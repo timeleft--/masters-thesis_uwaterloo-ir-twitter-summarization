@@ -1,0 +1,76 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>yaboulna-thesis</groupId>
+  <artifactId>twitter-track</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <repositories>
+      <repository>
+         <id>twitter4j.org</id>
+         <name>twitter4j.org Repository</name>
+         <url>http://twitter4j.org/maven2</url>
+         <releases>
+            <enabled>true</enabled>
+         </releases>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+      </repository>
+   </repositories>
+   <dependencies>
+<!--       <dependency> -->
+<!--          <groupId>org.twitter4j</groupId> -->
+<!--          <artifactId>twitter4j-core</artifactId> -->
+<!--          <version>[2.2,)</version> -->
+<!--       </dependency> -->
+      <dependency>
+         <groupId>org.twitter4j</groupId>
+         <artifactId>twitter4j-stream</artifactId>
+         <version>[2.2,)</version>
+      </dependency>
+      <dependency>
+      	<groupId>commons-io</groupId>
+      	<artifactId>commons-io</artifactId>
+      	<version>2.3</version>
+      </dependency>
+      <dependency>
+      	<groupId>org.apache.commons</groupId>
+      	<artifactId>commons-lang3</artifactId>
+      	<version>3.1</version>
+      </dependency>
+   </dependencies>
+   <build>
+		<plugins>
+			<!-- <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<finalName>${artifactId}-${version}-jarjar</finalName>
+				</configuration>
+			</plugin> -->
+
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+<!-- 							<addClasspath>true</addClasspath> -->
+							<mainClass>yaboulna.twitter.Track</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+
+		</plugins>
+	</build>
+</project>
