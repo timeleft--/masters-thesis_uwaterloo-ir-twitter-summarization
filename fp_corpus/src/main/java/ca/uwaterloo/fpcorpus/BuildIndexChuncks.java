@@ -25,6 +25,7 @@ import ca.uwaterloo.twitter.ItemSetIndexBuilder;
 public class BuildIndexChuncks {
   private static final Logger LOG = LoggerFactory
       .getLogger(BuildIndexChuncks.class);
+  private static final boolean DONOT_REPLACE = true;
   
   /**
    * @param args
@@ -40,9 +41,10 @@ public class BuildIndexChuncks {
     
     File inDir = new File(args[0]);
     File outDir = new File(args[1]);
-    int days = Integer.parseInt(args[2]);
+    int dayStart = Integer.parseInt(args[2]);
+    int dayEnd = Integer.parseInt(args[3]);
     
-    for (int i = 1; i <= days; ++i) {
+    for (int i = dayStart; i <= dayEnd; ++i) {
       final int dayNum = i;
       File dayOut = new File(outDir, "d" + i);
       for (File dayIn : inDir.listFiles(new FilenameFilter() {
@@ -61,6 +63,11 @@ public class BuildIndexChuncks {
           
           Path freqPattsPath = new Path(inervalEndIn.toURI()
               .toString() + "/" + PFPGrowth.FREQUENT_PATTERNS);
+          
+          if(intervalOut.exists() && DONOT_REPLACE){
+            continue;
+          }
+          
           LOG.info("Indexing {} to {}", freqPattsPath, intervalOut.getAbsolutePath());
           ItemSetIndexBuilder builder = new ItemSetIndexBuilder();
           Map<String, SummaryStatistics> stats = builder.buildIndex(
