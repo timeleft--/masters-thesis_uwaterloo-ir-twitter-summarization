@@ -258,7 +258,10 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
       entropyTotalInLongWindow.addValue(dsEntropy);
     }
     
-    final MutableBoolean exclusive = new MutableBoolean(true);
+    // final MutableBoolean exclusive = new MutableBoolean(true);
+    long entropyExactOverlapBefore = entropyExactOverlap.getN();
+    long entropyDiffLongerInLongWindowBefore = entropyDiffLongerInLongWindow.getN();
+    long entropyDiffLongerInShortUnionBefore = entropyDiffLongerInShortUnion.getN();
     
     final Document docDS = shortDocsReader.document(ds);
     Query query = fisQparser.parse(tSetDs.toString().replaceAll(
@@ -324,7 +327,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           throws IOException {
         // this.reader = reader;
         this.docBase = docBase;
-        exclusive.setValue(false);
+        // exclusive.setValue(false);
       }
       
       @Override
@@ -334,8 +337,12 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     };
     longDocsSearcher.search(query, longDocsCollector);
     
+    boolean exclusive =
+            (entropyExactOverlapBefore == entropyExactOverlap.getN()) &&
+            (entropyDiffLongerInLongWindowBefore == entropyDiffLongerInLongWindow.getN()) &&
+            (entropyDiffLongerInShortUnionBefore == entropyDiffLongerInShortUnion.getN());
     
-    if (dumpIntersction && exclusive.booleanValue()) {
+    if (dumpIntersction && exclusive) {
       if (shortUnionIsShortDoc) {
         dumpWr.append(tSetDs + "\tEXCLUSIVE\n");
       } else {
