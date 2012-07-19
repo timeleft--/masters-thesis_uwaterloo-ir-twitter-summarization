@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.commons.lang.mutable.MutableLong;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.lucene.analysis.Analyzer;
@@ -77,9 +78,9 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   
   protected static IndexReader twtIxReader;
   public static final String TWITTER_INDEX_ROOT =
-      "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/stemmed-stored_8hr-increments/";
-  // "1295740800000/1297209600000";
-  // "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/index_orig";
+      // "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/stemmed-stored_8hr-increments/";
+      // "1295740800000/1297209600000";
+      "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/index_orig";
   
   private static final String COLLECTION_STRING_CLEANER = "[\\,\\[\\]]";
   
@@ -220,6 +221,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   }
   
   private static final float TWITTER_CORPUS_LENGTH_IN_TERMS = 100055949;
+  
   private double patternEntropy(Set<String> pattern) throws IOException {
     double result = 0;
     for (String item : pattern) {
@@ -255,6 +257,8 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     } else {
       entropyTotalInLongWindow.addValue(dsEntropy);
     }
+    
+    final MutableBoolean exclusive = new MutableBoolean(true);
     
     final Document docDS = shortDocsReader.document(ds);
     Query query = fisQparser.parse(tSetDs.toString().replaceAll(
@@ -320,6 +324,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           throws IOException {
         // this.reader = reader;
         this.docBase = docBase;
+        exclusive.setValue(false);
       }
       
       @Override
@@ -329,6 +334,14 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     };
     longDocsSearcher.search(query, longDocsCollector);
     
+    
+    if (dumpIntersction && exclusive.booleanValue()) {
+      if (shortUnionIsShortDoc) {
+        dumpWr.append(tSetDs + "\tEXCLUSIVE\n");
+      } else {
+        dumpWr.append("EXCLUSIVE\t" + tSetDs + "\n");
+      }
+    }
   }
   
   public static void main(String[] args) throws CorruptIndexException, IOException,
@@ -347,11 +360,9 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     
     // TODO: should I use more timely indexes?????????? Up to the end time?? or between start and
     // end??
-    File twtIxPath = new File(TWITTER_INDEX_ROOT
-        + "/1295740800000/1297209600000");
+    File twtIxPath = new File(TWITTER_INDEX_ROOT);
     // TODO: handle the addition of stats
     twtIxReader = IndexReader.open(MMapDirectory.open(twtIxPath));
-    
     
     Writer wr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath, "stats.csv"))
         .getChannel(), "UTF-8");
