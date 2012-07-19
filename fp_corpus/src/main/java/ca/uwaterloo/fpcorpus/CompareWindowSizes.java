@@ -34,7 +34,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.store.MMapDirectory;
-import org.apache.lucene.store.SimpleFSDirectory;
+import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.util.Version;
 import org.apache.mahout.common.Pair;
 import org.apache.mahout.math.map.OpenIntObjectHashMap;
@@ -76,8 +76,9 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           AssocField.STEMMED_EN.name, ENGLISH_ANALYZER));
   
   protected static IndexReader twtIxReader;
-  public static final String TWITTER_INDEX_PATH =
-      "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/stemmed-stored_8hr-increments/1295740800000/1297209600000";
+  public static final String TWITTER_INDEX_ROOT =
+      "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/stemmed-stored_8hr-increments/";
+  // "1295740800000/1297209600000";
   // "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/index_orig";
   
   private static final String COLLECTION_STRING_CLEANER = "[\\,\\[\\]]";
@@ -129,16 +130,18 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     IndexReader[] shortWindowReaders = new IndexReader[shortWindowIndexes.size()];
     int i = 0;
     for (File shortWindowIx : shortWindowIndexes) {
-      shortWindowReaders[i++] = IndexReader.open(SimpleFSDirectory.open(shortWindowIx));
+      shortWindowReaders[i++] = IndexReader.open(NIOFSDirectory.open(shortWindowIx));
     }
     shortWindowsUnion = new MultiReader(shortWindowReaders);
-    longWindow = IndexReader.open(SimpleFSDirectory.open(longWindowIndex));
+    longWindow = IndexReader.open(NIOFSDirectory.open(longWindowIndex));
     
     OpenIntObjectHashMap<MutableLong> docIdInLongPatternInBoth = new OpenIntObjectHashMap<MutableLong>();
     IndexSearcher longWindowSearcher = new IndexSearcher(longWindow);
     
-    this.dumpWr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath, id + ".dump"))
-        .getChannel(), "UTF-8");
+    if (dumpIntersction) {
+      this.dumpWr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath, id + ".dump"))
+          .getChannel(), "UTF-8");
+    }
     
     for (int ds = 0; ds < shortWindowsUnion.maxDoc(); ++ds) {
       measureOverlap(shortWindowsUnion,
@@ -191,8 +194,10 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     
     shortWindowsUnion.close();
     longWindow.close();
-    this.dumpWr.flush();
-    this.dumpWr.close();
+    if (this.dumpWr != null) {
+      this.dumpWr.flush();
+      this.dumpWr.close();
+    }
     
     return new Pair<String, List<SummaryStatistics>>(id,
         Lists.newArrayList(
@@ -214,15 +219,16 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
             ));
   }
   
+  private static final float TWITTER_CORPUS_LENGTH_IN_TERMS = 100055949;
   private double patternEntropy(Set<String> pattern) throws IOException {
     double result = 0;
     for (String item : pattern) {
       Term term = new Term(TweetField.TEXT.name, item);
-      double pt = twtIxReader.docFreq(term);
+      double pt = twtIxReader.docFreq(term); // we assume the frequency in any document is 1
       if (pt == 0) {
         continue;
       }
-      pt /= twtIxReader.numDocs();
+      pt /= TWITTER_CORPUS_LENGTH_IN_TERMS;
       result -= pt * Math.log(pt) / LOG2;
     }
     return result;
@@ -339,7 +345,13 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
       throw new IllegalArgumentException("Output file already exists: " + outPath);
     }
     
-    twtIxReader = IndexReader.open(MMapDirectory.open(new File(TWITTER_INDEX_PATH)));
+    // TODO: should I use more timely indexes?????????? Up to the end time?? or between start and
+    // end??
+    File twtIxPath = new File(TWITTER_INDEX_ROOT
+        + "/1295740800000/1297209600000");
+    // TODO: handle the addition of stats
+    twtIxReader = IndexReader.open(MMapDirectory.open(twtIxPath));
+    
     
     Writer wr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath, "stats.csv"))
         .getChannel(), "UTF-8");
@@ -383,6 +395,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     
     for (int d = dayStart; d <= dayEnd; ++d) {
       File dayIn = new File(inDir, "d" + d);
+      int counter = 0;
       for (int ws = 0; ws < windowSizesArr.length - 1; ++ws) {
         for (int wl = ws + 1; wl < windowSizesArr.length; ++wl) {
           List<File> shortWindowReaders = Lists.newLinkedList();
@@ -405,7 +418,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
                       d + "_" + startDir.getName() + "_" + // endDir.getName() + "_" +
                           windowSizesArr[ws] + "_" + windowSizesArr[wl], outPath);
                   
-                  compareCall.dumpIntersction = (d == 1);
+                  compareCall.dumpIntersction = (counter++ % 7 == 0);
                   
                   completion.submit(compareCall);
                   ++numJobs;
