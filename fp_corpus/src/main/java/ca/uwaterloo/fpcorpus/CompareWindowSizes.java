@@ -85,7 +85,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   
   private static final String COLLECTION_STRING_CLEANER = "[\\,\\[\\]]";
   
-  private static final boolean DONOT_REPLACE = false;
+  private static final boolean DONOT_REPLACE = true;
   private static final boolean DUMP_INTERSECTION_DEFAULT = true;
   
   private final QueryParser fisQparser;
