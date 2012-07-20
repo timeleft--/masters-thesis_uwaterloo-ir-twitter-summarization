@@ -11,6 +11,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
@@ -357,8 +358,9 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     File outPath = new File(args[1]);
     int dayStart = Integer.parseInt(args[2]);
     int dayEnd = Integer.parseInt(args[3]);
-    CompletionService<Pair<String, List<SummaryStatistics>>> completion = new ExecutorCompletionService<Pair<String, List<SummaryStatistics>>>(
-        Executors.newFixedThreadPool(Integer.parseInt(args[4])));
+    ExecutorService exec = Executors.newFixedThreadPool(Integer.parseInt(args[4]));
+    CompletionService<Pair<String, List<SummaryStatistics>>> completion = 
+        new ExecutorCompletionService<Pair<String, List<SummaryStatistics>>>(exec);
     int numJobs = 0;
     
     if (DONOT_REPLACE && outPath.exists()) {
@@ -511,6 +513,11 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           "\n");
       
       wr.flush();
+    }
+    
+    exec.shutdown();
+    while(!exec.isTerminated()){
+      Thread.sleep(5000);
     }
     
     wr.flush();
