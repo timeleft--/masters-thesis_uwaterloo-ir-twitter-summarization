@@ -223,6 +223,22 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   
   private static final float TWITTER_CORPUS_LENGTH_IN_TERMS = 100055949;
   
+//  private double patternEntropy(Set<String> pattern) throws IOException {
+//    double result = 0;
+//    for (String item : pattern) {
+//      Term term = new Term(TweetField.TEXT.name, item);
+//      double pt = twtIxReader.docFreq(term); // we assume the frequency in any document is 1
+//      if (pt == 0) {
+//        continue;
+//      }
+//      pt /= TWITTER_CORPUS_LENGTH_IN_TERMS;
+//      result -= pt * Math.log(pt) / LOG2;
+//    }
+//    return result;
+//  }
+  
+  
+  // This actually now the IDF average
   private double patternEntropy(Set<String> pattern) throws IOException {
     double result = 0;
     for (String item : pattern) {
@@ -231,10 +247,10 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
       if (pt == 0) {
         continue;
       }
-      pt /= TWITTER_CORPUS_LENGTH_IN_TERMS;
-      result -= pt * Math.log(pt) / LOG2;
+      pt /= twtIxReader.numDocs();
+      result -=  Math.log(pt);
     }
-    return result;
+    return result / pattern.size();
   }
   
   private void measureOverlap(IndexReader shortDocsReader, int ds,
