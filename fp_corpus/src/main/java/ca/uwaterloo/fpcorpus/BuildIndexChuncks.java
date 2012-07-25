@@ -55,10 +55,14 @@ public class BuildIndexChuncks {
       })) {
         
         for (File intervalStartIn : dayIn.listFiles()) {
-          File intervalOut = new File(dayOut,
-              intervalStartIn.getName());
+        	
+        	File inervalEndIn = intervalStartIn.listFiles()[0];
+        	long windowSize = Long.parseLong(inervalEndIn.getName()) - Long.parseLong(intervalStartIn.getName());
+        	File intervalOut = new File(dayOut, "w" + windowSize);
+        	intervalOut = new File(intervalOut,  
+        		  intervalStartIn.getName());
           
-          File inervalEndIn = intervalStartIn.listFiles()[0];
+          
           intervalOut = new File(intervalOut, inervalEndIn.getName());
           
           Path freqPattsPath = new Path(inervalEndIn.toURI()
