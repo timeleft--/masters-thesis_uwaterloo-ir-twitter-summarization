@@ -3,14 +3,10 @@ package ca.uwaterloo.fpcorpus;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.hadoop.fs.Path;
 import org.apache.lucene.index.CorruptIndexException;
@@ -55,20 +51,20 @@ public class BuildIndexChuncks {
       })) {
         
         for (File intervalStartIn : dayIn.listFiles()) {
-        	
-        	File inervalEndIn = intervalStartIn.listFiles()[0];
-        	long windowSize = Long.parseLong(inervalEndIn.getName()) - Long.parseLong(intervalStartIn.getName());
-        	File intervalOut = new File(dayOut, "w" + windowSize);
-        	intervalOut = new File(intervalOut,  
-        		  intervalStartIn.getName());
           
+          File inervalEndIn = intervalStartIn.listFiles()[0];
+          long windowSize = Long.parseLong(inervalEndIn.getName())
+              - Long.parseLong(intervalStartIn.getName());
+          File intervalOut = new File(dayOut, "w" + windowSize);
+          intervalOut = new File(intervalOut,
+              intervalStartIn.getName());
           
           intervalOut = new File(intervalOut, inervalEndIn.getName());
           
           Path freqPattsPath = new Path(inervalEndIn.toURI()
               .toString() + "/" + PFPGrowth.FREQUENT_PATTERNS);
           
-          if(intervalOut.exists() && DONOT_REPLACE){
+          if (intervalOut.exists() && DONOT_REPLACE) {
             continue;
           }
           

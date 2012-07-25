@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.nio.channels.Channels;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
@@ -16,7 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.commons.lang.mutable.MutableLong;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.lucene.analysis.Analyzer;
@@ -68,7 +68,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
       14400000, // 4hr
       28800000, // 8hr
       57600000, // 16hr
-      115200000 // 24hr
+      86400000 // 24hr
   };
   
   private static final Analyzer PLAIN_ANALYZER = new TwitterAnalyzer(); // Version.LUCENE_36);
@@ -86,7 +86,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   private static final String COLLECTION_STRING_CLEANER = "[\\,\\[\\]]";
   
   private static final boolean DONOT_REPLACE = true;
-  private static final boolean DUMP_INTERSECTION_DEFAULT = true;
+  private static final boolean DUMP_INTERSECTION_DEFAULT = false;
   
   private final QueryParser fisQparser;
   protected final List<File> shortWindowIndexes;
@@ -223,20 +223,19 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   
   private static final float TWITTER_CORPUS_LENGTH_IN_TERMS = 100055949;
   
-//  private double patternEntropy(Set<String> pattern) throws IOException {
-//    double result = 0;
-//    for (String item : pattern) {
-//      Term term = new Term(TweetField.TEXT.name, item);
-//      double pt = twtIxReader.docFreq(term); // we assume the frequency in any document is 1
-//      if (pt == 0) {
-//        continue;
-//      }
-//      pt /= TWITTER_CORPUS_LENGTH_IN_TERMS;
-//      result -= pt * Math.log(pt) / LOG2;
-//    }
-//    return result;
-//  }
-  
+  // private double patternEntropy(Set<String> pattern) throws IOException {
+  // double result = 0;
+  // for (String item : pattern) {
+  // Term term = new Term(TweetField.TEXT.name, item);
+  // double pt = twtIxReader.docFreq(term); // we assume the frequency in any document is 1
+  // if (pt == 0) {
+  // continue;
+  // }
+  // pt /= TWITTER_CORPUS_LENGTH_IN_TERMS;
+  // result -= pt * Math.log(pt) / LOG2;
+  // }
+  // return result;
+  // }
   
   // This actually now the IDF average
   private double patternEntropy(Set<String> pattern) throws IOException {
@@ -248,7 +247,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
         continue;
       }
       pt /= twtIxReader.numDocs();
-      result -=  Math.log(pt);
+      result -= Math.log(pt);
     }
     return result / pattern.size();
   }
@@ -355,7 +354,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     longDocsSearcher.search(query, longDocsCollector);
     
     boolean exclusive =
-            (entropyExactOverlapBefore == entropyExactOverlap.getN()) &&
+        (entropyExactOverlapBefore == entropyExactOverlap.getN()) &&
             (entropyDiffLongerInLongWindowBefore == entropyDiffLongerInLongWindow.getN()) &&
             (entropyDiffLongerInShortUnionBefore == entropyDiffLongerInShortUnion.getN());
     
@@ -375,7 +374,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     int dayStart = Integer.parseInt(args[2]);
     int dayEnd = Integer.parseInt(args[3]);
     ExecutorService exec = Executors.newFixedThreadPool(Integer.parseInt(args[4]));
-    CompletionService<Pair<String, List<SummaryStatistics>>> completion = 
+    CompletionService<Pair<String, List<SummaryStatistics>>> completion =
         new ExecutorCompletionService<Pair<String, List<SummaryStatistics>>>(exec);
     int numJobs = 0;
     
@@ -429,46 +428,86 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
         "entDiffLongerInShortN\t" +
         "\n");
     
+    
+    Random rand = new Random(System.currentTimeMillis());
     for (int d = dayStart; d <= dayEnd; ++d) {
       File dayIn = new File(inDir, "d" + d);
-      int counter = 0;
+      
       for (int ws = 0; ws < windowSizesArr.length - 1; ++ws) {
+        File shortWinDir = new File(dayIn, "w" + windowSizesArr[ws]);
+        File[] shortsAsc = shortWinDir.listFiles();
+        Arrays.sort(shortsAsc);
+        
         for (int wl = ws + 1; wl < windowSizesArr.length; ++wl) {
-          List<File> shortWindowReaders = Lists.newLinkedList();
-          File longWindowPending = null;
-          File[] startAscending = dayIn.listFiles();
-          Arrays.sort(startAscending);
-          for (File startDir : startAscending) {
-            File[] endDescending = startDir.listFiles();
-            Arrays.sort(endDescending);
-            for (int e = endDescending.length - 1; e >= 0; --e) {
-              File endDir = endDescending[e];
-              long windowSize = Long.parseLong(endDir.getName())
-                  - Long.parseLong(startDir.getName());
-              if (windowSize == windowSizesArr[ws]) {
-                shortWindowReaders.add(new File(endDir, "index"));
-              } else if (windowSize == windowSizesArr[wl]) {
-                if (longWindowPending != null) {
-                  CompareWindowSizes compareCall = new CompareWindowSizes(shortWindowReaders,
-                      new File(endDir, "index"),
-                      d + "_" + startDir.getName() + "_" + // endDir.getName() + "_" +
-                          windowSizesArr[ws] + "_" + windowSizesArr[wl], outPath);
-                  
-                  compareCall.dumpIntersction = (counter++ % 7 == 0);
-                  
-                  completion.submit(compareCall);
-                  ++numJobs;
-                  shortWindowReaders.clear();
-                } else {
-                  if (shortWindowReaders.size() >= windowSizesArr[wl] / windowSizesArr[ws]) {
-                    throw new AssertionError("The short union is becoming too powerful!!");
-                  }
-                }
-                longWindowPending = endDir;
+        
+          boolean dumped = false;
+          File longWinDir = new File(dayIn, "w" + windowSizesArr[wl]);
+          int numShortWins = (int) Math.ceil(windowSizesArr[wl] / windowSizesArr[ws]);
+          int numIntervals = shortsAsc.length / numShortWins; // floor
+          for (File longWin : longWinDir.listFiles()) {
+            
+            longWin = longWin.listFiles()[0];
+            
+            for (int i = 0; i < numIntervals; ++i) {
+              int startIx = i * numShortWins;
+              int endIx = (i + 1) * numShortWins;
+              String startTime = shortsAsc[startIx].getName();
+              
+              List<File> shortWindowReaderList = Lists.newArrayListWithCapacity(numShortWins);
+              for (int j = startIx; j < endIx; ++j) {
+                File f = shortsAsc[j].listFiles()[0];
+                shortWindowReaderList.add(new File(f, "index"));
               }
+              CompareWindowSizes compareCall = new CompareWindowSizes(shortWindowReaderList,
+                  new File(longWin, "index"),
+                  d + "_" + startTime + "_" + // endDir.getName() + "_" +
+                      windowSizesArr[ws] + "_" + windowSizesArr[wl], outPath);
+              
+              if (!dumped && (rand.nextBoolean() || i == numIntervals - 1)) {
+                dumped = true;
+                compareCall.dumpIntersction = true;
+              }
+              completion.submit(compareCall);
+              ++numJobs;
             }
           }
         }
+        // for (int wl = ws + 1; wl < windowSizesArr.length; ++wl) {
+        // List<File> shortWindowReaders = Lists.newLinkedList();
+        // File longWindowPending = null;
+        // File[] startAscending = dayIn.listFiles();
+        // Arrays.sort(startAscending);
+        // for (File startDir : startAscending) {
+        // File[] endDescending = startDir.listFiles();
+        // Arrays.sort(endDescending);
+        // for (int e = endDescending.length - 1; e >= 0; --e) {
+        // File endDir = endDescending[e];
+        // long windowSize = Long.parseLong(endDir.getName())
+        // - Long.parseLong(startDir.getName());
+        // if (windowSize == windowSizesArr[ws]) {
+        // shortWindowReaders.add(new File(endDir, "index"));
+        // } else if (windowSize == windowSizesArr[wl]) {
+        // if (longWindowPending != null) {
+        // CompareWindowSizes compareCall = new CompareWindowSizes(shortWindowReaders,
+        // new File(endDir, "index"),
+        // d + "_" + startDir.getName() + "_" + // endDir.getName() + "_" +
+        // windowSizesArr[ws] + "_" + windowSizesArr[wl], outPath);
+        //
+        // compareCall.dumpIntersction = (counter++ % 7 == 0);
+        //
+        // completion.submit(compareCall);
+        // ++numJobs;
+        // shortWindowReaders.clear();
+        // } else {
+        // if (shortWindowReaders.size() >= windowSizesArr[wl] / windowSizesArr[ws]) {
+        // throw new AssertionError("The short union is becoming too powerful!!");
+        // }
+        // }
+        // longWindowPending = endDir;
+        // }
+        // }
+        // }
+        // }
       }
     }
     
@@ -532,7 +571,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     }
     
     exec.shutdown();
-    while(!exec.isTerminated()){
+    while (!exec.isTerminated()) {
       Thread.sleep(5000);
     }
     
