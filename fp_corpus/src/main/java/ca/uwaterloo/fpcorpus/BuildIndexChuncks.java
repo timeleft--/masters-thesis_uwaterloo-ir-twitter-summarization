@@ -70,15 +70,20 @@ public class BuildIndexChuncks {
           
           LOG.info("Indexing {} to {}", freqPattsPath, intervalOut.getAbsolutePath());
           ItemSetIndexBuilder builder = new ItemSetIndexBuilder();
-          Map<String, SummaryStatistics> stats = builder.buildIndex(
-              freqPattsPath, new File(intervalOut, "index"),
-              Long.parseLong(intervalStartIn.getName()),
-              Long.parseLong(inervalEndIn.getName()), null);
-          
-          for (String key : stats.keySet()) {
-            FileUtils.writeStringToFile(new File(new File(
-                intervalOut, "stats"), key), stats.get(key)
-                .toString());
+          try {
+            Map<String, SummaryStatistics> stats = builder.buildIndex(
+                freqPattsPath, new File(intervalOut, "index"),
+                Long.parseLong(intervalStartIn.getName()),
+                Long.parseLong(inervalEndIn.getName()), null);
+            
+            for (String key : stats.keySet()) {
+              FileUtils.writeStringToFile(new File(new File(
+                  intervalOut, "stats"), key), stats.get(key)
+                  .toString());
+            }
+          } catch (Exception ignored) {
+            LOG.error(ignored.getMessage(), ignored);
+            continue;
           }
         }
         
