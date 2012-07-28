@@ -15,6 +15,21 @@
 <!--       <version>1.0.1</version> -->
 <!--     </dependency> -->
   <dependency>
+      <groupId>trec2012</groupId>
+  <artifactId>query-expander</artifactId>
+  <version>0.0.2-SNAPSHOT</version>
+  </dependency>
+  <dependency>
+    <groupId>trec2012</groupId>
+    <artifactId>trec-util</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </dependency>
+  <dependency>
+      <groupId>yaboulna-thesis</groupId>
+     <artifactId>timeseries-util</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </dependency>
+  <dependency>
     <groupId>trec2012</groupId>
     <artifactId>assoc-mr</artifactId>
     <version>0.0.2-SNAPSHOT</version>
