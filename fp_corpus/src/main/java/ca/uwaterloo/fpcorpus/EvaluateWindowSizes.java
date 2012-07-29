@@ -5,8 +5,9 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.channels.Channels;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -30,10 +31,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.NIOFSDirectory;
-import org.apache.mahout.math.list.IntArrayList;
-import org.apache.mahout.math.map.OpenIntFloatHashMap;
-import org.apache.mahout.math.map.OpenIntObjectHashMap;
 import org.apache.mahout.math.map.OpenObjectFloatHashMap;
+import org.apache.mahout.math.map.OpenObjectIntHashMap;
 import org.jdom2.JDOMException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +49,7 @@ import ca.uwaterloo.twitter.queryexpand.ScoreIxObj;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class EvaluateWindowSizes implements Callable<Void> {
   private static final Logger LOG = LoggerFactory
@@ -98,10 +98,11 @@ public class EvaluateWindowSizes implements Callable<Void> {
   
   private static final boolean SEARCH_NONSTEMMED = false;
   
+  private static final int CALC_METRICS_FOR_N_IRRELEVANT_TWEETS = 30;
+  
   protected final String queryStr;
   protected final String queryTimeFmted;
   protected final String qid;
-  
   
   public EvaluateWindowSizes(String id, String queryTimeFmted,
       String queryStr) throws CorruptIndexException, IOException {
@@ -110,27 +111,28 @@ public class EvaluateWindowSizes implements Callable<Void> {
     this.queryStr = queryStr;
     this.queryTimeFmted = queryTimeFmted;
     
-    
   }
   
   public Void call() throws IOException, ParseException, java.text.ParseException {
     
-    
     FISQueryExpander fisQEx;
     fisQEx = new FISQueryExpander(twtIncIxLoc, twtChunkIxLocs, queryTimeFmted);
     
-    List<String> relevantQueries = Lists.newLinkedList();
-    for (Entry<String, Float> e : qrelUtil.qRel.get(""+Integer.parseInt(qid.substring(2))).entrySet()) {
-      if (e.getValue() > 0) {
-        relevantQueries.add(e.getKey());
-      }
-    }
+    // List<String> targetTweets = Lists.newLinkedList();
+    // for (Entry<String, Float> e :
+    // qrelUtil.qRel.get(""+Integer.parseInt(qid.substring(2))).entrySet()) {
+    // if (e.getValue() <= 0) {
+    // targetTweets.add(e.getKey());
+    // }
+    // }
+    LinkedHashMap<String, Float> targetTweets = qrelUtil.qRel.get(""
+        + Integer.parseInt(qid.substring(2)));
     
     for (int h = 0; h < historyLengths.length; ++h) {
       for (int ws = 0; ws < windowSizesArr.length; ++ws) {
         long historyStart = fisQEx.getQueryTime() - historyLengths[h];
         int numShortWins = (int) Math.ceil(historyLengths[h] / windowSizesArr[ws]);
-        if(numShortWins > 24){
+        if (numShortWins == 0 || numShortWins > 24) {
           // 2 hours of 5 mninutes or 1 day of 24 hours is the maximum we will wait for..
           // multireader would get tooo slow if there are more windows
           continue;
@@ -146,10 +148,10 @@ public class EvaluateWindowSizes implements Callable<Void> {
             long startTime = Long.parseLong(shortFile.getName());
             File endFile = shortFile.listFiles()[0];
             long endTime = Long.parseLong(endFile.getName());
-            if (endTime < historyStart ) {
+            if (endTime < historyStart) {
               continue;
             }
-            if(endTime > fisQEx.getQueryTime()){
+            if (endTime > fisQEx.getQueryTime()) {
               break;
             }
             
@@ -165,43 +167,58 @@ public class EvaluateWindowSizes implements Callable<Void> {
             shortWindowReaderList.toArray(new IndexReader[0]));
         fisQEx.setFisIxReader(shortWindowsUnion);
         
-        ///////////////////////////////////
+        // /////////////////////////////////
         
-        Writer twtMetricsWr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath, "twtMetrics_" + qid + "_"
-            + historyLengths[h] + "_" + windowSizesArr[ws] + ".csv"))
+        Writer twtMetricsWr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath,
+            "twtMetrics_" + qid + "_"
+                + historyLengths[h] + "_" + windowSizesArr[ws] + ".csv"))
             .getChannel(),
             "UTF-8");
         twtMetricsWr
-            .append("tweetid\t" +
+            .append("tweet\t" +
+                "relevance\t" +
                 "length\t" +
                 "perplexity\n");
         
-        OpenIntFloatHashMap aggregateScores = new OpenIntFloatHashMap();
-        OpenIntObjectHashMap<String[]> allItemsets = new OpenIntObjectHashMap<String[]>();
-        for (String tweetId : relevantQueries) {
+        OpenObjectFloatHashMap<Set<String>> aggregateScore = new OpenObjectFloatHashMap<Set<String>>();
+        OpenObjectFloatHashMap<Set<String>> aggregateSupp = new OpenObjectFloatHashMap<Set<String>>();
+        OpenObjectIntHashMap<Set<String>> relevanceCount = new OpenObjectIntHashMap<Set<String>>();
+        // OpenIntFloatHashMap aggregateScores = new OpenIntFloatHashMap();
+        // OpenIntObjectHashMap<String[]> allItemsets = new OpenIntObjectHashMap<String[]>();
+        int numIrrelevantSeen = 0;
+        for (String tweetId : targetTweets.keySet()) {
+          Float relevance = targetTweets.get(tweetId);
+          if (relevance <= 0 && numIrrelevantSeen >= CALC_METRICS_FOR_N_IRRELEVANT_TWEETS) {
+            continue;
+          }
           try {
-            TopDocs relTopDocs = fisQEx.getTwtSearcher().search(new TermQuery(new Term(
+            TopDocs tweetTopDocs = fisQEx.getTwtSearcher().search(new TermQuery(new Term(
                 TweetField.ID.name, tweetId)),
                 10);
-            if (relTopDocs.totalHits != 1) {
-              LOG.warn("Found {} tweets with tweetId {}", relTopDocs.totalHits, tweetId);
+            if (tweetTopDocs.totalHits != 1) {
+              LOG.warn("Found {} tweets with tweetId {}", tweetTopDocs.totalHits, tweetId);
               continue;
             }
             
-            int docId = relTopDocs.scoreDocs[0].doc;
-            Document relTweetDoc = fisQEx.getTwtIxReader().document(docId);
+            int docId = tweetTopDocs.scoreDocs[0].doc;
+            Document tweetDoc = fisQEx.getTwtIxReader().document(docId);
             OpenObjectFloatHashMap<String> queryTermWeight;
             MutableLong qLen = new MutableLong();
+            String tweetStr = tweetDoc.get(TweetField.TEXT.name);
+            if (relevance <= 0 && tweetStr.charAt(0) == 'R' && tweetStr.charAt(1) == 'T'){
+              // we are not interested in measuring ReTweets... thye are easy to filter out 
+              continue;
+            }
             if (SEARCH_NONSTEMMED) {
-              String relTweetStr = relTweetDoc.get(TweetField.TEXT.name);
-              queryTermWeight = fisQEx.queryTermFreq(relTweetStr,
+              queryTermWeight = fisQEx.queryTermFreq(tweetStr,
                   qLen,
                   PLAIN_ANALYZER,
                   AssocField.ITEMSET.name);
             } else {
               queryTermWeight = new OpenObjectFloatHashMap<String>();
-              TermFreqVector tv = fisQEx.getTwtIxReader().getTermFreqVector(docId, TweetField.STEMMED_EN.name);
-              if(tv == null){
+              TermFreqVector tv = fisQEx.getTwtIxReader().getTermFreqVector(docId,
+                  TweetField.STEMMED_EN.name);
+              if (tv == null) {
                 continue;
               }
               for (String term : tv.getTerms()) {
@@ -211,22 +228,28 @@ public class EvaluateWindowSizes implements Callable<Void> {
             }
             
             float perplexity = 0;
-            for(String word: queryTermWeight.keys()){
-              Term term = new Term(SEARCH_NONSTEMMED?TweetField.TEXT.name:TweetField.STEMMED_EN.name, word);
+            for (String word : queryTermWeight.keys()) {
+              Term term = new Term(SEARCH_NONSTEMMED ? TweetField.TEXT.name
+                  : TweetField.STEMMED_EN.name, word);
               float pt = fisQEx.getTwtIxReader().docFreq(term) / TWITTER_CORPUS_LENGTH_IN_TERMS;
-              if(pt == 0){
+              if (pt == 0) {
                 continue;
               }
               perplexity += Math.log(pt) / LOG2;
             }
             perplexity /= -qLen.floatValue();
-            perplexity = (float)Math.pow(2, perplexity);
+            perplexity = (float) Math.pow(2, perplexity);
             
-            twtMetricsWr.append(tweetId + "\t" )
-              .append(qLen.intValue() + "\t") //length
-              .append(perplexity + "\t") //perplexity
-              .append("\n");
+            twtMetricsWr.append(tweetStr + "\t")
+                .append(relevance + "\t")
+                .append(qLen.intValue() + "\t") // length
+                .append(perplexity + "\t") // perplexity
+                .append("\n");
             
+            if (relevance <= 0) {
+              ++numIrrelevantSeen;
+              continue;
+            }
             
             Query query = fisQEx.parseQueryIntoTerms(queryTermWeight,
                 qLen.floatValue(),
@@ -241,10 +264,19 @@ public class EvaluateWindowSizes implements Callable<Void> {
             fisQEx.getFisSearcher().search(query, bm25Coll);
             
             TreeMap<ScoreIxObj<Integer>, String[]> rs = bm25Coll.getResultSet();
-            
+            Set<Set<String>> seenForThisQuery = Sets.newHashSet();
             for (ScoreIxObj<Integer> key : rs.keySet()) {
-              aggregateScores.put(key.obj, aggregateScores.get(key.obj) + key.score);
-              allItemsets.put(key.obj, rs.get(key));
+              Set<String> itemset = Sets.newCopyOnWriteArraySet(Arrays.asList(rs.get(key)));
+              if (!seenForThisQuery.contains(itemset)) {
+                seenForThisQuery.add(itemset);
+                aggregateScore.put(itemset, key.score);
+                relevanceCount.put(itemset, relevanceCount.get(itemset) + 1);
+              }
+              float supp = Float.parseFloat(fisQEx.getFisIxReader().document(key.obj)
+                  .get(AssocField.SUPPORT.name));
+              aggregateSupp.put(itemset, aggregateSupp.get(itemset) + supp);
+              // aggregateScores.put(key.obj, aggregateScores.get(key.obj) + key.score);
+              // allItemsets.put(key.obj, rs.get(key));
             }
             
           } catch (Exception ignored) {
@@ -254,10 +286,11 @@ public class EvaluateWindowSizes implements Callable<Void> {
         
         twtMetricsWr.flush();
         twtMetricsWr.close();
-        ////////////////////////////////////
+        // //////////////////////////////////
         
-        Writer fisMetricsWr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath, "fisMetrics_" + qid + "_"
-            + historyLengths[h] + "_" + windowSizesArr[ws] + ".csv"))
+        Writer fisMetricsWr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath,
+            "fisMetrics_" + qid + "_"
+                + historyLengths[h] + "_" + windowSizesArr[ws] + ".csv"))
             .getChannel(),
             "UTF-8");
         fisMetricsWr
@@ -265,6 +298,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
                 "length\t" +
                 "bm25Sum\t" +
                 "support\t" +
+                "rel-count\t" +
                 // "lift\t" +
                 "coherence\t" +
                 "all_conf\t" +
@@ -274,24 +308,32 @@ public class EvaluateWindowSizes implements Callable<Void> {
                 "entropy\t" +
                 "sum-term-inf\t" +
                 "sum-idf\n");
-        IntArrayList scoreAsc = new IntArrayList(aggregateScores.size());
-        aggregateScores.keysSortedByValue(scoreAsc);
+        // IntArrayList scoreAsc = new IntArrayList(aggregateScores.size());
+        // aggregateScores.keysSortedByValue(scoreAsc);
+        List<Set<String>> scoreAsc = Lists.newArrayListWithCapacity(aggregateScore.size());
+        aggregateScore.keysSortedByValue(scoreAsc);
         for (int d = scoreAsc.size() - 1; d >= 0; --d) {
-          int docId = scoreAsc.get(d);
-          String[] itemset = allItemsets.get(docId);
+          // int docId = scoreAsc.get(d);
+          // String[] itemset = allItemsets.get(docId);
+          Set<String> itemset = scoreAsc.get(d);
+          
           // MutableFloat maxTermSupp = new MutableFloat();
           // MutableFloat universe = new MutableFloat();
           // float[][] jointProbs = estimatePairWiseJointProbs(itemset, fisQEx, maxTermSupp,
           // universe);
-          float supp = Float.parseFloat(fisQEx.getFisIxReader().document(docId)
-              .get(AssocField.SUPPORT.name));
-          float[] tweetSupp = new float[itemset.length];
+          
+          float[] tweetSupp = new float[itemset.size()];
           // float[] fisSupp = new float[itemset.length];
           float maxTermSupp = Float.MIN_VALUE;
           float totalTermSupp = 0;
-          for (int i = 0; i < itemset.length; ++i) {
+          // for (int i = 0; i < itemset.length; ++i) {
+          // Term termi = new Term(fisQEx.paramBM25StemmedIDF ? TweetField.STEMMED_EN.name
+          // : TweetField.TEXT.name, itemset[i]);
+          int i = -1;
+          for (String item : itemset) {
+            ++i;
             Term termi = new Term(fisQEx.paramBM25StemmedIDF ? TweetField.STEMMED_EN.name
-                : TweetField.TEXT.name, itemset[i]);
+                : TweetField.TEXT.name, item);
             tweetSupp[i] = fisQEx.getTwtIxReader().docFreq(termi);
             totalTermSupp += tweetSupp[i];
             if (tweetSupp[i] > maxTermSupp) {
@@ -302,10 +344,14 @@ public class EvaluateWindowSizes implements Callable<Void> {
             // : AssocField.ITEMSET.name, itemset[i]);
             // fisSupp[i] = fisQEx.getFisIxReader().docFreq(termi);
           }
-          fisMetricsWr.append(Arrays.toString(itemset) + "\t") // "itemset\t
-              .append(itemset.length + "\t") // length\t
-              .append(aggregateScores.get(docId) + "\t") // bm25Sum
+          
+          float supp = aggregateSupp.get(itemset);
+          
+          fisMetricsWr.append(itemset + "\t") // "itemset\t
+              .append(itemset.size() + "\t") // length\t
+              .append(aggregateScore.get(itemset) + "\t") // bm25Sum
               .append(supp + "\t") // support
+              .append(relevanceCount.get(itemset) + "\t") //rel-count
               // .append(calcLift(itemset, jointProbs) + "\t") //lift
               .append(supp / totalTermSupp + "\t") // coherence
               .append(supp / maxTermSupp + "\t") // all_conf
@@ -329,10 +375,10 @@ public class EvaluateWindowSizes implements Callable<Void> {
     float numTweets = fisQEx.getTwtIxReader().numDocs();
     float result = 0;
     for (float ts : tweetSupp) {
-      if(ts == 0){
-        continue; //duh
+      if (ts == 0) {
+        continue; // duh
       }
-      result -= Math.log(ts/ numTweets);
+      result -= Math.log(ts / numTweets);
     }
     return result;
   }
@@ -499,7 +545,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
     
     Future<Void> lastFuture = null;
     for (int t = 0; t < topicUtil.topicIds.size(); ++t) {
-
+      
       EvaluateWindowSizes compareCall = new EvaluateWindowSizes(topicUtil.topicIds.get(t),
           topicUtil.queryTimes.get(t), topicUtil.queries.get(t));
       
