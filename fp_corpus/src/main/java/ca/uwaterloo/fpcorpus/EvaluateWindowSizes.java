@@ -245,9 +245,9 @@ public class EvaluateWindowSizes implements Callable<Void> {
             
             float perplexity = 0;
             for (String word : queryTermWeight.keys()) {
-              Term term = new Term(SEARCH_NONSTEMMED ? TweetField.TEXT.name
-                  : TweetField.STEMMED_EN.name, word);
-              float pt = fisQEx.getTwtIxReader().docFreq(term) / TWITTER_CORPUS_LENGTH_IN_TERMS;
+              Term term = new Term(SEARCH_NONSTEMMED ? AssocField.ITEMSET.name
+                  : AssocField.STEMMED_EN.name, word);
+              float pt = fisQEx.getFisIxReader().docFreq(term) / TWITTER_CORPUS_LENGTH_IN_TERMS;
               if (pt == 0) {
                 continue;
               }
@@ -319,22 +319,23 @@ public class EvaluateWindowSizes implements Callable<Void> {
                 "coherence\t" +
                 "all_conf\t" +
                 
-                "avg-cramerv\t" +
+//                "avg-cramerv\t" +
                 "avg-yuleq\t" +
-                "avg-kruskal\t" +
-                "avg-fischerexact\t" +
+//                "avg-kruskal\t" +
+//                "avg-fischerexact\t" +
                 "avg-gainratio\t" +
                 
                 "avg-bleheta\t" +
-                // "avg-berry\t" +
+//                 "avg-berry\t" +
                 
                 "nmi\t" +
                 "avg-pmi\t" +
-                "exp-pmi\t" +
+//                "exp-pmi\t" +
                 // "dfidf\t" +
-                "entropy\t" +
-                "avg-term-inf\t" +
-                "avg-idf\n");
+//                "entropy\t" +
+//                "avg-term-inf\t" +
+//                "avg-idf\t" +
+                "\n");
         // IntArrayList scoreAsc = new IntArrayList(aggregateScores.size());
         // aggregateScores.keysSortedByValue(scoreAsc);
         List<Set<String>> scoreAsc = Lists.newArrayListWithCapacity(aggregateScore.size());
@@ -413,23 +414,23 @@ public class EvaluateWindowSizes implements Callable<Void> {
               .append(supp / maxTermSupp.floatValue() + "\t") // all_conf
               
               // Contingency table
-              .append(avgPairCramerV(jointFreqs, numDocs) + "\t") // "avg-cramerv\t" +
+//              .append(avgPairCramerV(jointFreqs, numDocs) + "\t") // "avg-cramerv\t" +
               .append(avgPairYuleQ(jointFreqs, numDocs) + "\t") // "avg-yuleq\t" +
-              .append(avgPairKruskalTau(jointFreqs, numDocs) + "\t") // "avg-kruskal\t" +
-              .append(avgPairFischerExact(jointFreqs, numDocs) + "\t") // "avg-fischerexact\t" +
+//              .append(avgPairKruskalTau(jointFreqs, numDocs) + "\t") // "avg-kruskal\t" +
+//              .append(avgPairFischerExact(jointFreqs, numDocs) + "\t") // "avg-fischerexact\t" +
               .append(avgPairGainRatio(jointFreqs, numDocs) + "\t") // "avg-gainratio\t" +
               
               // Freom Pearce 2003 MWE evaluation
               .append(avgBleheta(jointFreqs, numDocs) + "\t") // bleheta and johnson
-              // .append(avgBerry(jointFreqs, numDocs) + "\t") // average-pairwise-mutual-inf
+//               .append(avgBerry(jointFreqs, numDocs) + "\t") // berry 1973
               
               .append(calcNMI(jointFreqs, numDocs, totalTermSupp.floatValue()) + "\t") // normalized-mutual-inf
               .append(averagePmi(jointFreqs, numDocs) + "\t") // average-pairwise-mutual-inf
-              .append(expectedPmi(jointFreqs, numDocs, totalTermSupp.floatValue()) + "\t") // expected-pairwise-mutual-inf
+//              .append(expectedPmi(jointFreqs, numDocs, totalTermSupp.floatValue()) + "\t") // expected-pairwise-mutual-inf
               // .append(calcDfIdf(tweetSupp, fisSupp, fisQEx) + "\t") // dfidf \
-              .append(calcEntropy(jointFreqs) + "\t") // entropy
-              .append(calcSumTermInf(jointFreqs) + "\t") // avg-term-inf
-              .append(calcSumIdf(jointFreqs, numDocs) + "\t") // avg-idf
+//              .append(calcEntropy(jointFreqs) + "\t") // entropy
+//              .append(calcSumTermInf(jointFreqs) + "\t") // avg-term-inf
+//              .append(calcSumIdf(jointFreqs, numDocs) + "\t") // avg-idf
               .append("\n");
         }
         fisMetricsWr.flush();
@@ -440,29 +441,8 @@ public class EvaluateWindowSizes implements Callable<Void> {
     return null;
   }
   
-  // private double avgBerry(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
-  // if (jointFreqs.length == 1) {
-  // return 0;
-  // }
-  // double result = 0;
-  // for (int i = 0; i < jointFreqs.length; ++i) {
-  // for (int j = i+1; j < jointFreqs.length; ++j) {
-  // if (i == j) {
-  // continue;
-  // }
-  // // we'll leave the numbers cancel out
-  // result += berry(contingencyTable(i, j, jointFreqs, numDocs));
-  // }
-  // }
-  // return 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
-  // }
-  //
-  // private double berry(double[][] cont) {
-  // double estimate = (cont[0][0] + cont[1][0]) * (cont[0][0] + cont[0][1]);
-  // return 0;
-  // }
   
-  private double avgPairYuleQ(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+  public static double avgBerry(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     if (jointFreqs.length == 1) {
       return 0;
     }
@@ -473,7 +453,39 @@ public class EvaluateWindowSizes implements Callable<Void> {
           continue;
         }
         // we'll leave the numbers cancel out
-        result += Math.abs(yuleQ(contingencyTable(i, j, jointFreqs, numDocs)));
+//        result += Math.abs(yuleQ(contingencyTable(i, j, jointFreqs, numDocs)));
+        result += berry(i, j, jointFreqs, numDocs);
+      }
+    }
+    if(METRICS_AVERAGED){
+      result = 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
+    }
+    return result;
+
+  }
+  
+
+
+  public static double berry(int i, int j, OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+    double p = jointFreqs[i].get(i) / (numDocs - jointFreqs[j].get(j));
+    double fHat = p * jointFreqs[j].get(j) * AVG_TWEET_LENGTH;
+    double result = (jointFreqs[i].get(j) - fHat) / Math.sqrt(fHat * (1-p));
+    return result;
+  }
+
+  public static double avgPairYuleQ(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+    if (jointFreqs.length == 1) {
+      return 0;
+    }
+    double result = 0;
+    for (int i = 0; i < jointFreqs.length; ++i) {
+      for (int j = i + 1; j < jointFreqs.length; ++j) {
+        if (i == j) {
+          continue;
+        }
+        // we'll leave the numbers cancel out
+//        result += Math.abs(yuleQ(contingencyTable(i, j, jointFreqs, numDocs)));
+        result += yuleQ(contingencyTable(i, j, jointFreqs, numDocs));
       }
     }
     if(METRICS_AVERAGED){
@@ -488,13 +500,13 @@ public class EvaluateWindowSizes implements Callable<Void> {
    * @param cont
    * @return +/-1 positive or negative perfect correlation, 0 no association
    */
-  private double yuleQ(double[][] cont) {
+  public static double yuleQ(double[][] cont) {
     double ad = cont[0][0] * cont[1][1];
     double bc = cont[0][1] * cont[1][0];
     return (ad - bc) / (ad + bc);
   }
   
-  private double avgPairCramerV(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+  public static double avgPairCramerV(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     if (jointFreqs.length == 1) {
       return 0;
     }
@@ -504,7 +516,8 @@ public class EvaluateWindowSizes implements Callable<Void> {
         if (i == j) {
           continue;
         }
-        result += ContingencyTables.chiSquared(contingencyTable(i, j, jointFreqs, numDocs), true);
+        result += ContingencyTables.CramersV(contingencyTable(i, j, jointFreqs, numDocs));
+//            ContingencyTables.chiSquared(contingencyTable(i, j, jointFreqs, numDocs), true);
       }
     }
     if(METRICS_AVERAGED){
@@ -514,7 +527,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
 
   }
   
-  private double avgPairGainRatio(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+  public static double avgPairGainRatio(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     if (jointFreqs.length == 1) {
       return 0;
     }
@@ -534,7 +547,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
 
   }
   
-  private double avgPairFischerExact(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+  public static double avgPairFischerExact(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     if (jointFreqs.length == 1) {
       return 0;
     }
@@ -557,7 +570,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
 
   }
   
-  private double avgPairKruskalTau(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+  public static double avgPairKruskalTau(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     if (jointFreqs.length == 1) {
       return 0;
     }
@@ -578,7 +591,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
 
   }
   
-  private double avgBleheta(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+  public static double avgBleheta(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     if (jointFreqs.length == 1) {
       return 0;
     }
@@ -599,7 +612,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
 
   }
   
-  private double[][] contingencyTable(int i, int j, OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+  public static double[][] contingencyTable(int i, int j, OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     double[][] result = new double[2][2];
     result[0][0] = numDocs - (jointFreqs[i].get(i) + jointFreqs[j].get(j) - jointFreqs[i].get(j));
     result[0][1] = jointFreqs[j].get(j) - jointFreqs[i].get(j);
@@ -608,7 +621,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
     return result;
   }
   
-  private double bleheta(double[][] cont) {
+  public static double bleheta(double[][] cont) {
     double logOdds = (cont[0][0] * cont[1][1]) / (cont[0][1] * cont[1][0]);
     if (logOdds == 0 || Double.isInfinite(logOdds)) {
       return 0; // duh!
@@ -624,7 +637,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
     return result;
   }
   
-  private float calcSumIdf(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+  public static float calcSumIdf(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     float result = 0;
     for (int i = 0; i < jointFreqs.length; ++i) {
       float ts = jointFreqs[i].get(i);
@@ -640,7 +653,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
 
   }
   
-  private float calcSumTermInf(OpenIntFloatHashMap[] jointFreqs) {
+  public static float calcSumTermInf(OpenIntFloatHashMap[] jointFreqs) {
     float result = 0;
     for (int i = 0; i < jointFreqs.length; ++i) {
       float ts = jointFreqs[i].get(i);
@@ -656,7 +669,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
 
   }
   
-  private float calcEntropy(OpenIntFloatHashMap[] jointFreqs) {
+  public static float calcEntropy(OpenIntFloatHashMap[] jointFreqs) {
     float result = 0;
     for (int i = 0; i < jointFreqs.length; ++i) {
       float pt = jointFreqs[i].get(i);
@@ -676,12 +689,12 @@ public class EvaluateWindowSizes implements Callable<Void> {
   
   // lift is a cascade measure, not really useful here when we want to measure the absolute quality
   // of itemsets. It could be used when searching for relevant ones for qEx for example
-  // private String calcLift(String[] itemset, float[][] jointFreqs) {
+  // public static String calcLift(String[] itemset, float[][] jointFreqs) {
   //
   // return null;
   // }
   
-  private double pmi(int i, int j, OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+  public static double pmi(int i, int j, OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     // This metric becomes unstable when f(x,y) becomes less than 5 according to Pearce (2003)
     if (jointFreqs[j].get(j) < 6) {
       return 0;
@@ -696,7 +709,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
     return Math.log(result) / LOG2;
   }
   
-  private double expectedPmi(OpenIntFloatHashMap[] jointFreqs, float numDocs, float totalFreq) {
+  public static double expectedPmi(OpenIntFloatHashMap[] jointFreqs, float numDocs, float totalFreq) {
     if (jointFreqs.length == 1) {
       return 0;
     }
@@ -713,7 +726,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
     return 2 * result;
   }
   
-  private double averagePmi(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+  public static double averagePmi(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     if (jointFreqs.length == 1) {
       return 0;
     }
@@ -732,7 +745,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
     return result;
   }
   
-  private double calcNMI(OpenIntFloatHashMap[] jointFreqs, float numDocs, float totalFreq) {
+  public static double calcNMI(OpenIntFloatHashMap[] jointFreqs, float numDocs, float totalFreq) {
     if (jointFreqs.length == 1) {
       return 0;
     }
@@ -770,7 +783,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
    * @throws InterruptedException
    * @throws ExecutionException
    */
-  private OpenIntFloatHashMap[] estimatePairWiseJointFreqsFromTwitter(String[] itemset,
+  public static OpenIntFloatHashMap[] estimatePairWiseJointFreqsFromTwitter(String[] itemset,
       FISQueryExpander fisQEx,
       String fieldName,
       MutableFloat maxTermSupp, MutableFloat totalTermSupp)
@@ -818,7 +831,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
    * @throws InterruptedException
    * @throws ExecutionException
    */
-  private OpenIntFloatHashMap[] estimatePairWiseJointFreqsFromFIS(String[] itemset,
+  public static OpenIntFloatHashMap[] estimatePairWiseJointFreqsFromFIS(String[] itemset,
       final FISQueryExpander fisQEx,
       String fieldName,
       MutableFloat maxTermSupp, MutableFloat totalTermSupp)
