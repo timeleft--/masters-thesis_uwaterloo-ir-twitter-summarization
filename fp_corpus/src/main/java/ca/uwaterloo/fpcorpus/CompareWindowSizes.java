@@ -278,8 +278,9 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     // }
     
     final StringBuffer dsMetricStrBuffer = new StringBuffer();
+    final double[] dsMetrics = new double[5];
     
-//    final MutableBoolean exclusive = new MutableBoolean(true);
+    // final MutableBoolean exclusive = new MutableBoolean(true);
     // long MetricExactOverlapBefore = MetricExactOverlap.getN();
     // long MetricDiffLongerInLongWindowBefore = MetricDiffLongerInLongWindow.getN();
     // long MetricDiffLongerInShortUnionBefore = MetricDiffLongerInShortUnion.getN();
@@ -298,7 +299,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
       @Override
       public void collect(int dl) throws IOException {
         dl += docBase;
-//        exclusive.setValue(false);
+        // exclusive.setValue(false);
         TermFreqVector tvDl = longDocsReader.getTermFreqVector(
             dl, AssocField.ITEMSET.name);
         
@@ -328,9 +329,17 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           // else because dumping the exact overlap is not useful
           if (dumpIntersction) {
             if (dsMetricStrBuffer.length() == 0) {
-              dsMetricStrBuffer.append(patternMetricString(tSetDs));
+              int m = 0;
+              for (double metric : patternMetric(tSetDs)) {
+                dsMetrics[m++] = metric;
+              }
+              dsMetricStrBuffer.append(metricToString(dsMetrics));
             }
-            String dlMetricStr = patternMetricString(tSetDl);
+            double[] dlMetricDiff = patternMetric(tSetDl);
+            for (int m = 0; m < dlMetricDiff.length; ++m) {
+              dlMetricDiff[m] -= dsMetrics[m];
+            }
+            String dlMetricStr = metricToString(dlMetricDiff);
             if (shortUnionIsShortDoc) {
               dumpWr.append(tSetDs + "\t" + dsMetricStrBuffer.toString() + "\t"
                   + Sets.difference(tSetDl, tSetDs) + "\t"
@@ -389,23 +398,22 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     // (MetricDiffLongerInShortUnionBefore == MetricDiffLongerInShortUnion.getN());
     boolean exclusive = dsMetricStrBuffer.length() == 0;
     if (dumpIntersction && exclusive) {
-      dsMetricStrBuffer.append(patternMetricString(tSetDs));
-      String dlMetricsZeros = Arrays.toString(new double[5]).replace(',', '\t').replaceAll(" ", "");
-      dlMetricsZeros = dlMetricsZeros.substring(1, dlMetricsZeros.length()-1);
+      dsMetricStrBuffer.append(metricToString(patternMetric(tSetDs)));
+//      String dlMetricsZeros = metricToString(new double[5]);
+      String dlMetricsZeros ="\t\t\t\t";
       if (shortUnionIsShortDoc) {
-        dumpWr.append(tSetDs + "\t" + dsMetricStrBuffer.toString() + "\tEXCLUSIVE\t"
+        dumpWr.append(tSetDs + "\t" + dsMetricStrBuffer.toString() + "\tX\t"
             + dlMetricsZeros + "\n");
       } else {
-        dumpWr.append("EXCLUSIVE\t" + dlMetricsZeros + "\t" + tSetDs + "\t"
+        dumpWr.append("X\t" + dlMetricsZeros + "\t" + tSetDs + "\t"
             + dsMetricStrBuffer.toString() + "\n");
       }
     }
   }
   
-  private String patternMetricString(Set<String> tSetDs) throws IOException {
-    double[] dsMetrics = patternMetric(tSetDs);
+  private String metricToString(double[] dsMetrics) throws IOException {
     String result = Arrays.toString(dsMetrics).replace(',', '\t').replaceAll(" ", "");
-    return result.substring(1,result.length()-1);
+    return result.substring(1, result.length() - 1);
   }
   
   // private double patternMetric(Set<String> tSet, float support) throws IOException {
