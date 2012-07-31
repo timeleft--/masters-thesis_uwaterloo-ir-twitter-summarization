@@ -84,9 +84,10 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   protected static IndexReader twtIxReader;
   protected static IndexSearcher twtIxSearcher;
   public static final String TWITTER_INDEX_ROOT =
-      // "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/stemmed-stored_8hr-increments/";
-      // "1295740800000/1297209600000";
-      "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/twt_index_orig";
+       "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/twt_stemmed-stored_8hr-increments/" +
+       "1295740800000/1297209600000/index";
+      // The parser used for this orig is not mine, so some issues arise because of # and _
+//      "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/twt_index_orig";
   
   private static final String COLLECTION_STRING_CLEANER = "[\\,\\[\\]]";
   
