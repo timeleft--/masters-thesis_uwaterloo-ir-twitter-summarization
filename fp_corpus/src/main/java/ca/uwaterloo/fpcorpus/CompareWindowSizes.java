@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
@@ -84,10 +85,10 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   protected static IndexReader twtIxReader;
   protected static IndexSearcher twtIxSearcher;
   public static final String TWITTER_INDEX_ROOT =
-       "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/twt_stemmed-stored_8hr-increments/" +
-       "1295740800000/1297209600000/index";
-      // The parser used for this orig is not mine, so some issues arise because of # and _
-//      "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/twt_index_orig";
+      "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/twt_stemmed-stored_8hr-increments/" +
+          "1295740800000/1297209600000/index";
+  // The parser used for this orig is not mine, so some issues arise because of # and _
+  // "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/twt_index_orig";
   
   private static final String COLLECTION_STRING_CLEANER = "[\\,\\[\\]]";
   
@@ -152,8 +153,10 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
       
       this.dumpWr
           .append("shortsFIs\tshortsPMI\tshortsNMI\tshortsYule\tshortsGainRation\tshortsBeleheta\t"
+              + "shortsCommitment\tshortsCoherence\tshortAllConf\t"
               +
-              "longFIs\tlongPMI\tlongNMI\tlongYule\tlongGainRation\tlongBeleheta\n");
+              "longFIs\tlongPMI\tlongNMI\tlongYule\tlongGainRation\tlongBeleheta\t"
+              + "longCommitment\tlongCoherence\tlongAllConf\n");
     }
     
     for (int ds = 0; ds < shortWindowsUnion.maxDoc(); ++ds) {
@@ -243,8 +246,8 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
             ));
   }
   
-  private void measureOverlap(IndexReader shortDocsReader, int ds,
-      final IndexReader longDocsReader, IndexSearcher longDocsSearcher,
+  private void measureOverlap(final IndexReader shortDocsReader, int ds,
+      final IndexReader longDocsReader, final IndexSearcher longDocsSearcher,
       
       final OpenIntObjectHashMap<MutableLong> docIdInLongPatternInBoth,
       final boolean sumSupport,
@@ -279,7 +282,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     // }
     
     final StringBuffer dsMetricStrBuffer = new StringBuffer();
-    final double[] dsMetrics = new double[5];
+    final double[] dsMetrics = new double[8];
     
     // final MutableBoolean exclusive = new MutableBoolean(true);
     // long MetricExactOverlapBefore = MetricExactOverlap.getN();
@@ -331,14 +334,27 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           if (dumpIntersction) {
             if (dsMetricStrBuffer.length() == 0) {
               int m = 0;
-              for (double metric : patternMetric(tSetDs)) {
-                dsMetrics[m++] = metric;
+              IndexSearcher shortDocsSearcher = new IndexSearcher(shortDocsReader);
+              try {
+                for (double metric : patternMetric(tSetDs, shortDocsSearcher)) {
+                  dsMetrics[m++] = metric;
+                }
+              } catch (ParseException e) {
+                LOG.error(e.getMessage(), e);
               }
+              // shortDocsSearcher.close();
               dsMetricStrBuffer.append(metricToString(dsMetrics));
             }
-            double[] dlMetricDiff = patternMetric(tSetDl);
-            for (int m = 0; m < dlMetricDiff.length; ++m) {
-              dlMetricDiff[m] -= dsMetrics[m];
+            double[] dlMetricDiff = null;
+            try {
+              dlMetricDiff = patternMetric(tSetDl, longDocsSearcher);
+              
+              for (int m = 0; m < dlMetricDiff.length; ++m) {
+                dlMetricDiff[m] -= dsMetrics[m];
+              }
+            } catch (ParseException e) {
+              LOG.error(e.getMessage(), e);
+              dlMetricDiff = new double[8];
             }
             String dlMetricStr = metricToString(dlMetricDiff);
             if (shortUnionIsShortDoc) {
@@ -399,9 +415,10 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     // (MetricDiffLongerInShortUnionBefore == MetricDiffLongerInShortUnion.getN());
     boolean exclusive = dsMetricStrBuffer.length() == 0;
     if (dumpIntersction && exclusive) {
-      dsMetricStrBuffer.append(metricToString(patternMetric(tSetDs)));
-//      String dlMetricsZeros = metricToString(new double[5]);
-      String dlMetricsZeros ="\t\t\t\t";
+      dsMetricStrBuffer.append(metricToString(patternMetric(tSetDs, new IndexSearcher(
+          shortDocsReader))));
+      // String dlMetricsZeros = metricToString(new double[8]);
+      String dlMetricsZeros = "\t\t\t\t\t\t\t";
       if (shortUnionIsShortDoc) {
         dumpWr.append(tSetDs + "\t" + dsMetricStrBuffer.toString() + "\tX\t"
             + dlMetricsZeros + "\n");
@@ -437,7 +454,13 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   // }
   // return support / maxTermSupp; //totalTermSupp;
   // }
-  private double[] patternMetric(Set<String> tSet) throws IOException {
+  
+  // TODO: if dumping the exact overlap between window sizes make sure to handle clearing this cache
+  // so that the cache from the short union is not carried over to the long win (do we really care?) 
+  WeakHashMap<Set<String>, MutableLong> supportCache = new WeakHashMap<Set<String>, MutableLong>();
+  
+  private double[] patternMetric(final Set<String> tSet, IndexSearcher fisSearcher)
+      throws IOException, ParseException {
     List<String> itemsetList = Lists.newLinkedList();
     for (String item : tSet) {
       char ch0 = item.charAt(0);
@@ -453,7 +476,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
             twtIxReader, twtIxSearcher, TweetField.TEXT.name,
             maxTermSupp, totalTermSupp);
     
-    double[] result = new double[5];
+    double[] result = new double[8];
     
     float numDocs = twtIxReader.numDocs();
     
@@ -463,6 +486,51 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     result[3] = EvaluateWindowSizes.avgPairGainRatio(jointFreq, numDocs);
     result[4] = EvaluateWindowSizes.avgBleheta(jointFreq, numDocs);
     
+    MutableLong realSupportCached = supportCache.get(tSet);
+    if (realSupportCached == null) {
+      final MutableLong realSupport = new MutableLong();
+      fisSearcher.search(fisQparser
+          .parse(tSet.toString().replaceAll(COLLECTION_STRING_CLEANER, "")),
+          new Collector() {
+            
+            @Override
+            public void setScorer(Scorer scorer) throws IOException {
+              
+            }
+            
+            int docBase;
+            IndexReader reader;
+            
+            @Override
+            public void setNextReader(IndexReader reader, int docBase) throws IOException {
+              this.docBase = docBase;
+              this.reader = reader;
+            }
+            
+            @Override
+            public void collect(int doc) throws IOException {
+              TermFreqVector tvDl = reader.getTermFreqVector(doc, AssocField.ITEMSET.name);
+              Set<String> tSetDl = Sets.newCopyOnWriteArraySet(Arrays
+                  .asList(tvDl.getTerms()));
+              if (tSetDl.equals(tSet)) {
+                realSupport.add(Integer.parseInt(reader.document(doc).get(AssocField.SUPPORT.name)));
+              }
+            }
+            
+            @Override
+            public boolean acceptsDocsOutOfOrder() {
+              return false;
+            }
+          });
+      supportCache.put(tSet, realSupport);
+      realSupportCached = realSupport;
+    }
+    // commitment
+    result[5] = EvaluateWindowSizes.commitment(jointFreq, realSupportCached.floatValue());
+    // coherence
+    result[6] = realSupportCached.floatValue() / totalTermSupp.floatValue();
+    // all_conf
+    result[7] = realSupportCached.floatValue() / maxTermSupp.floatValue();
     return result;
   }
   

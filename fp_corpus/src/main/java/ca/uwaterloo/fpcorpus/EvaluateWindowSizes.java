@@ -487,15 +487,27 @@ public class EvaluateWindowSizes implements Callable<Void> {
         // we'll leave the numbers cancel out
         // result += Math.abs(yuleQ(contingencyTable(i, j, jointFreqs, numDocs)));
         result += yuleQ(contingencyTable(i, j, jointFreqs, numDocs));
+//        result += Math.pow(yuleQ(contingencyTable(i, j, jointFreqs, numDocs)), 2);
       }
     }
     if (METRICS_AVERAGED) {
       result = 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
+      // result = result / (jointFreqs.length * (jointFreqs.length - 1));
+//      result = Math.sqrt(result);
     }
     return result;
     
   }
   
+  public static double commitment(OpenIntFloatHashMap[] jointFreqs, float support){
+    // harmonic mean of the rate to which every item is committed to the itemset (conditional prob)
+    double result = 0;
+    for (int i = 0; i < jointFreqs.length; ++i) {
+        result += 1 / (support/jointFreqs[i].get(i));
+    }
+    result = (jointFreqs.length) / result;
+    return result;
+  }
   /**
    * 
    * @param cont
