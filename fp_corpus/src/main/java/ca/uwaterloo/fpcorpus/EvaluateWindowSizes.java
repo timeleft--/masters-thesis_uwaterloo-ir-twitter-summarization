@@ -31,6 +31,7 @@ import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TermQuery;
@@ -247,7 +248,9 @@ public class EvaluateWindowSizes implements Callable<Void> {
             for (String word : queryTermWeight.keys()) {
               Term term = new Term(SEARCH_NONSTEMMED ? AssocField.ITEMSET.name
                   : AssocField.STEMMED_EN.name, word);
-              float pt = fisQEx.getFisIxReader().docFreq(term) / TWITTER_CORPUS_LENGTH_IN_TERMS;
+              // The best is to use sum of support / total support.. but duh!
+              float pt = fisQEx.getFisIxReader().docFreq(term) * 1.0f
+                  / fisQEx.getFisIxReader().numDocs();
               if (pt == 0) {
                 continue;
               }
@@ -319,22 +322,22 @@ public class EvaluateWindowSizes implements Callable<Void> {
                 "coherence\t" +
                 "all_conf\t" +
                 
-//                "avg-cramerv\t" +
+                // "avg-cramerv\t" +
                 "avg-yuleq\t" +
-//                "avg-kruskal\t" +
-//                "avg-fischerexact\t" +
+                // "avg-kruskal\t" +
+                // "avg-fischerexact\t" +
                 "avg-gainratio\t" +
                 
                 "avg-bleheta\t" +
-//                 "avg-berry\t" +
+                // "avg-berry\t" +
                 
                 "nmi\t" +
                 "avg-pmi\t" +
-//                "exp-pmi\t" +
+                // "exp-pmi\t" +
                 // "dfidf\t" +
-//                "entropy\t" +
-//                "avg-term-inf\t" +
-//                "avg-idf\t" +
+                // "entropy\t" +
+                // "avg-term-inf\t" +
+                // "avg-idf\t" +
                 "\n");
         // IntArrayList scoreAsc = new IntArrayList(aggregateScores.size());
         // aggregateScores.keysSortedByValue(scoreAsc);
@@ -358,7 +361,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
           }
           if (METRICS_FROM_TWITTER) {
             jointFreqs = estimatePairWiseJointFreqsFromTwitter(itemsetList.toArray(new String[0]),
-                fisQEx, 
+                fisQEx,
                 fisQEx.paramBM25StemmedIDF ? TweetField.STEMMED_EN.name : TweetField.TEXT.name,
                 maxTermSupp, totalTermSupp);
           } else {
@@ -414,23 +417,24 @@ public class EvaluateWindowSizes implements Callable<Void> {
               .append(supp / maxTermSupp.floatValue() + "\t") // all_conf
               
               // Contingency table
-//              .append(avgPairCramerV(jointFreqs, numDocs) + "\t") // "avg-cramerv\t" +
+              // .append(avgPairCramerV(jointFreqs, numDocs) + "\t") // "avg-cramerv\t" +
               .append(avgPairYuleQ(jointFreqs, numDocs) + "\t") // "avg-yuleq\t" +
-//              .append(avgPairKruskalTau(jointFreqs, numDocs) + "\t") // "avg-kruskal\t" +
-//              .append(avgPairFischerExact(jointFreqs, numDocs) + "\t") // "avg-fischerexact\t" +
+              // .append(avgPairKruskalTau(jointFreqs, numDocs) + "\t") // "avg-kruskal\t" +
+              // .append(avgPairFischerExact(jointFreqs, numDocs) + "\t") // "avg-fischerexact\t" +
               .append(avgPairGainRatio(jointFreqs, numDocs) + "\t") // "avg-gainratio\t" +
               
               // Freom Pearce 2003 MWE evaluation
               .append(avgBleheta(jointFreqs, numDocs) + "\t") // bleheta and johnson
-//               .append(avgBerry(jointFreqs, numDocs) + "\t") // berry 1973
+              // .append(avgBerry(jointFreqs, numDocs) + "\t") // berry 1973
               
               .append(calcNMI(jointFreqs, numDocs, totalTermSupp.floatValue()) + "\t") // normalized-mutual-inf
               .append(averagePmi(jointFreqs, numDocs) + "\t") // average-pairwise-mutual-inf
-//              .append(expectedPmi(jointFreqs, numDocs, totalTermSupp.floatValue()) + "\t") // expected-pairwise-mutual-inf
+              // .append(expectedPmi(jointFreqs, numDocs, totalTermSupp.floatValue()) + "\t") //
+              // expected-pairwise-mutual-inf
               // .append(calcDfIdf(tweetSupp, fisSupp, fisQEx) + "\t") // dfidf \
-//              .append(calcEntropy(jointFreqs) + "\t") // entropy
-//              .append(calcSumTermInf(jointFreqs) + "\t") // avg-term-inf
-//              .append(calcSumIdf(jointFreqs, numDocs) + "\t") // avg-idf
+              // .append(calcEntropy(jointFreqs) + "\t") // entropy
+              // .append(calcSumTermInf(jointFreqs) + "\t") // avg-term-inf
+              // .append(calcSumIdf(jointFreqs, numDocs) + "\t") // avg-idf
               .append("\n");
         }
         fisMetricsWr.flush();
@@ -440,7 +444,6 @@ public class EvaluateWindowSizes implements Callable<Void> {
     fisQEx.close();
     return null;
   }
-  
   
   public static double avgBerry(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     if (jointFreqs.length == 1) {
@@ -453,26 +456,24 @@ public class EvaluateWindowSizes implements Callable<Void> {
           continue;
         }
         // we'll leave the numbers cancel out
-//        result += Math.abs(yuleQ(contingencyTable(i, j, jointFreqs, numDocs)));
+        // result += Math.abs(yuleQ(contingencyTable(i, j, jointFreqs, numDocs)));
         result += berry(i, j, jointFreqs, numDocs);
       }
     }
-    if(METRICS_AVERAGED){
+    if (METRICS_AVERAGED) {
       result = 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
     }
     return result;
-
+    
   }
   
-
-
   public static double berry(int i, int j, OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     double p = jointFreqs[i].get(i) / (numDocs - jointFreqs[j].get(j));
     double fHat = p * jointFreqs[j].get(j) * AVG_TWEET_LENGTH;
-    double result = (jointFreqs[i].get(j) - fHat) / Math.sqrt(fHat * (1-p));
+    double result = (jointFreqs[i].get(j) - fHat) / Math.sqrt(fHat * (1 - p));
     return result;
   }
-
+  
   public static double avgPairYuleQ(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
     if (jointFreqs.length == 1) {
       return 0;
@@ -484,15 +485,15 @@ public class EvaluateWindowSizes implements Callable<Void> {
           continue;
         }
         // we'll leave the numbers cancel out
-//        result += Math.abs(yuleQ(contingencyTable(i, j, jointFreqs, numDocs)));
+        // result += Math.abs(yuleQ(contingencyTable(i, j, jointFreqs, numDocs)));
         result += yuleQ(contingencyTable(i, j, jointFreqs, numDocs));
       }
     }
-    if(METRICS_AVERAGED){
+    if (METRICS_AVERAGED) {
       result = 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
     }
     return result;
-
+    
   }
   
   /**
@@ -517,14 +518,14 @@ public class EvaluateWindowSizes implements Callable<Void> {
           continue;
         }
         result += ContingencyTables.CramersV(contingencyTable(i, j, jointFreqs, numDocs));
-//            ContingencyTables.chiSquared(contingencyTable(i, j, jointFreqs, numDocs), true);
+        // ContingencyTables.chiSquared(contingencyTable(i, j, jointFreqs, numDocs), true);
       }
     }
-    if(METRICS_AVERAGED){
+    if (METRICS_AVERAGED) {
       result = 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
     }
     return result;
-
+    
   }
   
   public static double avgPairGainRatio(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
@@ -537,14 +538,14 @@ public class EvaluateWindowSizes implements Callable<Void> {
         if (i == j) {
           continue;
         }
-        result += 2/ContingencyTables.gainRatio(contingencyTable(i, j, jointFreqs, numDocs));
+        result += 2 / ContingencyTables.gainRatio(contingencyTable(i, j, jointFreqs, numDocs));
       }
     }
-//    if(METRICS_AVERAGED){
-      result =  (jointFreqs.length * (jointFreqs.length - 1)) / result;
-//    }
+    // if(METRICS_AVERAGED){
+    result = (jointFreqs.length * (jointFreqs.length - 1)) / result;
+    // }
     return result;
-
+    
   }
   
   public static double avgPairFischerExact(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
@@ -563,11 +564,11 @@ public class EvaluateWindowSizes implements Callable<Void> {
             numDocs));
       }
     }
-    if(METRICS_AVERAGED){
+    if (METRICS_AVERAGED) {
       result = 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
     }
     return result;
-
+    
   }
   
   public static double avgPairKruskalTau(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
@@ -580,15 +581,15 @@ public class EvaluateWindowSizes implements Callable<Void> {
         if (i == j) {
           continue;
         }
-        result +=2/ ContingencyTables.tauVal(contingencyTable(i, j, jointFreqs, numDocs));
+        result += 2 / ContingencyTables.tauVal(contingencyTable(i, j, jointFreqs, numDocs));
       }
     }
-//    if(METRICS_AVERAGED){
-//      result = 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
-//    }
-    result =  (jointFreqs.length * (jointFreqs.length - 1)) / result;
+    // if(METRICS_AVERAGED){
+    // result = 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
+    // }
+    result = (jointFreqs.length * (jointFreqs.length - 1)) / result;
     return result;
-
+    
   }
   
   public static double avgBleheta(OpenIntFloatHashMap[] jointFreqs, float numDocs) {
@@ -601,18 +602,19 @@ public class EvaluateWindowSizes implements Callable<Void> {
         if (i == j) {
           continue;
         }
-        result += 2/ bleheta(contingencyTable(i, j, jointFreqs, numDocs));
+        result += 2 / bleheta(contingencyTable(i, j, jointFreqs, numDocs));
       }
     }
-//    if(METRICS_AVERAGED){
-//      result = 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
-//    }
-    result =  (jointFreqs.length * (jointFreqs.length - 1)) / result;
+    // if(METRICS_AVERAGED){
+    // result = 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
+    // }
+    result = (jointFreqs.length * (jointFreqs.length - 1)) / result;
     return result;
-
+    
   }
   
-  public static double[][] contingencyTable(int i, int j, OpenIntFloatHashMap[] jointFreqs, float numDocs) {
+  public static double[][] contingencyTable(int i, int j, OpenIntFloatHashMap[] jointFreqs,
+      float numDocs) {
     double[][] result = new double[2][2];
     result[0][0] = numDocs - (jointFreqs[i].get(i) + jointFreqs[j].get(j) - jointFreqs[i].get(j));
     result[0][1] = jointFreqs[j].get(j) - jointFreqs[i].get(j);
@@ -629,7 +631,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
     logOdds = Math.log(logOdds);
     
     double error = (1 / cont[0][0]) + (1 / cont[0][1]) + (1 / cont[1][0]) + (1 / cont[1][1]);
-    if(Double.isNaN(error) || Double.isInfinite(error)){
+    if (Double.isNaN(error) || Double.isInfinite(error)) {
       return logOdds;
     }
     error = Math.sqrt(error);
@@ -646,11 +648,11 @@ public class EvaluateWindowSizes implements Callable<Void> {
       }
       result -= Math.log(ts / numDocs);
     }
-    if(METRICS_AVERAGED){
+    if (METRICS_AVERAGED) {
       result = result / jointFreqs.length;
     }
     return result;
-
+    
   }
   
   public static float calcSumTermInf(OpenIntFloatHashMap[] jointFreqs) {
@@ -662,11 +664,11 @@ public class EvaluateWindowSizes implements Callable<Void> {
       }
       result -= Math.log(ts / TWITTER_CORPUS_LENGTH_IN_TERMS) / LOG2;
     }
-    if(METRICS_AVERAGED){
+    if (METRICS_AVERAGED) {
       result = result / (jointFreqs.length);
     }
     return result;
-
+    
   }
   
   public static float calcEntropy(OpenIntFloatHashMap[] jointFreqs) {
@@ -680,11 +682,11 @@ public class EvaluateWindowSizes implements Callable<Void> {
       pt /= TWITTER_CORPUS_LENGTH_IN_TERMS;
       result -= pt * Math.log(pt) / LOG2;
     }
-    if(METRICS_AVERAGED){
+    if (METRICS_AVERAGED) {
       result = result / (jointFreqs.length);
     }
     return result;
-
+    
   }
   
   // lift is a cascade measure, not really useful here when we want to measure the absolute quality
@@ -739,7 +741,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
         result += pmi(i, j, jointFreqs, numDocs);
       }
     }
-    if(METRICS_AVERAGED){
+    if (METRICS_AVERAGED) {
       result = 2 * result / (jointFreqs.length * (jointFreqs.length - 1));
     }
     return result;
@@ -788,6 +790,16 @@ public class EvaluateWindowSizes implements Callable<Void> {
       String fieldName,
       MutableFloat maxTermSupp, MutableFloat totalTermSupp)
       throws IOException {
+    return estimatePairWiseJointFreqsFromTwitter(itemset, fisQEx.getTwtIxReader(),
+        fisQEx.getTwtSearcher(), fieldName, maxTermSupp, totalTermSupp);
+  }
+  
+  public static OpenIntFloatHashMap[] estimatePairWiseJointFreqsFromTwitter(String[] itemset,
+      IndexReader twtIxReader,
+      IndexSearcher twtIxSearcher,
+      String fieldName,
+      MutableFloat maxTermSupp, MutableFloat totalTermSupp)
+      throws IOException {
     // float[][] result = new float[itemset.length][itemset.length];
     OpenIntFloatHashMap[] result = new OpenIntFloatHashMap[itemset.length];
     totalTermSupp.setValue(0);
@@ -795,7 +807,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
     for (int i = 0; i < itemset.length; ++i) {
       Term termi = new Term(fieldName, itemset[i]);
       result[i] = new OpenIntFloatHashMap();
-      int termSupp = fisQEx.getTwtIxReader().docFreq(termi);
+      int termSupp = twtIxReader.docFreq(termi);
       result[i].put(i, termSupp);
       if (termSupp > maxTermSupp.floatValue()) {
         maxTermSupp.setValue(termSupp);
@@ -809,7 +821,7 @@ public class EvaluateWindowSizes implements Callable<Void> {
         query.add(tqi, Occur.MUST);
         query.add(tqj, Occur.MUST);
         TotalHitCountCollector counterCollector = new TotalHitCountCollector();
-        fisQEx.getTwtSearcher().search(query, counterCollector);
+        twtIxSearcher.search(query, counterCollector);
         // result[i][j] = counterCollector.getTotalHits();
         // result[j][i] = result[i][j];
         result[i].put(j, counterCollector.getTotalHits());

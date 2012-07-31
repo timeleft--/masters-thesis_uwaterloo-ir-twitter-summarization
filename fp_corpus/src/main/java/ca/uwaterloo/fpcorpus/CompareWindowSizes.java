@@ -17,6 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.mutable.MutableBoolean;
+import org.apache.commons.lang.mutable.MutableFloat;
 import org.apache.commons.lang.mutable.MutableLong;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.lucene.analysis.Analyzer;
@@ -39,7 +41,9 @@ import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.util.Version;
 import org.apache.mahout.common.Pair;
+import org.apache.mahout.math.map.OpenIntFloatHashMap;
 import org.apache.mahout.math.map.OpenIntObjectHashMap;
+import org.apache.mahout.math.map.OpenObjectIntHashMap;
 import org.apache.mahout.math.set.OpenIntHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +71,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
       7200000, // 2hr
       14400000, // 4hr
       28800000, // 8hr
-      57600000, // 16hr
+      // 57600000, // 16hr
       86400000 // 24hr
   };
   
@@ -78,10 +82,11 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           AssocField.STEMMED_EN.name, ENGLISH_ANALYZER));
   
   protected static IndexReader twtIxReader;
+  protected static IndexSearcher twtIxSearcher;
   public static final String TWITTER_INDEX_ROOT =
       // "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/stemmed-stored_8hr-increments/";
       // "1295740800000/1297209600000";
-      "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/index_orig";
+      "/u2/yaboulnaga/datasets/twitter-trec2011/indexes/twt_index_orig";
   
   private static final String COLLECTION_STRING_CLEANER = "[\\,\\[\\]]";
   
@@ -101,11 +106,11 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   protected final SummaryStatistics longerInShortUnion = new SummaryStatistics();
   protected final SummaryStatistics longerInLongWindow = new SummaryStatistics();
   
-  protected final SummaryStatistics entropyTotalInShortUnion = new SummaryStatistics();
-  protected final SummaryStatistics entropyTotalInLongWindow = new SummaryStatistics();
-  protected final SummaryStatistics entropyExactOverlap = new SummaryStatistics();
-  protected final SummaryStatistics entropyDiffLongerInShortUnion = new SummaryStatistics();
-  protected final SummaryStatistics entropyDiffLongerInLongWindow = new SummaryStatistics();
+  // protected final SummaryStatistics MetricTotalInShortUnion = new SummaryStatistics();
+  // protected final SummaryStatistics MetricTotalInLongWindow = new SummaryStatistics();
+  // protected final SummaryStatistics MetricExactOverlap = new SummaryStatistics();
+  // protected final SummaryStatistics MetricDiffLongerInShortUnion = new SummaryStatistics();
+  // protected final SummaryStatistics MetricDiffLongerInLongWindow = new SummaryStatistics();
   
   protected final String id;
   protected boolean dumpIntersction = DUMP_INTERSECTION_DEFAULT;
@@ -141,8 +146,13 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     IndexSearcher longWindowSearcher = new IndexSearcher(longWindow);
     
     if (dumpIntersction) {
-      this.dumpWr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath, id + ".dump"))
+      this.dumpWr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath, id + ".csv"))
           .getChannel(), "UTF-8");
+      
+      this.dumpWr
+          .append("shortsFIs\tshortsPMI\tshortsNMI\tshortsYule\tshortsGainRation\tshortsBeleheta\t"
+              +
+              "longFIs\tlongPMI\tlongNMI\tlongYule\tlongGainRation\tlongBeleheta\n");
     }
     
     for (int ds = 0; ds < shortWindowsUnion.maxDoc(); ++ds) {
@@ -150,8 +160,14 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           ds,
           longWindow,
           longWindowSearcher,
+          
+          // itemsetInBoth,
+          
           docIdInLongPatternInBoth,
-          true, extraItemsInLong, true);
+          true,
+          
+          extraItemsInLong,
+          true);
     }
     
     IndexSearcher shortWindowsUnionSearcher = new IndexSearcher(shortWindowsUnion);
@@ -169,8 +185,13 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           dl,
           shortWindowsUnion,
           shortWindowsUnionSearcher,
+          
+          // itemsetInBoth,
           tempDocIdInShortPatternInBoth,
-          false, extraItemsInShorts, false);
+          false,
+          
+          extraItemsInShorts,
+          false);
       
       for (int docId : tempDocIdInShortPatternInBoth.keys().elements()) {
         
@@ -212,50 +233,23 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
             // exlusiveInShortUnion,
             diffSuppSUL,
             extraItemsInLong,
-            extraItemsInShorts,
-            entropyTotalInLongWindow,
-            entropyTotalInShortUnion,
-            entropyExactOverlap,
-            entropyDiffLongerInLongWindow,
-            entropyDiffLongerInShortUnion
+            extraItemsInShorts
+            // MetricTotalInLongWindow,
+            // MetricTotalInShortUnion,
+            // MetricExactOverlap,
+            // MetricDiffLongerInLongWindow,
+            // MetricDiffLongerInShortUnion
             ));
-  }
-  
-  private static final float TWITTER_CORPUS_LENGTH_IN_TERMS = 100055949;
-  
-  // private double patternEntropy(Set<String> pattern) throws IOException {
-  // double result = 0;
-  // for (String item : pattern) {
-  // Term term = new Term(TweetField.TEXT.name, item);
-  // double pt = twtIxReader.docFreq(term); // we assume the frequency in any document is 1
-  // if (pt == 0) {
-  // continue;
-  // }
-  // pt /= TWITTER_CORPUS_LENGTH_IN_TERMS;
-  // result -= pt * Math.log(pt) / LOG2;
-  // }
-  // return result;
-  // }
-  
-  // This actually now the IDF average
-  private double patternEntropy(Set<String> pattern) throws IOException {
-    double result = 0;
-    for (String item : pattern) {
-      Term term = new Term(TweetField.TEXT.name, item);
-      double pt = twtIxReader.docFreq(term); // we assume the frequency in any document is 1
-      if (pt == 0) {
-        continue;
-      }
-      pt /= twtIxReader.numDocs();
-      result -= Math.log(pt);
-    }
-    return result / pattern.size();
   }
   
   private void measureOverlap(IndexReader shortDocsReader, int ds,
       final IndexReader longDocsReader, IndexSearcher longDocsSearcher,
+      
       final OpenIntObjectHashMap<MutableLong> docIdInLongPatternInBoth,
       final boolean sumSupport,
+      
+      // final OpenObjectIntHashMap<Set<String>> itemsetInBothUnionSupport,
+      
       final SummaryStatistics extraItems, final boolean shortUnionIsShortDoc)
       throws IOException, ParseException {
     final TermFreqVector tvDs = shortDocsReader
@@ -264,22 +258,32 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
       LOG.warn("Null term vector for document {} out of {}", tvDs, shortDocsReader.maxDoc());
       return;
     }
+    
     final Set<String> tSetDs = Sets.newCopyOnWriteArraySet(Arrays
         .asList(tvDs.getTerms()));
-    
-    final double dsEntropy = patternEntropy(tSetDs);
-    if (shortUnionIsShortDoc) {
-      entropyTotalInShortUnion.addValue(dsEntropy);
-    } else {
-      entropyTotalInLongWindow.addValue(dsEntropy);
-    }
-    
-    // final MutableBoolean exclusive = new MutableBoolean(true);
-    long entropyExactOverlapBefore = entropyExactOverlap.getN();
-    long entropyDiffLongerInLongWindowBefore = entropyDiffLongerInLongWindow.getN();
-    long entropyDiffLongerInShortUnionBefore = entropyDiffLongerInShortUnion.getN();
-    
     final Document docDS = shortDocsReader.document(ds);
+    
+    // if(itemsetInBothUnionSupport.containsKey(tSetDs)){
+    // itemsetInBothUnionSupport.put(tSetDs, itemsetInBothUnionSupport.get(tSetDs)
+    // + Integer.parseInt(docDS.get(AssocField.SUPPORT.name)));
+    // return;
+    // }
+    
+    // final int dsSupp = Integer.parseInt(docDS.get(AssocField.SUPPORT.name));
+    // final double dsMetric = patternMetric(tSetDs, dsSupp);
+    // if (shortUnionIsShortDoc) {
+    // MetricTotalInShortUnion.addValue(dsMetric);
+    // } else {
+    // MetricTotalInLongWindow.addValue(dsMetric);
+    // }
+    
+    final StringBuffer dsMetricStrBuffer = new StringBuffer();
+    
+//    final MutableBoolean exclusive = new MutableBoolean(true);
+    // long MetricExactOverlapBefore = MetricExactOverlap.getN();
+    // long MetricDiffLongerInLongWindowBefore = MetricDiffLongerInLongWindow.getN();
+    // long MetricDiffLongerInShortUnionBefore = MetricDiffLongerInShortUnion.getN();
+    
     Query query = fisQparser.parse(tSetDs.toString().replaceAll(
         COLLECTION_STRING_CLEANER, ""));
     Collector longDocsCollector = new Collector() {
@@ -294,9 +298,12 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
       @Override
       public void collect(int dl) throws IOException {
         dl += docBase;
-        
+//        exclusive.setValue(false);
         TermFreqVector tvDl = longDocsReader.getTermFreqVector(
             dl, AssocField.ITEMSET.name);
+        
+        Document docDL = longDocsReader.document(dl);
+        // int dlSupp = Integer.parseInt(docDL.get(AssocField.SUPPORT.name));
         
         Set<String> tSetDl = Sets.newCopyOnWriteArraySet(Arrays
             .asList(tvDl.getTerms()));
@@ -313,29 +320,52 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           }
           
           docIdInLongPatternInBoth.put(dl, supportSum);
+          // itemsetInBothUnionSupport.put(tSetDs, itemsetInBothUnionSupport.get(tSetDs)
+          // + Integer.parseInt(docDS.get(AssocField.SUPPORT.name)));
           
-          entropyExactOverlap.addValue(dsEntropy);
+          // MetricExactOverlap.addValue(dsMetric);
+        } else {
+          // else because dumping the exact overlap is not useful
+          if (dumpIntersction) {
+            if (dsMetricStrBuffer.length() == 0) {
+              dsMetricStrBuffer.append(patternMetricString(tSetDs));
+            }
+            String dlMetricStr = patternMetricString(tSetDl);
+            if (shortUnionIsShortDoc) {
+              dumpWr.append(tSetDs + "\t" + dsMetricStrBuffer.toString() + "\t"
+                  + Sets.difference(tSetDl, tSetDs) + "\t"
+                  + dlMetricStr + "\n");
+            } else {
+              dumpWr.append(Sets.difference(tSetDl, tSetDs) + "\t" + dlMetricStr + "\t"
+                  + tSetDs + "\t" + dsMetricStrBuffer.toString() + "\n");
+            }
+          }
         }
         
         int diffLen = tvDl.size() - tSetDs.size();
         extraItems.addValue(diffLen);
         
-        double dlEnt = patternEntropy(tSetDl);
-        if (shortUnionIsShortDoc) {
-          entropyTotalInLongWindow.addValue(dlEnt);
-          entropyDiffLongerInLongWindow.addValue(dlEnt - dsEntropy);
-        } else {
-          // already added from previous run: entropyTotalInShortUnion
-          entropyDiffLongerInShortUnion.addValue(dlEnt - dsEntropy);
-        }
+        // double dlMetric = patternMetric(tSetDl, dlSupp);
+        // if (shortUnionIsShortDoc) {
+        // MetricTotalInLongWindow.addValue(dlMetric);
+        // MetricDiffLongerInLongWindow.addValue(dlMetric - dsMetric);
+        // } else {
+        // // already added from previous run: MetricTotalInShortUnion
+        // MetricDiffLongerInShortUnion.addValue(dlMetric - dsMetric);
+        // }
+        //
+        // if (dumpIntersction) {
+        // if (shortUnionIsShortDoc) {
+        // dumpWr.append(tSetDs + "\t" + dsSupp + "\t" + dsMetric + "\t"
+        // + Sets.difference(tSetDl, tSetDs) + "\t"
+        // + dlSupp + "\t" + dlMetric + "\n");
+        // } else {
+        // dumpWr.append(Sets.difference(tSetDl, tSetDs) + "\t" + dlSupp + "\t" + dlMetric + "\t"
+        // + tSetDs + "\t"
+        // + dsSupp + "\t" + dsMetric + "\n");
+        // }
+        // }
         
-        if (dumpIntersction) {
-          if (shortUnionIsShortDoc) {
-            dumpWr.append(tSetDs + "\t" + tSetDl + "\n");
-          } else {
-            dumpWr.append(tSetDl + "\t" + tSetDs + "\n");
-          }
-        }
       }
       
       @Override
@@ -353,18 +383,78 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     };
     longDocsSearcher.search(query, longDocsCollector);
     
-    boolean exclusive =
-        (entropyExactOverlapBefore == entropyExactOverlap.getN()) &&
-            (entropyDiffLongerInLongWindowBefore == entropyDiffLongerInLongWindow.getN()) &&
-            (entropyDiffLongerInShortUnionBefore == entropyDiffLongerInShortUnion.getN());
-    
+    // boolean exclusive =
+    // (MetricExactOverlapBefore == MetricExactOverlap.getN()) &&
+    // (MetricDiffLongerInLongWindowBefore == MetricDiffLongerInLongWindow.getN()) &&
+    // (MetricDiffLongerInShortUnionBefore == MetricDiffLongerInShortUnion.getN());
+    boolean exclusive = dsMetricStrBuffer.length() == 0;
     if (dumpIntersction && exclusive) {
+      dsMetricStrBuffer.append(patternMetricString(tSetDs));
+      String dlMetricsZeros = Arrays.toString(new double[5]).replace(',', '\t').replaceAll(" ", "");
+      dlMetricsZeros = dlMetricsZeros.substring(1, dlMetricsZeros.length()-1);
       if (shortUnionIsShortDoc) {
-        dumpWr.append(tSetDs + "\tEXCLUSIVE\n");
+        dumpWr.append(tSetDs + "\t" + dsMetricStrBuffer.toString() + "\tEXCLUSIVE\t"
+            + dlMetricsZeros + "\n");
       } else {
-        dumpWr.append("EXCLUSIVE\t" + tSetDs + "\n");
+        dumpWr.append("EXCLUSIVE\t" + dlMetricsZeros + "\t" + tSetDs + "\t"
+            + dsMetricStrBuffer.toString() + "\n");
       }
     }
+  }
+  
+  private String patternMetricString(Set<String> tSetDs) throws IOException {
+    double[] dsMetrics = patternMetric(tSetDs);
+    String result = Arrays.toString(dsMetrics).replace(',', '\t').replaceAll(" ", "");
+    return result.substring(1,result.length()-1);
+  }
+  
+  // private double patternMetric(Set<String> tSet, float support) throws IOException {
+  // // float[] termSupp = new float[tSet.size()];
+  // float maxTermSupp = Float.MIN_VALUE;
+  // float totalTermSupp = 0;
+  // // int i = -1;
+  // for (String item : tSet) {
+  // // ++i;
+  // char ch0 = item.charAt(0);
+  // if(ch0 == '@' || ch0 == '#'){
+  // continue;
+  // }
+  // Term termi = new Term(TweetField.TEXT.name, item);
+  // float termSupp = twtIxReader.docFreq(termi);
+  // totalTermSupp += termSupp;
+  // if (termSupp > maxTermSupp) {
+  // maxTermSupp = termSupp;
+  // }
+  // }
+  // return support / maxTermSupp; //totalTermSupp;
+  // }
+  private double[] patternMetric(Set<String> tSet) throws IOException {
+    List<String> itemsetList = Lists.newLinkedList();
+    for (String item : tSet) {
+      char ch0 = item.charAt(0);
+      if (ch0 == '@' || ch0 == '#') {
+        continue;
+      }
+      itemsetList.add(item);
+    }
+    MutableFloat maxTermSupp = new MutableFloat();
+    MutableFloat totalTermSupp = new MutableFloat();
+    OpenIntFloatHashMap[] jointFreq = EvaluateWindowSizes
+        .estimatePairWiseJointFreqsFromTwitter(itemsetList.toArray(new String[0]),
+            twtIxReader, twtIxSearcher, TweetField.TEXT.name,
+            maxTermSupp, totalTermSupp);
+    
+    double[] result = new double[5];
+    
+    float numDocs = twtIxReader.numDocs();
+    
+    result[0] = EvaluateWindowSizes.averagePmi(jointFreq, numDocs);
+    result[1] = EvaluateWindowSizes.calcNMI(jointFreq, numDocs, totalTermSupp.floatValue());
+    result[2] = EvaluateWindowSizes.avgPairYuleQ(jointFreq, numDocs);
+    result[3] = EvaluateWindowSizes.avgPairGainRatio(jointFreq, numDocs);
+    result[4] = EvaluateWindowSizes.avgBleheta(jointFreq, numDocs);
+    
+    return result;
   }
   
   public static void main(String[] args) throws CorruptIndexException, IOException,
@@ -387,7 +477,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     File twtIxPath = new File(TWITTER_INDEX_ROOT);
     // TODO: handle the addition of stats
     twtIxReader = IndexReader.open(MMapDirectory.open(twtIxPath));
-    
+    twtIxSearcher = new IndexSearcher(twtIxReader);
     Writer wr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath, "stats.csv"))
         .getChannel(), "UTF-8");
     
@@ -411,23 +501,22 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
         "extraItemsInShortMean\t" +
         "extraItemsInShortVariance\t" +
         "extraItemsInShortN\t" +
-        "entTotLongWinMean\t" +
-        "entTotLongWinVar\t" +
-        "entTotLongWinN\t" +
-        "entTotShortUnionMean\t" +
-        "entTotShortUnionVar\t" +
-        "entTotShortUnionN\t" +
-        "entExactOverlapMean\t" +
-        "entExactOverlapVar\t" +
-        "entExactOverlapN\t" +
-        "entDiffLongerInLongMean\t" +
-        "entDiffLongerInLongVar\t" +
-        "entDiffLongerInLongN\t" +
-        "entDiffLongerInShortMean\t" +
-        "entDiffLongerInShortVar\t" +
-        "entDiffLongerInShortN\t" +
+        // "entTotLongWinMean\t" +
+        // "entTotLongWinVar\t" +
+        // "entTotLongWinN\t" +
+        // "entTotShortUnionMean\t" +
+        // "entTotShortUnionVar\t" +
+        // "entTotShortUnionN\t" +
+        // "entExactOverlapMean\t" +
+        // "entExactOverlapVar\t" +
+        // "entExactOverlapN\t" +
+        // "entDiffLongerInLongMean\t" +
+        // "entDiffLongerInLongVar\t" +
+        // "entDiffLongerInLongN\t" +
+        // "entDiffLongerInShortMean\t" +
+        // "entDiffLongerInShortVar\t" +
+        // "entDiffLongerInShortN\t" +
         "\n");
-    
     
     Random rand = new Random(System.currentTimeMillis());
     for (int d = dayStart; d <= dayEnd; ++d) {
@@ -439,37 +528,44 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
         Arrays.sort(shortsAsc);
         
         for (int wl = ws + 1; wl < windowSizesArr.length; ++wl) {
-        
           boolean dumped = false;
           File longWinDir = new File(dayIn, "w" + windowSizesArr[wl]);
           int numShortWins = (int) Math.ceil(windowSizesArr[wl] / windowSizesArr[ws]);
+          if (numShortWins > 168) {
+            // FIXME the case of 24 hours of 5 minutes has a glitch.. numshort windows is 288 but
+            // there are only 287 files in day 12.. must be the interval that was skipped
+            continue;
+          }
           int numIntervals = shortsAsc.length / numShortWins; // floor
           for (File longWin : longWinDir.listFiles()) {
             
             longWin = longWin.listFiles()[0];
             
-            for (int i = 0; i < numIntervals; ++i) {
-              int startIx = i * numShortWins;
-              int endIx = (i + 1) * numShortWins;
-              String startTime = shortsAsc[startIx].getName();
-              
-              List<File> shortWindowReaderList = Lists.newArrayListWithCapacity(numShortWins);
-              for (int j = startIx; j < endIx; ++j) {
-                File f = shortsAsc[j].listFiles()[0];
-                shortWindowReaderList.add(new File(f, "index"));
-              }
-              CompareWindowSizes compareCall = new CompareWindowSizes(shortWindowReaderList,
-                  new File(longWin, "index"),
-                  d + "_" + startTime + "_" + // endDir.getName() + "_" +
-                      windowSizesArr[ws] + "_" + windowSizesArr[wl], outPath);
-              
-              if (!dumped && (rand.nextBoolean() || i == numIntervals - 1)) {
-                dumped = true;
-                compareCall.dumpIntersction = true;
-              }
-              completion.submit(compareCall);
-              ++numJobs;
+            // for (int i = 0; i < numIntervals; ++i) {
+            int i = (numIntervals == 0 ? 0 : rand.nextInt(numIntervals));
+            
+            int startIx = i * numShortWins;
+            int endIx = (i + 1) * numShortWins;
+            String startTime = shortsAsc[startIx].getName();
+            
+            List<File> shortWindowReaderList = Lists.newArrayListWithCapacity(numShortWins);
+            for (int j = startIx; j < endIx; ++j) {
+              File f = shortsAsc[j].listFiles()[0];
+              shortWindowReaderList.add(new File(f, "index"));
             }
+            CompareWindowSizes compareCall = new CompareWindowSizes(shortWindowReaderList,
+                new File(longWin, "index"),
+                d + "_" + startTime + "_" + // endDir.getName() + "_" +
+                    windowSizesArr[ws] + "_" + windowSizesArr[wl], outPath);
+            
+            if (true || !dumped && (rand.nextBoolean() || i == numIntervals - 1)) {
+              dumped = true;
+              compareCall.dumpIntersction = true;
+            }
+            completion.submit(compareCall);
+            ++numJobs;
+            
+            // }
           }
         }
         // for (int wl = ws + 1; wl < windowSizesArr.length; ++wl) {
@@ -546,26 +642,26 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           + stats.get(7).getVariance() + "\t" // extraItemsInShortsVariance
           + stats.get(7).getN() + "\t" // extraItemsIngShortsN
           
-          + stats.get(8).getMean() + "\t" + // entTotLongWinMean
-          +stats.get(8).getVariance() + "\t" + // "entTotLongWinVar
-          +stats.get(8).getN() + "\t" + // "entTotLongWinN
-          
-          +stats.get(9).getMean() + "\t" + // "entTotShortUnionMean
-          +stats.get(9).getVariance() + "\t" + // "entTotShortUnionVar
-          +stats.get(9).getN() + "\t" + // "entTotShortUnionN
-          
-          +stats.get(10).getMean() + "\t" + // "entExactOverlapMean
-          +stats.get(10).getVariance() + "\t" + // "entExactOverlapVar
-          +stats.get(10).getN() + "\t" + // "entExactOverlapN
-          
-          +stats.get(11).getMean() + "\t" + // "entDiffLongerInLongMean
-          +stats.get(11).getVariance() + "\t" + // entDiffLongerInLongVar
-          +stats.get(11).getN() + "\t" + // entDiffLongerInLongN
-          
-          +stats.get(12).getMean() + "\t" + // entDiffLongerInShortMean
-          +stats.get(12).getVariance() + "\t" + // entDiffLongerInShortVar
-          +stats.get(12).getN() + "\t" + // entDiffLongerInShortN
-          "\n");
+          // + stats.get(8).getMean() + "\t" + // entTotLongWinMean
+          // +stats.get(8).getVariance() + "\t" + // "entTotLongWinVar
+          // +stats.get(8).getN() + "\t" + // "entTotLongWinN
+          //
+          // +stats.get(9).getMean() + "\t" + // "entTotShortUnionMean
+          // +stats.get(9).getVariance() + "\t" + // "entTotShortUnionVar
+          // +stats.get(9).getN() + "\t" + // "entTotShortUnionN
+          //
+          // +stats.get(10).getMean() + "\t" + // "entExactOverlapMean
+          // +stats.get(10).getVariance() + "\t" + // "entExactOverlapVar
+          // +stats.get(10).getN() + "\t" + // "entExactOverlapN
+          //
+          // +stats.get(11).getMean() + "\t" + // "entDiffLongerInLongMean
+          // +stats.get(11).getVariance() + "\t" + // entDiffLongerInLongVar
+          // +stats.get(11).getN() + "\t" + // entDiffLongerInLongN
+          //
+          // +stats.get(12).getMean() + "\t" + // entDiffLongerInShortMean
+          // +stats.get(12).getVariance() + "\t" + // entDiffLongerInShortVar
+          // +stats.get(12).getN() + "\t" + // entDiffLongerInShortN
+          + "\n");
       
       wr.flush();
     }
