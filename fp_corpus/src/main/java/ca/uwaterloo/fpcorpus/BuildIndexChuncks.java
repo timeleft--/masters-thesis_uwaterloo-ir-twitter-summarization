@@ -65,6 +65,7 @@ public class BuildIndexChuncks {
               .toString() + "/" + PFPGrowth.FREQUENT_PATTERNS);
           
           if (intervalOut.exists() && DONOT_REPLACE) {
+            LOG.warn("Skipping interval whose output path already exists: {}", intervalOut);
             continue;
           }
           

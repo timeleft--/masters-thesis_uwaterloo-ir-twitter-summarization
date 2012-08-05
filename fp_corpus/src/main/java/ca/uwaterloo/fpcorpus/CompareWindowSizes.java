@@ -29,7 +29,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermFreqVector;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
@@ -44,7 +43,6 @@ import org.apache.lucene.util.Version;
 import org.apache.mahout.common.Pair;
 import org.apache.mahout.math.map.OpenIntFloatHashMap;
 import org.apache.mahout.math.map.OpenIntObjectHashMap;
-import org.apache.mahout.math.map.OpenObjectIntHashMap;
 import org.apache.mahout.math.set.OpenIntHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,6 +95,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   
   private final QueryParser fisQparser;
   protected final List<File> shortWindowIndexes;
+  protected final List<File> shiftedWindowIndexes;
   protected final File longWindowIndex;
   
   protected final SummaryStatistics diffSuppSUL = new SummaryStatistics();
@@ -119,9 +118,12 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   protected Writer dumpWr;
   protected final File outPath;
   
-  public CompareWindowSizes(List<File> shortWindowIndexes, File longWindowIndex,
+  public CompareWindowSizes(List<File> shortWindowIndexes, List<File> shiftedWindowList,
+      File longWindowIndex,
       String id, File outPath) throws CorruptIndexException, IOException {
     this.shortWindowIndexes = Lists.newArrayList(shortWindowIndexes);
+    this.shiftedWindowIndexes = shiftedWindowList == null ? null : 
+      Lists.newArrayList(shiftedWindowList);
     this.longWindowIndex = longWindowIndex;
     this.id = id;
     this.outPath = outPath;
@@ -132,9 +134,14 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   }
   
   public Pair<String, List<SummaryStatistics>> call() throws IOException, ParseException {
-    
-    final MultiReader shortWindowsUnion;
-    final IndexReader longWindow;
+    File outFile = new File(outPath, id + ".csv");
+    if (DONOT_REPLACE && outFile.exists()) {
+      LOG.warn("Skipping window whose output path already exists: {}", outFile);
+      return null;
+    }
+    MultiReader shortWindowsUnion;
+    MultiReader shiftedWindowsUnion = null;
+    IndexReader longWindow;
     
     IndexReader[] shortWindowReaders = new IndexReader[shortWindowIndexes.size()];
     int i = 0;
@@ -142,13 +149,22 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
       shortWindowReaders[i++] = IndexReader.open(NIOFSDirectory.open(shortWindowIx));
     }
     shortWindowsUnion = new MultiReader(shortWindowReaders);
+    
+    if (shiftedWindowIndexes != null) {
+      IndexReader[] shiftedWindowReaders = new IndexReader[shiftedWindowIndexes.size()];
+      i = 0;
+      for (File shiftedWindowIx : shiftedWindowIndexes) {
+        shiftedWindowReaders[i++] = IndexReader.open(NIOFSDirectory.open(shiftedWindowIx));
+      }
+      shiftedWindowsUnion = new MultiReader(shiftedWindowReaders);
+    }
     longWindow = IndexReader.open(NIOFSDirectory.open(longWindowIndex));
     
     OpenIntObjectHashMap<MutableLong> docIdInLongPatternInBoth = new OpenIntObjectHashMap<MutableLong>();
     IndexSearcher longWindowSearcher = new IndexSearcher(longWindow);
     
     if (dumpIntersction) {
-      this.dumpWr = Channels.newWriter(FileUtils.openOutputStream(new File(outPath, id + ".csv"))
+      this.dumpWr = Channels.newWriter(FileUtils.openOutputStream(outFile)
           .getChannel(), "UTF-8");
       
       this.dumpWr
@@ -164,7 +180,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           ds,
           longWindow,
           longWindowSearcher,
-          
+          null,
           // itemsetInBoth,
           
           docIdInLongPatternInBoth,
@@ -175,6 +191,9 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     }
     
     IndexSearcher shortWindowsUnionSearcher = new IndexSearcher(shortWindowsUnion);
+    
+    IndexSearcher shiftedWindowsUnionSearcher = new IndexSearcher(shiftedWindowsUnion);
+    
     OpenIntHashSet docIdInShortPatternInBoth = new OpenIntHashSet();
     
     for (int dl = 0; dl < longWindow.maxDoc(); ++dl) {
@@ -189,7 +208,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           dl,
           shortWindowsUnion,
           shortWindowsUnionSearcher,
-          
+          shiftedWindowsUnionSearcher,
           // itemsetInBoth,
           tempDocIdInShortPatternInBoth,
           false,
@@ -248,6 +267,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   
   private void measureOverlap(final IndexReader shortDocsReader, int ds,
       final IndexReader longDocsReader, final IndexSearcher longDocsSearcher,
+      final IndexSearcher shiftedWindowsUnionSearcher,
       
       final OpenIntObjectHashMap<MutableLong> docIdInLongPatternInBoth,
       final boolean sumSupport,
@@ -283,7 +303,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     
     final StringBuffer dsMetricStrBuffer = new StringBuffer();
     final double[] dsMetrics = new double[8];
-    
+    final MutableBoolean longDocsIsShiftedUnion = new MutableBoolean(false);
     // final MutableBoolean exclusive = new MutableBoolean(true);
     // long MetricExactOverlapBefore = MetricExactOverlap.getN();
     // long MetricDiffLongerInLongWindowBefore = MetricDiffLongerInLongWindow.getN();
@@ -312,7 +332,8 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
         
         Set<String> tSetDl = Sets.newCopyOnWriteArraySet(Arrays
             .asList(tvDl.getTerms()));
-        if (tSetDs.equals(tSetDl)) {
+        boolean exactMatch = tSetDs.equals(tSetDl);
+        if (exactMatch) {
           
           MutableLong supportSum = null;
           if (sumSupport) {
@@ -329,7 +350,9 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
           // + Integer.parseInt(docDS.get(AssocField.SUPPORT.name)));
           
           // MetricExactOverlap.addValue(dsMetric);
-        } else {
+        }
+        
+        if (longDocsIsShiftedUnion.booleanValue() || !exactMatch) {
           // else because dumping the exact overlap is not useful
           if (dumpIntersction) {
             if (dsMetricStrBuffer.length() == 0) {
@@ -362,7 +385,9 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
                   + Sets.difference(tSetDl, tSetDs) + "\t"
                   + dlMetricStr + "\n");
             } else {
-              dumpWr.append(Sets.difference(tSetDl, tSetDs) + "\t" + dlMetricStr + "\t"
+              
+              dumpWr.append((longDocsIsShiftedUnion.booleanValue() ? "SHIFTED " : "") +
+                  Sets.difference(tSetDl, tSetDs) + "\t" + dlMetricStr + "\t"
                   + tSetDs + "\t" + dsMetricStrBuffer.toString() + "\n");
             }
           }
@@ -414,17 +439,28 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     // (MetricDiffLongerInLongWindowBefore == MetricDiffLongerInLongWindow.getN()) &&
     // (MetricDiffLongerInShortUnionBefore == MetricDiffLongerInShortUnion.getN());
     boolean exclusive = dsMetricStrBuffer.length() == 0;
+    
     if (dumpIntersction && exclusive) {
-      dsMetricStrBuffer.append(metricToString(patternMetric(tSetDs, new IndexSearcher(
-          shortDocsReader))));
-      // String dlMetricsZeros = metricToString(new double[8]);
       String dlMetricsZeros = "\t\t\t\t\t\t\t";
       if (shortUnionIsShortDoc) {
+        dsMetricStrBuffer.append(metricToString(patternMetric(tSetDs, new IndexSearcher(
+            shortDocsReader))));
         dumpWr.append(tSetDs + "\t" + dsMetricStrBuffer.toString() + "\tX\t"
             + dlMetricsZeros + "\n");
       } else {
-        dumpWr.append("X\t" + dlMetricsZeros + "\t" + tSetDs + "\t"
-            + dsMetricStrBuffer.toString() + "\n");
+        String exclChar = "X";
+        if (shiftedWindowsUnionSearcher != null) {
+          exclChar = "XS";
+          longDocsIsShiftedUnion.setValue(true);
+          shiftedWindowsUnionSearcher.search(query, longDocsCollector);
+        }
+        exclusive = dsMetricStrBuffer.length() == 0;
+        if (exclusive) {
+          dsMetricStrBuffer.append(metricToString(patternMetric(tSetDs, new IndexSearcher(
+              shortDocsReader))));
+          dumpWr.append(exclChar + "\t" + dlMetricsZeros + "\t" + tSetDs + "\t"
+              + dsMetricStrBuffer.toString() + "\n");
+        }
       }
     }
   }
@@ -456,7 +492,7 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
   // }
   
   // TODO: if dumping the exact overlap between window sizes make sure to handle clearing this cache
-  // so that the cache from the short union is not carried over to the long win (do we really care?) 
+  // so that the cache from the short union is not carried over to the long win (do we really care?)
   WeakHashMap<Set<String>, MutableLong> supportCache = new WeakHashMap<Set<String>, MutableLong>();
   
   private double[] patternMetric(final Set<String> tSet, IndexSearcher fisSearcher)
@@ -541,13 +577,15 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     int dayStart = Integer.parseInt(args[2]);
     int dayEnd = Integer.parseInt(args[3]);
     ExecutorService exec = Executors.newFixedThreadPool(Integer.parseInt(args[4]));
+    File shiftedDir = new File(args[5]);
+    
     CompletionService<Pair<String, List<SummaryStatistics>>> completion =
         new ExecutorCompletionService<Pair<String, List<SummaryStatistics>>>(exec);
     int numJobs = 0;
     
-    if (DONOT_REPLACE && outPath.exists()) {
-      throw new IllegalArgumentException("Output file already exists: " + outPath);
-    }
+    // if (DONOT_REPLACE && outPath.exists()) {
+    // throw new IllegalArgumentException("Output file already exists: " + outPath);
+    // }
     
     // TODO: should I use more timely indexes?????????? Up to the end time?? or between start and
     // end??
@@ -604,6 +642,13 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
         File[] shortsAsc = shortWinDir.listFiles();
         Arrays.sort(shortsAsc);
         
+        File[] shiftedAsc = null;
+        File shiftedRoot = FileUtils.getFile(shiftedDir, "d" + d, "w" + windowSizesArr[ws]);
+        if (shiftedRoot.exists()) {
+          shiftedAsc = shiftedRoot.listFiles();
+          Arrays.sort(shiftedAsc);
+        }
+        
         for (int wl = ws + 1; wl < windowSizesArr.length; ++wl) {
           boolean dumped = false;
           File longWinDir = new File(dayIn, "w" + windowSizesArr[wl]);
@@ -614,36 +659,52 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
             continue;
           }
           int numIntervals = shortsAsc.length / numShortWins; // floor
-          for (File longWin : longWinDir.listFiles()) {
-            
-            longWin = longWin.listFiles()[0];
-            
-            // for (int i = 0; i < numIntervals; ++i) {
-            int i = (numIntervals == 0 ? 0 : rand.nextInt(numIntervals));
-            
-            int startIx = i * numShortWins;
-            int endIx = (i + 1) * numShortWins;
-            String startTime = shortsAsc[startIx].getName();
-            
-            List<File> shortWindowReaderList = Lists.newArrayListWithCapacity(numShortWins);
-            for (int j = startIx; j < endIx; ++j) {
-              File f = shortsAsc[j].listFiles()[0];
-              shortWindowReaderList.add(new File(f, "index"));
-            }
-            CompareWindowSizes compareCall = new CompareWindowSizes(shortWindowReaderList,
-                new File(longWin, "index"),
-                d + "_" + startTime + "_" + // endDir.getName() + "_" +
-                    windowSizesArr[ws] + "_" + windowSizesArr[wl], outPath);
-            
-            if (true || !dumped && (rand.nextBoolean() || i == numIntervals - 1)) {
-              dumped = true;
-              compareCall.dumpIntersction = true;
-            }
-            completion.submit(compareCall);
-            ++numJobs;
-            
-            // }
+          // for (File longWin : longWinDir.listFiles()) {
+          //
+          // longWin = longWin.listFiles()[0];
+          
+          // for (int i = 0; i < numIntervals; ++i) {
+          File[] longWinArr = longWinDir.listFiles();
+          if (longWinArr.length == 0)
+            continue;
+          
+          File longWin = longWinArr[rand.nextInt(longWinArr.length)];
+          longWin = longWin.listFiles()[0];
+          int i = (numIntervals == 0 ? 0 : rand.nextInt(numIntervals));
+          
+          int startIx = i * numShortWins;
+          int endIx = (i + 1) * numShortWins;
+          String startTime = shortsAsc[startIx].getName();
+          
+          List<File> shortWindowReaderList = Lists.newArrayListWithCapacity(numShortWins);
+          for (int j = startIx; j < endIx; ++j) {
+            File f = shortsAsc[j].listFiles()[0];
+            shortWindowReaderList.add(new File(f, "index"));
           }
+          
+          List<File> shiftedWindowList = null;
+          if (shiftedAsc != null) {
+            shiftedWindowList = Lists.newArrayListWithCapacity(numShortWins - 1);
+            for (int j = startIx; j < endIx - 1; ++j) {
+              File f = shiftedAsc[j].listFiles()[0];
+              shiftedWindowList.add(new File(f, "index"));
+            }
+          }
+          CompareWindowSizes compareCall = new CompareWindowSizes(shortWindowReaderList,
+              shiftedWindowList,
+              new File(longWin, "index"),
+              d + "_" + startTime + "_" + // endDir.getName() + "_" +
+                  windowSizesArr[ws] + "_" + windowSizesArr[wl], outPath);
+          
+          if (true || !dumped && (rand.nextBoolean() || i == numIntervals - 1)) {
+            dumped = true;
+            compareCall.dumpIntersction = true;
+          }
+          completion.submit(compareCall);
+          ++numJobs;
+          
+          // }
+          // }
         }
         // for (int wl = ws + 1; wl < windowSizesArr.length; ++wl) {
         // List<File> shortWindowReaders = Lists.newLinkedList();
@@ -687,7 +748,9 @@ public class CompareWindowSizes implements Callable<Pair<String, List<SummarySta
     for (int j = 0; j < numJobs; ++j) {
       Future<Pair<String, List<SummaryStatistics>>> f = completion.take();
       Pair<String, List<SummaryStatistics>> comparison = f.get();
-      
+      if (comparison == null) {
+        continue;
+      }
       String[] ids = comparison.getFirst().split("_");
       List<SummaryStatistics> stats = comparison.getSecond();
       
