@@ -62,8 +62,10 @@ public class PlotTermFrequencyTimeSeries {
   };
   
   // TODO: command line
-  
   public static RunMode runMode = RunMode.VERTICAL;
+  public static boolean writeUnixTime = true;
+  public static boolean fillZeros = true;
+  
   private static long windowLength = 3600000;
   private static String ixPath = "/u2/yaboulnaga/data/twitter-trec2011/indexes/twt_pos-stored_chunks/001_twt_pos-stored_1hr_chunks";
   private static String outParent = "/u2/yaboulnaga/data/twitter-trec2011/timeseries/";
@@ -394,9 +396,8 @@ public class PlotTermFrequencyTimeSeries {
               }
               Collections.sort(tList);
             } else {
-                tList = Lists.newCopyOnWriteArrayList(watchedTerms);
+              tList = Lists.newCopyOnWriteArrayList(watchedTerms);
             }
-            
             
             switch (runMode) {
             case RRD4J:
@@ -496,8 +497,8 @@ public class PlotTermFrequencyTimeSeries {
                           + timestamp);
                   misorderLag.addValue(lasttime - timestamp);
                   ++misordered;
-                  if(misordered % 10 == 0){
-                    System.out.println("Misorder lag: " +  misorderLag.toString());
+                  if (misordered % 10 == 0) {
+                    System.out.println("Misorder lag: " + misorderLag.toString());
                   }
                 } else if (timestamp > lasttime) {
                   printPendingCounts(counts, wr, lasttime,
@@ -713,7 +714,7 @@ public class PlotTermFrequencyTimeSeries {
                     }
                     wr.append(""
                         + termTimestamps
-                            .get(timestampt));
+                            .get(timestampt)); // / (writeUnixTime?1000:1));
                     break;
                   case DUMPDELTAT:
                     for (int c = 0; c < termTimestamps
@@ -780,13 +781,16 @@ public class PlotTermFrequencyTimeSeries {
     }
     switch (runMode) {
     case VERTICAL: {
+      if (writeUnixTime) {
+        time /= 1000;
+      }
       wr.append("" + time);
       
       int tabs = 0;
       for (String t : counts.keySet()) {
         int col = tIxMap.get(t);
         while (tabs < col) {
-          wr.append('\t');
+          wr.append((fillZeros ? "0" : "") + "\t");
           ++tabs;
         }
         wr.append(counts.get(t) + "\t");
