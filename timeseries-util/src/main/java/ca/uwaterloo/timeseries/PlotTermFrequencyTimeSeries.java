@@ -26,6 +26,7 @@ import org.apache.lucene.index.TermEnum;
 import org.apache.lucene.index.TermFreqVector;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.FilteredQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -64,9 +65,12 @@ public class PlotTermFrequencyTimeSeries {
   // TODO: command line
   public static RunMode runMode = RunMode.VERTICAL;
   public static boolean writeUnixTime = true;
-  public static boolean fillZeros = true;
+  
+  public static boolean fillZeros = false;
   
   private static long windowLength = 3600000;
+  private static long timeStep = 60000;
+  
   private static String ixPath = "/u2/yaboulnaga/data/twitter-trec2011/indexes/twt_pos-stored_chunks/001_twt_pos-stored_1hr_chunks";
   private static String outParent = "/u2/yaboulnaga/data/twitter-trec2011/timeseries/";
   
@@ -339,6 +343,7 @@ public class PlotTermFrequencyTimeSeries {
           // TwitterAnalyzer();;
           QueryParser twtQparser = new QueryParser(Version.LUCENE_36,
               "text", new WhitespaceAnalyzer(Version.LUCENE_36));
+          twtQparser.setDefaultOperator(Operator.OR);
           
           while (startTime < endTime) {
             long winEnd = startTime + windowLength;
@@ -470,8 +475,14 @@ public class PlotTermFrequencyTimeSeries {
               }
               
               // tList.clear();
-              tList = null;
+              // tList = null;
+              // List<String> tIxKeys = Lists.newArrayListWithCapacity(tIxMap.size());
+              // tIxMap.keysSortedByValue(tIxKeys);
+              
+              // This messes up the sorting.. has to use a sort with it, and sort doesn't work
+//              Query allTweets = twtQparser.parse(tList.toString().replaceAll("[\\,\\[\\]]", ""));
               Query allTweets = twtQparser.parse("*:*");
+              
               // Time filter
               NumericRangeFilter<Long> timeFilter = NumericRangeFilter
                   .newLongRange("timestamp", Long.MIN_VALUE,
@@ -481,29 +492,39 @@ public class PlotTermFrequencyTimeSeries {
               // luckily they come sorted, coz this doesn't work:
               // timeSort);
               
-              long lasttime = startTime;
-              Map<String, Integer> counts = Maps.newTreeMap();
+              long epochStart = startTime;
+              long epochEnd = epochStart + timeStep;
+              
+              // No need to keep order since we will pass along the key list
+              // Map<String, Integer> counts = Maps.newTreeMap();
+              // This causes an endless loop after the first call to clear.. TODO bug report
+              // OpenObjectIntHashMap<String> counts = new OpenObjectIntHashMap<String>();
+              Map<String, Integer> counts = Maps.newHashMap();
               int misordered = 0;
               SummaryStatistics misorderLag = new SummaryStatistics();
               for (int h = 0; h < rs.totalHits; ++h) {
                 long timestamp = Long.parseLong(ixReader
                     .document(rs.scoreDocs[h].doc).get(
                         "timestamp"));
-                if (timestamp < lasttime) {
+                if (timestamp < epochStart) {
                   System.err
-                      .println("Out of order document - lasttimestamp: "
-                          + lasttime
+                      .println("Out of order document - epochStart: "
+                          + epochStart
                           + " timestamp: "
                           + timestamp);
-                  misorderLag.addValue(lasttime - timestamp);
+                  misorderLag.addValue(epochStart - timestamp);
                   ++misordered;
                   if (misordered % 10 == 0) {
                     System.out.println("Misorder lag: " + misorderLag.toString());
                   }
-                } else if (timestamp > lasttime) {
-                  printPendingCounts(counts, wr, lasttime,
-                      rrSample, tIxMap);
-                  lasttime = timestamp;
+                } else if (timestamp >= epochEnd) {
+                  while (timestamp >= epochEnd) {
+                    printPendingCounts(counts, wr, epochEnd,
+                        rrSample, tIxMap, tList);
+                    // lasttime = timestamp;
+                    epochStart = epochEnd;
+                    epochEnd += timeStep;
+                  }
                 }
                 
                 TermFreqVector tfv = ixReader
@@ -534,8 +555,8 @@ public class PlotTermFrequencyTimeSeries {
                 }
               }
               
-              printPendingCounts(counts, wr, lasttime, rrSample,
-                  tIxMap);
+              printPendingCounts(counts, wr, epochEnd, rrSample,
+                  tIxMap, tList);
               System.out.println("Misorder lag: " + misorderLag.toString());
               
               if (runMode.equals(RunMode.RRD4J)) {
@@ -775,35 +796,52 @@ public class PlotTermFrequencyTimeSeries {
   
   private static void printPendingCounts(Map<String, Integer> counts,
       Writer wr, long time, Sample rrSample,
-      OpenObjectIntHashMap<String> tIxMap) throws IOException {
-    if (counts.isEmpty()) {
-      return;
-    }
+      OpenObjectIntHashMap<String> tIxMap, List<String> tIxKeys) throws IOException {
     switch (runMode) {
     case VERTICAL: {
       if (writeUnixTime) {
         time /= 1000;
       }
-      wr.append("" + time);
-      
+      wr.append(time + "\t");
+      if (counts.isEmpty() && !fillZeros) {
+        return;
+      }
       int tabs = 0;
-      for (String t : counts.keySet()) {
+      for (String t : tIxKeys) {
         int col = tIxMap.get(t);
-        while (tabs < col) {
-          wr.append((fillZeros ? "0" : "") + "\t");
-          ++tabs;
+        while (++tabs < col) {
+          wr.append("\t");
         }
-        wr.append(counts.get(t) + "\t");
+        String cntStr;
+        // int cnt = counts.get(t);
         
+        // if (!fillZeros && cnt == 0) {
+        // cntStr = "";
+        // } else {
+        // cntStr = cnt + "";
+        // }
+        if (counts.containsKey(t)) {
+          cntStr = counts.get(t) + "";
+        } else {
+          if (fillZeros) {
+            cntStr = "0";
+          } else {
+            cntStr = "";
+          }
+        }
+        wr.append(cntStr + "\t");
       }
       wr.append('\n');
       
       break;
     }
     case RRD4J: {
+      if (counts.isEmpty()) {
+        return;
+      }
       rrSample.setTime(time / 1000);
       
-      for (String t : counts.keySet()) {
+      for (String t : tIxKeys) {
         rrSample.setValue(dsNameFromTerm(t), counts.get(t));
       }
       
