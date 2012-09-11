@@ -67,7 +67,6 @@ public class PlotTermFrequencyTimeSeries {
   public static RunMode runMode = RunMode.VERTICAL;
   public static boolean writeUnixTime = true;
   public static boolean fillZeros = true;
-//  public static boolean rHeader = true;
   
   private static long windowLength = 3600000;
   private static long timeStep = 60000;
@@ -409,7 +408,7 @@ public class PlotTermFrequencyTimeSeries {
             case RRD4J:
             case VERTICAL: {
               Sample rrSample = null;
-              if (runMode.equals(RunMode.VERTICAL)) {// && !rHeader) {
+              if (runMode.equals(RunMode.VERTICAL)) {
                 wr.append("\"TIMESTAMP\"");
               }
               
@@ -422,16 +421,7 @@ public class PlotTermFrequencyTimeSeries {
                 
                 switch (runMode) {
                 case VERTICAL: {
-                  //This causes the error that there are less columns thancolumn names
-//                  if(!rHeader || ix>1){
-//                    wr.append(DELIM);
-//                  }
-//                  wr.append("\"" + t + "\"");
-                  //This causes shifting the readings of each column to the previous one
                   wr.append(DELIM+"\"" + t + "\"");
-                  // This is the less of evils, as it causes an extra column with all NAs
-//                  wr.append((!rHeader?DELIM:"") + "\"" + t + "\"" + (rHeader?DELIM:""));
-                  
                   break;
                 }
                 case RRD4J: {
@@ -483,10 +473,6 @@ public class PlotTermFrequencyTimeSeries {
               }
               }
               
-              // tList.clear();
-              // tList = null;
-              // List<String> tIxKeys = Lists.newArrayListWithCapacity(tIxMap.size());
-              // tIxMap.keysSortedByValue(tIxKeys);
               
               // This messes up the sorting.. has to use a sort with it, and sort doesn't work
               // Query allTweets = twtQparser.parse(tList.toString().replaceAll("[\\,\\[\\]]", ""));
@@ -504,8 +490,6 @@ public class PlotTermFrequencyTimeSeries {
               long epochStart = startTime;
               long epochEnd = epochStart + timeStep;
               
-              // No need to keep order since we will pass along the key list
-              // Map<String, Integer> counts = Maps.newTreeMap();
               // This causes an endless loop after the first call to clear.. TODO bug report
               // OpenObjectIntHashMap<String> counts = new OpenObjectIntHashMap<String>();
               Map<String, Integer> counts = Maps.newHashMap();
@@ -530,9 +514,7 @@ public class PlotTermFrequencyTimeSeries {
                   while (timestamp >= epochEnd) {
                     printPendingCounts(counts, wr, epochEnd,
                         rrSample, 
-//                        tIxMap, 
                         tList);
-                    // lasttime = timestamp;
                     epochStart = epochEnd;
                     epochEnd += timeStep;
                   }
@@ -567,7 +549,6 @@ public class PlotTermFrequencyTimeSeries {
               }
               
               printPendingCounts(counts, wr, epochEnd, rrSample,
-//                  tIxMap, 
                   tList);
               System.out.println("Misorder lag: " + misorderLag.toString());
               
@@ -590,9 +571,6 @@ public class PlotTermFrequencyTimeSeries {
                 gDef.setTitle("Frequencies of terms");
                 gDef.setVerticalLabel("Frequency");
                 
-//                List<String> termsSorted = Lists
-//                    .newArrayListWithCapacity(tIxMap.size());
-//                tIxMap.keysSortedByValue(termsSorted);
                 for (String t : tList) {
                   String dsname = dsNameFromTerm(t);
                   gDef.datasource(t, outPath, dsname,
@@ -808,7 +786,6 @@ public class PlotTermFrequencyTimeSeries {
   
   private static void printPendingCounts(Map<String, Integer> counts,
       Writer wr, long time, Sample rrSample,
-//      OpenObjectIntHashMap<String> tIxMap, 
       List<String> tIxKeys) throws IOException {
     switch (runMode) {
     case VERTICAL: {
@@ -821,13 +798,6 @@ public class PlotTermFrequencyTimeSeries {
       }
       for (String t : tIxKeys) {
         String cntStr;
-        // int cnt = counts.get(t);
-        
-        // if (!fillZeros && cnt == 0) {
-        // cntStr = "";
-        // } else {
-        // cntStr = cnt + "";
-        // }
         if (counts.containsKey(t)) {
           cntStr = counts.get(t) + "";
         } else {
