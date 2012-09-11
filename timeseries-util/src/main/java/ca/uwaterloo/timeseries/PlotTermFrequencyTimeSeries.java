@@ -62,11 +62,12 @@ public class PlotTermFrequencyTimeSeries {
     RRD4J, VERTICAL, DUMP1S, DUMPDELTAT
   };
   
+  public static char DELIM = '\t';
   // TODO: command line
   public static RunMode runMode = RunMode.VERTICAL;
   public static boolean writeUnixTime = true;
-  
-  public static boolean fillZeros = false;
+  public static boolean fillZeros = true;
+//  public static boolean rHeader = true;
   
   private static long windowLength = 3600000;
   private static long timeStep = 60000;
@@ -408,20 +409,28 @@ public class PlotTermFrequencyTimeSeries {
             case RRD4J:
             case VERTICAL: {
               Sample rrSample = null;
-              if (runMode.equals(RunMode.VERTICAL)) {
-                wr.append("TIMESTAMP");
+              if (runMode.equals(RunMode.VERTICAL)) {// && !rHeader) {
+                wr.append("\"TIMESTAMP\"");
               }
               
               OpenObjectIntHashMap<String> tIxMap = new OpenObjectIntHashMap<String>();
               
-              int ix = 1;
+              int ix = 0;
               for (String t : tList) {
                 
-                tIxMap.put(t, ix++);
+                tIxMap.put(t, ++ix);
                 
                 switch (runMode) {
                 case VERTICAL: {
-                  wr.append("\t" + t);
+                  //This causes the error that there are less columns thancolumn names
+//                  if(!rHeader || ix>1){
+//                    wr.append(DELIM);
+//                  }
+//                  wr.append("\"" + t + "\"");
+                  //This causes shifting the readings of each column to the previous one
+                  wr.append(DELIM+"\"" + t + "\"");
+                  // This is the less of evils, as it causes an extra column with all NAs
+//                  wr.append((!rHeader?DELIM:"") + "\"" + t + "\"" + (rHeader?DELIM:""));
                   
                   break;
                 }
@@ -480,7 +489,7 @@ public class PlotTermFrequencyTimeSeries {
               // tIxMap.keysSortedByValue(tIxKeys);
               
               // This messes up the sorting.. has to use a sort with it, and sort doesn't work
-//              Query allTweets = twtQparser.parse(tList.toString().replaceAll("[\\,\\[\\]]", ""));
+              // Query allTweets = twtQparser.parse(tList.toString().replaceAll("[\\,\\[\\]]", ""));
               Query allTweets = twtQparser.parse("*:*");
               
               // Time filter
@@ -520,7 +529,9 @@ public class PlotTermFrequencyTimeSeries {
                 } else if (timestamp >= epochEnd) {
                   while (timestamp >= epochEnd) {
                     printPendingCounts(counts, wr, epochEnd,
-                        rrSample, tIxMap, tList);
+                        rrSample, 
+//                        tIxMap, 
+                        tList);
                     // lasttime = timestamp;
                     epochStart = epochEnd;
                     epochEnd += timeStep;
@@ -556,7 +567,8 @@ public class PlotTermFrequencyTimeSeries {
               }
               
               printPendingCounts(counts, wr, epochEnd, rrSample,
-                  tIxMap, tList);
+//                  tIxMap, 
+                  tList);
               System.out.println("Misorder lag: " + misorderLag.toString());
               
               if (runMode.equals(RunMode.RRD4J)) {
@@ -578,10 +590,10 @@ public class PlotTermFrequencyTimeSeries {
                 gDef.setTitle("Frequencies of terms");
                 gDef.setVerticalLabel("Frequency");
                 
-                List<String> termsSorted = Lists
-                    .newArrayListWithCapacity(tIxMap.size());
-                tIxMap.keysSortedByValue(termsSorted);
-                for (String t : termsSorted) {
+//                List<String> termsSorted = Lists
+//                    .newArrayListWithCapacity(tIxMap.size());
+//                tIxMap.keysSortedByValue(termsSorted);
+                for (String t : tList) {
                   String dsname = dsNameFromTerm(t);
                   gDef.datasource(t, outPath, dsname,
                       ConsolFun.AVERAGE);
@@ -796,22 +808,18 @@ public class PlotTermFrequencyTimeSeries {
   
   private static void printPendingCounts(Map<String, Integer> counts,
       Writer wr, long time, Sample rrSample,
-      OpenObjectIntHashMap<String> tIxMap, List<String> tIxKeys) throws IOException {
+//      OpenObjectIntHashMap<String> tIxMap, 
+      List<String> tIxKeys) throws IOException {
     switch (runMode) {
     case VERTICAL: {
       if (writeUnixTime) {
         time /= 1000;
       }
-      wr.append(time + "\t");
+      wr.append(time + ""); // + DELIM);
       if (counts.isEmpty() && !fillZeros) {
         return;
       }
-      int tabs = 0;
       for (String t : tIxKeys) {
-        int col = tIxMap.get(t);
-        while (++tabs < col) {
-          wr.append("\t");
-        }
         String cntStr;
         // int cnt = counts.get(t);
         
@@ -829,7 +837,7 @@ public class PlotTermFrequencyTimeSeries {
             cntStr = "";
           }
         }
-        wr.append(cntStr + "\t");
+        wr.append(DELIM +cntStr);
       }
       wr.append('\n');
       
