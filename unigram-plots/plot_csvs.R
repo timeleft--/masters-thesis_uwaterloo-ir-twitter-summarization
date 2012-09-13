@@ -12,7 +12,7 @@ sumN <- function (inFrame, colname, n) {
 	if(len %% n != 0)
 		stop("n must be a divisor for inFrame's length")
 	
-	retVal <- data.frame(TIMESTAMP=inFrame$TIMESTAMP[seq(n,len,by=n)])
+	retVal <- data.frame(TIMESTAMP=as.POSIXct(inFrame$TIMESTAMP[seq(n,len,by=n)],origin="1970-01-01", tz="GMT"))
 	retVal[colname] <- colSums(matrix(inFrame[[colname]], nrow=n))
 	return(retVal)
 }
