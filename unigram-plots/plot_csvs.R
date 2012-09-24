@@ -11,7 +11,7 @@ require(dlmodeler)
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
-kUnigram <- "the"
+kUnigram <- "auto"
 kEpochMins <- 5
 
 sumN <- function (inFrame, colname, n) {
@@ -44,10 +44,13 @@ for(i in 1:length(hrs.files)){
 }
 kTraining <- dim(uniCntT)[1] #/2
 
+#sdNoise <- 0 #deterministic: caused very noisy curve 
+#sdNoise <- sd(uniCntT[1:kTraining/2,kUnigram]) #fixed: didn't make a difference from stochastic (only scaled)
+
 kModelName <- "level+trend+days"
 uniModel <- dlmodeler.build.structural(
                             pol.order=1,
-                            pol.sigmaQ=NA,
+                            pol.sigmaQ=NA, 
                             tseas.order=3, # when increased the processing time increases a lot
                             tseas.period=24*(60/kEpochMins),
                             tseas.sigmaQ=NA,
@@ -76,16 +79,21 @@ uniCycle <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnam
 
 dayDelims = seq(from=0,to=dim(uniCntT)[1],by=24*(60/kEpochMins));
 mar.default <- par("mar")
+#uniYLims <- quantile(uniCntT[1:kTraining,kUnigram], c(.25,.75))
+#uniYLog <- ifelse(as.numeric(diff(quantile(uniCntT[1:kTraining,kUnigram], c(0.05,.95)))) > 100, TRUE, FALSE)   
 
 pdf(paste("~/Desktop/", kUnigram, "_", kComp, ".pdf", sep=""))
 #qplot(get(kTS), get(kUnigram), data=uniCntT, xlab="Date/Time", ylab=kUnigram, log="y")  
 # Can't control point size or shape :( -->   size=get(kUnigram)) + scale_size(c(0.20,0.21)) cex=.1)
 #TODO: + geom_line(uniCntT[(kTraining+1):dim(uniCntT)[1],kTS],uniComp$"level+trend+hourly"[(1):(dim(uniCntT)[1]-kTraining)])
 par(mar = mar.default + c(7,0,0,0))
+par(ylog=uniYLog)
+
 plot(as.matrix(uniCntT[kUnigram]),type="p",
-    cex=0.5,pch=20,ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
+    cex=0.5,pch=20,
+    ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
     main=paste(kUnigram, " occurrences, fitted model (red) and Confidence bands (blue)"),
-    lab=c(1,10,7)) #,log="y") #,ylim=c(0,400))
+    lab=c(1,10,7)) # ,ylim=uniYLims) #,log="y") #,ylim=c(0,400))
 lines(uniComp[[kComp]]$lower[1,],col="blue",lty=2)
 lines(uniComp[[kComp]]$mean[1,],col="red")
 lines(uniComp[[kComp]]$upper[1,],col="blue",lty=2)
@@ -94,9 +102,13 @@ axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 
 dev.off()
 
+# noiseYLim <- ???
+# noiseYLog <- flase (-ve numbers)
+    
 pdf(paste("~/Desktop/", kUnigram, "_", "noise+cycle", ".pdf", sep=""))
 par(mar = mar.default + c(7,0,0,0))
 plot(as.matrix(uniCntT[1:kTraining,kUnigram]) - uniComp[[kComp]]$mean[1,1:kTraining],type="l",
+    ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
     main=paste(kUnigram, " Noise (black) and daily Cycle (green)"),
     ylim=c(-10,10),lab=c(1,10,7))
 lines(uniCycle$cycle[1:kTraining],type='l',col="green")
