@@ -4,7 +4,7 @@
 ###############################################################################
 
 require(reshape)
-require(ggplot2)
+#require(ggplot2)
 #require(MARSS)
 require(dlmodeler)
 
@@ -50,36 +50,58 @@ uniModel <- dlmodeler.build.structural(
                             pol.sigmaQ=NA,
                             tseas.order=3, # when increased the processing time increases a lot
                             tseas.period=24*(60/kEpochMins),
-                            tseas.sigmaQ=0,
+                            tseas.sigmaQ=NA,
                             # day of week seasonal causes the diffuse to fail because of negative
                             # variance (cycle) or hangs up the computer (dummy seasonal)
                             #dseas.period=7*24*(60/kEpochMins),
                             #dseas.sigmaQ=0,
                             sigmaH=NA,
                             name=kModelName)
-system.time(uniFit <- dlmodeler.fit(t(as.matrix(uniCntT[1:kTraining,kUnigram])), uniModel, method="MLE"))
+system.time(uniFit <- dlmodeler.fit(t(as.matrix(uniCntT[1:kTraining,kUnigram])), uniModel, 
+        filter=TRUE, smooth=FALSE, verbose=TRUE, 
+        method="MLE", backend="FKF"))
 
 uniFit$model$Ht
 uniFit$model$Qt
 
 system.time(uniFilter <- dlmodeler.filter(t(as.matrix(uniCntT[1:kTraining,kUnigram])),uniFit$model,smooth=FALSE))
 
-kComp <- kModelName
+kComp <- "level+trend"
 #compnames can be "level+trend+hourly"(kModelName) or "level+trend" or "seasonal"
+# find out using: summary(uniFit$model$components)
 uniComp <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kComp, value="interval")
 uniSeasonal <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="seasonal", value="mean")
 uniCycle <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="cycle", value="mean")
 
+
+dayDelims = seq(from=0,to=dim(uniCntT)[1],by=24*(60/kEpochMins));
+mar.default <- par("mar")
+
+pdf(paste("~/Desktop/", kUnigram, "_", kComp, ".pdf", sep=""))
 #qplot(get(kTS), get(kUnigram), data=uniCntT, xlab="Date/Time", ylab=kUnigram, log="y")  
 # Can't control point size or shape :( -->   size=get(kUnigram)) + scale_size(c(0.20,0.21)) cex=.1)
 #TODO: + geom_line(uniCntT[(kTraining+1):dim(uniCntT)[1],kTS],uniComp$"level+trend+hourly"[(1):(dim(uniCntT)[1]-kTraining)])
-plot(as.matrix(uniCntT[kUnigram]),type="p",log="y") #,ylim=c(0,400))
+par(mar = mar.default + c(7,0,0,0))
+plot(as.matrix(uniCntT[kUnigram]),type="p",
+    cex=0.5,pch=20,ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
+    main=paste(kUnigram, " occurrences, fitted model (red) and Confidence bands (blue)"),
+    lab=c(1,10,7)) #,log="y") #,ylim=c(0,400))
 lines(uniComp[[kComp]]$lower[1,],col="blue",lty=2)
 lines(uniComp[[kComp]]$mean[1,],col="red")
 lines(uniComp[[kComp]]$upper[1,],col="blue",lty=2)
 
-plot(as.matrix(uniCntT[1:kTraining,kUnigram]) - uniComp[[kComp]]$mean[1,1:kTraining],type="l",ylim=c(-100,100))
-lines(uniCycle$cycle[1:kTraining],type='l',col="green")
+axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 
+dev.off()
+
+pdf(paste("~/Desktop/", kUnigram, "_", "noise+cycle", ".pdf", sep=""))
+par(mar = mar.default + c(7,0,0,0))
+plot(as.matrix(uniCntT[1:kTraining,kUnigram]) - uniComp[[kComp]]$mean[1,1:kTraining],type="l",
+    main=paste(kUnigram, " Noise (black) and daily Cycle (green)"),
+    ylim=c(-10,10),lab=c(1,10,7))
+lines(uniCycle$cycle[1:kTraining],type='l',col="green")
+axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
+
+dev.off()
 
 #lines((kTraining+1):dim(uniCntT)[1],uniComp$"level+trend+hourly"[(1):(dim(uniCntT)[1]-kTraining)],col="red")
