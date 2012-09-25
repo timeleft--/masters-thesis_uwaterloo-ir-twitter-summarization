@@ -12,7 +12,29 @@ require(dlmodeler)
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
 kUnigram <- "white"
-kEpochMins <- 5
+#kEpochMins <- 5
+kSupport <- 50 # must be greater than kNormalityAssumptionThreshold = 30
+
+supportLag <- function(inFrame, colname, supp) {
+  len <- dim(inFrame)[1]
+  retVal <- NULL
+  currSupp <- 0
+  prevIntervalEnd <- 0
+  nextIntervalIx <- 1
+  for(i in 1:len){
+    currSupp <- currSupp + inFrame[i,colname]
+    if(currSupp >= supp){
+      retVal[nextIntervalIx] <- i - prevIntervalEnd #if input isn't by minute, use TIMESTAMP
+      prevIntervalEnd <- i
+      currSupp = 0
+      nextIntervalIx <- nextIntervalIx + 1
+    }
+  }
+  # don't care about the interval len - prevIntervalEnd
+  return(retVal)
+}
+# debug(supportLag)
+# setBreakpoint("plot_csvs.R#27")
 
 sumN <- function (inFrame, colname, n) {
 	len <- dim(inFrame)[1]
@@ -39,9 +61,13 @@ hrs.files <- list.files(pattern=".*csv$")
 uniCntT <- NULL
 for(i in 1:length(hrs.files)){ 
   uniCntT <- rbind.fill(uniCntT, 
-      sumN(read.table(hrs.files[i], header=TRUE, sep='\t', quote="\"")
-        [c(kTS, kUnigram)],kUnigram,kEpochMins))
+        read.table(hrs.files[i], header=TRUE, sep='\t', quote="\"")
+        [c(kTS, kUnigram)])
 }
+suppLag <- supportLag(uniCntT, kUnigram, kSupport)
+kEpochMins <- ceiling(as.numeric(quantile(suppLag, probs=c(0.95))))
+uniCntT <- sumN(uniCntT, kUnigram, kEpochMins)
+
 kTraining <- dim(uniCntT)[1] #/2
 
 #sdNoise <- 0 #deterministic: caused very noisy curve 
@@ -77,12 +103,14 @@ uniComp <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compname
 uniCycle <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="cycle", value="mean")
 uniAll <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kModelName, value="mean")
 
+
+pdf(paste("~/Desktop/", kUnigram, "_", kComp, ".pdf", sep=""))
+
 dayDelims = seq(from=0,to=dim(uniCntT)[1],by=24*(60/kEpochMins));
 mar.default <- par("mar")
 #uniYLims <- quantile(uniCntT[1:kTraining,kUnigram], c(.25,.75))
 #uniYLog <- ifelse(as.numeric(diff(quantile(uniCntT[1:kTraining,kUnigram], c(0.05,.95)))) > 100, TRUE, FALSE)   
 
-pdf(paste("~/Desktop/", kUnigram, "_", kComp, ".pdf", sep=""))
 #qplot(get(kTS), get(kUnigram), data=uniCntT, xlab="Date/Time", ylab=kUnigram, log="y")  
 # Can't control point size or shape :( -->   size=get(kUnigram)) + scale_size(c(0.20,0.21)) cex=.1)
 #TODO: + geom_line(uniCntT[(kTraining+1):dim(uniCntT)[1],kTS],uniComp$"level+trend+hourly"[(1):(dim(uniCntT)[1]-kTraining)])
@@ -102,15 +130,16 @@ axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 
 dev.off()
 
+pdf(paste("~/Desktop/", kUnigram, "_", "noise+cycle", ".pdf", sep=""))
+
 # noiseYLim <- ???
 # noiseYLog <- flase (-ve numbers)
     
-pdf(paste("~/Desktop/", kUnigram, "_", "noise+cycle", ".pdf", sep=""))
 par(mar = mar.default + c(7,0,0,0))
 plot(as.matrix(uniCntT[1:kTraining,kUnigram]) - uniAll[[kModelName]][1,1:kTraining],type="l",
     ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
     main=paste(kUnigram, " Noise (black) and daily Cycle (green)"),
-    ylim=c(-10,10),lab=c(1,10,7))
+    ylim=c(-kSupport,kSupport),lab=c(1,10,7))
 lines(uniCycle$cycle[1:kTraining],type='l',col="green")
 axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 
