@@ -11,7 +11,7 @@ require(dlmodeler)
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
-kUnigram <- "auto"
+kUnigram <- "white"
 kEpochMins <- 5
 
 sumN <- function (inFrame, colname, n) {
@@ -73,9 +73,9 @@ kComp <- "level+trend"
 #compnames can be "level+trend+hourly"(kModelName) or "level+trend" or "seasonal"
 # find out using: summary(uniFit$model$components)
 uniComp <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kComp, value="interval")
-uniSeasonal <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="seasonal", value="mean")
+#uniSeasonal <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="seasonal", value="mean")
 uniCycle <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="cycle", value="mean")
-
+uniAll <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kModelName, value="mean")
 
 dayDelims = seq(from=0,to=dim(uniCntT)[1],by=24*(60/kEpochMins));
 mar.default <- par("mar")
@@ -107,7 +107,7 @@ dev.off()
     
 pdf(paste("~/Desktop/", kUnigram, "_", "noise+cycle", ".pdf", sep=""))
 par(mar = mar.default + c(7,0,0,0))
-plot(as.matrix(uniCntT[1:kTraining,kUnigram]) - uniComp[[kComp]]$mean[1,1:kTraining],type="l",
+plot(as.matrix(uniCntT[1:kTraining,kUnigram]) - uniAll[[kModelName]][1,1:kTraining],type="l",
     ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
     main=paste(kUnigram, " Noise (black) and daily Cycle (green)"),
     ylim=c(-10,10),lab=c(1,10,7))
