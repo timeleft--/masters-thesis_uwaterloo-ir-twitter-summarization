@@ -134,8 +134,8 @@ predictionErr <- uniFilter$f[1:kTraining] - uniCntM[1:kTraining];
 stdzdErr <- predictionErr / sd(predictionErr)
 
 print("Tests for Null hypothesis of independence of residuals from previous ones")
-print(paste("lag=24*60/kEpochMins=",24*60/kEpochMins))
-print(Box.test(stdzdErr,lag=24*60/kEpochMins,type="Ljung-Box",fitdf=length(uniFit$par)))
+print(paste("lag=24*60/kEpochMins=",as.numeric(ceiling(24*60/kEpochMins))))
+print(Box.test(stdzdErr,lag=as.numeric(ceiling(24*60/kEpochMins)),type="Ljung-Box",fitdf=length(uniFit$par)))
 
 print("lag=20:")
 print(Box.test(stdzdErr,lag=20,type="Ljung-Box",fitdf=length(uniFit$par)))
