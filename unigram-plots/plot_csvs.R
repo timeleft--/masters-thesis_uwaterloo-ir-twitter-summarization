@@ -11,11 +11,12 @@ require(dlmodeler)
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
-kUnigram <- "the"
+kUnigram <- "house"
 #kEpochMins <- 5
 kSupport <- 50 # must be greater than kNormalityAssumptionThreshold = 30
 kFitMethod <- "MLE"
 kBackEnd <- "FKF" # KFAS, FKF or dlm
+kRawResult <- TRUE
 
 supportLag <- function(inFrame, colname, supp) {
   len <- dim(inFrame)[1]
@@ -81,7 +82,7 @@ kModelName <- "level+trend+days"
 rm(uniModel)
 uniModel <- dlmodeler.build.structural(
                             pol.order=1,
-                            pol.sigmaQ=NA, 
+                            pol.sigmaQ=c(NA,0), 
                             tseas.order=3, # when increased the processing time increases a lot
                             tseas.period=24*(60/kEpochMins),
                             tseas.sigmaQ=0,
@@ -103,6 +104,10 @@ print("Convergence (uniFit$convergence): ")
 print(uniFit$convergence)
 print("Optim message (uniFit$message): ")
 print(uniFit$message)
+print("Number of hyper parameter [variances] (length(uniFit$par)):")
+print(length(uniFit$par))
+print("Number of diffuse elements [initial values] (length(uniFit$model$a0)):")
+print(length(uniFit$model$a0))
 print("Irregular Variance Matrix (uniFit$model$Ht): ") 
 print(uniFit$model$Ht)
 print("State Variance Matrix (uniFit$model$Qt): ")
@@ -111,21 +116,67 @@ print("Akaike Information Criterion (AIC(uniFit, k=2/kTraining): ")
 print(AIC(uniFit, k=2/kTraining)) # the lower the better, absolute value meaningless
 
 # should AIC be -ve number of a small absolute value?? like -1.19 is worse than -1.20 and -1.25 
-# Text book method.. very close number to the package method
-#print("Akaike Information Criterion = (2 / kTraining) * (-2 * (kTraining/2) * uniFit$logLik +  2 * length(uniFit$par) ): ")
-#(2 / kTraining) * (-2 * (kTraining/2) * uniFit$logLik +  2 * length(uniFit$par) ) # the lower the better..
+# Text book method.. exactly the value from the package method
+#print("Akaike Information Criterion = (2 / kTraining) * (-2 * (kTraining/2) * uniFit$logLik +  2 * (length(uniFit$par) +length(uniFit$model$a0))): ")
+#(2 / kTraining) * (-2 * (kTraining/2) * uniFit$logLik +  2 * (length(uniFit$par) + length(uniFit$model$a0))) # the lower the better..
 
 rm(uniFilter)
 print(paste("Time for", kFitMethod, "of filtering using backend", kBackEnd))
 print(system.time(uniFilter <- dlmodeler.filter(uniCntM,uniFit$model,smooth=FALSE, 
-        backend=kBackEnd)))
+        backend=kBackEnd, raw.result=kRawResult)))
 
 # This return just a zero.. well, the textbook says the logLik of the diffuse should be used
 #print("Akaike Information Criterion (AIC(uniFilter, k=2/kTraining): ")
 #print(AIC(uniFilter, k=2/kTraining)) # the lower the better..
 
 #Validate Assumptions
+predictionErr <- uniFilter$f[1:kTraining] - uniCntM[1:kTraining];
+stdzdErr <- predictionErr / sd(predictionErr)
 
+print("Tests for Null hypothesis of independence of residuals from previous ones")
+print(paste("lag=24*60/kEpochMins=",24*60/kEpochMins))
+print(Box.test(stdzdErr,lag=24*60/kEpochMins,type="Ljung-Box",fitdf=length(uniFit$par)))
+
+print("lag=20:")
+print(Box.test(stdzdErr,lag=20,type="Ljung-Box",fitdf=length(uniFit$par)))
+
+print(paste("lag=ln(kTraining)=",ceiling(log(kTraining))))
+print(Box.test(stdzdErr,lag=as.numeric(ceiling(log(kTraining))),type="Ljung-Box",fitdf=length(uniFit$par)))
+
+#Null hypothesis that variances of the residuals in the first third of the sequence is equal to the
+# variances of those in the last third (Homoscedacity)
+diffuseElts <- length(uniFit$model$a0)
+h <- round((kTraining - diffuseElts)/3)
+
+#text book test for homoscedacity
+#Hh <- sum(stdzdErr[(diffuseElts+1):(diffuseElts+h)]^2) / sum(stdzdErr[(kTraining-h+1):(kTraining)]^2)
+#print(paste("Ratio of variances of first and last (h=",h,") elements = ", Hh))
+#qFhh.025 <- qf(0.975,h,h) #,lower.tail=FALSE)
+#constVar <- if(Hh>=1){
+#  Hh < qFhh.025
+#} else {
+#  (1/Hh) < qFhh.025
+#}
+#print(paste("The null hypothesis of constant variance (homoscedacity) is (critical =", qFhh.025, ") = ", constVar))
+
+print("Tests for the null that variances of each third are the same (homoscedacity):")
+print(bartlett.test(stdzdErr[1:(3*h)],gl(3,h)))
+
+if(library(car, logical.return=TRUE)){
+  print(leveneTest(stdzdErr[1:(3*h)],gl(3,h)))
+} 
+
+print(fligner.test(stdzdErr[1:(3*h)],gl(3,h)))
+
+print("Tests for the null that standardized errors are normally distributed:")
+#TODO: better sampling of the 5000 errors
+shapiro.test(stdzdErr[if(length(stdzdErr)>5000){round(runif(5000,1,length(stdzdErr)))}else{1:length(stdzdErr)}])
+
+if(library(fBasics, logical.return=TRUE)){
+# jarqueberaTest used in the text book
+  print(jarqueberaTest(stdzdErr))
+  print(ksnormTest(stdzdErr))
+}
 sink()
 
 kComp <- "level+trend"
