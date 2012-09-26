@@ -11,7 +11,7 @@ require(dlmodeler)
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
-kUnigram <- "house"
+kUnigram <- "oprah"
 #kEpochMins <- 5
 kSupport <- 50 # must be greater than kNormalityAssumptionThreshold = 30
 kFitMethod <- "MLE"
@@ -170,7 +170,7 @@ print(fligner.test(stdzdErr[1:(3*h)],gl(3,h)))
 
 print("Tests for the null that standardized errors are normally distributed:")
 #TODO: better sampling of the 5000 errors
-shapiro.test(stdzdErr[if(length(stdzdErr)>5000){round(runif(5000,1,length(stdzdErr)))}else{1:length(stdzdErr)}])
+print(shapiro.test(stdzdErr[if(length(stdzdErr)>5000){round(runif(5000,1,length(stdzdErr)))}else{1:length(stdzdErr)}]))
 
 if(library(fBasics, logical.return=TRUE)){
 # jarqueberaTest used in the text book
