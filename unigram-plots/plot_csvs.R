@@ -11,7 +11,7 @@ require(dlmodeler)
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
-kUnigram <- "oprah"
+kUnigram <- "egyptian"
 #kEpochMins <- 5
 kSupport <- 50 # must be greater than kNormalityAssumptionThreshold = 30
 kFitMethod <- "MLE"
@@ -146,7 +146,7 @@ print(Box.test(stdzdErr,lag=as.numeric(ceiling(log(kTraining))),type="Ljung-Box"
 #Null hypothesis that variances of the residuals in the first third of the sequence is equal to the
 # variances of those in the last third (Homoscedacity)
 diffuseElts <- length(uniFit$model$a0)
-h <- round((kTraining - diffuseElts)/3)
+h <- floor((length(stdzdErr) - diffuseElts)/3)
 
 #text book test for homoscedacity
 #Hh <- sum(stdzdErr[(diffuseElts+1):(diffuseElts+h)]^2) / sum(stdzdErr[(kTraining-h+1):(kTraining)]^2)
@@ -160,22 +160,34 @@ h <- round((kTraining - diffuseElts)/3)
 #print(paste("The null hypothesis of constant variance (homoscedacity) is (critical =", qFhh.025, ") = ", constVar))
 
 print("Tests for the null that variances of each third are the same (homoscedacity):")
-print(bartlett.test(stdzdErr[1:(3*h)],gl(3,h)))
+
+range <- (diffuseElts+1):length(stdzdErr)
+groups <- gl(3,h)
+range <- range[1:length(groups)]
+
+print("Bartlett's test is sensitive to departures from normality. H0 that all k population variances are equal.")
+print(bartlett.test(stdzdErr[range],groups))
 
 if(library(car, logical.return=TRUE)){
-  print(leveneTest(stdzdErr[1:(3*h)],gl(3,h)))
+  print("If the Levene's Test is significant, the variances are significantly different")
+  print(leveneTest(stdzdErr[range],groups))
 } 
 
-print(fligner.test(stdzdErr[1:(3*h)],gl(3,h)))
+#the FK test originated for the cross-sectional data, not time series objects. Even in subsamples the data points will be dependent, thus the tests are probably not applicable. 
+#print(fligner.test(stdzdErr[range],groups))
 
 print("Tests for the null that standardized errors are normally distributed:")
 #TODO: better sampling of the 5000 errors
-print(shapiro.test(stdzdErr[if(length(stdzdErr)>5000){round(runif(5000,1,length(stdzdErr)))}else{1:length(stdzdErr)}]))
+print(shapiro.test(stdzdErr[if((length(stdzdErr)-diffuseElts)>5000){
+                  round(runif(5000,diffuseElts+1,length(stdzdErr)))
+                }else{
+                  (diffuseElts+1):length(stdzdErr)
+                }]))
 
 if(library(fBasics, logical.return=TRUE)){
 # jarqueberaTest used in the text book
-  print(jarqueberaTest(stdzdErr))
-  print(ksnormTest(stdzdErr))
+  print(jarqueberaTest(stdzdErr[(diffuseElts+1):length(stdzdErr)]))
+  print(ksnormTest(stdzdErr[(diffuseElts+1):length(stdzdErr)]))
 }
 sink()
 
@@ -202,7 +214,7 @@ par(mar = mar.default + c(7,0,0,0))
 #uniYLog <- ifelse(as.numeric(diff(quantile(uniCntT[1:kTraining,kUnigram], c(0.05,.95)))) > 100, TRUE, FALSE)   
 #par(ylog=uniYLog)
 
-plot(as.matrix(uniCntT[kUnigram]),type="p",
+plot(t(uniCntM),type="p",
     cex=0.5,pch=20,
     ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
     main=paste(kUnigram, " occurrences, fitted model (red) and Confidence bands (blue)"),
@@ -215,7 +227,7 @@ axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 
 dev.off()
 
-pdf(paste("~/Desktop/", kUnigram, "_", "noise+cycle", ".pdf", sep=""))
+pdf(paste("~/Desktop/", kUnigram, "_", "predictionerr+cycle", ".pdf", sep=""))
 
 # noiseYLim <- ???
 # noiseYLog <- flase (-ve numbers)
@@ -223,11 +235,24 @@ pdf(paste("~/Desktop/", kUnigram, "_", "noise+cycle", ".pdf", sep=""))
 par(mar = mar.default + c(7,0,0,0))
 plot(t(uniCntM) - uniAll[[kModelName]][1,1:kTraining],type="l",
     ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
-    main=paste(kUnigram, " Noise (black) and daily Cycle (green)"),
+    main=paste(kUnigram, "Irregular (black) and daily Cycle (green)"),
     ylim=c(-kSupport,kSupport),lab=c(1,10,7))
 lines(uniCycle$cycle[1:kTraining],type='l',col="green")
 axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 
 dev.off()
+
+pdf(paste("~/Desktop/", kUnigram, "_", "filtered+predicted", ".pdf", sep=""))
+par(mar = mar.default + c(7,0,0,0))
+plot(t(uniCntM), type="p", cex=0.5,pch=20,
+  ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="",
+  main=paste(kUnigram, " filtered (red) and predicted (black)"),
+  lab=c(1,10,7)) #ylim=c(-kSupport,kSupport),
+axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
+lines(t(uniComp[["level+trend"]]$mean), type="l", col="red", lty=2)
+lines(t(uniFilter$f), type="l")
+
+dev.off()
+
 cat("Done\n")
 #lines((kTraining+1):dim(uniCntT)[1],uniComp$"level+trend+hourly"[(1):(dim(uniCntT)[1]-kTraining)],col="red")
