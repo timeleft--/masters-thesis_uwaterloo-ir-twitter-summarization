@@ -147,6 +147,7 @@ print(Box.test(stdzdErr,lag=20,type="Ljung-Box",fitdf=length(uniFit$par)))
 print(paste("lag=ln(kTraining)=",ceiling(log(kTraining))))
 print(Box.test(stdzdErr,lag=as.numeric(ceiling(log(kTraining))),type="Ljung-Box",fitdf=length(uniFit$par)))
 
+
 #Null hypothesis that variances of the residuals in the first third of the sequence is equal to the
 # variances of those in the last third (Homoscedacity)
 diffuseElts <- length(uniFit$model$a0)
@@ -196,6 +197,14 @@ if(library(fBasics, logical.return=TRUE)){
 }
 sink()
 
+#if(library(corrgram, logical.return=TRUE)){
+#  pdf(paste("~/Desktop/", kUnigram, "_", "correlogram-stderr-filter", ".pdf", sep=""))
+#
+#  corrgram(t(stdzdErr), order=FALSE, lower.panel=panel.shade, upper.panel=panel.pie, text.panel=panel.txt, main="Autocorrelation of standardized onestep ahead prediction error")
+#    
+#  dev.off()
+#}
+
 kComp <- "level+trend"
 #compnames can be "level+trend+hourly"(kModelName) or "level+trend" or "seasonal"
 # find out using: summary(uniFit$model$components)
@@ -232,7 +241,7 @@ axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 
 dev.off()
 
-pdf(paste("~/Desktop/", kUnigram, "_", "predictionerr+cycle", ".pdf", sep=""))
+pdf(paste("~/Desktop/", kUnigram, "_", "onestepaheadprederr+cycle", ".pdf", sep=""))
 
 # noiseYLim <- ???
 # noiseYLog <- flase (-ve numbers)
