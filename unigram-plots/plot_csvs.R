@@ -69,6 +69,7 @@ for(i in 1:length(hrs.files)){
 }
 suppLag <- supportLag(uniCntT, kUnigram, kSupport)
 kEpochMins <- ceiling(as.numeric(quantile(suppLag, probs=c(0.75))))
+#TODO: assert that the minutes are less than a day, or else the cycle will have not meaning
 uniCntT <- sumN(uniCntT, kUnigram, kEpochMins)
 
 kTraining <- dim(uniCntT)[1] #/2
@@ -95,7 +96,7 @@ uniModel <- dlmodeler.build.structural(
 rm(uniFit)
 
 sink(paste("~/Desktop/", kUnigram, "_", kModelName, ".log", sep=""))
-
+print(paster("Epoch in minutes:", kEpochMins))
 print(paste("Time for", kFitMethod, "of model parameters (initialization) using backend", kBackEnd))
 print(system.time(uniFit <- dlmodeler.fit(uniCntM, uniModel, 
         filter=FALSE, smooth=FALSE, verbose=FALSE, 
@@ -129,8 +130,18 @@ print(system.time(uniFilter <- dlmodeler.filter(uniCntM,uniFit$model,smooth=FALS
 #print("Akaike Information Criterion (AIC(uniFilter, k=2/kTraining): ")
 #print(AIC(uniFilter, k=2/kTraining)) # the lower the better..
 
+
+kComp <- "level+trend"
+#compnames can be "level+trend+hourly"(kModelName) or "level+trend" or "seasonal"
+# find out using: summary(uniFit$model$components)
+uniComp <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kComp, value="interval")
+#uniSeasonal <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="seasonal", value="mean")
+uniCycle <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="cycle", value="mean")
+uniAll <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kModelName, value="mean")
+
+
 #Validate Assumptions
-predictionErr <- uniFilter$f[1:kTraining] - uniCntM[1:kTraining];
+validateAssumps <- function(predictionErr){
 stdzdErr <- predictionErr / sd(predictionErr)
 
 print("Tests for independence of residuals from previous ones")
@@ -140,6 +151,10 @@ where CHSPPF is the percent point function of the chi-square distribution.
 That is, small p-value indicate that there's no enough evidence of independence.")
 print(paste("lag=24*60/kEpochMins=",as.numeric(ceiling(24*60/kEpochMins))))
 print(Box.test(stdzdErr,lag=as.numeric(ceiling(24*60/kEpochMins)),type="Ljung-Box",fitdf=length(uniFit$par)))
+
+print(paste("lag=7*24*60/kEpochMins=",as.numeric(ceiling(7*24*60/kEpochMins))))
+print(Box.test(stdzdErr,lag=as.numeric(ceiling(7*24*60/kEpochMins)),type="Ljung-Box",fitdf=length(uniFit$par)))
+
 
 print("lag=20:")
 print(Box.test(stdzdErr,lag=20,type="Ljung-Box",fitdf=length(uniFit$par)))
@@ -170,8 +185,8 @@ range <- (diffuseElts+1):length(stdzdErr)
 groups <- gl(3,h)
 range <- range[1:length(groups)]
 
-print("Bartlett's test is sensitive to departures from normality. H0 that all k population variances are equal.")
-print(bartlett.test(stdzdErr[range],groups))
+#print("Bartlett's test is sensitive to departures from normality. H0 that all k population variances are equal.")
+#print(bartlett.test(stdzdErr[range],groups))
 
 if(library(car, logical.return=TRUE)){
   print("If the Levene's Test is significant, the variances are significantly different")
@@ -184,17 +199,29 @@ if(library(car, logical.return=TRUE)){
 print("Tests for the null that standardized errors are normally distributed:")
 print("Remember if the p-value is less than the chosen alpha level, then the null hypothesis is rejected (i.e. one concludes the data are not from a normally distributed population)")
 #TODO: better sampling of the 5000 errors
-print(shapiro.test(stdzdErr[if((length(stdzdErr)-diffuseElts)>5000){
-                  round(runif(5000,diffuseElts+1,length(stdzdErr)))
-                }else{
-                  (diffuseElts+1):length(stdzdErr)
-                }]))
+#print(shapiro.test(stdzdErr[if((length(stdzdErr)-diffuseElts)>5000){
+#                  round(runif(5000,diffuseElts+1,length(stdzdErr)))
+#                }else{
+#                  (diffuseElts+1):length(stdzdErr)
+#                }]))
 
 if(library(fBasics, logical.return=TRUE)){
 # jarqueberaTest used in the text book
   print(jarqueberaTest(stdzdErr[(diffuseElts+1):length(stdzdErr)]))
-  print(ksnormTest(stdzdErr[(diffuseElts+1):length(stdzdErr)]))
+#  print(ksnormTest(stdzdErr[(diffuseElts+1):length(stdzdErr)]))
 }
+}
+
+
+print("******************** One step ahead error for validating assumptions *******************")
+oneStepAheadPredictionErr <- uniCntM[1:kTraining] - uniFilter$f[1:kTraining]
+validateAssumps(oneStepAheadPredictionErr)
+print("******************** ********************************************** *******************")
+#they are the same
+#print("******************** irregular for validating assumptions *******************")
+#irregular <- uniCntM[1:kTraining] - uniAll[[kModelName]][1,1:kTraining]
+#validateAssumps(irregular)
+#print("******************** ********************************************** *******************")
 sink()
 
 #if(library(corrgram, logical.return=TRUE)){
@@ -204,14 +231,6 @@ sink()
 #    
 #  dev.off()
 #}
-
-kComp <- "level+trend"
-#compnames can be "level+trend+hourly"(kModelName) or "level+trend" or "seasonal"
-# find out using: summary(uniFit$model$components)
-uniComp <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kComp, value="interval")
-#uniSeasonal <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="seasonal", value="mean")
-uniCycle <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="cycle", value="mean")
-uniAll <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kModelName, value="mean")
 
 #qplot(get(kTS), get(kUnigram), data=uniCntT, xlab="Date/Time", ylab=kUnigram, log="y")  
 # Can't control point size or shape :( -->   size=get(kUnigram)) + scale_size(c(0.20,0.21)) cex=.1)
@@ -241,13 +260,13 @@ axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 
 dev.off()
 
-pdf(paste("~/Desktop/", kUnigram, "_", "onestepaheadprederr+cycle", ".pdf", sep=""))
+pdf(paste("~/Desktop/", kUnigram, "_", "irregular+cycle", ".pdf", sep=""))
 
 # noiseYLim <- ???
 # noiseYLog <- flase (-ve numbers)
     
 par(mar = mar.default + c(7,0,0,0))
-plot(t(uniCntM) - uniAll[[kModelName]][1,1:kTraining],type="l",
+plot(oneStepAheadPredictionErr,type="l",
     ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
     main=paste(kUnigram, "Irregular (black) and daily Cycle (green)"),
     ylim=c(-kSupport,kSupport),lab=c(1,10,7))
@@ -256,14 +275,14 @@ axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 
 dev.off()
 
-pdf(paste("~/Desktop/", kUnigram, "_", "filtered+predicted", ".pdf", sep=""))
+pdf(paste("~/Desktop/", kUnigram, "_", kComp, "+", kModelName, ".pdf", sep=""))
 par(mar = mar.default + c(7,0,0,0))
 plot(t(uniCntM), type="p", cex=0.5,pch=20,
   ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="",
-  main=paste(kUnigram, " filtered (red) and predicted (blue)"),
+  main=paste(kUnigram, kComp, "(red) and",  kModelName, " (blue)"),
   lab=c(1,10,7)) #ylim=c(-kSupport,kSupport),
 axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
-lines(t(uniComp[["level+trend"]]$mean), type="l", col="red", lty=2)
+lines(t(uniComp[[kComp]]$mean), type="l", col="red", lty=2)
 lines(t(uniFilter$f), type="l",col="blue")
 
 dev.off()
