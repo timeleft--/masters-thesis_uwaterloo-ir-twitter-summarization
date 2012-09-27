@@ -11,7 +11,7 @@ require(dlmodeler)
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
-kUnigram <- "winfrey"
+kUnigram <- "egyptian"
 #kEpochMins <- 5
 kSupport <- 50 # must be greater than kNormalityAssumptionThreshold = 30
 kFitMethod <- "MLE"
@@ -133,7 +133,11 @@ print(system.time(uniFilter <- dlmodeler.filter(uniCntM,uniFit$model,smooth=FALS
 predictionErr <- uniFilter$f[1:kTraining] - uniCntM[1:kTraining];
 stdzdErr <- predictionErr / sd(predictionErr)
 
-print("Tests for Null hypothesis of independence of residuals from previous ones")
+print("Tests for independence of residuals from previous ones")
+print("In Box-Ljung test The hypothesis of randomness is rejected if
+    QLB > CHSPPF((1-alpha),h) 
+where CHSPPF is the percent point function of the chi-square distribution.
+That is, small p-value indicate that there's no enough evidence of independence.")
 print(paste("lag=24*60/kEpochMins=",as.numeric(ceiling(24*60/kEpochMins))))
 print(Box.test(stdzdErr,lag=as.numeric(ceiling(24*60/kEpochMins)),type="Ljung-Box",fitdf=length(uniFit$par)))
 
@@ -148,7 +152,7 @@ print(Box.test(stdzdErr,lag=as.numeric(ceiling(log(kTraining))),type="Ljung-Box"
 diffuseElts <- length(uniFit$model$a0)
 h <- floor((length(stdzdErr) - diffuseElts)/3)
 
-#text book test for homoscedacity
+#text book test for homoscedacity (I guess this is the Box Q test)
 #Hh <- sum(stdzdErr[(diffuseElts+1):(diffuseElts+h)]^2) / sum(stdzdErr[(kTraining-h+1):(kTraining)]^2)
 #print(paste("Ratio of variances of first and last (h=",h,") elements = ", Hh))
 #qFhh.025 <- qf(0.975,h,h) #,lower.tail=FALSE)
@@ -159,7 +163,7 @@ h <- floor((length(stdzdErr) - diffuseElts)/3)
 #}
 #print(paste("The null hypothesis of constant variance (homoscedacity) is (critical =", qFhh.025, ") = ", constVar))
 
-print("Tests for the null that variances of each third are the same (homoscedacity):")
+print("Tests for homoginity of variances of each third of the data (homoscedacity):")
 
 range <- (diffuseElts+1):length(stdzdErr)
 groups <- gl(3,h)
@@ -177,6 +181,7 @@ if(library(car, logical.return=TRUE)){
 #print(fligner.test(stdzdErr[range],groups))
 
 print("Tests for the null that standardized errors are normally distributed:")
+print("Remember if the p-value is less than the chosen alpha level, then the null hypothesis is rejected (i.e. one concludes the data are not from a normally distributed population)")
 #TODO: better sampling of the 5000 errors
 print(shapiro.test(stdzdErr[if((length(stdzdErr)-diffuseElts)>5000){
                   round(runif(5000,diffuseElts+1,length(stdzdErr)))
