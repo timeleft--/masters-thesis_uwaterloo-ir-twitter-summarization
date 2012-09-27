@@ -11,7 +11,7 @@ require(dlmodeler)
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
-kUnigram <- "egyptian"
+kUnigram <- "oprah"
 #kEpochMins <- 5
 kSupport <- 50 # must be greater than kNormalityAssumptionThreshold = 30
 kFitMethod <- "MLE"
@@ -246,11 +246,11 @@ pdf(paste("~/Desktop/", kUnigram, "_", "filtered+predicted", ".pdf", sep=""))
 par(mar = mar.default + c(7,0,0,0))
 plot(t(uniCntM), type="p", cex=0.5,pch=20,
   ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="",
-  main=paste(kUnigram, " filtered (red) and predicted (black)"),
+  main=paste(kUnigram, " filtered (red) and predicted (cyan)"),
   lab=c(1,10,7)) #ylim=c(-kSupport,kSupport),
 axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 lines(t(uniComp[["level+trend"]]$mean), type="l", col="red", lty=2)
-lines(t(uniFilter$f), type="l")
+lines(t(uniFilter$f), type="l",col="red")
 
 dev.off()
 
