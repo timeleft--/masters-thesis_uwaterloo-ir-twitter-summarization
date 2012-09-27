@@ -96,7 +96,7 @@ uniModel <- dlmodeler.build.structural(
 rm(uniFit)
 
 sink(paste("~/Desktop/", kUnigram, "_", kModelName, ".log", sep=""))
-print(paster("Epoch in minutes:", kEpochMins))
+print(paste("Epoch in minutes:", kEpochMins))
 print(paste("Time for", kFitMethod, "of model parameters (initialization) using backend", kBackEnd))
 print(system.time(uniFit <- dlmodeler.fit(uniCntM, uniModel, 
         filter=FALSE, smooth=FALSE, verbose=FALSE, 
