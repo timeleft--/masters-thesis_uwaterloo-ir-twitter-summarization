@@ -17,6 +17,9 @@ kSupport <- 50 # must be greater than kNormalityAssumptionThreshold = 30
 kFitMethod <- "MLE"
 kBackEnd <- "FKF" # KFAS, FKF or dlm
 kRawResult <- TRUE
+kModelName <- "level+days"
+kComp <- "level"
+
 
 supportLag <- function(inFrame, colname, supp) {
   len <- dim(inFrame)[1]
@@ -79,11 +82,11 @@ uniCntM <- t(as.matrix(uniCntT[1:kTraining,kUnigram]))
 #sdNoise <- 0 #deterministic: caused very noisy curve 
 #sdNoise <- sd(uniCntT[1:kTraining/2,kUnigram]) #fixed: didn't make a difference from stochastic (only scaled)
 
-kModelName <- "level+trend+days"
+
 rm(uniModel)
 uniModel <- dlmodeler.build.structural(
-                            pol.order=1,
-                            pol.sigmaQ=c(NA,0), 
+                            pol.order=0, #1,
+                            pol.sigmaQ=NA, #c(NA,0), 
                             tseas.order=3, # when increased the processing time increases a lot
                             tseas.period=24*(60/kEpochMins),
                             tseas.sigmaQ=0,
@@ -131,7 +134,6 @@ print(system.time(uniFilter <- dlmodeler.filter(uniCntM,uniFit$model,smooth=FALS
 #print(AIC(uniFilter, k=2/kTraining)) # the lower the better..
 
 
-kComp <- "level+trend"
 #compnames can be "level+trend+hourly"(kModelName) or "level+trend" or "seasonal"
 # find out using: summary(uniFit$model$components)
 uniComp <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kComp, value="interval")
@@ -275,7 +277,7 @@ axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 
 dev.off()
 
-pdf(paste("~/Desktop/", kUnigram, "_", kComp, "+", kModelName, ".pdf", sep=""))
+pdf(paste("~/Desktop/", kUnigram, "_", kComp, "_", kModelName, ".pdf", sep=""))
 par(mar = mar.default + c(7,0,0,0))
 plot(t(uniCntM), type="p", cex=0.5,pch=20,
   ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="",
