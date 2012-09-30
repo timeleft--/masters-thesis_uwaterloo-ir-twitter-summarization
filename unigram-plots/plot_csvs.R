@@ -11,7 +11,7 @@ require(dlmodeler)
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
-kUnigram <- "sister"
+kUnigram <- "egyptian"
 #kEpochMins <- 5
 kSupport <- 50 # must be greater than kNormalityAssumptionThreshold = 30
 #kSuppLagExpW <- 0.8
@@ -83,7 +83,10 @@ suppLag <- supportLag(uniCntT, kUnigram, kSupport)
 #kEpochMins <- quantile(suppLag, probs=c(0.75))
 
 # The maximum likelihood rate assuming an exponential distrib
-kEpochMins <- mean(suppLag)
+# kEpochMins <- mean(suppLag)
+
+# The upper bound of the 95% CI of the MLE of rate, assuming exponential distrib of suppLag
+kEpochMins <- mean(suppLag) * (1 + (1.96 * sqrt(length(suppLag)))) 
 
 ##Exponentially moving average of the support lag
 #kEpochMins <- suppLag[1]
