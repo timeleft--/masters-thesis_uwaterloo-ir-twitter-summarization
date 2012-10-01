@@ -11,7 +11,7 @@ require(dlmodeler)
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
-kUnigram <- "white"
+kUnigram <- "oprah"
 #kEpochMins <- 5
 kSupport <- 30 # must be greater than kNormalityAssumptionThreshold = 30
 kSuppedQtile <- 0.95
@@ -20,13 +20,14 @@ kFitMethod <- "MLE"
 # FKF is the best, FKAS is also good
 # but dlm is so heavy weight that day of week seasonal causes the diffuse to fail because of negative
 # variance (cycle) or hangs up the computer (dummy seasonal)
-kBackEnd <- "FKF" # KFAS, FKF or dlm
+kBackEnd <- "KFAS" # KFAS, FKF or dlm
 kRawResult <- TRUE
 kModelName <- "random-walk+days" #-drift+weeks+days"
 kComp <- "level" #"+trend"
 kRepeating<-"cycle" # "seasonal+cycle"
 kCycleOrder <- 3
 
+kTrainingFraction <- 1
 
 supportLag <- function(inFrame, colname, supp) {
   len <- dim(inFrame)[1]
@@ -78,7 +79,7 @@ for(i in 1:length(hrs.files)){
         [c(kTS, kUnigram)])
 }
 
-kTraining <- dim(uniCntT)[1] #/ 2 
+kTraining <- as.numeric(ceiling(dim(uniCntT)[1] * kTrainingFraction))
 # determing the epoch length
 suppLag <- supportLag(uniCntT[1:kTraining,], kUnigram, kSupport)
 ##The 3rd quartile of the suppLag assuming uniform distrib
@@ -115,8 +116,8 @@ while(((24*60) %% kEpochMins) > 0){
 
 #Aggregate the epochs
 uniCntT <- sumN(uniCntT, kUnigram, kEpochMins)
-kTraining <- dim(uniCntT)[1] #/ 2
-uniCntM <- t(as.matrix(uniCntT[1:kTraining,kUnigram]))
+kTraining <- as.numeric(ceiling(dim(uniCntT)[1] * kTrainingFraction))
+uniTrainM <- t(as.matrix(uniCntT[1:kTraining,kUnigram]))
 
 #sdNoise <- 0 #deterministic: caused very noisy curve 
 #sdNoise <- sd(uniCntT[1:kTraining/2,kUnigram]) #fixed: didn't make a difference from stochastic (only scaled)
@@ -144,7 +145,7 @@ rm(uniFit)
 sink(paste("~/Desktop/",kModelName,"_",  kUnigram, ".log", sep=""))
 print(paste("Epoch in minutes:", kEpochMins))
 print(paste("Time for", kFitMethod, "of model parameters (initialization) using backend", kBackEnd))
-print(system.time(uniFit <- dlmodeler.fit(uniCntM, uniModel, 
+print(system.time(uniFit <- dlmodeler.fit(uniTrainM, uniModel, 
         filter=FALSE, smooth=FALSE, verbose=FALSE, 
         method=kFitMethod, backend=kBackEnd)))
 print("Convergence (uniFit$convergence): ")
@@ -169,7 +170,7 @@ print(AIC(uniFit, k=2/kTraining)) # the lower the better, absolute value meaning
 
 rm(uniFilter)
 print(paste("Time for", kFitMethod, "of filtering using backend", kBackEnd))
-print(system.time(uniFilter <- dlmodeler.filter(uniCntM,uniFit$model,smooth=FALSE, 
+print(system.time(uniFilter <- dlmodeler.filter(uniTrainM,uniFit$model,smooth=FALSE, 
         backend=kBackEnd, raw.result=kRawResult)))
 
 # This return just a zero.. well, the textbook says the logLik of the diffuse should be used
@@ -260,21 +261,20 @@ if(library(fBasics, logical.return=TRUE)){
 
 
 print("******************** One step ahead error for validating assumptions *******************")
-oneStepAheadPredictionErr <- uniCntM[1:kTraining] - uniFilter$f[1:kTraining] # balash hals -> +1]
+oneStepAheadPredictionErr <- uniTrainM[1:kTraining] - uniFilter$f[1:kTraining] # balash hals -> +1]
 validateAssumps(oneStepAheadPredictionErr)
 print("******************** ********************************************** *******************")
 #they are the same
 #print("******************** irregular for validating assumptions *******************")
-#irregular <- uniCntM[1:kTraining] - uniAll[[kModelName]][1,1:kTraining]
+#irregular <- uniTrainM[1:kTraining] - uniAll[[kModelName]][1,1:kTraining]
 #validateAssumps(irregular)
 #print("******************** ********************************************** *******************")
 sink()
 
 pdf(paste("~/Desktop/",kModelName,"_",  kUnigram, "_", "autocorrelation", ".pdf", sep=""))
-
 acf(oneStepAheadPredictionErr, lag=20)
-
 dev.off()
+
 
 #if(library(corrgram, logical.return=TRUE)){
 #  pdf(paste("~/Desktop/",kModelName,"_",  kUnigram, "_", "correlogram-stderr-filter", ".pdf", sep=""))
@@ -283,6 +283,15 @@ dev.off()
 #    
 #  dev.off()
 #}
+
+########### FORECASTING #############
+# I can't get it to work, and I don't really need it anyway as we intend to use Filtering
+#uniTestM <- t(as.matrix(uniCntT[(kTraining+1):length(uniCntT),kUnigram]))
+#uniFore <- dlmodeler.forecast(uniTestM, uniFit$model,start=1,ahead=1,iters=dim(uniTestM)[1])  
+
+
+
+############## PLOTS ################
 
 #qplot(get(kTS), get(kUnigram), data=uniCntT, xlab="Date/Time", ylab=kUnigram, log="y")  
 # Can't control point size or shape :( -->   size=get(kUnigram)) + scale_size(c(0.20,0.21)) cex=.1)
@@ -299,7 +308,7 @@ par(mar = mar.default + c(7,0,0,0))
 #uniYLog <- ifelse(as.numeric(diff(quantile(uniCntT[1:kTraining,kUnigram], c(0.05,.95)))) > 100, TRUE, FALSE)   
 #par(ylog=uniYLog)
 
-plot(t(uniCntM),type="p",
+plot(t(uniTrainM),type="p",
     cex=0.5,pch=20,
     ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
     main=paste(kUnigram, " occurrences, ", kComp, " (red) and Confidence bands (blue)"),
@@ -331,7 +340,7 @@ dev.off()
 
 pdf(paste("~/Desktop/", kModelName,"_", kUnigram, "_", "full-predicted", ".pdf", sep=""))
 par(mar = mar.default + c(7,0,0,0))
-plot(t(uniCntM), type="p", cex=0.5,pch=20,
+plot(t(uniTrainM), type="p", cex=0.5,pch=20,
   ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="",
   main=paste(kUnigram, kComp, "(red) and",  kModelName, " (blue)"),
   lab=c(1,10,7)) #ylim=c(-kSupport,kSupport),
