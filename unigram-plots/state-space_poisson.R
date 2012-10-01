@@ -6,68 +6,17 @@
 require(reshape)
 #require(ggplot2)
 #require(MARSS)
-require(dlmodeler)
+require(KFAS)
 
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
 kUnigram <- "white"
-#kEpochMins <- 5
-kSupport <- 50 # must be greater than kNormalityAssumptionThreshold = 30
-#kSuppLagExpW <- 0.8
-kFitMethod <- "MLE"
-# FKF is the best, FKAS is also good
-# but dlm is so heavy weight that day of week seasonal causes the diffuse to fail because of negative
-# variance (cycle) or hangs up the computer (dummy seasonal)
-kBackEnd <- "FKF" # KFAS, FKF or dlm
-kRawResult <- TRUE
+kEpochMins <- 5
+
 kModelName <- "random-walk+days" #-trend+weeks+days"
 kComp <- "level"
 kRepeating<-"cycle" # "seasonal+cycle"
-
-
-
-supportLag <- function(inFrame, colname, supp) {
-  len <- dim(inFrame)[1]
-  retVal <- NULL
-  currSupp <- 0
-  prevIntervalEnd <- 0
-  nextIntervalIx <- 1
-  for(i in 1:len){
-    currSupp <- currSupp + inFrame[i,colname]
-    if(currSupp >= supp){
-      retVal[nextIntervalIx] <- i - prevIntervalEnd #if input isn't by minute, use TIMESTAMP
-      prevIntervalEnd <- i
-      currSupp = 0
-      nextIntervalIx <- nextIntervalIx + 1
-    }
-  }
-  # don't care about the interval len - prevIntervalEnd
-  return(retVal)
-}
-# debug(supportLag)
-# setBreakpoint("plot_csvs.R#27")
-
-sumN <- function (inFrame, colname, n) {
-	len <- dim(inFrame)[1]
-	if(len %% n != 0) {
-    xlen <- ceiling(len/n)*n
-    deltaT <- inFrame$TIMESTAMP[2] - inFrame$TIMESTAMP[1]
-    currT <- inFrame$TIMESTAMP[len]
-    for(i in (len+1):xlen)  {
-      currT <- currT + deltaT
-      inFrame[i,] <- c(currT,NA)
-    }
-    len <-xlen
-  }
-	
-	retVal <- data.frame(TIMESTAMP=as.POSIXct(inFrame$TIMESTAMP[seq(n,len,by=n)],origin="1970-01-01",
-          tz="GMT"))
-	retVal[colname] <- colSums(matrix(inFrame[[colname]], nrow=n),na.rm=TRUE)
-	return(retVal)
-}
-#debug(sumN)
-# setBreakpoint("plot_csvs.R#19")
 
 hrs.files <- list.files(pattern=".*csv$")
 uniCntT <- NULL
@@ -77,90 +26,54 @@ for(i in 1:length(hrs.files)){
         [c(kTS, kUnigram)])
 }
 
-# determing the epoch length
-suppLag <- supportLag(uniCntT, kUnigram, kSupport)
-##The 3rd quartile of the suppLag
-#kEpochMins <- quantile(suppLag, probs=c(0.75))
-
-# The maximum likelihood rate assuming an exponential distrib
-# kEpochMins <- mean(suppLag)
-
-# The upper bound of the 95% CI of the MLE of rate, assuming exponential distrib of suppLag
-kEpochMins <- mean(suppLag) * (1 + (1.96 * sqrt(length(suppLag)))) 
-
-##Exponentially moving average of the support lag
-#kEpochMins <- suppLag[1]
-#for(i in 2:length(suppLag)){
-#  kEpochMins <- kEpochMins + kSuppLagExpW * (suppLag[i] - kEpochMins)
-#}
-
-##Linear Weighted moving average of the support lag
-#require(TTR)
-#lastN <- length(suppLag)
-#kEpochMins <- WMA(suppLag,lastN,1:lastN)[lastN]
-
-# assert that the minutes are less than a day, or else the cycle will have not meaning
-kEpochMins <- min(c(ceiling(as.numeric(kEpochMins)),24*60))
-
-#Aggregate the epochs
-uniCntT <- sumN(uniCntT, kUnigram, kEpochMins)
-kTraining <- dim(uniCntT)[1] #/2
-uniCntM <- t(as.matrix(uniCntT[1:kTraining,kUnigram]))
-
-#sdNoise <- 0 #deterministic: caused very noisy curve 
-#sdNoise <- sd(uniCntT[1:kTraining/2,kUnigram]) #fixed: didn't make a difference from stochastic (only scaled)
-
+kTraining <- dim(uniCntT)[1] #/ 2
+    
+uniTS <- ts(uniCntT[,kUnigram][1:kTraining], frequency=kEpochMins)
 
 rm(uniModel)
-uniModel <- dlmodeler.build.structural(
-                            pol.order=0, #1 -> trend isn't large enough to justify this extra state 
-                            pol.sigmaQ=NA, #c(NA,0), -> Even as deterministic trend, it doesn't work
-                            #daily repeating as harmonics in a spectral component
-                            tseas.order=3, # when increased the processing time increases a lot
-                            tseas.period=as.numeric(ceiling(24*(60/kEpochMins))),
-                            tseas.sigmaQ=0,
-                            #weekly repeating as harmonics in a spectral component
-                            #tseas.order=7, # when increased the processing time increases a lot
-                            #tseas.period=as.numeric(ceiling(7*24*(60/kEpochMins))),
-                            #tseas.sigmaQ=0,
-                            #daily repeating as dummy seasonal
-                            #dseas.order=max(2,as.numeric(ceiling(24*(60/kEpochMins)))),
-                            #dseas.sigmaQ=0,
-                            sigmaH=NA,
-                            name=kModelName)
+uniModel <- structSSM(uniTS, 
+      trend = "level", 
+      seasonal = "freq",
+      Q.seasonal=0,
+      distribution="Poisson")
+    
 rm(uniFit)
 
-sink(paste("~/Desktop/",kModelName,"_",  kUnigram, ".log", sep=""))
+sink(paste("~/Desktop/kfas/",kModelName,"_",  kUnigram, ".log", sep=""))
 print(paste("Epoch in minutes:", kEpochMins))
 print(paste("Time for", kFitMethod, "of model parameters (initialization) using backend", kBackEnd))
-print(system.time(uniFit <- dlmodeler.fit(uniCntM, uniModel, 
-        filter=FALSE, smooth=FALSE, verbose=FALSE, 
-        method=kFitMethod, backend=kBackEnd)))
-print("Convergence (uniFit$convergence): ")
-print(uniFit$convergence)
-print("Optim message (uniFit$message): ")
-print(uniFit$message)
-print("Number of hyper parameter [variances] (length(uniFit$par)):")
-print(length(uniFit$par))
-print("Number of diffuse elements [initial values] (length(uniFit$model$a0)):")
-print(length(uniFit$model$a0))
-print("Irregular Variance Matrix (uniFit$model$Ht): ") 
-print(uniFit$model$Ht)
-print("State Variance Matrix (uniFit$model$Qt): ")
-print(uniFit$model$Qt)
-print("Akaike Information Criterion (AIC(uniFit, k=2/kTraining): ")
-print(AIC(uniFit, k=2/kTraining)) # the lower the better, absolute value meaningless
-
+print(system.time(uniFit <- fitSSM(inits=rep(0.5*log(0.005)), model=uniModel)))
+print("Convergence (uniFit$opt$convergence): ")
+print(uniFit$opt$convergence)
+print("Optim message (uniFit$opt$message): ")
+print(uniFit$opt$message)
+print("Number of hyper parameter [variances] (length(uniFit$opt$par)):")
+print(length(uniFit$opt$par))
+print("Number of diffuse elements [initial values] (length(uniFit$model$a1)):")
+print(length(uniFit$model$a1))
+print("Irregular Variance Matrix (uniFit$model$H): ") 
+print(uniFit$model$H)
+print("State Variance Matrix (uniFit$model$Q): ")
+print(uniFit$model$Q)
+#print("Akaike Information Criterion (AIC(uniFit, k=2/kTraining): ")
+#print(AIC(uniFit$model, k=2/kTraining)) # the lower the better, absolute value meaningless
 # should AIC be -ve number of a small absolute value?? like -1.19 is worse than -1.20 and -1.25 
 # Text book method.. exactly the value from the package method
-#print("Akaike Information Criterion = (2 / kTraining) * (-2 * (kTraining/2) * uniFit$logLik +  2 * (length(uniFit$par) +length(uniFit$model$a0))): ")
-#(2 / kTraining) * (-2 * (kTraining/2) * uniFit$logLik +  2 * (length(uniFit$par) + length(uniFit$model$a0))) # the lower the better..
+print("Akaike Information Criterion = (2 / kTraining) * (-2 * (kTraining/2) * uniFit$logLik +  2 * (length(uniFit$par) +length(uniFit$model$a0))): ")
+print((2 / kTraining) * (-2 * (kTraining/2) * logLik(uniFit$model) +  2 * (length(uniFit$opt$par) + length(uniFit$model$a1)))) # the lower the better..
+
+print("*************** Approximate Gaussian Model *****************")
+print(amod <- approxSSM(uniFit$model))
+print("Akaike Information Criterion = (2 / kTraining) * (-2 * (kTraining/2) * uniFit$logLik +  2 * (length(uniFit$par) +length(uniFit$model$a0))): ")
+print((2 / kTraining) * (-2 * (kTraining/2) * logLik(amod) +  2 * (length(uniFit$opt$par) + length(amod$a1)))) # the lower the better..
+
 
 rm(uniFilter)
 print(paste("Time for", kFitMethod, "of filtering using backend", kBackEnd))
-print(system.time(uniFilter <- dlmodeler.filter(uniCntM,uniFit$model,smooth=FALSE, 
-        backend=kBackEnd, raw.result=kRawResult)))
+print(system.time(uniFilter <- KFS(uniFit$model,smooth="none")))
 
+
+ts.plot(cbind(uniFit$model$y,uniFilter$yhat,exp(amod$theta)),col=1:3)
 # This return just a zero.. well, the textbook says the logLik of the diffuse should be used
 #print("Akaike Information Criterion (AIC(uniFilter, k=2/kTraining): ")
 #print(AIC(uniFilter, k=2/kTraining)) # the lower the better..
