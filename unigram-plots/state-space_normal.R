@@ -11,7 +11,7 @@ require(dlmodeler)
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
-kUnigram <- "egyptian"
+kUnigram <- "white"
 #kEpochMins <- 5
 kSupport <- 50 # must be greater than kNormalityAssumptionThreshold = 30
 #kSuppLagExpW <- 0.8
