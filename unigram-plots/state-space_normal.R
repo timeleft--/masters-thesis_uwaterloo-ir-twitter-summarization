@@ -13,18 +13,19 @@ setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
 kUnigram <- "white"
 #kEpochMins <- 5
-kSupport <- 50 # must be greater than kNormalityAssumptionThreshold = 30
-#kSuppLagExpW <- 0.8
+kSupport <- 30 # must be greater than kNormalityAssumptionThreshold = 30
+kSuppedQtile <- 0.95
+
 kFitMethod <- "MLE"
 # FKF is the best, FKAS is also good
 # but dlm is so heavy weight that day of week seasonal causes the diffuse to fail because of negative
 # variance (cycle) or hangs up the computer (dummy seasonal)
 kBackEnd <- "FKF" # KFAS, FKF or dlm
 kRawResult <- TRUE
-kModelName <- "random-walk+days" #-trend+weeks+days"
-kComp <- "level"
+kModelName <- "random-walk+days" #-drift+weeks+days"
+kComp <- "level" #"+trend"
 kRepeating<-"cycle" # "seasonal+cycle"
-
+kCycleOrder <- 3
 
 
 supportLag <- function(inFrame, colname, supp) {
@@ -77,18 +78,23 @@ for(i in 1:length(hrs.files)){
         [c(kTS, kUnigram)])
 }
 
+kTraining <- dim(uniCntT)[1] #/ 2 
 # determing the epoch length
-suppLag <- supportLag(uniCntT, kUnigram, kSupport)
-##The 3rd quartile of the suppLag
+suppLag <- supportLag(uniCntT[1:kTraining,], kUnigram, kSupport)
+##The 3rd quartile of the suppLag assuming uniform distrib
 #kEpochMins <- quantile(suppLag, probs=c(0.75))
 
 # The maximum likelihood rate assuming an exponential distrib
 # kEpochMins <- mean(suppLag)
 
 # The upper bound of the 95% CI of the MLE of rate, assuming exponential distrib of suppLag
-kEpochMins <- mean(suppLag) * (1 + (1.96 * sqrt(length(suppLag)))) 
+#kEpochMins <- mean(suppLag) * (1 + (1.96 * sqrt(length(suppLag)))) 
+
+#The 3rd quartile of the suppLag assuming exponential distrib
+kEpochMins <- qexp(kSuppedQtile, rate=1/mean(suppLag))
 
 ##Exponentially moving average of the support lag
+#kSuppLagExpW <- 2/(length(suppLag)+1) #0.8
 #kEpochMins <- suppLag[1]
 #for(i in 2:length(suppLag)){
 #  kEpochMins <- kEpochMins + kSuppLagExpW * (suppLag[i] - kEpochMins)
@@ -102,9 +108,14 @@ kEpochMins <- mean(suppLag) * (1 + (1.96 * sqrt(length(suppLag))))
 # assert that the minutes are less than a day, or else the cycle will have not meaning
 kEpochMins <- min(c(ceiling(as.numeric(kEpochMins)),24*60))
 
+# round up to the next divisor of the minutes in a day
+while(((24*60) %% kEpochMins) > 0){
+  kEpochMins <- kEpochMins + 1 
+}
+
 #Aggregate the epochs
 uniCntT <- sumN(uniCntT, kUnigram, kEpochMins)
-kTraining <- dim(uniCntT)[1] #/2
+kTraining <- dim(uniCntT)[1] #/ 2
 uniCntM <- t(as.matrix(uniCntT[1:kTraining,kUnigram]))
 
 #sdNoise <- 0 #deterministic: caused very noisy curve 
@@ -116,17 +127,17 @@ uniModel <- dlmodeler.build.structural(
                             pol.order=0, #1 -> trend isn't large enough to justify this extra state 
                             pol.sigmaQ=NA, #c(NA,0), -> Even as deterministic trend, it doesn't work
                             #daily repeating as harmonics in a spectral component
-                            tseas.order=3, # when increased the processing time increases a lot
+                            tseas.order=kCycleOrder, 
                             tseas.period=as.numeric(ceiling(24*(60/kEpochMins))),
-                            tseas.sigmaQ=0,
+                            tseas.sigmaQ=NA,
                             #weekly repeating as harmonics in a spectral component
-                            #tseas.order=7, # when increased the processing time increases a lot
+                            #tseas.order=7, 
                             #tseas.period=as.numeric(ceiling(7*24*(60/kEpochMins))),
                             #tseas.sigmaQ=0,
                             #daily repeating as dummy seasonal
                             #dseas.order=max(2,as.numeric(ceiling(24*(60/kEpochMins)))),
                             #dseas.sigmaQ=0,
-                            sigmaH=NA,
+                            #sigmaH=NA,
                             name=kModelName)
 rm(uniFit)
 
@@ -249,7 +260,7 @@ if(library(fBasics, logical.return=TRUE)){
 
 
 print("******************** One step ahead error for validating assumptions *******************")
-oneStepAheadPredictionErr <- uniCntM[1:kTraining] - uniFilter$f[1:kTraining]
+oneStepAheadPredictionErr <- uniCntM[1:kTraining] - uniFilter$f[1:kTraining] # balash hals -> +1]
 validateAssumps(oneStepAheadPredictionErr)
 print("******************** ********************************************** *******************")
 #they are the same
@@ -258,6 +269,12 @@ print("******************** ********************************************** *****
 #validateAssumps(irregular)
 #print("******************** ********************************************** *******************")
 sink()
+
+pdf(paste("~/Desktop/",kModelName,"_",  kUnigram, "_", "autocorrelation", ".pdf", sep=""))
+
+acf(oneStepAheadPredictionErr, lag=20)
+
+dev.off()
 
 #if(library(corrgram, logical.return=TRUE)){
 #  pdf(paste("~/Desktop/",kModelName,"_",  kUnigram, "_", "correlogram-stderr-filter", ".pdf", sep=""))
@@ -273,7 +290,7 @@ sink()
 
 pdf(paste("~/Desktop/",kModelName,"_",  kUnigram, "_", kComp, ".pdf", sep=""))
 
-dayDelims = seq(from=0,to=dim(uniCntT)[1],by=24*(60/kEpochMins));
+dayDelims = seq(from=0,to=dim(uniCntT)[1],by=as.numeric(ceiling(24*(60/kEpochMins))));
 
 mar.default <- par("mar")
 par(mar = mar.default + c(7,0,0,0))
@@ -291,6 +308,8 @@ lines(uniComp[[kComp]]$lower[1,],col="blue",lty=2)
 lines(uniComp[[kComp]]$mean[1,],col="red")
 lines(uniComp[[kComp]]$upper[1,],col="blue",lty=2)
 
+#TODONE: why dayDelims + 1??? Why shift?
+# Because the day delims are zero based, and the indeces are 1 based
 axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 
 dev.off()

@@ -74,9 +74,27 @@ print(system.time(uniFilter <- KFS(uniFit$model,smooth="none")))
 
 
 ts.plot(cbind(uniFit$model$y,uniFilter$yhat,exp(amod$theta)),col=1:3)
-# This return just a zero.. well, the textbook says the logLik of the diffuse should be used
-#print("Akaike Information Criterion (AIC(uniFilter, k=2/kTraining): ")
-#print(AIC(uniFilter, k=2/kTraining)) # the lower the better..
+
+thirteen <- length(uniFit$model$a1)
+
+# It is more interesting to look at the smoothed values of exp(level + intervention)
+lev1<-exp(signal(uniFilter,states=c(1,thirteen))$s)
+#lev2<-exp(signal(amod,states=c(1,thirteen))$s)
+# These are slightly biased as E[exp(x)] > exp(E[x]), better to use importance sampling:
+vansample<-importanceSSM(uniFit$model,save.model=FALSE,nsim=250)
+# nsim is number of independent samples, as default two antithetic variables are used,
+# so total number of samples is 1000.
+
+w<-vansample$weights/sum(vansample$weights)
+
+level<-colSums(t(exp(vansample$states[1,,]+uniFit$model$Z[1,thirteen,]*vansample$states[thirteen,,]))*w)
+ts.plot(cbind(uniFit$model$y,lev1,level),col=1:3) #’ Almost identical results
+
+
+# Confidence intervals (no seasonal component)
+varlevel<-colSums(t(exp(vansample$states[1,,]+uniFit$model$Z[1,thirteen,]*vansample$states[thirteen,,])^2)*w)-level^2
+intv<-level + qnorm(0.975)*varlevel%o%c(-1,1)
+ts.plot(cbind(uniFit$model$y,level,intv),col=c(1,2,3,3))
 
 
 #compnames can be "level+trend+hourly"(kModelName) or "level+trend" or "seasonal"
