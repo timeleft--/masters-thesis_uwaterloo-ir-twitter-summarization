@@ -19,12 +19,12 @@
 		<!-- <artifactId>textcat</artifactId> -->
 		<!-- <version>1.0.1</version> -->
 		<!-- </dependency> -->
-		<!-- <dependency> -->
-		<!-- <groupId>trec2012</groupId> -->
-		<!-- <artifactId>assoc-mr</artifactId> -->
-		<!-- <version>0.0.2-SNAPSHOT</version> -->
-		<!-- </dependency> -->
-		<!-- <dependency> -->
+		<dependency>
+		<groupId>trec2012</groupId>
+		<artifactId>assoc-mr</artifactId>
+		<version>0.0.2-SNAPSHOT</version>
+		</dependency>
+<!-- 		<dependency> -->
 		<!-- <groupId>org.apache.hadoop</groupId> -->
 		<!-- <artifactId>hadoop-core</artifactId> -->
 		<!-- <version>1.0.2</version> -->

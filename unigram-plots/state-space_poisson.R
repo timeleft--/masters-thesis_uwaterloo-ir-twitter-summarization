@@ -12,11 +12,31 @@ require(KFAS)
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
 kUnigram <- "white"
-kEpochMins <- 5
+kModelName <- "poisson_random-walk+days" #-drift
+kEpochMins <- 60
+kCycleEpochs <- 24*60/kEpochMins
+kTrainingFraction <- 1
 
-kModelName <- "random-walk+days" #-trend+weeks+days"
-kComp <- "level"
-kRepeating<-"cycle" # "seasonal+cycle"
+sumN <- function (inFrame, colname, n) {
+  len <- dim(inFrame)[1]
+  if(len %% n != 0) {
+    xlen <- ceiling(len/n)*n
+    deltaT <- inFrame$TIMESTAMP[2] - inFrame$TIMESTAMP[1]
+    currT <- inFrame$TIMESTAMP[len]
+    for(i in (len+1):xlen)  {
+      currT <- currT + deltaT
+      inFrame[i,] <- c(currT,NA)
+    }
+    len <-xlen
+  }
+  
+  retVal <- data.frame(TIMESTAMP=as.POSIXct(inFrame$TIMESTAMP[seq(n,len,by=n)],origin="1970-01-01",
+          tz="GMT"))
+  retVal[colname] <- colSums(matrix(inFrame[[colname]], nrow=n),na.rm=TRUE)
+  return(retVal)
+}
+#debug(sumN)
+# setBreakpoint("plot_csvs.R#19")
 
 hrs.files <- list.files(pattern=".*csv$")
 uniCntT <- NULL
@@ -26,9 +46,10 @@ for(i in 1:length(hrs.files)){
         [c(kTS, kUnigram)])
 }
 
-kTraining <- dim(uniCntT)[1] #/ 2
-    
-uniTS <- ts(uniCntT[,kUnigram][1:kTraining], frequency=kEpochMins)
+uniCntT <- sumN(uniCntT, kUnigram, kEpochMins)
+kTraining <- as.numeric(ceiling(dim(uniCntT)[1] * kTrainingFraction))
+
+uniTS <- ts(uniCntT[,kUnigram][1:kTraining], frequency=kCycleEpochs, start=uniCntT[1,kTS])
 
 rm(uniModel)
 uniModel <- structSSM(uniTS, 
@@ -40,8 +61,8 @@ uniModel <- structSSM(uniTS,
 rm(uniFit)
 
 sink(paste("~/Desktop/kfas/",kModelName,"_",  kUnigram, ".log", sep=""))
-print(paste("Epoch in minutes:", kEpochMins))
-print(paste("Time for", kFitMethod, "of model parameters (initialization) using backend", kBackEnd))
+#print(paste("Epoch in minutes:", kEpochMins))
+#print(paste("Time for", kFitMethod, "of model parameters (initialization) using backend", kBackEnd))
 print(system.time(uniFit <- fitSSM(inits=rep(0.5*log(0.005)), model=uniModel)))
 print("Convergence (uniFit$opt$convergence): ")
 print(uniFit$opt$convergence)
@@ -62,37 +83,36 @@ print(uniFit$model$Q)
 print("Akaike Information Criterion = (2 / kTraining) * (-2 * (kTraining/2) * uniFit$logLik +  2 * (length(uniFit$par) +length(uniFit$model$a0))): ")
 print((2 / kTraining) * (-2 * (kTraining/2) * logLik(uniFit$model) +  2 * (length(uniFit$opt$par) + length(uniFit$model$a1)))) # the lower the better..
 
-print("*************** Approximate Gaussian Model *****************")
-print(amod <- approxSSM(uniFit$model))
-print("Akaike Information Criterion = (2 / kTraining) * (-2 * (kTraining/2) * uniFit$logLik +  2 * (length(uniFit$par) +length(uniFit$model$a0))): ")
-print((2 / kTraining) * (-2 * (kTraining/2) * logLik(amod) +  2 * (length(uniFit$opt$par) + length(amod$a1)))) # the lower the better..
+#print("*************** Approximate Gaussian Model *****************")
+#print(amod <- approxSSM(uniFit$model))
+#print("Akaike Information Criterion = (2 / kTraining) * (-2 * (kTraining/2) * uniFit$logLik +  2 * (length(uniFit$par) +length(uniFit$model$a0))): ")
+#print((2 / kTraining) * (-2 * (kTraining/2) * logLik(amod) +  2 * (length(uniFit$opt$par) + length(amod$a1)))) # the lower the better..
 
 
 rm(uniFilter)
-print(paste("Time for", kFitMethod, "of filtering using backend", kBackEnd))
+print(paste("Time for filtering"))
 print(system.time(uniFilter <- KFS(uniFit$model,smooth="none")))
 
 
-ts.plot(cbind(uniFit$model$y,uniFilter$yhat,exp(amod$theta)),col=1:3)
+#ts.plot(cbind(uniFit$model$y,uniFilter$yhat),col=1:2) #,exp(amod$theta) 
 
 thirteen <- length(uniFit$model$a1)
 
 # It is more interesting to look at the smoothed values of exp(level + intervention)
-lev1<-exp(signal(uniFilter,states=c(1,thirteen))$s)
+logLevel <- signal(uniFilter,states=c(1))
+uniLevel <-exp(logLevel$s)
 #lev2<-exp(signal(amod,states=c(1,thirteen))$s)
-# These are slightly biased as E[exp(x)] > exp(E[x]), better to use importance sampling:
-vansample<-importanceSSM(uniFit$model,save.model=FALSE,nsim=250)
-# nsim is number of independent samples, as default two antithetic variables are used,
-# so total number of samples is 1000.
+## These are slightly biased as E[exp(x)] > exp(E[x]), better to use importance sampling:
+#vansample<-importanceSSM(uniFit$model,save.model=FALSE,nsim=250)
+## nsim is number of independent samples, as default two antithetic variables are used,
+## so total number of samples is 1000.
+#w<-vansample$weights/sum(vansample$weights)
+#level<-colSums(t(exp(vansample$states[1,,]+uniFit$model$Z[1,thirteen,]*vansample$states[thirteen,,]))*w)
 
-w<-vansample$weights/sum(vansample$weights)
-
-level<-colSums(t(exp(vansample$states[1,,]+uniFit$model$Z[1,thirteen,]*vansample$states[thirteen,,]))*w)
-ts.plot(cbind(uniFit$model$y,lev1,level),col=1:3) #’ Almost identical results
-
+ts.plot(cbind(uniFit$model$y,uniLevel,uniFilter$yhat),col=1:3) #’ Almost identical results -> level
 
 # Confidence intervals (no seasonal component)
-varlevel<-colSums(t(exp(vansample$states[1,,]+uniFit$model$Z[1,thirteen,]*vansample$states[thirteen,,])^2)*w)-level^2
+varLevel<-colSums(t(exp(logLevel+uniFit$model$Z[1,thirteen,]*vansample$states[thirteen,,])^2)*w)-level^2
 intv<-level + qnorm(0.975)*varlevel%o%c(-1,1)
 ts.plot(cbind(uniFit$model$y,level,intv),col=c(1,2,3,3))
 

@@ -3,11 +3,13 @@ package ca.uwaterloo.timeseries;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.Writer;
 import java.nio.channels.Channels;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -15,7 +17,10 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
-import org.apache.lucene.analysis.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.TwitterEnglishAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldSelector;
 import org.apache.lucene.document.FieldSelectorResult;
@@ -26,7 +31,6 @@ import org.apache.lucene.index.TermEnum;
 import org.apache.lucene.index.TermFreqVector;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.FilteredQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -49,6 +53,9 @@ import org.rrd4j.core.Util;
 import org.rrd4j.graph.RrdGraph;
 import org.rrd4j.graph.RrdGraphDef;
 
+import ca.uwaterloo.twitter.TwitterAnalyzer;
+import ca.uwaterloo.twitter.TwitterIndexBuilder.TweetField;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -56,6 +63,8 @@ import com.google.common.hash.Hashing;
 
 public class PlotTermFrequencyTimeSeries {
   
+  private static final boolean EPOCH_START_FROM_FOLDER_NAMES = false;
+  private static final String FIELD_NAME = TweetField.STEMMED_EN.name;
   private static Random rand = new Random(System.currentTimeMillis());
   
   public static enum RunMode {
@@ -68,16 +77,63 @@ public class PlotTermFrequencyTimeSeries {
   public static boolean writeUnixTime = true;
   public static boolean fillZeros = true;
   
-  private static long windowLength = 3600000;
+  private static long windowLength = 3600000 * 24 * 365;
   private static long timeStep = 60000;
+  private static int simultaniousEpochs = 10000000;
   
-  private static String ixPath = "/u2/yaboulnaga/data/twitter-trec2011/indexes/twt_pos-stored_chunks/001_twt_pos-stored_1hr_chunks";
-  private static String outParent = "/u2/yaboulnaga/data/twitter-trec2011/timeseries/";
+  private static String ixPath =
+      "/u2/yaboulnaga/data/twitter-tracked/spritzer_index";
+  // "/u2/yaboulnaga/data/twitter-trec2011/indexes/twt_pos-stored_chunks/001_twt_pos-stored_1hr_chunks";
+  private static String outParent = "/u2/yaboulnaga/data/twitter_spritzer-timeseries/";
   
   // Generated using:
   // cat 2011.topics.MB1-50.txt | grep title | tr ' ' '\n' | tr '[A-Z]' '[a-z]' | tr -dc
   // '[A-Za-z0-9\n]' | sed 's/.*/"&",/'
   private static Set<String> watchedTerms = Sets.newCopyOnWriteArraySet(Arrays.asList(
+      "i",
+      "love",
+      "you",
+      "hate",
+      "my",
+      "class",
+      "education",
+      
+      "freedom",
+      "speech",
+      "blasphemie",
+      "mohammed",
+      "video",
+      "embassy",
+      "us",
+      "islam",
+      "#muslimrage",
+      "muslim",
+      "rage",
+      "egypt",
+      "libya",
+      "jihadist",
+      "jihad",
+      
+      "iphone",
+      "iphone5",
+      "ios",
+      "ios6",
+      "samsung",
+      "galaxy",
+      "s3",
+      "siii",
+      "maps",
+      
+      "mona",
+      "eltahawy",
+      
+      "barack",
+      "obama",
+      "@barackobama",
+      "romney",
+      "mitt",
+      "@mittromney",
+      
       "bbc",
       "world",
       "service",
@@ -322,29 +378,58 @@ public class PlotTermFrequencyTimeSeries {
     
     long startTime = -1;
     
-    for (File startDir : startArr) {
+    for (int sd = 0; sd < startArr.length; ++sd) {
+      File startDir = startArr[sd];
+      
       if (ixReadersList.isEmpty()) {
         startTime = Long.parseLong(startDir.getName());
       }
       File[] endArr = startDir.listFiles();
       Arrays.sort(endArr);
-      for (File endDir : endArr) {
+      for (int ef = 0; ef < endArr.length; ++ef) {
+        File endDir = endArr[ef];
+        
         long endTime = Long.parseLong(endDir.getName());
         
         Directory dir = NIOFSDirectory.open(endDir);
         ixReadersList.add(IndexReader.open(dir));
-        if (endTime - startTime >= windowLength) {
+        if ((sd == startArr.length - 1 && ef == endArr.length - 1)
+            || (endTime - startTime >= windowLength)) {
           final MultiReader ixReader = new MultiReader(
               ixReadersList.toArray(new IndexReader[0]));
           ixReadersList.clear();
           
           IndexSearcher ixSearcher = new IndexSearcher(ixReader);
-          // Analyzer tweetNonStemmingAnalyzer = new
-          // TwitterAnalyzer();;
-          QueryParser twtQparser = new QueryParser(Version.LUCENE_36,
-              "text", new WhitespaceAnalyzer(Version.LUCENE_36));
-          twtQparser.setDefaultOperator(Operator.OR);
+          Analyzer tweetAnalyzer;
+          if (TweetField.STEMMED_EN.name.equals(FIELD_NAME)) {
+            tweetAnalyzer = new TwitterEnglishAnalyzer();
+          } else {
+            tweetAnalyzer = new TwitterAnalyzer();
+          }
           
+          QueryParser twtQparser = new QueryParser(Version.LUCENE_36,
+              FIELD_NAME, tweetAnalyzer);
+          // new WhitespaceAnalyzer(Version.LUCENE_36));
+          // twtQparser.setDefaultOperator(Operator.OR);
+          List watchedTermsAnalyzed = null;
+          if (watchedTerms != null) {
+            watchedTermsAnalyzed = Lists.newArrayListWithCapacity(watchedTerms.size());
+            for (String watched : watchedTerms) {
+              TokenStream queryTokens = tweetAnalyzer.tokenStream(FIELD_NAME,
+                  new StringReader(watched.trim()));
+              queryTokens.reset();
+              
+              StringBuilder analyzed = new StringBuilder();
+              while (queryTokens.incrementToken()) {
+                CharTermAttribute attr = (CharTermAttribute) queryTokens.getAttribute(queryTokens
+                    .getAttributeClassesIterator().next());
+                String token = attr.toString();
+                
+                analyzed.append(token);
+              }
+              watchedTermsAnalyzed.add(analyzed.toString());
+            }
+          }
           while (startTime < endTime) {
             long winEnd = startTime + windowLength;
             
@@ -377,7 +462,7 @@ public class PlotTermFrequencyTimeSeries {
             // Sort timeSort = new Sort(new SortField("timestamp",
             // SortField.LONG));
             
-            List<String> tList = null;
+            List<String> tList = null; // Lists.newLinkedList();;
             if (watchedTerms == null) {
               tList = Lists.newLinkedList();
               TermEnum tEnum = ixReader.terms();
@@ -385,7 +470,7 @@ public class PlotTermFrequencyTimeSeries {
               // ixReader.getUniqueTermCount());
               while (tEnum.next()) {
                 Term t = tEnum.term();
-                if ("text".equals(t.field())) {
+                if (FIELD_NAME.equals(t.field())) {
                   String txt = t.text();
                   int hash = Hashing
                       .murmur3_32()
@@ -401,7 +486,7 @@ public class PlotTermFrequencyTimeSeries {
               }
               Collections.sort(tList);
             } else {
-              tList = Lists.newCopyOnWriteArrayList(watchedTerms);
+              tList = Lists.newCopyOnWriteArrayList(watchedTermsAnalyzed);
             }
             
             switch (runMode) {
@@ -421,7 +506,7 @@ public class PlotTermFrequencyTimeSeries {
                 
                 switch (runMode) {
                 case VERTICAL: {
-                  wr.append(DELIM+"\"" + t + "\"");
+                  wr.append(DELIM + "\"" + t + "\"");
                   break;
                 }
                 case RRD4J: {
@@ -473,7 +558,6 @@ public class PlotTermFrequencyTimeSeries {
               }
               }
               
-              
               // This messes up the sorting.. has to use a sort with it, and sort doesn't work
               // Query allTweets = twtQparser.parse(tList.toString().replaceAll("[\\,\\[\\]]", ""));
               Query allTweets = twtQparser.parse("*:*");
@@ -487,12 +571,24 @@ public class PlotTermFrequencyTimeSeries {
               // luckily they come sorted, coz this doesn't work:
               // timeSort);
               
-              long epochStart = startTime;
-              long epochEnd = epochStart + timeStep;
+              long epochStart;// = startTime;
+              if (EPOCH_START_FROM_FOLDER_NAMES) {
+                epochStart = startTime;
+              } else {
+                epochStart = 1348443011000L;
+//                    Long.parseLong(ixReader
+//                    .document(rs.scoreDocs[0].doc).get(
+//                        "timestamp"));
+              }
               
-              // This causes an endless loop after the first call to clear.. TODO bug report
-              // OpenObjectIntHashMap<String> counts = new OpenObjectIntHashMap<String>();
-              Map<String, Integer> counts = Maps.newHashMap();
+              long epochsEnd = epochStart + (timeStep * simultaniousEpochs);
+              
+              LinkedList<Map<String, Integer>> counts = new LinkedList<Map<String, Integer>>();
+              for (int e = 0; e < simultaniousEpochs; ++e) {
+                // This causes an endless loop after the first call to clear.. TODO bug report
+                // OpenObjectIntHashMap<String> counts = new OpenObjectIntHashMap<String>();
+                counts.addLast(Maps.<String, Integer>newHashMap());
+              }
               int misordered = 0;
               SummaryStatistics misorderLag = new SummaryStatistics();
               for (int h = 0; h < rs.totalHits; ++h) {
@@ -508,21 +604,26 @@ public class PlotTermFrequencyTimeSeries {
                   misorderLag.addValue(epochStart - timestamp);
                   ++misordered;
                   if (misordered % 10 == 0) {
-                    System.out.println("Misorder lag: " + misorderLag.toString());
+                    System.out.println("Misorder lag at h = " + h + ": " + misorderLag.toString());
                   }
-                } else if (timestamp >= epochEnd) {
-                  while (timestamp >= epochEnd) {
-                    printPendingCounts(counts, wr, epochEnd,
-                        rrSample, 
+                  continue;
+                } else if (timestamp >= epochsEnd) {
+                  while (timestamp >= epochsEnd) {
+                     Map<String, Integer> recycle = counts.removeFirst();
+                    printPendingCounts(recycle, wr, epochStart + timeStep,
+                        rrSample,
                         tList);
-                    epochStart = epochEnd;
-                    epochEnd += timeStep;
+                    counts.addLast(recycle);
+                    epochStart += timeStep;
+                    epochsEnd += timeStep;
                   }
                 }
                 
+                int e = (int) ((timestamp - epochStart) / timeStep);
+                Map<String, Integer> countse = counts.get(e);
                 TermFreqVector tfv = ixReader
                     .getTermFreqVector(rs.scoreDocs[h].doc,
-                        "text");
+                        FIELD_NAME);
                 if (tfv == null) {
                   System.err
                       .println("Null Term Frequencies Vector for document"
@@ -536,20 +637,23 @@ public class PlotTermFrequencyTimeSeries {
                   if (!tIxMap.containsKey(docT)) {
                     continue;
                   }
-                  if (!counts.containsKey(docT)) {
-                    counts.put(docT, 0);
+                  if (!countse.containsKey(docT)) {
+                    countse.put(docT, 0);
                   }
-                  counts.put(docT, counts.get(docT) + 1);
+                  countse.put(docT, countse.get(docT) + 1);
                 }
                 
-                if (wr != null && (h + 1) % 100 == 0) {
-                  System.out.println("Flushing 100 docs");
+                if (wr != null && (h + 1) % 10000 == 0) {
+                  System.out.println("Flushing 10000 docs");
                   wr.flush();
                 }
               }
               
-              printPendingCounts(counts, wr, epochEnd, rrSample,
-                  tList);
+              int e=0;
+              while(!counts.isEmpty()){
+                printPendingCounts(counts.removeFirst(), wr, epochStart + (++e * timeStep), rrSample,
+                    tList);
+              }
               System.out.println("Misorder lag: " + misorderLag.toString());
               
               if (runMode.equals(RunMode.RRD4J)) {
@@ -613,7 +717,7 @@ public class PlotTermFrequencyTimeSeries {
               // Long.valueOf(startDir.getName()));
               int count = 0;
               for (String t : tList) {
-                final Term tTerm = new Term("text", t);
+                final Term tTerm = new Term(FIELD_NAME, t);
                 
                 String header = t + " ("
                     + ixReader.docFreq(tTerm) + ") ";
@@ -807,7 +911,7 @@ public class PlotTermFrequencyTimeSeries {
             cntStr = "";
           }
         }
-        wr.append(DELIM +cntStr);
+        wr.append(DELIM + cntStr);
       }
       wr.append('\n');
       

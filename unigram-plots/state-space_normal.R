@@ -11,7 +11,7 @@ require(dlmodeler)
 
 setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
 kTS <- "TIMESTAMP"
-kUnigram <- "oprah"
+kUnigram <- "the"
 #kEpochMins <- 5
 kSupport <- 30 # must be greater than kNormalityAssumptionThreshold = 30
 kSuppedQtile <- 0.95
@@ -20,7 +20,7 @@ kFitMethod <- "MLE"
 # FKF is the best, FKAS is also good
 # but dlm is so heavy weight that day of week seasonal causes the diffuse to fail because of negative
 # variance (cycle) or hangs up the computer (dummy seasonal)
-kBackEnd <- "KFAS" # KFAS, FKF or dlm
+kBackEnd <- "FKF" # KFAS, FKF or dlm
 kRawResult <- TRUE
 kModelName <- "random-walk+days" #-drift+weeks+days"
 kComp <- "level" #"+trend"
@@ -184,7 +184,7 @@ uniComp <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compname
 #uniSeasonal <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="seasonal", value="mean")
 #uniCycle <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames="cycle", value="mean")
 uniRepeating <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kRepeating, value="mean")
-uniAll <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kModelName, value="mean")
+#uniAll <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kModelName, value="mean")
 
 
 #Validate Assumptions
