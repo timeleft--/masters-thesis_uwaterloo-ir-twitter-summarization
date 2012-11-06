@@ -56,6 +56,20 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+/**
+ * Empirical comparison of different window lengths. The comparison is done by measuring various
+ * measures of "quality" of the frequent itemsets from both window sizes. If the an itemset is 
+ * mined out of both the window sizes it is output on the same row. If an itemset is part of a
+ * longer itemset in the other window size, they are both output on one row, so a shorter itemset 
+ * would be repeated as many times as there are extensions to it (TODO: why are there repetitions
+ * without extensions? it seems that the itemset is printed when it is encountered in the posting
+ * list of each of its items). (TODO: What is SHIFTED? it seems that it is output when the window
+ * sizes result in windows that don't exactly overlap, is it?)     
+ * 
+ * @author yaboulna
+ *
+ */
+
 public class CompareWindowSizes implements Callable<Pair<String, List<SummaryStatistics>>> {
   private static final Logger LOG = LoggerFactory
       .getLogger(CompareWindowSizes.class);

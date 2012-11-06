@@ -60,6 +60,26 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+/**
+ * Empirical evaluation of different history lengths and different window lengths.
+ * Windows don't overlap, but rather the history is just a stitching of consecutive "whole" windows.
+ * The evaluation is based on the QRels of Trec Microblog. Both relevant and irrelevant Tweets are
+ * used as queries to search for Frequent Itemsets, using BM25 relevance to get the top 10,000. 
+ * 
+ * The evaluation writes out two files:
+ * 1) fisMetrics_{QueryID}_{HistoryLength}_{WindowLength}.csv: Different metrics for the retrieved 
+ * Frequent Itemsets, which include "good" and "bad" itemsets since the Tweets used to query would 
+ * include stop words and also irrelevant terms from irrelevant Tweets. A "good" itemset is ill 
+ * defined, and that's why I'm meeting Charlie today :D. 
+ *
+ * 2) twtMetrics_{QueryID}_{HistoryLength}_{WindowLength}.csv: The perplexity of the Tweet based on
+ * term frequencies in the Itemsets corpus of the current History and Window lengthes. Perplexity 
+ * is not bounded so I still don't know how this can be useful.
+ * 
+ * @author yaboulna
+ * Last Update Oct. 22nd, 2012
+ *
+ */
 public class EvaluateWindowSizes implements Callable<Void> {
   private static final Logger LOG = LoggerFactory
       .getLogger(EvaluateWindowSizes.class);
