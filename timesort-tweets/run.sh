@@ -1,0 +1,1 @@
+/u2/yaboulnaga/Programs/hadoop-1.0.3/bin/hadoop jar target/timesort-tweets-0.0.1-SNAPSHOT-job.jar ca.uwaterloo.yaboulna.TimeSortDriver --input file:///u2/yaboulnaga/data/twitter-tracked/spritzer/ --output file:///u2/yaboulnaga/data/twitter-tracked/spritzer_timesorted/
