@@ -9,9 +9,9 @@ require(reshape)
 require(dlmodeler)
 
 
-setwd("/u2/yaboulnaga/data/twitter-trec2011/timeseries")
+setwd("/Users/yia/") #debug_tweetcountstweet-counts.csv")
 kTS <- "TIMESTAMP"
-kUnigram <- "the"
+kUnigram <- "NUMTWEETS"
 #kEpochMins <- 5
 kSupport <- 30 # must be greater than kNormalityAssumptionThreshold = 30
 kSuppedQtile <- 0.95
