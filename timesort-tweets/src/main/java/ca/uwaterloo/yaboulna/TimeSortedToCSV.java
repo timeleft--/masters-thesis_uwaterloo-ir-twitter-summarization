@@ -132,10 +132,6 @@ public class TimeSortedToCSV {
 
 					}
 
-					if (currentCount > 0) {
-						out.append(currentTime + "\t" + currentCount);// + "\n");
-					}
-
 				} catch (Exception ex) {
 					LOG.error(ex.getMessage(), ex);
 				} finally {
@@ -144,6 +140,10 @@ public class TimeSortedToCSV {
 					iterator.close();
 				}
 			}
+			
+			if (currentCount > 0) {
+        out.append(currentTime + "\t" + currentCount);// + "\n");
+      }
 		} catch (Exception ex) {
 			LOG.error(ex.getMessage(), ex);
 		} finally {
