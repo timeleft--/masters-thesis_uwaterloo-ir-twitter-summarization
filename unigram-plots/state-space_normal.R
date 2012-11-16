@@ -8,8 +8,10 @@ require(reshape)
 #require(MARSS)
 require(dlmodeler)
 
+MILLIS_PUT_1000 <- 1000
 
-setwd("/Users/yia/") #debug_tweetcountstweet-counts.csv")
+setwd("/u2/yaboulnaga/data/twitter-tracked/spritzer_timesorted_csv/") #tweet-counts.csv")
+
 kTS <- "TIMESTAMP"
 kUnigram <- "NUMTWEETS"
 #kEpochMins <- 5
@@ -31,21 +33,21 @@ kTrainingFraction <- 1
 
 supportLag <- function(inFrame, colname, supp) {
   len <- dim(inFrame)[1]
-  retVal <- NULL
+  numRecs <- NULL
   currSupp <- 0
   prevIntervalEnd <- 0
   nextIntervalIx <- 1
   for(i in 1:len){
     currSupp <- currSupp + inFrame[i,colname]
     if(currSupp >= supp){
-      retVal[nextIntervalIx] <- i - prevIntervalEnd #if input isn't by minute, use TIMESTAMP
+      numRecs[nextIntervalIx] <- i - prevIntervalEnd #if input isn't by minute, use TIMESTAMP
       prevIntervalEnd <- i
       currSupp = 0
       nextIntervalIx <- nextIntervalIx + 1
     }
   }
   # don't care about the interval len - prevIntervalEnd
-  return(retVal)
+  return(numRecs)
 }
 # debug(supportLag)
 # setBreakpoint("plot_csvs.R#27")
@@ -63,7 +65,7 @@ sumN <- function (inFrame, colname, n) {
     len <-xlen
   }
 	
-	retVal <- data.frame(TIMESTAMP=as.POSIXct(inFrame$TIMESTAMP[seq(n,len,by=n)],origin="1970-01-01",
+	retVal <- data.frame(TIMESTAMP=as.POSIXct(inFrame$TIMESTAMP[seq(n,len,by=n)]/MILLIS_PUT_1000,origin="1970-01-01",
           tz="GMT"))
 	retVal[colname] <- colSums(matrix(inFrame[[colname]], nrow=n),na.rm=TRUE)
 	return(retVal)
@@ -80,42 +82,47 @@ for(i in 1:length(hrs.files)){
 }
 
 kTraining <- as.numeric(ceiling(dim(uniCntT)[1] * kTrainingFraction))
+
+kRecordsPerMinute <- 60
+kEpochRecs <- 5 * kRecordsPerMinute
 # determing the epoch length
-suppLag <- supportLag(uniCntT[1:kTraining,], kUnigram, kSupport)
+#suppLag <- supportLag(uniCntT[1:kTraining,], kUnigram, kSupport)
 ##The 3rd quartile of the suppLag assuming uniform distrib
-#kEpochMins <- quantile(suppLag, probs=c(0.75))
+#kEpochRecs <- quantile(suppLag, probs=c(0.75))
 
 # The maximum likelihood rate assuming an exponential distrib
-# kEpochMins <- mean(suppLag)
+# kEpochRecs <- mean(suppLag)
 
 # The upper bound of the 95% CI of the MLE of rate, assuming exponential distrib of suppLag
-#kEpochMins <- mean(suppLag) * (1 + (1.96 * sqrt(length(suppLag)))) 
+#kEpochRecs <- mean(suppLag) * (1 + (1.96 * sqrt(length(suppLag)))) 
 
 #The 3rd quartile of the suppLag assuming exponential distrib
-kEpochMins <- qexp(kSuppedQtile, rate=1/mean(suppLag))
+#kEpochRecs <- qexp(kSuppedQtile, rate=1/mean(suppLag))
 
 ##Exponentially moving average of the support lag
 #kSuppLagExpW <- 2/(length(suppLag)+1) #0.8
-#kEpochMins <- suppLag[1]
+#kEpochRecs <- suppLag[1]
 #for(i in 2:length(suppLag)){
-#  kEpochMins <- kEpochMins + kSuppLagExpW * (suppLag[i] - kEpochMins)
+#  kEpochRecs <- kEpochRecs + kSuppLagExpW * (suppLag[i] - kEpochRecs)
 #}
 
 ##Linear Weighted moving average of the support lag
 #require(TTR)
 #lastN <- length(suppLag)
-#kEpochMins <- WMA(suppLag,lastN,1:lastN)[lastN]
+#kEpochRecs <- WMA(suppLag,lastN,1:lastN)[lastN]
 
 # assert that the minutes are less than a day, or else the cycle will have not meaning
-kEpochMins <- min(c(ceiling(as.numeric(kEpochMins)),24*60))
+kEpochRecs <- min(c(ceiling(as.numeric(kEpochRecs)),24*60 * kRecordsPerMinute))
+kEpochMins <- kEpochRecs / kRecordsPerMinute
 
 # round up to the next divisor of the minutes in a day
 while(((24*60) %% kEpochMins) > 0){
   kEpochMins <- kEpochMins + 1 
 }
 
+
 #Aggregate the epochs
-uniCntT <- sumN(uniCntT, kUnigram, kEpochMins)
+uniCntT <- sumN(uniCntT, kUnigram, kEpochMins*kRecordsPerMinute)
 kTraining <- as.numeric(ceiling(dim(uniCntT)[1] * kTrainingFraction))
 uniTrainM <- t(as.matrix(uniCntT[1:kTraining,kUnigram]))
 
@@ -187,7 +194,7 @@ uniRepeating <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", com
 #uniAll <- dlmodeler.extract(uniFilter,uniFit$model,type="observation", compnames=kModelName, value="mean")
 
 
-#Validate Assumptions
+########################### Validate Assumptions ###################################333
 validateAssumps <- function(predictionErr){
 stdzdErr <- predictionErr / sd(predictionErr)
 
@@ -196,10 +203,10 @@ print("In Box-Ljung test The hypothesis of randomness is rejected if
     QLB > CHSPPF((1-alpha),h) 
 where CHSPPF is the percent point function of the chi-square distribution.
 That is, small p-value indicate that there's no enough evidence of independence.")
-print(paste("lag=24*60/kEpochMins=",as.numeric(ceiling(24*60/kEpochMins))))
+print(paste("lag=(24*60/kEpochMins)=",as.numeric(ceiling(24*60/kEpochMins))))
 print(Box.test(stdzdErr,lag=as.numeric(ceiling(24*60/kEpochMins)),type="Ljung-Box",fitdf=length(uniFit$par)))
 
-print(paste("lag=7*24*60/kEpochMins=",as.numeric(ceiling(7*24*60/kEpochMins))))
+print(paste("lag=(7*24*60/kEpochMins)=",as.numeric(ceiling(7*24*60/kEpochMins))))
 print(Box.test(stdzdErr,lag=as.numeric(ceiling(7*24*60/kEpochMins)),type="Ljung-Box",fitdf=length(uniFit$par)))
 
 
@@ -332,7 +339,8 @@ par(mar = mar.default + c(7,0,0,0))
 plot(oneStepAheadPredictionErr,type="l",
     ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
     main=paste(kUnigram, "Irregular (black) and daily Cycle (green)"),
-    ylim=c(-kSupport,kSupport),lab=c(1,10,7))
+    #ylim=c(-kSupport,kSupport),
+    lab=c(1,10,7))
 lines(uniRepeating[[kRepeating]][1:kTraining],type='l',col="green")
 axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
 

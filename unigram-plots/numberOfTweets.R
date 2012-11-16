@@ -1,7 +1,9 @@
+mar.default <- par("mar")
+
 tCntsTS <- read.table("/u2/yaboulnaga/data/twitter-tracked/spritzer_timesorted_tweet-counts.csv", header=TRUE, sep='\t', quote="\"")
 tCntsTS$TIMESTAMP <- as.POSIXct(tCntsTS$TIMESTAMP/1000,origin="1970-01-01", tz="GMT")
 dayDelims <- seq(from=0,to=dim(tCntsTS)[1],by=(60*60*24))
-mar.default <- par("mar")
+
 par(mar = mar.default + c(10,0,0,0))
 plot(tCntsTS$NUMTWEETS, type="p", cex=0.5, pch=20, lab=c(1,10,7), xlab="", main="Number of Tweets", ylab="Number of Tweets")
 axis(1,at=dayDelims,tck=1,lty=3,labels=tCntsTS$TIMESTAMP[dayDelims+1],las=2)

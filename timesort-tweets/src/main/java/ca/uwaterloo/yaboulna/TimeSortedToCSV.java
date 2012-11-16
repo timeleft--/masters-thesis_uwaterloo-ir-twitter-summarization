@@ -3,6 +3,7 @@ package ca.uwaterloo.yaboulna;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
@@ -73,8 +74,11 @@ public class TimeSortedToCSV {
 			}
 		};
 		
-		Collection<File> seqFiles = FileUtils.listFiles(new File(seqRoot),
-				partFFilter, noHidderOrLogsFilter);
+		File[] seqFiles = FileUtils.listFiles(new File(seqRoot),
+				partFFilter, noHidderOrLogsFilter).toArray(new File[0]);
+		
+		Arrays.sort(seqFiles);
+		
 		PrintStream out = new PrintStream(FileUtils.openOutputStream(new File(
 				outRoot + "tweet-counts.csv")), true, "UTF-8");
 		out.append("TIMESTAMP\tNUMTWEETS\n");
