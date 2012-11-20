@@ -8,9 +8,9 @@ require(reshape)
 #require(MARSS)
 require(dlmodeler)
 
-MILLIS_PUT_1000 <- 1000
+MILLIS_PUT_1000 <- 1
 
-setwd("/u2/yaboulnaga/data/twitter-tracked/spritzer_timesorted_csv/") #tweet-counts.csv")
+setwd("/u2/yaboulnaga/data/twitter-tracked/spritzer_timesorted_csv/pig/") #tweet-counts.csv")
 
 kTS <- "TIMESTAMP"
 kUnigram <- "NUMTWEETS"
@@ -83,7 +83,7 @@ for(i in 1:length(hrs.files)){
 
 kTraining <- as.numeric(ceiling(dim(uniCntT)[1] * kTrainingFraction))
 
-kRecordsPerMinute <- 60
+kRecordsPerMinute <- 1/5
 kEpochRecs <- 5 * kRecordsPerMinute
 # determing the epoch length
 #suppLag <- supportLag(uniCntT[1:kTraining,], kUnigram, kSupport)
@@ -150,7 +150,9 @@ uniModel <- dlmodeler.build.structural(
 rm(uniFit)
 
 sink(paste("~/Desktop/",kModelName,"_",  kUnigram, ".log", sep=""))
+print(paste("Sum of all", kUnigram, "occurrences:", colSums(matrix(uniCntT$NUMTWEETS))))
 print(paste("Epoch in minutes:", kEpochMins))
+print(paste("Span of training data in days:", kTraining * kEpochMins / (60*24)))
 print(paste("Time for", kFitMethod, "of model parameters (initialization) using backend", kBackEnd))
 print(system.time(uniFit <- dlmodeler.fit(uniTrainM, uniModel, 
         filter=FALSE, smooth=FALSE, verbose=FALSE, 
