@@ -77,13 +77,31 @@ hrs.files <- list.files(pattern=".*csv$")
 uniCntT <- NULL
 for(i in 1:length(hrs.files)){ 
   uniCntT <- rbind.fill(uniCntT, 
-        read.table(hrs.files[i], header=TRUE, sep='\t', quote="\"")
+     read.table(hrs.files[i], header=TRUE, sep='\t', quote="\"")
         [c(kTS, kUnigram)])
 }
 
+uniCntT <-  uniCntT[complete.cases(uniCntT),]
+
+############### Fill the gaps in the data with zeros to make sure epochs are fixed ###############
+kRecordsPerMinute <- 1/5
+kEpochLenTemp <- 60 / kRecordsPerMinute
+for(i in rev(which(diff(uniCntT[[kTS]]) !=  kEpochLenTemp))){
+  #while((i<12069+71700) && (uniCntT[[kTS]][i+1] - uniCntT[[kTS]][i]) > kEpochLenTemp ){
+    numMissingEpochs <- (floor( (uniCntT[[kTS]][i+1] - uniCntT[[kTS]][i]) / kEpochLenTemp) - 1)
+    missingEpochs <- data.frame(c(uniCntT[[kTS]][i] + ( seq( 1: numMissingEpochs) * kEpochLenTemp)), 0)
+    names(missingEpochs) <- c(kTS, kUnigram)
+    uniCntT <- rbind(uniCntT[1:i, ], 
+        missingEpochs,
+        uniCntT[(i+1):nrow(uniCntT), ])
+  # i <- i + 1 
+  
+}
+
+#################### Calculate the number of records and minutes in each epoch #################333    
+
 kTraining <- as.numeric(ceiling(dim(uniCntT)[1] * kTrainingFraction))
 
-kRecordsPerMinute <- 1/5
 kEpochRecs <- 5 * kRecordsPerMinute
 # determing the epoch length
 #suppLag <- supportLag(uniCntT[1:kTraining,], kUnigram, kSupport)
