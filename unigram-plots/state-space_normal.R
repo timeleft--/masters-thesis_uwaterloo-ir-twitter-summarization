@@ -29,7 +29,7 @@ kComp <- "level" #"+trend"
 kRepeating<-"cycle" # "seasonal+cycle"
 kCycleOrder <- 3
 
-kTrainingFraction <- 1
+kTrainingFraction <- 1 #16/54.2881944444444
 
 supportLag <- function(inFrame, colname, supp) {
   len <- dim(inFrame)[1]
@@ -82,7 +82,7 @@ for(i in 1:length(hrs.files)){
 }
 
 uniCntT <-  uniCntT[complete.cases(uniCntT),]
-
+uniCntT <- uniCntT[which(uniCntT$TIMESTAMP >= 1348030800),]
 ############### Fill the gaps in the data with zeros to make sure epochs are fixed ###############
 kRecordsPerMinute <- 1/5
 kEpochLenTemp <- 60 / kRecordsPerMinute

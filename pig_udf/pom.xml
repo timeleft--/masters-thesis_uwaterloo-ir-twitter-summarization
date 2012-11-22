@@ -1,39 +1,158 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>yaboulna-thesis</groupId>
-  <artifactId>yaboulna-udf</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-   <dependencies>
-    <dependency>
-      <groupId>org.apache.pig</groupId>
-      <artifactId>pig</artifactId>
-      <version>0.10.0</version>
-    </dependency>
-<!--     <dependency> -->
-<!--       <groupId>joda-time</groupId> -->
-<!--       <artifactId>joda-time</artifactId> -->
-<!--       <version>2.1</version> -->
-<!--     </dependency> -->
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.4</version>
-    </dependency>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>yaboulna-thesis</groupId>
+	<artifactId>yaboulna-udf</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.pig</groupId>
+			<artifactId>pig</artifactId>
+			<version>0.10.0</version>
+		</dependency>
+		<!-- <dependency> -->
+		<!-- <groupId>joda-time</groupId> -->
+		<!-- <artifactId>joda-time</artifactId> -->
+		<!-- <version>2.1</version> -->
+		<!-- </dependency> -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.4</version>
+		</dependency>
 
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>13.0.1</version>
-    </dependency>
-    <dependency>
-    	<groupId>org.apache.hadoop</groupId>
-    	<artifactId>hadoop-common</artifactId>
-    	<version>0.23.4</version>
-    </dependency>
-    <dependency>
-    	<groupId>trec2012</groupId>
-    	<artifactId>assoc-mr</artifactId>
-    	<version>0.0.2-SNAPSHOT</version>
-    </dependency>
-   </dependencies>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>13.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-common</artifactId>
+			<version>0.23.4</version>
+		</dependency>
+		<dependency>
+			<groupId>trec2012</groupId>
+			<artifactId>assoc-mr</artifactId>
+			<version>0.0.2-SNAPSHOT</version>
+			<type>pom</type>
+		</dependency>
+	</dependencies>
+	<build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.0</version>
+        <configuration>
+          <!-- put your configurations here -->
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  
+<!-- 		<pluginManagement> -->
+<!-- 			<plugins> -->
+<!-- 				<plugin> -->
+<!-- 					<groupId>org.eclipse.m2e</groupId> -->
+<!-- 					<artifactId>lifecycle-mapping</artifactId> -->
+<!-- 					<version>1.0.0</version> -->
+<!-- 					<configuration> -->
+<!-- 						<lifecycleMappingMetadata> -->
+<!-- 							<pluginExecutions> -->
+<!-- 								<pluginExecution> -->
+<!-- 									<pluginExecutionFilter> -->
+<!-- 										<groupId>org.apache.maven.plugins</groupId> -->
+<!-- 										<artifactId>maven-antrun-plugin</artifactId> -->
+<!-- 										<versionRange>[1.6,)</versionRange> -->
+<!-- 										<goals> -->
+<!-- 											<goal>run</goal> -->
+<!-- 										</goals> -->
+<!-- 									</pluginExecutionFilter> -->
+<!-- 									<action> -->
+<!-- 										<ignore /> -->
+<!-- 									</action> -->
+<!-- 								</pluginExecution> -->
+<!-- 								<pluginExecution> -->
+<!-- 									<pluginExecutionFilter> -->
+<!-- 										<groupId>org.apache.maven.plugins</groupId> -->
+<!-- 										<artifactId>maven-dependency-plugin</artifactId> -->
+<!-- 										<versionRange>[1.0.0,)</versionRange> -->
+<!-- 										<goals> -->
+<!-- 											<goal>copy-dependencies</goal> -->
+<!-- 										</goals> -->
+<!-- 									</pluginExecutionFilter> -->
+<!-- 									<action> -->
+<!-- 										<ignore /> -->
+<!-- 									</action> -->
+<!-- 								</pluginExecution> -->
+<!-- 								<pluginExecution> -->
+<!-- 									<pluginExecutionFilter> -->
+<!-- 										<groupId>com.github.igor-petruk.protobuf</groupId> -->
+<!-- 										<artifactId>protobuf-maven-plugin</artifactId> -->
+<!-- 										<versionRange>[0.4,)</versionRange> -->
+<!-- 										<goals> -->
+<!-- 											<goal>run</goal> -->
+<!-- 										</goals> -->
+<!-- 									</pluginExecutionFilter> -->
+<!-- 									<action> -->
+<!-- 										<ignore /> -->
+<!-- 									</action> -->
+<!-- 								</pluginExecution> -->
+<!-- 								<pluginExecution> -->
+<!-- 									<pluginExecutionFilter> -->
+<!-- 										<groupId>org.apache.thrift.tools</groupId> -->
+<!-- 										<artifactId>maven-thrift-plugin</artifactId> -->
+<!-- 										<versionRange>[0.1.10,)</versionRange> -->
+<!-- 										<goals> -->
+<!-- 											<goal>compile</goal> -->
+<!-- 											<goal>testCompile</goal> -->
+<!-- 										</goals> -->
+<!-- 									</pluginExecutionFilter> -->
+<!-- 									<action> -->
+<!-- 										<ignore /> -->
+<!-- 									</action> -->
+<!-- 								</pluginExecution> -->
+<!-- 							</pluginExecutions> -->
+<!-- 						</lifecycleMappingMetadata> -->
+<!-- 					</configuration> -->
+<!-- 				</plugin> -->
+<!-- 			</plugins> -->
+<!-- 		</pluginManagement> -->
+		<!-- <plugins> -->
+		<!-- <plugin> -->
+		<!-- <groupId>org.apache.maven.plugins</groupId> -->
+		<!-- <artifactId>maven-compiler-plugin</artifactId> -->
+		<!-- <configuration> -->
+		<!-- <encoding>UTF-8</encoding> -->
+		<!-- <source>1.6</source> -->
+		<!-- <target>1.6</target> -->
+		<!-- <optimize>true</optimize> -->
+		<!-- </configuration> -->
+		<!-- </plugin> -->
+		<!-- <plugin> -->
+		<!-- <groupId>org.apache.maven.plugins</groupId> -->
+		<!-- <artifactId>maven-dependency-plugin</artifactId> -->
+		<!-- <executions> -->
+		<!-- <execution> -->
+		<!-- <id>copy-dependencies</id> -->
+		<!-- <phase>package</phase> -->
+		<!-- <goals> -->
+		<!-- <goal>copy-dependencies</goal> -->
+		<!-- </goals> -->
+		<!-- <configuration> -->
+		<!-- configure the plugin here -->
+		<!-- </configuration> -->
+		<!-- </execution> -->
+		<!-- </executions> -->
+		<!-- </plugin> -->
+		<!-- </plugins> -->
+	</build>
 </project>

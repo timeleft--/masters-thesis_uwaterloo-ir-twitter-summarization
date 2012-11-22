@@ -3,6 +3,6 @@
 -- In each cell we store an array of the last part of the TweetIds in which the column term occurred
 -- There are more columns for statistics, such as total term count, average tweet length, tweet count
 
-REGISTER yaboulna-udf.jar;
+REGISTER ../pig_udf/target/yaboulna-udf-0.0.1-SNAPSHOT.jar;
 tweets = LOAD 'file:///u2/yaboulnaga/data/twitter-tracked/debug/[^_]*/[^.]*[^g]' USING PigStorage('\t') AS (id:long, screenname:chararray, timestamp:long, tweet:chararray); --debug XOR spritzer_unsorted_csv
 tokens = FOREACH tweets GENERATE timestamp, id, yaboulna.pig.TweetTokenizer(tweet);
