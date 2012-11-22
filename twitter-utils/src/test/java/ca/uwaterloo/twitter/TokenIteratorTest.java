@@ -196,7 +196,7 @@ public class TokenIteratorTest {
   @Test
   public void testNumbers() {
     LatinTokenIterator target = new LatinTokenIterator(
-        "On 05-07/2012 28th birthday buy 3333 for 12,234.99 each ");
+        "On 05-07/2012 28th birthday buy 3333. 22,for 12,234.99 each 14.");
     assertEquals("on", target.next());
     assertEquals("05", target.next());
     assertEquals("07", target.next());
@@ -205,9 +205,11 @@ public class TokenIteratorTest {
     assertEquals("birthday", target.next());
     assertEquals("buy", target.next());
     assertEquals("3333", target.next());
+    assertEquals("22", target.next());
     assertEquals("for", target.next());
     assertEquals("12234.99", target.next());
     assertEquals("each", target.next());
+    assertEquals("14", target.next());
     assertFalse(target.hasNext());
   }
   

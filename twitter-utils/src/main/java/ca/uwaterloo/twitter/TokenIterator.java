@@ -194,11 +194,11 @@ public class TokenIterator extends AbstractIterator<String> {
       --cIx;
       while (cIx < chs.length) {
         ch = chs[cIx++];
-        if (isTokenChar(ch) || isDecimalSeparator(ch)) {
+        if (isTokenChar(ch) || (isDecimalSeparator(ch) && cIx < chs.length && Character.isDigit(chs[cIx]))) {
           ret += (char)ch;
 //          result.append((char) ch);
         } else {
-          if (isThousandsSeparator(ch)) {
+          if (isThousandsSeparator(ch)  && cIx < chs.length && Character.isDigit(chs[cIx])) {
             continue;
           }
           // no need to check for being delimiter, because
