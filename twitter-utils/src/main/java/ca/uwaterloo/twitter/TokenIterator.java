@@ -2,12 +2,12 @@ package ca.uwaterloo.twitter;
 
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.regex.Pattern;
 
 import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Queues;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 public class TokenIterator extends AbstractIterator<String> {
@@ -59,8 +59,7 @@ public class TokenIterator extends AbstractIterator<String> {
    * Used to Store hashtags that will be repeated, so if repeatedHashTagAtTheEnd is true the content
    * will be repeated at the end of the tweet
    */
-  private LinkedBlockingDeque<String> pendingRes = Queues
-      .<String> newLinkedBlockingDeque();
+  private LinkedList<String> pendingRes = Lists.newLinkedList();
   private static int[] BLANK_3CH = { -1, -1, -1 };
   private int[] repeatedChs = Arrays.copyOf(BLANK_3CH, 3);
   private Set<Character> punctuation;
@@ -164,7 +163,7 @@ public class TokenIterator extends AbstractIterator<String> {
         }
       }
       
-      if (repeatHashTag && result.charAt(0) == '#') {
+      if (repeatHashTag && result.length() > 0 && result.charAt(0) == '#') {
         // || result.charAt(0) == '@') {
         pendingRes.addLast(result.toString());
         result = result.deleteCharAt(0);

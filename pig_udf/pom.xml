@@ -32,10 +32,9 @@
 			<version>0.23.4</version>
 		</dependency>
 		<dependency>
-			<groupId>trec2012</groupId>
-			<artifactId>assoc-mr</artifactId>
-			<version>0.0.2-SNAPSHOT</version>
-			<type>pom</type>
+			<groupId>yaboulna-thesis</groupId>
+			<artifactId>twitter-utils</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<build>
