@@ -31,8 +31,9 @@ public class TweetTokenizer extends EvalFunc<Tuple> {
   
   @Override
   public Tuple exec(Tuple input) throws IOException {
-    if (input == null || input.size() == 0)
+    if (input == null || input.isNull() || input.size() < 1 || input.isNull(0)){
       return null;
+    }
     try {
       String tweet = StringEscapeUtils.unescapeJava((String) input.get(0));
       
