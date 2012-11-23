@@ -8,8 +8,10 @@ import java.util.List;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.pig.EvalFunc;
+import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import ca.uwaterloo.twitter.TokenIterator.LatinTokenIterator;
 
@@ -20,12 +22,6 @@ import com.google.common.collect.Lists;
  * 
  */
 public class TweetTokenizer extends EvalFunc<Tuple> {
-  
-  /**
-   * 
-   */
-  public TweetTokenizer() {
-  }
   
   /*
    * (non-Javadoc)
@@ -62,6 +58,22 @@ public class TweetTokenizer extends EvalFunc<Tuple> {
     } catch (Exception e) {
       throw new IOException("Caught exception processing input row "
           + input.toDelimitedString("\t"), e);
+    }
+  }
+  
+  public Schema outputSchema(Schema input) {
+    try {
+      Schema.FieldSchema tokenFs = new Schema.FieldSchema("token",
+          DataType.CHARARRAY);
+      Schema tupleSchema = new Schema(tokenFs);
+      
+      Schema.FieldSchema tupleFs;
+      tupleFs = new Schema.FieldSchema("tuple_of_tokens", tupleSchema,
+          DataType.TUPLE);
+      
+      return new Schema(tupleFs);
+    } catch (Exception e) {
+      return null;
     }
   }
   
