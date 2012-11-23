@@ -3,24 +3,45 @@ package ca.uwaterloo.twitter;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import java.lang.reflect.InvocationTargetException;
+
+import org.junit.Before;
 import org.junit.Test;
+
+import com.google.common.collect.AbstractIterator;
 
 import ca.uwaterloo.twitter.TokenIterator;
 import ca.uwaterloo.twitter.TokenIterator.LatinTokenIterator;
 
 public class TokenIteratorTest {
   
+  protected Class<? extends AbstractIterator<String>> targetClazz;
+  
+  @Before
+  public void setUp() {
+    targetClazz = LatinTokenIterator.class;
+  }
+  
   @Test
-  public void testBasic() {
-    TokenIterator target = new TokenIterator("Basic Test");
+  public void testBasic() throws InstantiationException, IllegalAccessException,
+      IllegalArgumentException, InvocationTargetException, SecurityException {
+    // TokenIterator target = new TokenIterator(
+    @SuppressWarnings("unchecked")
+    AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+        .newInstance(
+        "Basic Test");
     assertEquals("basic", target.next());
     assertEquals("test", target.next());
     assertFalse(target.hasNext());
   }
   
   @Test
-  public void oneWordShort() {
-    TokenIterator target = new TokenIterator("OneWord");
+  public void oneWordShort() throws InstantiationException, IllegalAccessException,
+      IllegalArgumentException, InvocationTargetException, SecurityException {
+    // TokenIterator target = new TokenIterator(
+    @SuppressWarnings("unchecked")
+    AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+        .newInstance("OneWord");
     assertEquals("oneword", target.next());
     assertFalse(target.hasNext());
   }
@@ -33,9 +54,13 @@ public class TokenIteratorTest {
   // }
   
   @Test
-  public void testApostropheMiddle() {
-    TokenIterator target = new TokenIterator("Apostrphe shouldn't be 'always delimiter' " +
-        "like's ain'tt don't");
+  public void testApostropheMiddle() throws InstantiationException, IllegalAccessException,
+      IllegalArgumentException, InvocationTargetException, SecurityException {
+    // TokenIterator target = new TokenIterator(
+    @SuppressWarnings("unchecked")
+    AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+        .newInstance("Apostrphe shouldn't be 'always delimiter' " +
+            "like's ain'tt don't");
     assertEquals("apostrphe", target.next());
     assertEquals("shouldnt", target.next());
     assertEquals("be", target.next());
@@ -50,8 +75,12 @@ public class TokenIteratorTest {
   }
   
   @Test
-  public void testApostropheExtremes() {
-    TokenIterator target = new TokenIterator("'quoted'''words'");
+  public void testApostropheExtremes() throws InstantiationException, IllegalAccessException,
+      IllegalArgumentException, InvocationTargetException, SecurityException {
+    // TokenIterator target = new TokenIterator(
+    @SuppressWarnings("unchecked")
+    AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+        .newInstance("'quoted'''words'");
     assertEquals("quoted", target.next());
     assertEquals("words", target.next());
     assertFalse(target.hasNext());
@@ -73,8 +102,12 @@ public class TokenIteratorTest {
   }
   
   @Test
-  public void testSymbols() {
-    TokenIterator target = new TokenIterator("`~!1@#$%^&*()-_+={}|\\/?><'\":; you_rock");
+  public void testSymbols() throws InstantiationException, IllegalAccessException,
+      IllegalArgumentException, InvocationTargetException, SecurityException {
+    // TokenIterator target = new TokenIterator(
+    @SuppressWarnings("unchecked")
+    AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+        .newInstance("`~!1@#$%^&*()-_+={}|\\/?><'\":; you_rock");
     // 1 to insure the token doesn't start with @ or #
     // FIXME: # and @ should be treated as delimiters except in the begining
     assertEquals("1@#", target.next());
@@ -84,15 +117,23 @@ public class TokenIteratorTest {
   }
   
   @Test
-  public void testShortenning() {
-    TokenIterator target = new TokenIterator("coooooooooooooooooool");
+  public void testShortenning() throws InstantiationException, IllegalAccessException,
+      IllegalArgumentException, InvocationTargetException, SecurityException {
+    // TokenIterator target = new TokenIterator(
+    @SuppressWarnings("unchecked")
+    AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+        .newInstance("coooooooooooooooooool");
     assertEquals("coool", target.next());
     assertFalse(target.hasNext());
   }
   
   @Test
-  public void testMentions() {
-    TokenIterator target = new TokenIterator("@younos");
+  public void testMentions() throws InstantiationException, IllegalAccessException,
+      IllegalArgumentException, InvocationTargetException, SecurityException {
+    // TokenIterator target = new TokenIterator(
+    @SuppressWarnings("unchecked")
+    AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+        .newInstance("@younos");
     assertEquals("@younos", target.next());
     // assertEquals("younos", target.next());
     assertFalse(target.hasNext());
@@ -171,16 +212,24 @@ public class TokenIteratorTest {
   // }
   
   @Test
-  public void testLatinOnly() {
-    LatinTokenIterator target = new LatinTokenIterator("très جداً Özsu");
+  public void testLatinOnly() throws InstantiationException, IllegalAccessException,
+  IllegalArgumentException, InvocationTargetException, SecurityException {
+    // TokenIterator target = new TokenIterator(
+    @SuppressWarnings("unchecked")
+    AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+        .newInstance("très جداً Özsu");
     assertEquals("très", target.next());
     assertEquals("Özsu".toLowerCase(), target.next());
     assertFalse(target.hasNext());
   }
   
   @Test
-  public void testUrl() {
-    LatinTokenIterator target = new LatinTokenIterator(
+  public void testUrl() throws InstantiationException, IllegalAccessException,
+  IllegalArgumentException, InvocationTargetException, SecurityException {
+    // TokenIterator target = new TokenIterator(
+    @SuppressWarnings("unchecked")
+    AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+        .newInstance(
         "http://youtube.com/dsdf33 OK www.wikipedia.com GOOD https://www.bank.com GOTO HTTP://WATCH.THIS www2012_conference");
     assertEquals("URL", target.next());
     assertEquals("ok", target.next());
@@ -194,8 +243,12 @@ public class TokenIteratorTest {
   }
   
   @Test
-  public void testNumbers() {
-    LatinTokenIterator target = new LatinTokenIterator(
+  public void testNumbers() throws InstantiationException, IllegalAccessException,
+  IllegalArgumentException, InvocationTargetException, SecurityException {
+    // TokenIterator target = new TokenIterator(
+    @SuppressWarnings("unchecked")
+    AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+        .newInstance(
         "On 05-07/2012 28th birthday buy 3333. 22,for 12,234.99 each 14.");
     assertEquals("on", target.next());
     assertEquals("05", target.next());

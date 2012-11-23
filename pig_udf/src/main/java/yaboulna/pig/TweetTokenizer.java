@@ -4,7 +4,7 @@
 package yaboulna.pig;
 
 import java.io.IOException;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.pig.EvalFunc;
@@ -13,7 +13,7 @@ import org.apache.pig.data.TupleFactory;
 
 import ca.uwaterloo.twitter.TokenIterator.LatinTokenIterator;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 
 /**
  * @author yaboulna
@@ -32,7 +32,7 @@ public class TweetTokenizer extends EvalFunc<Tuple> {
    * 
    * @see org.apache.pig.EvalFunc#exec(org.apache.pig.data.Tuple)
    */
-
+  
   @Override
   public Tuple exec(Tuple input) throws IOException {
     if (input == null || input.size() == 0)
@@ -44,21 +44,24 @@ public class TweetTokenizer extends EvalFunc<Tuple> {
       tokenIter.setRepeatHashTag(true);
       tokenIter.setRepeatedHashTagAtTheEnd(true);
       
-      Set<String> resSet = Sets.newHashSet();
-      while(tokenIter.hasNext()){
-    	  resSet.add(tokenIter.next());
+      // Count once later, now wer need to preserve bigrams
+      // Set<String> resSet = Sets.newLinkedHashSet();
+      List<String> resSet = Lists.newLinkedList();
+      while (tokenIter.hasNext()) {
+        resSet.add(tokenIter.next());
       }
       
       Tuple result = TupleFactory.getInstance().newTuple(resSet.size());
-      int i=0;
-      for(String token: resSet){
-    	  result.set(i++, token);
+      int i = 0;
+      for (String token : resSet) {
+        result.set(i++, token);
       }
       
       return result;
       
     } catch (Exception e) {
-      throw new IOException("Caught exception processing input row " + input.toDelimitedString("\t"), e);
+      throw new IOException("Caught exception processing input row "
+          + input.toDelimitedString("\t"), e);
     }
   }
   
