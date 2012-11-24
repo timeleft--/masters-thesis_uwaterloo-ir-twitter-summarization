@@ -4,6 +4,7 @@
 package yaboulna.pig;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang.StringEscapeUtils;
@@ -43,11 +44,15 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
       tokenIter.setRepeatHashTag(true);
       tokenIter.setRepeatedHashTagAtTheEnd(true);
       
+      int pos = 0;
       // Count once later, now wer need to preserve bigrams
       // Set<String> resSet = Sets.newLinkedHashSet();
       List<Tuple> resSet = Lists.newLinkedList();
       while (tokenIter.hasNext()) {
-        resSet.add(TupleFactory.getInstance().newTuple(tokenIter.next()));
+        Tuple tokenTuple = TupleFactory.getInstance().newTuple(2);
+        tokenTuple.set(0, tokenIter.next());
+        tokenTuple.set(1, pos++);
+        resSet.add(tokenTuple);
       }
       
       DataBag result = BagFactory.getInstance().newDefaultBag(resSet);
@@ -62,17 +67,19 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
   
   public Schema outputSchema(Schema input) {
     try {
-      Schema.FieldSchema tokenFs = new Schema.FieldSchema("token",
-          DataType.CHARARRAY);
-      Schema tupleSchema = new Schema(tokenFs);
+      Schema.FieldSchema tokenFs = new Schema.FieldSchema("token", DataType.CHARARRAY);
+      Schema.FieldSchema posFS = new Schema.FieldSchema("position",  DataType.INTEGER);
+          // cannot be handled by FOREACH DataType.BYTE);
       
-      Schema.FieldSchema tupleFs = new Schema.FieldSchema("tuple_of_tokens", tupleSchema,
+      Schema tupleSchema = new Schema(Arrays.asList(tokenFs,posFS));
+      
+      Schema.FieldSchema tupleFs = new Schema.FieldSchema("tuple_of_token-pos", tupleSchema,
           DataType.TUPLE);
       
       Schema bagSchema = new Schema(tupleFs);
 //      bagSchema.setTwoLevelAccessRequired(true);
       Schema.FieldSchema bagFs = new Schema.FieldSchema(
-                  "bag_of_tokenTuples",bagSchema, DataType.BAG);
+                  "bag_of_token-pos_tuples",bagSchema, DataType.BAG);
 
       return new Schema(bagFs);
     } catch (Exception e) {
