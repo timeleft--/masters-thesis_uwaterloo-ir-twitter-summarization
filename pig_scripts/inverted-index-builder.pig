@@ -8,7 +8,7 @@ tweets = LOAD 'file:///u2/yaboulnaga/data/twitter-tracked/debug/[^_]*/[^.]*[^g]'
 tokens = FOREACH tweets GENERATE FLATTEN(yaboulna.pig.DecomposeSnowflake(id)) as (unixTime, msIdAtT, year, month, day), FLATTEN(yaboulna.pig.TweetTokenizer(tweet)) as (token, pos);
 
 tokenDocGrps = GROUP tokens BY (token, year, month, day, unixTime, msIdAtT);
-positionBags = FOREACH tokenDocGrps GENERATE group, tokens.pos;
+positionBags = FOREACH tokenDocGrps GENERATE FLATTEN(group) as (token, year, month, day, unixTime, msIdAtT), tokens.pos as posBag;
 
 -- This produces a posting list of (docID, position) pairs.. which would be hard to work with (joins)
 -- tokenTimeGrps = GROUP tokens BY (token, year, month, day, unixTime);
