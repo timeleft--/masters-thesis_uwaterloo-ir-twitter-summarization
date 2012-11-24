@@ -6,8 +6,16 @@
 REGISTER ../pig_udf/target/yaboulna-udf-0.0.1-SNAPSHOT.jar;
 tweets = LOAD 'file:///u2/yaboulnaga/data/twitter-tracked/debug/[^_]*/[^.]*[^g]' USING PigStorage('\t') AS (id:long, screenname:chararray, timestamp:long, tweet:chararray); --debug XOR spritzer_unsorted_csv
 tokens = FOREACH tweets GENERATE FLATTEN(yaboulna.pig.DecomposeSnowflake(id)) as (unixTime, msIdAtT, year, month, day), FLATTEN(yaboulna.pig.TweetTokenizer(tweet)) as (token, pos);
-timeTokenGrps = GROUP tokens BY (year, month, day, unixTime, token);
-postingBags = FOREACH timeTokenGrps {
-  t =  FOREACH tokens GENERATE msIdAtT, pos;
-  GENERATE FLATTEN(group), t; 
-};
+
+tokenDocGrps = GROUP tokens BY (token, year, month, day, unixTime, msIdAtT);
+positionBags = FOREACH tokenDocGrps GENERATE group, tokens.pos;
+
+-- This produces a posting list of (docID, position) pairs.. which would be hard to work with (joins)
+-- tokenTimeGrps = GROUP tokens BY (token, year, month, day, unixTime);
+-- postingBags = FOREACH tokenTimeGrps {
+--  t =  FOREACH tokens GENERATE msIdAtT, pos;
+--  GENERATE FLATTEN(group) as (token, year, month, day, unixTime), t; --FLATTEN(t) as (msIdAtT, pos); 
+-- };
+
+
+STORE positionBags INTO 'file:///u2/yaboulnaga/data/twitter-tracked/spritzer_times-postings_csv' USING PigStorage('\t');
