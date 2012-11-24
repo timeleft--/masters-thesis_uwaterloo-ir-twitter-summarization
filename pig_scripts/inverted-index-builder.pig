@@ -5,4 +5,6 @@
 
 REGISTER ../pig_udf/target/yaboulna-udf-0.0.1-SNAPSHOT.jar;
 tweets = LOAD 'file:///u2/yaboulnaga/data/twitter-tracked/debug/[^_]*/[^.]*[^g]' USING PigStorage('\t') AS (id:long, screenname:chararray, timestamp:long, tweet:chararray); --debug XOR spritzer_unsorted_csv
-tokens = FOREACH tweets GENERATE FLATTEN(yaboulna.pig.DecomposeSnowflake(id)), yaboulna.pig.TweetTokenizer(tweet) as tokenArr;
+tokens = FOREACH tweets GENERATE FLATTEN(yaboulna.pig.DecomposeSnowflake(id)) as (unixTime, msIdAtT, year, month, day), FLATTEN(yaboulna.pig.TweetTokenizer(tweet)) as token;
+timeTokenGrps = GROUP tokens by (year, month, day, unixTime, token);
+postingBags = FOREACH timeTokenGrps GENERATE FLATTEN(group), tokens.msIdAtT, tokens.pos;

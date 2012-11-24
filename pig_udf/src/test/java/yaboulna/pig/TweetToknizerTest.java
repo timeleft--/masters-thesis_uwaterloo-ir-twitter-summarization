@@ -4,8 +4,10 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Iterator;
 
 import org.apache.pig.backend.executionengine.ExecException;
+import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.junit.Before;
@@ -19,21 +21,22 @@ public class TweetToknizerTest extends TokenIteratorTest {
   
   public static class TweetTokenizerWrapper extends AbstractIterator<String> {
     
-    private Tuple output;
-    private int currIx = 0;
+    private DataBag output;
+    private Iterator<Tuple> iter;
     
     public TweetTokenizerWrapper(String string) throws IOException {
       TweetTokenizer delegate = new TweetTokenizer();
       Tuple input = TupleFactory.getInstance().newTuple(1);
       input.set(0, string);
       output = delegate.exec(input);
+      iter = output.iterator();
     }
     
     @Override
     protected String computeNext() {
-      if (currIx < output.size()) {
+      if (iter.hasNext()) {
         try {
-          return (String) output.get(currIx++);
+          return (String) iter.next().get(0);
         } catch (ExecException e) {
           return "ExecException: " + e.getMessage();
         }

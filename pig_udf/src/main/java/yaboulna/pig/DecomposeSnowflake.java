@@ -2,6 +2,9 @@ package yaboulna.pig;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 import org.apache.pig.EvalFunc;
 import org.apache.pig.data.DataType;
@@ -27,9 +30,15 @@ public class DecomposeSnowflake extends EvalFunc<Tuple> {
     
     int redisdues = (ms << 22) | idAtT;
     
-    Tuple result = TupleFactory.getInstance().newTuple(2);
+    Tuple result = TupleFactory.getInstance().newTuple(5);
     result.set(0, uxTimestamp);
     result.set(1, redisdues);
+    
+    Calendar gregCal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+    gregCal.setTimeInMillis(timestamp);
+    result.set(2, gregCal.get(Calendar.YEAR));
+    result.set(3, gregCal.get(Calendar.MONTH)+1); // +1 because Jan is 0.. duh!!
+    result.set(4, gregCal.get(Calendar.DAY_OF_MONTH));
     
     return result;
   }
@@ -38,8 +47,10 @@ public class DecomposeSnowflake extends EvalFunc<Tuple> {
   public Schema outputSchema(Schema input) {
     Schema.FieldSchema uxTimeFS = new Schema.FieldSchema("uxTime", DataType.INTEGER);
     Schema.FieldSchema residuesFS = new Schema.FieldSchema("msIdAtT", DataType.INTEGER);
-    
-    Schema result = new Schema(Arrays.asList(uxTimeFS,residuesFS));
+    Schema.FieldSchema yearFS = new Schema.FieldSchema("year", DataType.INTEGER);
+    Schema.FieldSchema monthFS = new Schema.FieldSchema("month", DataType.INTEGER);
+    Schema.FieldSchema dayFS = new Schema.FieldSchema("day", DataType.INTEGER);
+    Schema result = new Schema(Arrays.asList(uxTimeFS,residuesFS,yearFS,monthFS,dayFS));
     
     return result;
   }

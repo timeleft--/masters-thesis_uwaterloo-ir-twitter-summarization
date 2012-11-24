@@ -8,6 +8,8 @@ import java.util.List;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.pig.EvalFunc;
+import org.apache.pig.data.BagFactory;
+import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
@@ -21,7 +23,7 @@ import com.google.common.collect.Lists;
  * @author yaboulna
  * 
  */
-public class TweetTokenizer extends EvalFunc<Tuple> {
+public class TweetTokenizer extends EvalFunc<DataBag> {
   
   /*
    * (non-Javadoc)
@@ -30,7 +32,7 @@ public class TweetTokenizer extends EvalFunc<Tuple> {
    */
   
   @Override
-  public Tuple exec(Tuple input) throws IOException {
+  public DataBag exec(Tuple input) throws IOException {
     if (input == null || input.isNull() || input.size() < 1 || input.isNull(0)){
       return null;
     }
@@ -43,16 +45,12 @@ public class TweetTokenizer extends EvalFunc<Tuple> {
       
       // Count once later, now wer need to preserve bigrams
       // Set<String> resSet = Sets.newLinkedHashSet();
-      List<String> resSet = Lists.newLinkedList();
+      List<Tuple> resSet = Lists.newLinkedList();
       while (tokenIter.hasNext()) {
-        resSet.add(tokenIter.next());
+        resSet.add(TupleFactory.getInstance().newTuple(tokenIter.next()));
       }
       
-      Tuple result = TupleFactory.getInstance().newTuple(resSet.size());
-      int i = 0;
-      for (String token : resSet) {
-        result.set(i++, token);
-      }
+      DataBag result = BagFactory.getInstance().newDefaultBag(resSet);
       
       return result;
       
@@ -68,11 +66,15 @@ public class TweetTokenizer extends EvalFunc<Tuple> {
           DataType.CHARARRAY);
       Schema tupleSchema = new Schema(tokenFs);
       
-      Schema.FieldSchema tupleFs;
-      tupleFs = new Schema.FieldSchema("tuple_of_tokens", tupleSchema,
+      Schema.FieldSchema tupleFs = new Schema.FieldSchema("tuple_of_tokens", tupleSchema,
           DataType.TUPLE);
       
-      return new Schema(tupleFs);
+      Schema bagSchema = new Schema(tupleFs);
+//      bagSchema.setTwoLevelAccessRequired(true);
+      Schema.FieldSchema bagFs = new Schema.FieldSchema(
+                  "bag_of_tokenTuples",bagSchema, DataType.BAG);
+
+      return new Schema(bagFs);
     } catch (Exception e) {
       return null;
     }

@@ -18,15 +18,21 @@ public class SnowflakeTest {
   static Long TEST_ID = 246421517250985985L;
   static int UXTIME = (int) (1347586442660L / 1000); // api reported: 1347586443000L
   static int MSECS = 660;
+  static int YEAR = 2012;
+  static int MONTH = 9;
+  static int DAY =  14;
   static Integer IDATT = 131073 + (MSECS << 22); 
   
   @Test
   public void testDecomposeSnowflake() throws IOException {
     DecomposeSnowflake target = new DecomposeSnowflake();
     Tuple actual = target.exec(TupleFactory.getInstance().newTuple(TEST_ID));
-    assertEquals(2, actual.size());
+    assertEquals(5, actual.size());
     assertEquals(UXTIME, actual.get(0));
     assertEquals(IDATT, actual.get(1));
+    assertEquals(YEAR, actual.get(2));
+    assertEquals(MONTH, actual.get(3));
+    assertEquals(DAY, actual.get(4));
   }
   
   @Test
