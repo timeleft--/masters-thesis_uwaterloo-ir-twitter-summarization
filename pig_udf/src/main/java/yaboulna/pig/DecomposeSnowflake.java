@@ -34,7 +34,9 @@ public class DecomposeSnowflake extends EvalFunc<Tuple> {
     result.set(0, uxTimestamp);
     result.set(1, redisdues);
     
-    Calendar gregCal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+    // Interpreting the timestamp using the timezone GMT-10 so that day boundaries
+    // fall at 3 and 5 AM in North America West and East coast 
+    Calendar gregCal = new GregorianCalendar(TimeZone.getTimeZone("GMT-10"));
     gregCal.setTimeInMillis(timestamp);
     result.set(2, gregCal.get(Calendar.YEAR));
     result.set(3, gregCal.get(Calendar.MONTH)+1); // +1 because Jan is 0.. duh!!

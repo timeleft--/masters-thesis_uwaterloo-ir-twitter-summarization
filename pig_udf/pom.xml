@@ -15,22 +15,19 @@
 		<!-- <artifactId>joda-time</artifactId> -->
 		<!-- <version>2.1</version> -->
 		<!-- </dependency> -->
-		<!-- <dependency> -->
-		<!-- <groupId>commons-io</groupId> -->
-		<!-- <artifactId>commons-io</artifactId> -->
-		<!-- <version>2.4</version> -->
-		<!-- </dependency> -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.4</version>
+		</dependency>
 
 		<!-- <dependency> -->
 		<!-- <groupId>com.google.guava</groupId> -->
 		<!-- <artifactId>guava</artifactId> -->
 		<!-- <version>13.0.1</version> -->
 		<!-- </dependency> -->
-		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-common</artifactId>
-			<version>0.23.4</version>
-		</dependency>
+
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -50,8 +47,79 @@
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
-	</dependencies>
+		
+		<!-- Hive -->
+		<dependency>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-jdbc</artifactId>
+			<version>0.9.0</version>
+			<!-- Using hive2 server so we use the cloudera version -->
+			<type>pom</type>
+			<exclusions>
+				<!-- when using yarn exclude -->
+				<!-- <exclusion> -->
+				<!-- <artifactId>hadoop-core</artifactId> -->
+				<!-- <groupId>org.apache.hadoop</groupId> -->
+				<!-- </exclusion> -->
+				<exclusion>
+					<artifactId>jdo2-api</artifactId>
+					<groupId>javax.jdo</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>javax.jdo</groupId>
+			<artifactId>jdo2-api</artifactId>
+			<version>2.3-eb</version>
+		</dependency>
+		<!-- Cloudera hive replacements -->
+		<dependency>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-jdbc</artifactId>
+			<version>0.9.0</version>
+			<scope>system</scope>
+			<systemPath>/usr/lib/hive/lib/hive-jdbc-0.9.0-cdh4.1.2.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.thrift</groupId>
+			<artifactId>libthrift</artifactId>
+			<version>0.7.0</version>
+			<scope>system</scope>
+			<systemPath>/usr/lib/hive/lib/libthrift-0.7.0-cdh.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-service</artifactId>
+			<version>0.9.0</version>
+			<scope>system</scope>
+			<systemPath>/usr/lib/hive/lib/hive-service-0.9.0-cdh4.1.2.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-metastore</artifactId>
+			<version>0.9.0</version>
+			<scope>system</scope>
+			<systemPath>/usr/lib/hive/lib/hive-metastore-0.9.0-cdh4.1.2.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-exec</artifactId>
+			<version>0.9.0</version>
+			<scope>system</scope>
+			<systemPath>/usr/lib/hive/lib/hive-exec-0.9.0-cdh4.1.2.jar</systemPath>
+		</dependency>
+		<!-- END HIVE CRAZINESS -->
 
+		<!-- Hadoop -->
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-core</artifactId>
+			<version>0.20.205.0</version>
+		</dependency>
+	</dependencies>
+	<!-- when using yarn <dependency> <groupId>org.apache.hadoop</groupId> <artifactId>hadoop-common</artifactId> 
+		<version>0.23.4</version> </dependency> -->
+	<!-- End Hadoop -->
 	<build>
 		<plugins>
 			<plugin>

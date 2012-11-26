@@ -20,7 +20,7 @@ public class SnowflakeTest {
   static int MSECS = 660;
   static int YEAR = 2012;
   static int MONTH = 9;
-  static int DAY =  14;
+  static int DAY =  13; //This is HST but in EST it would be 14;
   static Integer IDATT = 131073 + (MSECS << 22); 
   
   @Test
