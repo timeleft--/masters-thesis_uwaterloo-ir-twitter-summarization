@@ -18,18 +18,18 @@ import org.apache.pig.data.Tuple;
 
 import com.google.common.collect.Sets;
 
-public class InsertIntoHivePartition extends EvalFunc<String> {
+public class InsertIntoHivePartition extends EvalFunc<Integer> {
   
-  private static String driverName = "org.apache.hive.jdbc.HiveDriver";
+  String driverName = "org.apache.hive.jdbc.HiveDriver";
   // jdbs:hive "org.apache.hadoop.hive.jdbc.HiveDriver"; // this does't support concurrent clients
   
   // TODO read from a properties file
-  private String serverURL = "jdbc:hive2://localhost:10000/default";
-  private String serverUName = "yaboulna";
-  private String serverPasswd = "53nhaN0rmal";
+  String serverURL = "jdbc:hive2://localhost:10000/default";
+  String serverUName = "yaboulna";
+  String serverPasswd = "53nhaN0rmal";
   
   @Override
-  public String exec(Tuple input) throws IOException {
+  public Integer exec(Tuple input) throws IOException {
     if (input == null || input.isNull() || input.size() < 3 || input.isNull(0) || input.isNull(1)
         || input.isNull(2)) {
       return null;
@@ -141,6 +141,12 @@ public class InsertIntoHivePartition extends EvalFunc<String> {
               + " STORED AS RCFILE "
               + " LOCATION '" + rcFilesPath + "' ";
       stmt.executeUpdate(createSQL);
+
+      // This is going to be ignored anyway.. a plunge in the code was needed to learn this
+//      stmt.executeUpdate("SET mapred.output.dir=${mapred.temp}")
+      
+      //FIXME remove after fix the problem with derby DB EmbeddedDriver not being in the class path 
+      stmt.executeUpdate("set hive.stats.autogather=false");
       
       String loadSQL =
           " INSERT INTO TABLE " + token + " PARTITION (dt='" + dateStr + "') " 
@@ -148,11 +154,12 @@ public class InsertIntoHivePartition extends EvalFunc<String> {
               + " SELECT * "
           		+ " FROM " + tempName; 
 //          		+ " GROUP BY unixTime, msIdAtT ";
-      stmt.executeUpdate(loadSQL);
+      int result = stmt.executeUpdate(loadSQL);
       
       stmt.executeUpdate(" DROP TABLE " + tempName);
       tempFile.delete();
-      return null;
+      
+      return result;
     } catch (Exception e) {
       log.error(e.getMessage(),e);
       throw new IOException("ERROR! ", e);

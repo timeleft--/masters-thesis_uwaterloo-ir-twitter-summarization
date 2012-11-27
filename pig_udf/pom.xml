@@ -65,6 +65,10 @@
 					<artifactId>jdo2-api</artifactId>
 					<groupId>javax.jdo</groupId>
 				</exclusion>
+				<exclusion>
+					<artifactId>hadoop-core</artifactId>
+					<groupId>org.apache.hadoop</groupId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -108,6 +112,19 @@
 			<scope>system</scope>
 			<systemPath>/usr/lib/hive/lib/hive-exec-0.9.0-cdh4.1.2.jar</systemPath>
 		</dependency>
+<!-- 		<dependency> -->
+<!-- 		  <groupId>org.apache.derby</groupId> -->
+<!--       <artifactId>derby</artifactId> -->
+<!--       <version>10.4.2.0</version> -->
+<!--       <scope>system</scope> -->
+<!--       <systemPath>/usr/lib/hive/lib/derby-10.4.2.0.jar</systemPath> -->
+<!--     </dependency> -->
+    
+<!--     <dependency> -->
+<!--       <groupId>org.apache.derby</groupId> -->
+<!--       <artifactId>derbytools</artifactId> -->
+<!--       <version>10.4.2.0</version> -->
+<!--     </dependency> -->
 		<!-- END HIVE CRAZINESS -->
 
 		<!-- Hadoop -->
@@ -116,6 +133,7 @@
 			<artifactId>hadoop-core</artifactId>
 			<version>0.20.205.0</version>
 		</dependency>
+		
 	</dependencies>
 	<!-- when using yarn <dependency> <groupId>org.apache.hadoop</groupId> <artifactId>hadoop-common</artifactId> 
 		<version>0.23.4</version> </dependency> -->

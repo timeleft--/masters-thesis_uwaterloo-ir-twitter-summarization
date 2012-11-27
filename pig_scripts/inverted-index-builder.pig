@@ -5,7 +5,7 @@
 
 REGISTER ../pig_udf/target/yaboulna-udf-0.0.1-SNAPSHOT.jar;
 -- file:///u2/yaboulnaga/data/twitter-tracked/debug/
-tweets = LOAD 'twitter-tracked/spritzer/debug/[^_]*/[^.]*[^g]' USING PigStorage('\t') AS (id:long, screenname:chararray, timestamp:long, tweet:chararray); --debug XOR spritzer_unsorted_csv
+tweets = LOAD 'file:///u2/yaboulnaga/data/twitter-tracked/spritzer_unsorted_csv/[^_]*/[^.]*[^g]' USING PigStorage('\t') AS (id:long, screenname:chararray, timestamp:long, tweet:chararray); --debug XOR spritzer_unsorted_csv
 tokens = FOREACH tweets GENERATE FLATTEN(yaboulna.pig.DecomposeSnowflake(id)) as (unixTime, msIdAtT, year, month, day), FLATTEN(yaboulna.pig.TweetTokenizer(tweet)) as (token, pos);
 
 -- This produces a list of positions for each document, fragmenting the records too much
@@ -17,7 +17,7 @@ tokenTimeGrps = GROUP tokens BY (token, year, month, day); -- less fragmentation
 storageResults = FOREACH tokenTimeGrps {
   t =  FOREACH tokens GENERATE unixTime, msIdAtT, pos;
   -- postingBags GENERATE FLATTEN(group) as (token, year, month, day), t; --FLATTEN(t) as (unixTime, msIdAtT, pos);
-  GENERATE group, t; --yaboulna.pig.InsertIntoHivePartition(
+  GENERATE yaboulna.pig.InsertIntoHivePartition(group, t, "/user/yaboulna/twitter-tracked/inverted-index/"); 
 };
 
 -- Telling PIG that we are storing the records makes it get really worried, so we pretent to eval
