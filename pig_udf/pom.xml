@@ -47,7 +47,7 @@
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<!-- Hive -->
 		<dependency>
 			<groupId>org.apache.hive</groupId>
@@ -57,10 +57,10 @@
 			<type>pom</type>
 			<exclusions>
 				<!-- when using yarn exclude -->
-				<!-- <exclusion> -->
-				<!-- <artifactId>hadoop-core</artifactId> -->
-				<!-- <groupId>org.apache.hadoop</groupId> -->
-				<!-- </exclusion> -->
+				<exclusion>
+					<artifactId>hadoop-core</artifactId>
+					<groupId>org.apache.hadoop</groupId>
+				</exclusion>
 				<exclusion>
 					<artifactId>jdo2-api</artifactId>
 					<groupId>javax.jdo</groupId>
@@ -80,64 +80,67 @@
 		<dependency>
 			<groupId>org.apache.hive</groupId>
 			<artifactId>hive-jdbc</artifactId>
-			<version>0.9.0</version>
-			<scope>system</scope>
-			<systemPath>/usr/lib/hive/lib/hive-jdbc-0.9.0-cdh4.1.2.jar</systemPath>
+			<version>0.9.0-cdh4.1.2</version>
+<!-- 			<scope>system</scope> -->
+<!-- 			<systemPath>/usr/lib/hive/lib/hive-jdbc-0.9.0-cdh4.1.2.jar</systemPath> -->
 		</dependency>
 		<dependency>
 			<groupId>org.apache.thrift</groupId>
 			<artifactId>libthrift</artifactId>
-			<version>0.7.0</version>
-			<scope>system</scope>
-			<systemPath>/usr/lib/hive/lib/libthrift-0.7.0-cdh.jar</systemPath>
+			<version>0.7.0-cdh4.1.2</version>
+<!-- 			<scope>system</scope> -->
+<!-- 			<systemPath>/usr/lib/hive/lib/libthrift-0.7.0-cdh.jar</systemPath> -->
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hive</groupId>
 			<artifactId>hive-service</artifactId>
-			<version>0.9.0</version>
-			<scope>system</scope>
-			<systemPath>/usr/lib/hive/lib/hive-service-0.9.0-cdh4.1.2.jar</systemPath>
+			<version>0.9.0-cdh4.1.2</version>
+<!-- 			<scope>system</scope> -->
+<!-- 			<systemPath>/usr/lib/hive/lib/hive-service-0.9.0-cdh4.1.2.jar</systemPath> -->
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hive</groupId>
 			<artifactId>hive-metastore</artifactId>
-			<version>0.9.0</version>
-			<scope>system</scope>
-			<systemPath>/usr/lib/hive/lib/hive-metastore-0.9.0-cdh4.1.2.jar</systemPath>
+			<version>0.9.0-cdh4.1.2</version>
+<!-- 			<scope>system</scope> -->
+<!-- 			<systemPath>/usr/lib/hive/lib/hive-metastore-0.9.0-cdh4.1.2.jar</systemPath> -->
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hive</groupId>
 			<artifactId>hive-exec</artifactId>
-			<version>0.9.0</version>
-			<scope>system</scope>
-			<systemPath>/usr/lib/hive/lib/hive-exec-0.9.0-cdh4.1.2.jar</systemPath>
+			<version>0.9.0-cdh4.1.2</version>
+<!-- 			<scope>system</scope> -->
+<!-- 			<systemPath>/usr/lib/hive/lib/hive-exec-0.9.0-cdh4.1.2.jar</systemPath> -->
 		</dependency>
-<!-- 		<dependency> -->
-<!-- 		  <groupId>org.apache.derby</groupId> -->
-<!--       <artifactId>derby</artifactId> -->
-<!--       <version>10.4.2.0</version> -->
-<!--       <scope>system</scope> -->
-<!--       <systemPath>/usr/lib/hive/lib/derby-10.4.2.0.jar</systemPath> -->
-<!--     </dependency> -->
-    
-<!--     <dependency> -->
-<!--       <groupId>org.apache.derby</groupId> -->
-<!--       <artifactId>derbytools</artifactId> -->
-<!--       <version>10.4.2.0</version> -->
-<!--     </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.derby</groupId> -->
+		<!-- <artifactId>derby</artifactId> -->
+		<!-- <version>10.4.2.0</version> -->
+		<!-- <scope>system</scope> -->
+		<!-- <systemPath>/usr/lib/hive/lib/derby-10.4.2.0.jar</systemPath> -->
+		<!-- </dependency> -->
+
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.derby</groupId> -->
+		<!-- <artifactId>derbytools</artifactId> -->
+		<!-- <version>10.4.2.0</version> -->
+		<!-- </dependency> -->
 		<!-- END HIVE CRAZINESS -->
 
 		<!-- Hadoop -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.hadoop</groupId> -->
+		<!-- <artifactId>hadoop-core</artifactId> -->
+		<!-- <version>0.20.205.0</version> -->
+		<!-- </dependency> -->
+		<!-- when using yarn -->
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-core</artifactId>
-			<version>0.20.205.0</version>
+			<artifactId>hadoop-common</artifactId>
+			<version>0.23.4</version>
 		</dependency>
-		
+		<!-- End Hadoop -->
 	</dependencies>
-	<!-- when using yarn <dependency> <groupId>org.apache.hadoop</groupId> <artifactId>hadoop-common</artifactId> 
-		<version>0.23.4</version> </dependency> -->
-	<!-- End Hadoop -->
 	<build>
 		<plugins>
 			<plugin>
