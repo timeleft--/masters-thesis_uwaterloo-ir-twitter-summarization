@@ -1,6 +1,7 @@
 package yaboulna.pig;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.channels.Channels;
@@ -9,24 +10,46 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.pig.EvalFunc;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
 
 import com.google.common.collect.Sets;
+import com.google.common.hash.Hashing;
 
 public class InsertIntoHivePartition extends EvalFunc<Integer> {
   
-  String driverName = "org.apache.hive.jdbc.HiveDriver";
+  static final String LOCAL_TMP_BASE = "/home/younos/data/tmp";
+  
+  static final String HASH_FUNCTION_NAME = "mur"; // short for murmur32";
+  static final byte[] HASH_FUNCTION_COLFAM = Bytes.toBytes(HASH_FUNCTION_NAME);
+  static final String HBASE_REVER_HASH_TABLE = "rev_hash";
+  
+  static final String driverName = "org.apache.hive.jdbc.HiveDriver";
   // jdbs:hive "org.apache.hadoop.hive.jdbc.HiveDriver"; // this does't support concurrent clients
+  
+  static final String HBASE_HISTORY_TABLE = "hist";
+  static final byte[] HBASE_VOLUME_COLFAM = Bytes.toBytes("vol");
+  
+  private static final boolean VOLUME_AS_DOCCOUNT = false;
   
   // TODO read from a properties file
   String serverURL = "jdbc:hive2://precise-hive:10000/default"; // 192.168.56.177
   String serverUName = "younos";
   String serverPasswd = "Passw0rt";
+  String hbaseZookeeperQuorum = "precise-01";
   
   @Override
   public Integer exec(Tuple input) throws IOException {
@@ -47,13 +70,41 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
     
     DataBag docPosBag = (DataBag) input.get(1);
     String dateStr = year + "-" + month + "-" + day;
-    String tempName = token + "_" + year + "_" + month + "_" + day;
-    File tempFile = File.createTempFile(tempName, ".csv");
+    
+    Integer volHist = getVolume(token, dateStr);
+    if (volHist != null) {
+      log.info("Partition dt=" + dateStr + " for token " + token + " already processed. Volume was " + volHist + " occurrences");
+      return -7;
+    }
+    
+    String tokenHash = uniqueTokenHash(token);
+    
+    String tempName = "staging_" + tokenHash + "_" + year + "_" + month
+        + "_" + day;
+    
+    // This file causes errors.. maybe it doesn't even get created
+    // The error in hive log says that it is an Invalid path
+    // File tempFile = File.createTempFile(tempName, ".csv");
+    // ////////////////////////////////
+    // Instead use task Id (but will this also get annihilated as soon as the task is over?)
+    // Configuration conf = new Configuration();
+    // The working dir is the home of the user not really a task attempt safe dir
+    // FileSystem fs = FileSystem.get(conf);
+    // fs.getWorkingDirectory()
+    // //////////////
+    File tempDir = FileUtils.getFile(LOCAL_TMP_BASE,
+        "InsertIntoHivePartition_" + tempName + "_" + new Random().nextInt()); // NULL: +
+                                                                               // conf.get("mapreduce.task.attempt.id"));
+    File tempFile = FileUtils.getFile(tempDir, tempName + ".csv");
+    
+    log.info("Temp file for token " + token + ": " + tempFile.getAbsolutePath());
+    
     // Leave it for debugging: tempFile.deleteOnExit();
     
     int sizeInBytes = 0;
-    
-    Writer tempWr = Channels.newWriter(FileUtils.openOutputStream(tempFile).getChannel(), "UTF-8");
+    int volume = 0;
+    FileOutputStream tempOs = FileUtils.openOutputStream(tempFile);
+    Writer tempWr = Channels.newWriter(tempOs.getChannel(), "UTF-8");
     try {
       Iterator<Tuple> docPosIter = docPosBag.iterator();
       Integer prevUnixTime = null;
@@ -70,17 +121,17 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
         Integer currIdAtT = (Integer) docPos.get(1);
         Integer currPos = (Integer) docPos.get(2);
         
-        // Relying on the tuples coming sorted in the bag is WRONG in general,
-        // but even if the tuples are coming from the same document, and I made sure
-        // they are emitted in order while tokenizing the documents??
-        // I could create a HashMap and sort them in memory, but I'd rather take the shot
+        // Relying on the tuples coming sorted in the bag because I had sorted
+        // it before passing it along.. this is a Data Gaurantee according to
+        // http://pig.apache.org/docs/r0.8.1/piglatin_ref2.htm
         if (!currUnixTime.equals(prevUnixTime) || !currIdAtT.equals(prevIdAtT)) {
           
           Long docIdPair = (((long) currUnixTime) << 32) | (currIdAtT & ((1L << 32) - 1));
           if (docIdPairsSeen.contains(docIdPair)) {
-            log.error("The bag is not ordered as we hoped! The (unixTime, docIdAt) pair ({0},{1}) "
-                +
-                " appeared more than once in discontinuous regions.");
+            log.error(String.format(
+                "The bag is not ordered as we hoped! The (unixTime, docIdAt) pair (" + currUnixTime
+                    + ", " + currIdAtT + ") " +
+                    " appeared more than once in discontinuous regions."));
             continue;
           }
           docIdPairsSeen.add(docIdPair);
@@ -93,11 +144,16 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
               .append((currPos).toString()); // .append('\n');
           
           sizeInBytes += (4 + 4 + 1);
-          
+          ++volume;
         } else {
           tempWr.append("," + currPos);
           
           sizeInBytes += 1;
+          if (VOLUME_AS_DOCCOUNT) {
+            // this is still part of the same document
+          } else {
+            ++volume;
+          }
         }
         prevIdAtT = currIdAtT;
         prevUnixTime = currUnixTime;
@@ -106,8 +162,14 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
       // END of relying on the tuples being sorted in the bag
       
     } finally {
-      tempWr.flush();
-      tempWr.close();
+      if (tempWr != null) {
+        tempWr.flush();
+        tempWr.close();
+      }
+      if (tempOs != null) {
+        tempOs.flush();
+        tempOs.close();
+      }
     }
     
     // this will include the size of separators, there are lots of them
@@ -120,27 +182,26 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
       con = DriverManager.getConnection(serverURL, serverUName, serverPasswd);
       
       Statement stmt = con.createStatement();
-
+      
       // I thought the EXERNAL table has to be in HDFS but it seems it can be local.. woohoo!
-//      Configuration conf = new Configuration();
-//      Path hdfsTemp = new Path(conf.get("hadoop.temp.dir", "/tmp/hadoop-USER"), "staging/"
-//          + tempName);
-//      Path localTemp = new Path(FileUtils.toURLs(new File[] { tempFile })[0].toURI());
-//      FileSystem fs = FileSystem.get(conf);
-      ///////////////////////////////////////////////// staging table
+      // Path hdfsTemp = new Path(conf.get("hadoop.temp.dir", "/tmp/hadoop-USER"), "staging/"
+      // + tempName);
+      // Path localTemp = new Path(FileUtils.toURLs(new File[] { tempFile })[0].toURI());
+      // FileSystem fs = FileSystem.get(conf);
+      // /////////////////////////////////////////////// staging table
       stmt.executeUpdate(" DROP TABLE IF EXISTS " + tempName);
       String tempCreateSQL =
-          " CREATE EXTERNAL TABLE  " + tempName
+          " CREATE TABLE  " + tempName
               + " (unixTime INT, msIdAtT INT, posArr ARRAY<TINYINT>) "
               + " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t' "
               + " COLLECTION ITEMS TERMINATED BY ',' "
               + " LINES TERMINATED BY '\\n' "
-              + " STORED AS TEXTFILE "
-              + " LOCATION 'file://" + tempFile.getAbsolutePath() + "'";
+              + " STORED AS TEXTFILE ";
+      // EXTERNAL+ " LOCATION 'file://" + tempDir.getAbsolutePath() + "'";
       stmt.executeUpdate(tempCreateSQL);
-  
+      
       // Copying doesn't strictly need to be after creating the table.. I think it works now
-//      fs.copyFromLocalFile(localTemp, hdfsTemp);
+      // fs.copyFromLocalFile(localTemp, hdfsTemp);
       
       // doesn't work through JDBC (what was I thinking)
       // stmt.executeUpdate(" hadoop dfs -put " + tempFile.getAbsolutePath() + " " + hdfsTemp);
@@ -166,9 +227,10 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
        * yaboulna.pig.InsertIntoHivePartition.exec(InsertIntoHivePartition.java:136) ... 18 more
        */
       
-      // String tempLoadSQL =
-      // " LOAD DATA LOCAL INPATH '" + tempFile.getAbsolutePath() + "' INTO TABLE " + tempName;
-      // stmt.executeUpdate(tempLoadSQL);
+      String tempLoadSQL =
+          " LOAD DATA LOCAL INPATH 'file://" + tempFile.getAbsolutePath() + "' INTO TABLE "
+              + tempName;
+      stmt.executeUpdate(tempLoadSQL);
       
       // ////////////////////////////// Actual table for the token's posting list
       
@@ -189,19 +251,24 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
         // according to http://www.adaltas.com/blog/2012/03/13/hdfs-hive-storage-format-compression/
       }
       
-      // TIMESTAMP is not good, it fails to be parsed (https://issues.apache.org/jira/browse/HIVE-2957)
       // "   SET hive.exec.compress.output=true; "
       // " SET io.seqfile.compression.type=BLOCK; -- NONE/RECORD/BLOCK (see below) "
+      
+      String tableName = HASH_FUNCTION_NAME + "_" + tokenHash;
       String createSQL =
-          " CREATE TABLE IF NOT EXISTS " //EXTERNAL
-              + token
-              + " (unixTime INT COMMENT 'Partition date interprets this in GMT-10', "
+          " CREATE EXTERNAL TABLE IF NOT EXISTS "
+              + tableName
+              + " (unixTime INT COMMENT 'Partition date interprets this in GMT-10', " // TIMESTAMP is
+                                                                                      // not good, it
+                                                                                      // fails to be
+                                                                                      // parsed
+                                                                                      // (https://issues.apache.org/jira/browse/HIVE-2957)
               + "  msIdAtT  INT COMMENT 'The 22 LSBs are the IdAtT and the 10 MSBs are mSecs', "
               + "  posArr   ARRAY<TINYINT> COMMENT 'Positions of occurrences within the document') "
               + " COMMENT 'This table is the posting list of the token (" + token + ")' "
               + " PARTITIONED BY (dt STRING) "
               + rowAndFileFormats
-              + " LOCATION '" + rcFilesPath + "' ";
+              + " LOCATION '" + new Path(rcFilesPath, tableName).toUri().toString() + "' ";
       stmt.executeUpdate(createSQL);
       
       // This is going to be ignored anyway.. a plunge in the code was needed to learn this
@@ -215,16 +282,22 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
       stmt.executeUpdate("SET io.seqfile.compression.type=BLOCK"); // NONE/RECORD
       
       String loadSQL =
-          " INSERT INTO TABLE " + token + " PARTITION (dt='" + dateStr + "') "
+          " INSERT OVERWRITE TABLE " + tableName + " PARTITION (dt='" + dateStr + "') "
               // + " SELECT unixTime, msIdAtT, array(pos) "
               + " SELECT * "
               + " FROM " + tempName;
       // + " GROUP BY unixTime, msIdAtT ";
       int result = stmt.executeUpdate(loadSQL);
       
+      if (result >= 0) {
+        markProcessed(token, dateStr, volume);
+      }
+      
       stmt.executeUpdate(" DROP TABLE " + tempName);
+      
       tempFile.delete();
-//      fs.delete(hdfsTemp, true);
+      FileUtils.deleteDirectory(tempDir);
+      // fs.delete(hdfsTemp, true);
       
       return result;
     } catch (Exception e) {
@@ -240,4 +313,123 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
     }
   }
   
+  public static Integer getVolume(String token, String dateStr) throws IOException {
+    // You need a configuration object to tell the client where to connect.
+    // When you create a HBaseConfiguration, it reads in whatever you've set
+    // into your hbase-site.xml and in hbase-default.xml, as long as these can
+    // be found on the CLASSPATH
+    Configuration config = HBaseConfiguration.create();
+    
+    // This instantiates an HTable object that connects you to
+    // the "myLittleHBaseTable" table.
+    HTable table = new HTable(config, HBASE_HISTORY_TABLE);
+    
+    Get g = new Get(Bytes.toBytes(token));
+    Result r = table.get(g);
+    
+    // Minimizing checks
+    // if(r.isEmpty()){
+    // return null;
+    // } else {
+    byte[] volBytes = r.getValue(HBASE_VOLUME_COLFAM, Bytes.toBytes(dateStr));
+    if (volBytes != null) {
+      return Bytes.toInt(volBytes);
+    } else {
+      return null;
+    }
+  }
+  
+  private void markProcessed(String token, String dateStr, int volume) throws IOException {
+    // You need a configuration object to tell the client where to connect.
+    // When you create a HBaseConfiguration, it reads in whatever you've set
+    // into your hbase-site.xml and in hbase-default.xml, as long as these can
+    // be found on the CLASSPATH
+    Configuration config = HBaseConfiguration.create();
+    
+    // This instantiates an HTable object that connects you to
+    // the "myLittleHBaseTable" table.
+    HTable table = new HTable(config, HBASE_HISTORY_TABLE);
+    
+    byte[] row = Bytes.toBytes(token);
+    byte[] qualifier = Bytes.toBytes(dateStr);
+    Put p = new Put(row);
+    p.add(HBASE_VOLUME_COLFAM, qualifier, Bytes.toBytes(volume));
+    
+    // no need for extra checks
+    // if (!table.checkAndPut(row, HASH_FUNCTION_COLFAM, qualifier, null, p)) {
+    // log.error(arg0)
+    // return tokenHash;
+    // }
+    
+    table.put(p);
+  }
+  
+  /**
+   * Avoid invalid table names by using the hash of the hash value of the token Makes sure that this
+   * hash doesn't collide with any other token by looking into HBase
+   * 
+   * @param token
+   * @param dateStr
+   * @return murmur32 hash that doesn't collide
+   * @throws IOException
+   */
+  public String uniqueTokenHash(String token) throws IOException {
+    
+    byte[] value = Bytes.toBytes(token);
+    
+    // You need a configuration object to tell the client where to connect.
+    // When you create a HBaseConfiguration, it reads in whatever you've set
+    // into your hbase-site.xml and in hbase-default.xml, as long as these can
+    // be found on the CLASSPATH
+    Configuration config = HBaseConfiguration.create();
+    
+    // This instantiates an HTable object that connects you to
+    // the "myLittleHBaseTable" table.
+    HTable table = new HTable(config, HBASE_REVER_HASH_TABLE);
+    
+    StringBuilder hashInput = new StringBuilder();
+    for (int i = 1; true; ++i) {
+      // avoid collisions by hashing repetitions of the token
+      hashInput.setLength(0);
+      for (int j = 0; j < i; ++j) {
+        hashInput.append(token);
+      }
+      
+      String tokenHash = Hashing.murmur3_32().hashString(hashInput.toString()).toString();
+      // I can't risk havingt the negative sign which is an invalid character .asInt();
+      // This still contains - (byte is still unsigned, and I didn't upcast it)
+      // Arrays.toString(.asBytes());
+      // tokenHash = tokenHash.replaceAll("[\\[\\]]", "");
+      // tokenHash = tokenHash.replaceAll(", ", "_");
+      
+      // To add to a row, use Put. A Put constructor takes the name of the row
+      // you want to insert into as a byte array. In HBase, the Bytes class has
+      // utility for converting all kinds of java types to byte arrays. In the
+      // below, we are converting the String "myLittleRow" into a byte array to
+      // use as a row key for our update. Once you have a Put instance, you can
+      // adorn it by setting the names of columns you want to update on the row,
+      // the timestamp to use in your update, etc.If no timestamp, the server
+      // applies current time to the edits.
+      byte[] row = Bytes.toBytes(tokenHash);
+      byte[] qualifier = Bytes.toBytes((byte) i);
+      Put p = new Put(row);
+      
+      // To set the value you'd like to update in the row 'myLittleRow', specify
+      // the column family, column qualifier, and value of the table cell you'd
+      // like to update. The column family must already exist in your table
+      // schema. The qualifier can be anything. All must be specified as byte
+      // arrays as hbase is all about byte arrays. Lets pretend the table
+      // 'myLittleHBaseTable' was created with a family 'myLittleFamily'.
+      p.add(HASH_FUNCTION_COLFAM, qualifier,
+          value);
+      
+      // Once you've adorned your Put instance with all the updates you want to
+      // make, to commit it do the following (The HTable#put method takes the
+      // Put instance you've been building and pushes the changes you made into
+      // hbase)
+      if (table.checkAndPut(row, HASH_FUNCTION_COLFAM, qualifier, null, p)) {
+        return tokenHash;
+      }
+    }
+  }
 }

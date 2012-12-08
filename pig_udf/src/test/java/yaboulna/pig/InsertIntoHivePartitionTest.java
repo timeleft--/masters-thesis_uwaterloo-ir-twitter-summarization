@@ -25,7 +25,7 @@ import com.google.common.collect.Lists;
 
 public class InsertIntoHivePartitionTest {
   
-  private static final Object TEST_TOKEN = "testTokenHabalFelGabal";
+  private static final String TEST_TOKEN = "123test_Token#Habal@FelGabal456";
   
   private Tuple input;
   private Tuple group;
@@ -95,7 +95,7 @@ public class InsertIntoHivePartitionTest {
     ////////////////////////////
     Connection con = null;
     try {
-      Class.forName(target.driverName);
+      Class.forName(InsertIntoHivePartition.driverName);
       con = DriverManager.getConnection(target.serverURL, target.serverUName, target.serverPasswd);
       Statement stmt = con.createStatement();
       ResultSet res = stmt.executeQuery("SELECT * FROM "+TEST_TOKEN);
@@ -141,4 +141,10 @@ public class InsertIntoHivePartitionTest {
       }
     }
   }
+  
+  @Test
+  public void testUniqueHash() throws IOException {
+    target.uniqueTokenHash(TEST_TOKEN);
+  }
+  
 }
