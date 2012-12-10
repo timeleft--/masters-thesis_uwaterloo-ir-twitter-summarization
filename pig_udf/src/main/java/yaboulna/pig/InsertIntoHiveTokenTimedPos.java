@@ -15,7 +15,6 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
@@ -27,24 +26,29 @@ import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
 
 import com.google.common.collect.Sets;
+import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 
 @Deprecated
-public class InsertIntoHivePartition extends EvalFunc<Integer> {
+public class InsertIntoHiveTokenTimedPos extends EvalFunc<Integer> {
   
   static final String LOCAL_TMP_BASE = "/home/younos/data/tmp";
   
+  static final String HIVE_TOKENPOSS_TABLE_NAME = "token_timed_pos";
+  
   static final String HASH_FUNCTION_NAME = "mur"; // short for murmur32";
-  static final byte[] HASH_FUNCTION_COLFAM = Bytes.toBytes(HASH_FUNCTION_NAME);
+  
+  static final byte[] HBASE_HASH_FUNCTION_COLFAM = Bytes.toBytes(HASH_FUNCTION_NAME);
   static final String HBASE_REVER_HASH_TABLE = "rev_hash";
-  
-  static final String driverName = "org.apache.hive.jdbc.HiveDriver";
-  // jdbs:hive "org.apache.hadoop.hive.jdbc.HiveDriver"; // this does't support concurrent clients
-  
+
   static final String HBASE_HISTORY_TABLE = "hist";
   static final byte[] HBASE_VOLUME_COLFAM = Bytes.toBytes("vol");
   
   private static final boolean VOLUME_AS_DOCCOUNT = false;
+  
+  static final String hiveDriverName = "org.apache.hive.jdbc.HiveDriver";
+  // jdbs:hive "org.apache.hadoop.hive.jdbc.HiveDriver"; // this does't support concurrent clients
+  
   
   // TODO read from a properties file
   String serverURL = "jdbc:hive2://precise-hive:10000/default"; // 192.168.56.177
@@ -53,22 +57,48 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
   String hbaseZookeeperQuorum = "precise-01";
   
   /**
-   * Stores the passed bag of timestamped document positions of occurrences of the token 
-   * into a Hive partition for the given date.  The token is a unigram or composite-unigram.
-   * The partition is stored as a Snappy compressed RCFile if its size  is more than 4 MBs 
-   * (4 * 1024 * 1024 / 5 = 838,860 occurrences), or as GZipped Text File otherwise.
-   * Four MB is the threshold afterwhich RCFiles start to have good performance according to 
-   * their paper (RFFile:.. by He, Yongqiang et al. ICDE 2011). 
-   * The small file storage is a very bad idea for storage in HDFS where block size is much
-   * larger (64 MB by default and we should set it to around 4 MB), and where every IO request
-   * on the cloud costs money. Therefore this should be modified to use a row an HBase table 
-   * for the given day (unigrams_2012-09-13 for example), with a row key equal to the token
-   * a column key equal to the id, and a value equal to the positions, using the timestamp metadata
-   * to store the actual timestamp (data). This schema has many good benefits, but data will
-   * be read from HBase as a Map which has to be broken into keys and values, also extracting 
-   * the timestamp metadata. Therefore the table per unigram idea was abandoned.
+   * Intention was to store the passed bag of timestamped document positions of occurrences of 
+   * the token into a Hive column in the table "token_timed_pos", but Hive doesn't allow this.
+   * The intention was to gather enough data for daily partitions so that they can be
+   * stored as a Snappy compressed RCFile, which can be loaded using HiveColumnarLoader. This was to
+   * work around the small file storage problem, caused by the fact that HDFS block size is large, and
+   * that every IO request on the cloud costs money. However, the only thing possible was to
+   * store the positions of occurrences in an HBase like format by repeating the key (token hash) 
+   * in each record. This is fine size wise, but how about joins? This will require loading the 
+   * occurrences of both tokens using a filter, then joining them. I don't know how bad is this. 
+   * But anyway if this is what we'll do then why not use HBaseStorage from Pig directly and
+   * get rid of the Hive mess?? Or should Hadoop be abandoned totally using OpenGraphLab instead??? 
    * 
-   * @param input: Tuple of (group(token, year, month, day), [], locationOfStroage)
+   * Make sure that the table exists by running the following in hive:
+   * 
+   * <pre>
+   *  CREATE EXTERNAL TABLE IF NOT EXISTS token_timed_pos
+   *                (unixTime INT COMMENT 'Partition date interprets this in GMT-10', 
+   *                 tokenHash INT COMMENT 'Hash of token (compact), reverse mapping stored in HBASE'
+   *                 msIdAtT  INT COMMENT 'The 22 LSBs are the IdAtT and the 10 MSBs are mSecs', 
+   *                 posArr   ARRAY&lt;TINYINT&gt; COMMENT 'Positions of occurrences within the document') 
+   *                 COMMENT 'This table is the posting list of all tokens, unigrams or combined' 
+   *                 PARTITIONED BY (dt STRING) 
+   *                 ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe' 
+   *                 STORED AS RCFILE 
+   *                 LOCATION '" + new Path(rcFilesPath, tableName).toUri().toString() + "' ";
+   * </pre>
+   * 
+   * Also make sure to set the compression:
+   * 
+   * <pre>
+   * SET hive.exec.compress.output=true
+   * SET io.seqfile.compression.type=BLOCK; -- NONE/RECORD/BLOCK
+   * SET mapred.output.compression.codec=org.apache.hadoop.io.compress.SnappyCodec
+   * </pre>
+   * 
+   * Also disable stats until I fix the problem with derby DB EmbeddedDriver not being in the class
+   * path: set hive.stats.autogather=false
+   * 
+   * @param <pre>
+   *          input : Tuple of (group: (token: chararray,year: int,month: int,day: int), tokens:
+   *          {(unixTime: int,msIdAtT: int,year: int,month: int,day: int,token: chararray,pos: int))
+   *          </pre>
    * 
    */
   @Override
@@ -93,13 +123,14 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
     
     Integer volHist = getVolume(token, dateStr);
     if (volHist != null) {
-      log.info("Partition dt=" + dateStr + " for token " + token + " already processed. Volume was " + volHist + " occurrences");
+      log.info("Partition dt=" + dateStr + " for token " + token
+          + " already processed. Volume was " + volHist + " occurrences");
       return -7;
     }
     
-    String tokenHash = uniqueTokenHash(token);
+    HashCode tokenHash = uniqueTokenHash(token);
     
-    String tempName = "staging_" + tokenHash + "_" + year + "_" + month
+    String tempName = "staging_" + tokenHash.toString() + "_" + year + "_" + month
         + "_" + day;
     
     // This file causes errors.. maybe it doesn't even get created
@@ -112,19 +143,22 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
     // FileSystem fs = FileSystem.get(conf);
     // fs.getWorkingDirectory()
     // //////////////
+    // Instead use a file in the user space, using the task ID.
+    // conf.get("mapreduce.task.attempt.id")) is null
+    // TODO: get the TaskAttemptID from the TaskAttemptContext
     File tempDir = FileUtils.getFile(LOCAL_TMP_BASE,
-        "InsertIntoHivePartition_" + tempName + "_" + new Random().nextInt()); // NULL: +
-                                                                               // conf.get("mapreduce.task.attempt.id"));
+        this.getClass().getName() + "_" + tempName + "_" + new Random().nextInt());
+    
     File tempFile = FileUtils.getFile(tempDir, tempName + ".csv");
     
     log.info("Temp file for token " + token + ": " + tempFile.getAbsolutePath());
     
     // Leave it for debugging: tempFile.deleteOnExit();
     
-    int sizeInBytes = 0;
     int volume = 0;
     FileOutputStream tempOs = FileUtils.openOutputStream(tempFile);
     Writer tempWr = Channels.newWriter(tempOs.getChannel(), "UTF-8");
+    
     try {
       Iterator<Tuple> docPosIter = docPosBag.iterator();
       Integer prevUnixTime = null;
@@ -160,15 +194,14 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
             tempWr.append('\n');
           }
           tempWr.append((currUnixTime).toString()).append('\t')
+              .append(Integer.toString(tokenHash.asInt())).append('\t')
               .append((currIdAtT).toString()).append('\t')
               .append((currPos).toString()); // .append('\n');
           
-          sizeInBytes += (4 + 4 + 1);
           ++volume;
         } else {
           tempWr.append("," + currPos);
           
-          sizeInBytes += 1;
           if (VOLUME_AS_DOCCOUNT) {
             // this is still part of the same document
           } else {
@@ -192,13 +225,9 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
       }
     }
     
-    // this will include the size of separators, there are lots of them
-    // int sizeInBytes = tempFile.length();
-    
-    String rcFilesPath = (String) input.get(2);
     Connection con = null;
     try {
-      Class.forName(driverName);
+      Class.forName(hiveDriverName);
       con = DriverManager.getConnection(serverURL, serverUName, serverPasswd);
       
       Statement stmt = con.createStatement();
@@ -212,7 +241,7 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
       stmt.executeUpdate(" DROP TABLE IF EXISTS " + tempName);
       String tempCreateSQL =
           " CREATE TABLE  " + tempName
-              + " (unixTime INT, msIdAtT INT, posArr ARRAY<TINYINT>) "
+              + " (unixTime INT, tokenHash INT, msIdAtT INT, posArr ARRAY<TINYINT>) "
               + " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t' "
               + " COLLECTION ITEMS TERMINATED BY ',' "
               + " LINES TERMINATED BY '\\n' "
@@ -253,60 +282,12 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
       stmt.executeUpdate(tempLoadSQL);
       
       // ////////////////////////////// Actual table for the token's posting list
-      
-      String rowAndFileFormats = " ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe' "
-          + " STORED AS RCFILE ";
-      String compression = "org.apache.hadoop.io.compress.SnappyCodec";
-      
-      if (sizeInBytes < 4 * FileUtils.ONE_MB) {
-        // According to the paper presenting RCFiles this is the RecordBlock size at which the
-        // RCFile format starts to be useful. Less than this is really too little for any
-        // file format to be useful, and it doesn't even require splitting (which is not possible
-        // for text files). TODO: Can we merely referencing the file created above?
-        rowAndFileFormats = " ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t' "
-            + " COLLECTION ITEMS TERMINATED BY ',' "
-            + " LINES TERMINATED BY '\\n' "
-            + " STORED AS TEXTFILE ";
-        compression = "org.apache.hadoop.io.compress.GzipCodec"; // works best with text format
-        // according to http://www.adaltas.com/blog/2012/03/13/hdfs-hive-storage-format-compression/
-      }
-      
-      // "   SET hive.exec.compress.output=true; "
-      // " SET io.seqfile.compression.type=BLOCK; -- NONE/RECORD/BLOCK (see below) "
-      
-      String tableName = HASH_FUNCTION_NAME + "_" + tokenHash;
-      String createSQL =
-          " CREATE EXTERNAL TABLE IF NOT EXISTS "
-              + tableName
-              + " (unixTime INT COMMENT 'Partition date interprets this in GMT-10', " // TIMESTAMP is
-                                                                                      // not good, it
-                                                                                      // fails to be
-                                                                                      // parsed
-                                                                                      // (https://issues.apache.org/jira/browse/HIVE-2957)
-              + "  msIdAtT  INT COMMENT 'The 22 LSBs are the IdAtT and the 10 MSBs are mSecs', "
-              + "  posArr   ARRAY<TINYINT> COMMENT 'Positions of occurrences within the document') "
-              + " COMMENT 'This table is the posting list of the token (" + token + ")' "
-              + " PARTITIONED BY (dt STRING) "
-              + rowAndFileFormats
-              + " LOCATION '" + new Path(rcFilesPath, tableName).toUri().toString() + "' ";
-      stmt.executeUpdate(createSQL);
-      
-      // This is going to be ignored anyway.. a plunge in the code was needed to learn this
-      // stmt.executeUpdate("SET mapred.output.dir=${mapred.temp}")
-      
-      // FIXME remove after fix the problem with derby DB EmbeddedDriver not being in the class path
-      stmt.executeUpdate("set hive.stats.autogather=false");
-      
-      stmt.executeUpdate("SET hive.exec.compress.output=true");
-      stmt.executeUpdate("SET mapred.output.compression.codec=" + compression);
-      stmt.executeUpdate("SET io.seqfile.compression.type=BLOCK"); // NONE/RECORD
-      
       String loadSQL =
-          " INSERT OVERWRITE TABLE " + tableName + " PARTITION (dt='" + dateStr + "') "
+          " INSERT INTO TABLE " + HIVE_TOKENPOSS_TABLE_NAME + " PARTITION (dt='" + dateStr + "') "
               // + " SELECT unixTime, msIdAtT, array(pos) "
               + " SELECT * "
               + " FROM " + tempName;
-      // + " GROUP BY unixTime, msIdAtT ";
+
       int result = stmt.executeUpdate(loadSQL);
       
       if (result >= 0) {
@@ -393,7 +374,7 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
    * @return murmur32 hash that doesn't collide
    * @throws IOException
    */
-  public String uniqueTokenHash(String token) throws IOException {
+  public HashCode uniqueTokenHash(String token) throws IOException {
     
     byte[] value = Bytes.toBytes(token);
     
@@ -415,7 +396,8 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
         hashInput.append(token);
       }
       
-      String tokenHash = Hashing.murmur3_32().hashString(hashInput.toString()).toString();
+      HashCode tokenHash = Hashing.murmur3_32().hashString(hashInput.toString());
+      String tokenHashStr = tokenHash.toString();
       // I can't risk havingt the negative sign which is an invalid character .asInt();
       // This still contains - (byte is still unsigned, and I didn't upcast it)
       // Arrays.toString(.asBytes());
@@ -430,7 +412,7 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
       // adorn it by setting the names of columns you want to update on the row,
       // the timestamp to use in your update, etc.If no timestamp, the server
       // applies current time to the edits.
-      byte[] row = Bytes.toBytes(tokenHash);
+      byte[] row = Bytes.toBytes(tokenHashStr);
       byte[] qualifier = Bytes.toBytes((byte) i);
       Put p = new Put(row);
       
@@ -440,14 +422,14 @@ public class InsertIntoHivePartition extends EvalFunc<Integer> {
       // schema. The qualifier can be anything. All must be specified as byte
       // arrays as hbase is all about byte arrays. Lets pretend the table
       // 'myLittleHBaseTable' was created with a family 'myLittleFamily'.
-      p.add(HASH_FUNCTION_COLFAM, qualifier,
+      p.add(HBASE_HASH_FUNCTION_COLFAM, qualifier,
           value);
       
       // Once you've adorned your Put instance with all the updates you want to
       // make, to commit it do the following (The HTable#put method takes the
       // Put instance you've been building and pushes the changes you made into
       // hbase)
-      if (table.checkAndPut(row, HASH_FUNCTION_COLFAM, qualifier, null, p)) {
+      if (table.checkAndPut(row, HBASE_HASH_FUNCTION_COLFAM, qualifier, null, p)) {
         return tokenHash;
       }
     }
