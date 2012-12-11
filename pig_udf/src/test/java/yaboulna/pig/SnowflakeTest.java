@@ -1,6 +1,7 @@
 package yaboulna.pig;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 
@@ -16,11 +17,13 @@ public class SnowflakeTest {
   static int MASK22B = 4194303;
   
   static Long TEST_ID = 246421517250985985L;
+  static long TIME_MILLIS = 1347586442660L;
   static int UXTIME = (int) (1347586442660L / 1000); // api reported: 1347586443000L
   static int MSECS = 660;
   static int YEAR = 2012;
   static int MONTH = 9;
   static int DAY =  13; //This is HST but in EST it would be 14;
+  static String DATE = "120913";
   static Integer IDATT = 131073 + (MSECS << 22); 
   
   @Test
@@ -75,5 +78,14 @@ public class SnowflakeTest {
     assertNull(tD.exec(oneTuple));
     oneTuple.set(0, null);
     assertNull(tD.exec(oneTuple));
+  }
+  
+  @Test
+  public void testDateFromSnowFlake() throws IOException {
+    DateFromSnowflake target = new DateFromSnowflake();
+    Tuple actual = target.exec(TupleFactory.getInstance().newTuple(TEST_ID));
+    assertEquals(2, actual.size());
+    assertEquals(TIME_MILLIS, actual.get(0));
+    assertEquals(DATE, actual.get(1));
   }
 }

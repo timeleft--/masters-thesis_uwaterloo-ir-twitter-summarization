@@ -16,6 +16,9 @@ public class ComposeSnowflake extends EvalFunc<Long> {
     
     long uxtime = (Integer) input.get(0);
     int residuals = (Integer) input.get(1);
+    if(residuals == -1) {
+      residuals = ((1<<22)-1); // Maximum residuals
+    }
     long msecs =  residuals >>> 22;
     int idAtT = (((1<<22)-1) & residuals);
     return (((uxtime * 1000L + msecs) - TWEET_EPOCH_MAGIC_NUM) << 22) | (idAtT);

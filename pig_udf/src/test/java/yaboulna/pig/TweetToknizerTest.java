@@ -66,4 +66,24 @@ public class TweetToknizerTest extends TokenIteratorTest {
     assertFalse(target.hasNext());
   }
   
+  @Override
+  public void testUrl() throws InstantiationException, IllegalAccessException,
+      IllegalArgumentException, InvocationTargetException, SecurityException {
+ // TokenIterator target = new TokenIterator(
+    @SuppressWarnings("unchecked")
+    AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+        .newInstance(
+        "http://youtube.com/dsdf33 OK www.wikipedia.com GOOD https://www.bank.com GOTO HTTP://WATCH.THIS www2012_conference");
+    assertEquals("URL", target.next());
+    assertEquals("ok", target.next());
+//    assertEquals("URL", target.next());
+    assertEquals("good", target.next());
+//    assertEquals("URL", target.next());
+    assertEquals("goto", target.next());
+//    assertEquals("URL", target.next());
+    assertEquals("www2012_conference", target.next());
+    assertFalse(target.hasNext());
+    
+  }
+  
 }
