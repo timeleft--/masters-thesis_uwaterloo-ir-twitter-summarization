@@ -232,7 +232,13 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
       throw e;
     }
     
-    loadRowKey_ = configuredOptions_.hasOption("loadKey");
+    loadRowKey_ = true;
+    if (configuredOptions_.hasOption("loadKey")) {
+      String value = configuredOptions_.getOptionValue("loadKey");
+      if (!"true".equalsIgnoreCase(value)) {
+        loadRowKey_ = false;
+      }
+    }
     
     delimiter_ = ",";
     if (configuredOptions_.getOptionValue("delim") != null) {
