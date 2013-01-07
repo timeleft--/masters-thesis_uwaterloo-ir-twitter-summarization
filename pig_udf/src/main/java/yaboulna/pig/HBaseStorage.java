@@ -66,10 +66,12 @@ import org.apache.pig.LoadStoreCaster;
 import org.apache.pig.OrderedLoadFunc;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.StoreFuncInterface;
+import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.backend.hadoop.hbase.HBaseBinaryConverter;
 import org.apache.pig.backend.hadoop.hbase.HBaseTableInputFormat.HBaseTableIFBuilder;
 import org.apache.pig.builtin.Utf8StorageConverter;
+import org.apache.pig.data.BagFactory;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
@@ -437,110 +439,124 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
   }
   
   /**
-   * YA 20121212 Return versions as a bag, in a tuple with one or two other fields containing the row
-   * id (optional) and column id: (ROW, COL, {VERSION==SNOWFLAKE, POS})
+   * YA 20121212 Return versions as a bag, in another bag with a tuple for each column qualifier. All
+   * of this is another tuple, optionally containing the row key. The schema is: (OptionalROWKey,
+   * {(COLQualifier, {(VERSION==SNOWFLAKE, POS)})})
    * 
    */
   @Override
   public Tuple getNext() throws IOException {
-    throw new UnsupportedOperationException("Still working on it");
-//    try {
-//      if (reader.nextKeyValue()) {
-//        ImmutableBytesWritable rowKey = (ImmutableBytesWritable) reader
-//            .getCurrentKey();
-//        Result result = (Result) reader.getCurrentValue();
-//        
-//        int tupleSize = columnInfo_.size();
-//        
-//        // use a map of families -> qualifiers with the most recent
-//        // version of the cell. Fetching multiple vesions could be a
-//        // useful feature.
-//        // YA 20121212 NavigableMap<byte[], NavigableMap<byte[], byte[]>> resultsMap =
-//        // result.getNoVersionMap();
-//        NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> resultsMap = result
-//            .getMap();
-//        
-//        // YA 20121212
-//        Tuple container;
-//        if (loadRowKey_) {
-//          // tupleSize++;
-//          container = TupleFactory.getInstance().newTuple(2); // ROW, BAG
-//          container.set(0, new DataByteArray(rowKey.get()));
-//        } else {
-//          container = TupleFactory.getInstance().newTuple(1); // BAG
-//        }
-//        
-//        // YA 20121212
-//        Tuple tuple = TupleFactory.getInstance().newTuple(tupleSize + 1); // +1 for the version
-//        
-//        // YA 20121212
-//        // int startIndex = 0;
-//        // if (loadRowKey_) {
-//        // tuple.set(0, new DataByteArray(rowKey.get()));
-//        // startIndex++;
-//        // }
-//        
-//        for (int i = 0; i < columnInfo_.size(); ++i) {
-//          // int currentIndex = startIndex + i;
-//          
-//          ColumnInfo columnInfo = columnInfo_.get(i);
-//          if (columnInfo.isColumnMap()) {
-//            // It's a column family so we need to iterate and set all
-//            // values found
-//            NavigableMap<byte[], NavigableMap<Long, byte[]>> cfResults =
-//                resultsMap.get(columnInfo.getColumnFamily());
-//            Map<String, DataByteArray> cfMap =
-//                new HashMap<String, DataByteArray>();
-//            
-//            if (cfResults != null) {
-//              for (byte[] quantifier : cfResults.keySet()) {
-//                // We need to check against the prefix filter to
-//                // see if this value should be included. We can't
-//                // just rely on the server-side filter, since a
-//                // user could specify multiple CF filters for the
-//                // same CF.
-//                if (columnInfo.getColumnPrefix() == null ||
-//                    columnInfo.hasPrefixMatch(quantifier)) {
-//                  
-//                  // byte[] cell = cfResults.get(quantifier);
-//                  NavigableMap<Long, byte[]> versionMap = cfResults.get(quantifier);
-//                  for (Long version : versionMap.keySet()) {
-//                    byte[] cell = versionMap.get(version).get(quantifier);
-//                    
-//                    DataByteArray value =
-//                        cell == null ? null : new DataByteArray(cell);
-//                    cfMap.put(Bytes.toString(quantifier), value);
-//                  }
-//                }
-//              }
-//            }
-//            tuple.set(currentIndex, cfBag);
-//          } else if (columnInfo.getColumnName() == EMPTY_BYTE_ARRAY) {
-//            // YA 20121210
-//            throw new IOException("Cannot use pound while reading");
-//            // YA 20121210 END
-//          } else {
-//            // It's a column so set the value
-//            byte[] cell = result.getValue(columnInfo.getColumnFamily(),
-//                columnInfo.getColumnName());
-//            DataByteArray value =
-//                cell == null ? null : new DataByteArray(cell);
-//            tuple.set(currentIndex, value);
-//          }
-//        }
-//        
-//        if (LOG.isDebugEnabled()) {
-//          for (int i = 0; i < tuple.size(); i++) {
-//            LOG.debug("tuple value:" + tuple.get(i));
-//          }
-//        }
-//        
-//        return container; //tuple;
-//      }
-//    } catch (InterruptedException e) {
-//      throw new IOException(e);
-//    }
-//    return null;
+    
+    try {
+      if (reader.nextKeyValue()) {
+        ImmutableBytesWritable rowKey = (ImmutableBytesWritable) reader
+            .getCurrentKey();
+        Result result = (Result) reader.getCurrentValue();
+        
+        int tupleSize = columnInfo_.size();
+        
+        // use a map of families -> qualifiers with the most recent
+        // version of the cell. Fetching multiple vesions could be a
+        // useful feature.
+        // YA 20121212 NavigableMap<byte[], NavigableMap<byte[], byte[]>> resultsMap =
+        // result.getNoVersionMap();
+        NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> resultsMap = result
+            .getMap();
+        
+        // YA 20121212
+        Tuple container;
+        int i;
+        if (loadRowKey_) {
+          tupleSize = tupleSize + 1; // +1 for the ROW ID
+          container = TupleFactory.getInstance().newTuple(tupleSize);
+          container.set(0, new DataByteArray(rowKey.get()));
+          i = 1;
+        } else {
+          container = TupleFactory.getInstance().newTuple(tupleSize); // {(COL, BAG)} per column
+          i = 0;
+        }
+        // int startIndex = 0;
+        // if (loadRowKey_) {
+        // tuple.set(0, new DataByteArray(rowKey.get()));
+        // startIndex++;
+        // }
+        // END YA 20121212
+        
+        // for (int i = 0; i < columnInfo_.size(); ++i) {
+        // int currentIndex = startIndex + i;
+        for (; i < tupleSize; ++i) {
+          ColumnInfo columnInfo = columnInfo_.get(i);
+          
+          NavigableMap<byte[], NavigableMap<Long, byte[]>> cfResults =
+              resultsMap.get(columnInfo.getColumnFamily());
+          
+          if (cfResults != null) {
+            DataBag cfBag = BagFactory.getInstance().newDefaultBag();
+            container.set(i, cfBag);
+            if (columnInfo.isColumnMap()) {
+              // It's a column family so we need to iterate and set all
+              // values found
+              for (byte[] qualifier : cfResults.keySet()) {
+                // We need to check against the prefix filter to
+                // see if this value should be included. We can't
+                // just rely on the server-side filter, since a
+                // user could specify multiple CF filters for the
+                // same CF.
+                if (columnInfo.getColumnPrefix() == null ||
+                    columnInfo.hasPrefixMatch(qualifier)) {
+                  addQualifierVersions(qualifier, cfResults, cfBag);
+                }
+              }
+            } else if (columnInfo.getColumnName() == EMPTY_BYTE_ARRAY) {
+              // YA 20121210
+              throw new IOException("Cannot use pound while reading");
+              // YA 20121210 END
+            } else {
+              // It's a column so set the value
+              addQualifierVersions(columnInfo.getColumnName(), cfResults, cfBag);
+              
+            }
+          } else {
+            container.set(i, Tuple.NULL);
+          }
+        }
+        return container; // tuple;
+      }
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
+    return null;
+  }
+  
+  private void addQualifierVersions(byte[] qualifier,
+      NavigableMap<byte[], NavigableMap<Long, byte[]>> cfResults, DataBag cfBag)
+      throws ExecException {
+    DataBag verBag = BagFactory.getInstance().newDefaultBag();
+    
+    Tuple qualifierVersTuple = TupleFactory.getInstance().newTuple(2);
+    qualifierVersTuple.set(0, new DataByteArray(qualifier));
+    qualifierVersTuple.set(1, verBag);
+    
+    cfBag.add(qualifierVersTuple);
+    
+    // byte[] cell = cfResults.get(quantifier);
+    NavigableMap<Long, byte[]> versionMap = cfResults.get(qualifier);
+    for (Long version : versionMap.keySet()) {
+      byte[] cell = versionMap.get(version);
+      
+      DataByteArray value =
+          cell == null ? new DataByteArray(new byte[] { Tuple.NULL }) : new DataByteArray(cell);
+      Tuple verValueTuple = TupleFactory.getInstance().newTuple(2);
+      
+      verValueTuple.set(0, version);
+      verValueTuple.set(1, value);
+      
+      verBag.add(verValueTuple);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Added qualifier version: (" + Arrays.toString(qualifier) + ", " + version + ", "
+            + value);
+      }
+    }
   }
   
   @SuppressWarnings("rawtypes")
