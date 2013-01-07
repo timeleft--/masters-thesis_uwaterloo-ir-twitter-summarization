@@ -2,18 +2,22 @@
 -- Column keys are dates for individual days, partitioning data into several buckets.
 -- The value is a byte array, where each byte is the position of an occurrence. 
 -- The version a.k.a. TIMESTAMP stores the Tweet Id of the occurrence. 
--- The HBase table must have unlimited versions (https://issues.apache.org/jira/browse/HBASE-379)
+-- The HBase table must have unlimited versions, the maximum is (2147483647 = 2^31 - 1 = Int Max). 
+-- Note that -1 doesn't work regardless of (https://issues.apache.org/jira/browse/HBASE-379).
 -- For Example: 
--- create 'tokenPos', {NAME => 'd', VERSIONS => -1} 
+-- create 'tokenPos', {NAME => 'd', VERSIONS => 2147483647} 
 -- No need to mess up with TTL, it's disabled by default (right?) {TTL => -1}
+-- If the data turns out to be too much, consider using {COMPRESSION => 'SNAPPY'}. However this will
+-- definitely attain a performance penalty (notice that this is not an archival database)  
 
 -- set debug 'on'
 
 REGISTER file:///home/younos/shared/yaboulna-udf-0.0.1-SNAPSHOT.jar; --../pig_udf/target
 -- file:///u2/yaboulnaga/data/twitter-tracked/debug/
--- hdfs://precise-01:8020/home/younos/spritzer_unsorted_csv/ 
 -- hdfs://precise-01:8020/user/younos/spritzer_debug/
-tweets = LOAD 'hdfs://precise-01:8020/home/younos/spritzer_unsorted_csv/[^_]*/[^.]*[^g]' USING yaboulna.pig.PigStorage('\t') AS (id:long, screenname:chararray, timestamp:long, tweet:chararray); --debug XOR spritzer_unsorted_csv
+-- file:///home/younos/spritzer_unsorted_csv
+-- hdfs://precise-01:8020/user/younos/spritzer_121211/ 
+tweets = LOAD 'file:///home/younos/spritzer_unsorted_csv/[^_]*/[^.]*[^g]' USING yaboulna.pig.PigStorage('\t') AS (id:long, screenname:chararray, timestamp:long, tweet:chararray); --debug XOR spritzer_unsorted_csv
 tokenPosTuples = FOREACH tweets GENERATE id, FLATTEN(yaboulna.pig.DateFromSnowflake(id)) as (timeMillis, date), FLATTEN(yaboulna.pig.TweetTokenizer(tweet)) as (token, positions);
 -- We don't need to write versions in order, as per: http://hbase.apache.org/book/versions.html#ftn.d352e3269
 -- tokenPosOrdered = ORDER tokenPosTuples BY id; -- This assures that the versions will be input in ascending order 

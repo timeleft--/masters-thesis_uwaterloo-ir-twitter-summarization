@@ -332,7 +332,8 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
   
   private void initScan() {
     scan = new Scan();
-    
+    // YA 20121212 Always get all available versions
+    scan.setMaxVersions();
     // Map-reduce jobs should not run with cacheBlocks
     scan.setCacheBlocks(false);
     
@@ -435,88 +436,111 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
     return columnInfo_;
   }
   
+  /**
+   * YA 20121212 Return versions as a bag, in a tuple with one or two other fields containing the row
+   * id (optional) and column id: (ROW, COL, {VERSION==SNOWFLAKE, POS})
+   * 
+   */
   @Override
   public Tuple getNext() throws IOException {
-    try {
-      if (reader.nextKeyValue()) {
-        ImmutableBytesWritable rowKey = (ImmutableBytesWritable) reader
-            .getCurrentKey();
-        Result result = (Result) reader.getCurrentValue();
-        
-        int tupleSize = columnInfo_.size();
-        
-        // use a map of families -> qualifiers with the most recent
-        // version of the cell. Fetching multiple vesions could be a
-        // useful feature.
-        NavigableMap<byte[], NavigableMap<byte[], byte[]>> resultsMap =
-            result.getNoVersionMap();
-        
-        if (loadRowKey_) {
-          tupleSize++;
-        }
-        Tuple tuple = TupleFactory.getInstance().newTuple(tupleSize);
-        
-        int startIndex = 0;
-        if (loadRowKey_) {
-          tuple.set(0, new DataByteArray(rowKey.get()));
-          startIndex++;
-        }
-        for (int i = 0; i < columnInfo_.size(); ++i) {
-          int currentIndex = startIndex + i;
-          
-          ColumnInfo columnInfo = columnInfo_.get(i);
-          if (columnInfo.isColumnMap()) {
-            // It's a column family so we need to iterate and set all
-            // values found
-            NavigableMap<byte[], byte[]> cfResults =
-                resultsMap.get(columnInfo.getColumnFamily());
-            Map<String, DataByteArray> cfMap =
-                new HashMap<String, DataByteArray>();
-            
-            if (cfResults != null) {
-              for (byte[] quantifier : cfResults.keySet()) {
-                // We need to check against the prefix filter to
-                // see if this value should be included. We can't
-                // just rely on the server-side filter, since a
-                // user could specify multiple CF filters for the
-                // same CF.
-                if (columnInfo.getColumnPrefix() == null ||
-                    columnInfo.hasPrefixMatch(quantifier)) {
-                  
-                  byte[] cell = cfResults.get(quantifier);
-                  DataByteArray value =
-                      cell == null ? null : new DataByteArray(cell);
-                  cfMap.put(Bytes.toString(quantifier), value);
-                }
-              }
-            }
-            tuple.set(currentIndex, cfMap);
-          } else if (columnInfo.getColumnName() == EMPTY_BYTE_ARRAY) {
-            // YA 20121210
-            throw new IOException("Cannot use pound while reading");
-            // YA 20121210 END
-          } else {
-            // It's a column so set the value
-            byte[] cell = result.getValue(columnInfo.getColumnFamily(),
-                columnInfo.getColumnName());
-            DataByteArray value =
-                cell == null ? null : new DataByteArray(cell);
-            tuple.set(currentIndex, value);
-          }
-        }
-        
-        if (LOG.isDebugEnabled()) {
-          for (int i = 0; i < tuple.size(); i++) {
-            LOG.debug("tuple value:" + tuple.get(i));
-          }
-        }
-        
-        return tuple;
-      }
-    } catch (InterruptedException e) {
-      throw new IOException(e);
-    }
-    return null;
+    throw new UnsupportedOperationException("Still working on it");
+//    try {
+//      if (reader.nextKeyValue()) {
+//        ImmutableBytesWritable rowKey = (ImmutableBytesWritable) reader
+//            .getCurrentKey();
+//        Result result = (Result) reader.getCurrentValue();
+//        
+//        int tupleSize = columnInfo_.size();
+//        
+//        // use a map of families -> qualifiers with the most recent
+//        // version of the cell. Fetching multiple vesions could be a
+//        // useful feature.
+//        // YA 20121212 NavigableMap<byte[], NavigableMap<byte[], byte[]>> resultsMap =
+//        // result.getNoVersionMap();
+//        NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> resultsMap = result
+//            .getMap();
+//        
+//        // YA 20121212
+//        Tuple container;
+//        if (loadRowKey_) {
+//          // tupleSize++;
+//          container = TupleFactory.getInstance().newTuple(2); // ROW, BAG
+//          container.set(0, new DataByteArray(rowKey.get()));
+//        } else {
+//          container = TupleFactory.getInstance().newTuple(1); // BAG
+//        }
+//        
+//        // YA 20121212
+//        Tuple tuple = TupleFactory.getInstance().newTuple(tupleSize + 1); // +1 for the version
+//        
+//        // YA 20121212
+//        // int startIndex = 0;
+//        // if (loadRowKey_) {
+//        // tuple.set(0, new DataByteArray(rowKey.get()));
+//        // startIndex++;
+//        // }
+//        
+//        for (int i = 0; i < columnInfo_.size(); ++i) {
+//          // int currentIndex = startIndex + i;
+//          
+//          ColumnInfo columnInfo = columnInfo_.get(i);
+//          if (columnInfo.isColumnMap()) {
+//            // It's a column family so we need to iterate and set all
+//            // values found
+//            NavigableMap<byte[], NavigableMap<Long, byte[]>> cfResults =
+//                resultsMap.get(columnInfo.getColumnFamily());
+//            Map<String, DataByteArray> cfMap =
+//                new HashMap<String, DataByteArray>();
+//            
+//            if (cfResults != null) {
+//              for (byte[] quantifier : cfResults.keySet()) {
+//                // We need to check against the prefix filter to
+//                // see if this value should be included. We can't
+//                // just rely on the server-side filter, since a
+//                // user could specify multiple CF filters for the
+//                // same CF.
+//                if (columnInfo.getColumnPrefix() == null ||
+//                    columnInfo.hasPrefixMatch(quantifier)) {
+//                  
+//                  // byte[] cell = cfResults.get(quantifier);
+//                  NavigableMap<Long, byte[]> versionMap = cfResults.get(quantifier);
+//                  for (Long version : versionMap.keySet()) {
+//                    byte[] cell = versionMap.get(version).get(quantifier);
+//                    
+//                    DataByteArray value =
+//                        cell == null ? null : new DataByteArray(cell);
+//                    cfMap.put(Bytes.toString(quantifier), value);
+//                  }
+//                }
+//              }
+//            }
+//            tuple.set(currentIndex, cfBag);
+//          } else if (columnInfo.getColumnName() == EMPTY_BYTE_ARRAY) {
+//            // YA 20121210
+//            throw new IOException("Cannot use pound while reading");
+//            // YA 20121210 END
+//          } else {
+//            // It's a column so set the value
+//            byte[] cell = result.getValue(columnInfo.getColumnFamily(),
+//                columnInfo.getColumnName());
+//            DataByteArray value =
+//                cell == null ? null : new DataByteArray(cell);
+//            tuple.set(currentIndex, value);
+//          }
+//        }
+//        
+//        if (LOG.isDebugEnabled()) {
+//          for (int i = 0; i < tuple.size(); i++) {
+//            LOG.debug("tuple value:" + tuple.get(i));
+//          }
+//        }
+//        
+//        return container; //tuple;
+//      }
+//    } catch (InterruptedException e) {
+//      throw new IOException(e);
+//    }
+//    return null;
   }
   
   @SuppressWarnings("rawtypes")
@@ -561,19 +585,19 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
       tablename = location.substring(8);
     }
     
-    // Supporting partitions by days TODO(yaboulna): Pass the partition postfix instead of time
-    int colonIx = tablename.indexOf(':');
-    if (colonIx != -1) {
-      long timestamp = Long.parseLong(tablename.substring(colonIx + 1));
-      // Interpreting the timestamp using the timezone GMT-10 so that day boundaries
-      // fall at 3 and 5 AM in North America West and East coast
-      Calendar gregCal = new GregorianCalendar(TimeZone.getTimeZone("GMT-10"));
-      gregCal.setTimeInMillis(timestamp);
-      tablename = tablename.substring(0, colonIx)
-          + "_" + gregCal.get(Calendar.YEAR)
-          + "-" + (gregCal.get(Calendar.MONTH) + 1) // +1 because Jan is 0.. duh!!
-          + "-" + gregCal.get(Calendar.DAY_OF_MONTH);
-    }
+    // // Supporting partitions by days TODO(yaboulna): Pass the partition postfix instead of time
+    // int colonIx = tablename.indexOf(':');
+    // if (colonIx != -1) {
+    // long timestamp = Long.parseLong(tablename.substring(colonIx + 1));
+    // // Interpreting the timestamp using the timezone GMT-10 so that day boundaries
+    // // fall at 3 and 5 AM in North America West and East coast
+    // Calendar gregCal = new GregorianCalendar(TimeZone.getTimeZone("GMT-10"));
+    // gregCal.setTimeInMillis(timestamp);
+    // tablename = tablename.substring(0, colonIx)
+    // + "_" + gregCal.get(Calendar.YEAR)
+    // + "-" + (gregCal.get(Calendar.MONTH) + 1) // +1 because Jan is 0.. duh!!
+    // + "-" + gregCal.get(Calendar.DAY_OF_MONTH);
+    // }
     
     if (m_table == null) {
       m_table = new HTable(m_conf, tablename);
@@ -770,66 +794,75 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
     // }
     // byte type = (fieldSchemas == null) ? DataType.findType(t.get(0)) : fieldSchemas[0].getType();
     
-    Put put = createPut(t.get(0), t.getType(0)); // type);
-    
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("putNext -- WAL disabled: " + noWAL_);
-      for (ColumnInfo columnInfo : columnInfo_) {
-        LOG.debug("putNext -- col: " + columnInfo);
-      }
-    }
-    
-    for (int i = 1; i < t.size(); ++i) {
-      ColumnInfo columnInfo = columnInfo_.get(i - 1);
+    try {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("putNext - tuple: " + i + ", value=" + t.get(i) +
-            ", cf:column=" + columnInfo);
+        LOG.debug("putNext - key=" + t.get(0) + ", type=" + t.getType(0));
+      }
+      Put put = createPut(t.get(0), t.getType(0)); // type);
+      
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("putNext -- WAL disabled: " + noWAL_);
+        for (ColumnInfo columnInfo : columnInfo_) {
+          LOG.debug("putNext -- col: " + columnInfo);
+        }
       }
       
-      if (columnInfo.isColumnMap()) {
-        Map<String, Object> cfMap = (Map<String, Object>) t.get(i);
-        for (String colName : cfMap.keySet()) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("putNext - colName=" + colName +
-                ", class: " + colName.getClass());
-          }
-          // TODO deal with the fact that maps can have types now. Currently we detect types at
-          // runtime in the case of storing to a cf, which is suboptimal.
-          put.add(columnInfo.getColumnFamily(), Bytes.toBytes(colName.toString()), ts,
-              objToBytes(cfMap.get(colName), DataType.findType(cfMap.get(colName))));
+      for (int i = 1; i < t.size(); ++i) {
+        ColumnInfo columnInfo = columnInfo_.get(i - 1);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("putNext - tuple: " + i + ", value=" + t.get(i) +
+              ", cf:column=" + columnInfo);
         }
-      } else if (columnInfo.getColumnName() == EMPTY_BYTE_ARRAY) { // all are == to the static array
-        // YA 2012-12-10 using the next column info as the column name if the name is an empty array
-        // ColumnInfo columnInfoKey = columnInfo;
         
-        columnInfo = null; // just as a guard
-        byte[] keyBytes = objToBytes(t.get(i), t.getType(i));
-        // (fieldSchemas == null) ? DataType.findType(t.get(i))
-        // // Make sure to the key in schema so that the index matches
-        // : fieldSchemas[i].getType());
-        ++i;
-        assert i <= columnInfo_.size() && i < t.size();
-        
-        ColumnInfo columnInfoVal = columnInfo_.get(i - 1);
-        put.add(columnInfoVal.getColumnFamily(), keyBytes,
-            ts, objToBytes(t.get(i), t.getType(i)));
-        // (fieldSchemas == null) ? DataType.findType(t.get(i))
-        // // Make sure to the key in schema so that the index matches
-        // : fieldSchemas[i].getType()));
-        
-        // YA 2012-12-10 END
-      } else {
-        put.add(columnInfo.getColumnFamily(), columnInfo.getColumnName(),
-            ts, objToBytes(t.get(i), t.getType(i)));
-        // (fieldSchemas == null) ?DataType.findType(t.get(i)) : fieldSchemas[i].getType()));
+        if (columnInfo.isColumnMap()) {
+          Map<String, Object> cfMap = (Map<String, Object>) t.get(i);
+          for (String colName : cfMap.keySet()) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("putNext - colName=" + colName +
+                  ", class: " + colName.getClass());
+            }
+            // TODO deal with the fact that maps can have types now. Currently we detect types at
+            // runtime in the case of storing to a cf, which is suboptimal.
+            put.add(columnInfo.getColumnFamily(), Bytes.toBytes(colName.toString()), ts,
+                objToBytes(cfMap.get(colName), DataType.findType(cfMap.get(colName))));
+          }
+        } else if (columnInfo.getColumnName() == EMPTY_BYTE_ARRAY) { // all are == to the static array
+          // YA 2012-12-10 using the next column info as the column name if the name is an empty array
+          // ColumnInfo columnInfoKey = columnInfo;
+          
+          columnInfo = null; // just as a guard
+          byte[] keyBytes = objToBytes(t.get(i), t.getType(i));
+          // (fieldSchemas == null) ? DataType.findType(t.get(i))
+          // // Make sure to the key in schema so that the index matches
+          // : fieldSchemas[i].getType());
+          ++i;
+          assert i <= columnInfo_.size() && i < t.size();
+          
+          ColumnInfo columnInfoVal = columnInfo_.get(i - 1);
+          put.add(columnInfoVal.getColumnFamily(), keyBytes,
+              ts, objToBytes(t.get(i), t.getType(i)));
+          // (fieldSchemas == null) ? DataType.findType(t.get(i))
+          // // Make sure to the key in schema so that the index matches
+          // : fieldSchemas[i].getType()));
+          
+          // YA 2012-12-10 END
+        } else {
+          put.add(columnInfo.getColumnFamily(), columnInfo.getColumnName(),
+              ts, objToBytes(t.get(i), t.getType(i)));
+          // (fieldSchemas == null) ?DataType.findType(t.get(i)) : fieldSchemas[i].getType()));
+        }
       }
+      
+      // try {
+      writer.write(null, put);
+      // } catch (InterruptedException e) {
+      // throw new IOException(e);
+      // }
+    } catch (Exception e) {
+      LOG.error("Exception while putting tuple: (" + t + ") at timestamp: " + ts);
+      LOG.error(e, e);
     }
     
-    try {
-      writer.write(null, put);
-    } catch (InterruptedException e) {
-      throw new IOException(e);
-    }
   }
   
   /**

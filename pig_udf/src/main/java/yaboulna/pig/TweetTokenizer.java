@@ -45,6 +45,8 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
       tokenIter.setRepeatHashTag(true);
       tokenIter.setRepeatedHashTagAtTheEnd(true);
       
+      
+      // This will overflow for anything over 127, make sure to interpret it properly
       byte[] pos = new byte[] {0};
       
       LinkedHashMap<String, DataByteArray> resMap = Maps.newLinkedHashMap();
