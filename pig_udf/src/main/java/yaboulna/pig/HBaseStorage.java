@@ -9,16 +9,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Properties;
-import java.util.TimeZone;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -471,15 +467,15 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
         
         // YA 20121212
         Tuple container;
-        int i;
+        int tupleOffset;
         if (loadRowKey_) {
           tupleSize = tupleSize + 1; // +1 for the ROW ID
           container = TupleFactory.getInstance().newTuple(tupleSize);
           container.set(0, new DataByteArray(rowKey.get()));
-          i = 1;
+          tupleOffset = 1;
         } else {
           container = TupleFactory.getInstance().newTuple(tupleSize); // {(COL, BAG)} per column
-          i = 0;
+          tupleOffset = 0;
         }
         // int startIndex = 0;
         // if (loadRowKey_) {
@@ -488,9 +484,7 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
         // }
         // END YA 20121212
         
-        // for (int i = 0; i < columnInfo_.size(); ++i) {
-        // int currentIndex = startIndex + i;
-        for (; i < tupleSize; ++i) {
+         for (int i = 0; i < columnInfo_.size(); ++i) {
           ColumnInfo columnInfo = columnInfo_.get(i);
           
           NavigableMap<byte[], NavigableMap<Long, byte[]>> cfResults =
@@ -498,7 +492,7 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
           
           if (cfResults != null) {
             DataBag cfBag = BagFactory.getInstance().newDefaultBag();
-            container.set(i, cfBag);
+            container.set(tupleOffset+ i, cfBag);
             if (columnInfo.isColumnMap()) {
               // It's a column family so we need to iterate and set all
               // values found
@@ -523,7 +517,7 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
               
             }
           } else {
-            container.set(i, Tuple.NULL);
+            container.set(tupleOffset+i, Tuple.NULL);
           }
         }
         return container; // tuple;
