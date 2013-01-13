@@ -19,7 +19,7 @@ REGISTER file:///nfs/vmshared/Code/thesis/pig_udf/target/yaboulna-udf-0.0.1-SNAP
 -- hdfs://precise-01:8020/user/younos/spritzer_debug/
 -- file:///home/younos/spritzer_unsorted_csv
 -- hdfs://precise-01:8020/user/younos/spritzer_121211/ 
-tweets = LOAD 'hdfs://yaboulna222:8020/user/younos/tweets_raw/spritzer_2012-09-14_2013-01-11.bz' USING yaboulna.pig.PigStorage('\t') AS (id:long, screenname:chararray, timestamp:long, tweet:chararray); --debug XOR spritzer_unsorted_csv
+tweets = LOAD 'hdfs://yaboulna222:8020/user/younos/tweets_raw/spritzer_2012-09-14_2013-01-11.bz' USING PigStorage('\t') AS (id:long, screenname:chararray, timestamp:long, tweet:chararray); --debug XOR spritzer_unsorted_csv
 tokenPosTuples = FOREACH tweets GENERATE id, FLATTEN(yaboulna.pig.DateFromSnowflake(id)) as (timeMillis, date), FLATTEN(yaboulna.pig.TweetTokenizer(tweet)) as (token, positions);
 -- We don't need to write versions in order, as per: http://hbase.apache.org/book/versions.html#ftn.d352e3269
 -- tokenPosOrdered = ORDER tokenPosTuples BY id; -- This assures that the versions will be input in ascending order 
