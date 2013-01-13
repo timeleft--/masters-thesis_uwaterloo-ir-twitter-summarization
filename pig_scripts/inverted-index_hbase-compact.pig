@@ -5,7 +5,9 @@
 -- The HBase table must have unlimited versions, the maximum is (2147483647 = 2^31 - 1 = Int Max). 
 -- Note that -1 doesn't work regardless of (https://issues.apache.org/jira/browse/HBASE-379).
 -- For Example: 
--- create 'tokenPos', {NAME => 'd', VERSIONS => 2147483647} 
+-- create 'tokenPos', {NAME => 'd', VERSIONS => 2147483647, SPLITS => ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'z'] 
+-- Performance should improve by creating splits explicitly (and don't forget to apply configs)
+-- SPLITS => ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', ... etc etc] BUT.. how will I know how to split evenly 
 -- No need to mess up with TTL, it's disabled by default (right?) {TTL => -1}
 -- If the data turns out to be too much, consider using {COMPRESSION => 'SNAPPY'}. However this will
 -- definitely attain a performance penalty (notice that this is not an archival database)  
@@ -23,5 +25,5 @@ tokenPosTuples = FOREACH tweets GENERATE id, FLATTEN(yaboulna.pig.DateFromSnowfl
 -- tokenPosOrdered = ORDER tokenPosTuples BY id; -- This assures that the versions will be input in ascending order 
 tokenPosToStore = FOREACH tokenPosTuples GENERATE TOTUPLE(token, date, positions) as t, id; --Ordered
 
-storageResults = STORE tokenPosToStore INTO 'hbase://tokenPos' USING yaboulna.pig.HBaseStorage('d:#');
+storageResults = STORE tokenPosToStore INTO 'hbase://tokenPos' USING yaboulna.pig.HBaseStorage('d:#', 'noWal');
 
