@@ -63,7 +63,7 @@
 		<!-- Cloudera Dependencies -->
 		<!-- check versions at: https://ccp.cloudera.com/display/CDH4DOC/Using+the+CDH4+Maven+Repository -->
 		<!-- HIVE CRAZINESS -->
-		<dependency>
+		<!--<dependency>
 			<groupId>org.apache.hive</groupId>
 			<artifactId>hive-jdbc</artifactId>
 			<version>0.9.0-cdh4.1.2</version>
@@ -87,7 +87,7 @@
 			<groupId>org.apache.hive</groupId>
 			<artifactId>hive-exec</artifactId>
 			<version>0.9.0-cdh4.1.2</version>
-		</dependency>
+		</dependency>-->
 		<!-- <dependency> <groupId>org.apache.derby</groupId> <artifactId>derby</artifactId> 
 			<version>10.4.2.0</version> </dependency> <dependency> <groupId>org.apache.derby</groupId> 
 			<artifactId>derbytools</artifactId> <version>10.4.2.0</version> </dependency> -->
@@ -97,26 +97,30 @@
 		<dependency>
 			<groupId>org.apache.pig</groupId>
 			<artifactId>pig</artifactId>
-			<version>0.10.0-cdh4.1.2</version>
+			<!--<version>0.10.0-cdh4.1.2</version>
+			--><version>0.9.2</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-core</artifactId>
-			<version>2.0.0-mr1-cdh4.1.2</version>
+			<!--<version>2.0.0-mr1-cdh4.1.2</version>
+			--><version>1.0.3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
-			<version>2.0.0-mr1-cdh4.1.2</version>
+			<!--<version>2.0.0-mr1-cdh4.1.2</version>
+			--><version>1.0.3</version>
 			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
 		  <groupId>org.apache.hbase</groupId>
 		  <artifactId>hbase</artifactId>
-		  <version>0.92.1-cdh4.1.2</version>
+		  <!--<version>0.92.1-cdh4.1.2</version>
+		  --><version>0.92.0</version>
 		</dependency>
 
 		<!-- Much better and easier than the mess below -->
