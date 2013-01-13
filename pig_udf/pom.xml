@@ -60,38 +60,39 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Cloudera Dependencies -->
-		<!-- check versions at: https://ccp.cloudera.com/display/CDH4DOC/Using+the+CDH4+Maven+Repository -->
-		<!-- HIVE CRAZINESS -->
-		<dependency>
-			<groupId>org.apache.hive</groupId>
-			<artifactId>hive-jdbc</artifactId>
-			<version>0.9.0-cdh4.1.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.thrift</groupId>
-			<artifactId>libthrift</artifactId>
-			<version>0.7.0-cdh4.1.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hive</groupId>
-			<artifactId>hive-service</artifactId>
-			<version>0.9.0-cdh4.1.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hive</groupId>
-			<artifactId>hive-metastore</artifactId>
-			<version>0.9.0-cdh4.1.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hive</groupId>
-			<artifactId>hive-exec</artifactId>
-			<version>0.9.0-cdh4.1.2</version>
-		</dependency>
-		<!-- <dependency> <groupId>org.apache.derby</groupId> <artifactId>derby</artifactId> 
-			<version>10.4.2.0</version> </dependency> <dependency> <groupId>org.apache.derby</groupId> 
-			<artifactId>derbytools</artifactId> <version>10.4.2.0</version> </dependency> -->
-		<!-- END HIVE CRAZINESS -->
+		<!-- Cloudera Dependencies --> 
+ 		<!-- check versions at: https://ccp.cloudera.com/display/CDH4DOC/Using+the+CDH4+Maven+Repository --> 
+ 		<!-- HIVE CRAZINESS --> 
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.apache.hive</groupId> -->
+<!-- 			<artifactId>hive-jdbc</artifactId> -->
+<!-- 			<version>0.9.0-cdh4.1.2</version> -->
+<!-- 		</dependency> -->
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.apache.thrift</groupId> -->
+<!-- 			<artifactId>libthrift</artifactId> -->
+<!-- 			<!--  what's wrong with that? --> 
+<!-- 			<version>0.7.0-cdh4.1.2</version> -->
+<!-- 		</dependency> -->
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.apache.hive</groupId> -->
+<!-- 			<artifactId>hive-service</artifactId> -->
+<!-- 			<version>0.9.0-cdh4.1.2</version> -->
+<!-- 		</dependency> -->
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.apache.hive</groupId> -->
+<!-- 			<artifactId>hive-metastore</artifactId> -->
+<!-- 			<version>0.9.0-cdh4.1.2</version> -->
+<!-- 		</dependency> -->
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.apache.hive</groupId> -->
+<!-- 			<artifactId>hive-exec</artifactId> -->
+<!-- 			<version>0.9.0-cdh4.1.2</version> -->
+<!-- 		</dependency> -->
+ 		<!-- <dependency> <groupId>org.apache.derby</groupId> <artifactId>derby</artifactId>  -->
+<!-- 			<version>10.4.2.0</version> </dependency> <dependency> <groupId>org.apache.derby</groupId>  -->
+<!-- 			<artifactId>derbytools</artifactId> <version>10.4.2.0</version> </dependency> --> 
+ 		<!-- END HIVE CRAZINESS --> 
 
 
 		<dependency>
