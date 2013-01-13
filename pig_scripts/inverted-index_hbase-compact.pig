@@ -25,5 +25,5 @@ tokenPosTuples = FOREACH tweets GENERATE id, FLATTEN(yaboulna.pig.DateFromSnowfl
 -- tokenPosOrdered = ORDER tokenPosTuples BY id; -- This assures that the versions will be input in ascending order 
 tokenPosToStore = FOREACH tokenPosTuples GENERATE TOTUPLE(token, date, positions) as t, id; --Ordered
 
-storageResults = STORE tokenPosToStore INTO 'hbase://tokenPos' USING yaboulna.pig.HBaseStorage('d:#', '-noWal');
+storageResults = STORE tokenPosToStore INTO 'hbase://tokenPos' USING yaboulna.pig.HBaseStorage('d:#', '-noWAL');
 
