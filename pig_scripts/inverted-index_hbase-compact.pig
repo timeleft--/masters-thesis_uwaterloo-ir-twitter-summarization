@@ -5,7 +5,7 @@
 -- The HBase table must have unlimited versions, the maximum is (2147483647 = 2^31 - 1 = Int Max). 
 -- Note that -1 doesn't work regardless of (https://issues.apache.org/jira/browse/HBASE-379).
 -- For Example: 
--- create 'tokenPos', {NAME => 'd', VERSIONS => 2147483647, SPLITS => ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'z'], DEFERRED_LOG_FLUSH => true} 
+-- create 'tokenPos', {NAME => 'd', VERSIONS => 2147483647, DEFERRED_LOG_FLUSH => 'true'} 
 -- Performance should improve by creating splits explicitly (and don't forget to apply configs)
 -- SPLITS => ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', ... etc etc] BUT.. how will I know how to split evenly 
 -- No need to mess up with TTL, it's disabled by default (right?) {TTL => -1}
