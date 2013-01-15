@@ -498,7 +498,7 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 	 * YA 20121212 Return versions as a bag, in another bag with a tuple for
 	 * each column qualifier. All of this is another tuple, optionally
 	 * containing the row key. The schema is: (OptionalROWKey, {(COLQualifier,
-	 * {(VERSION==SNOWFLAKE, {POS as int})})})
+	 * {(VERSION==SNOWFLAKE, {(POS as int)})})})
 	 * 
 	 */
 	@Override
@@ -610,7 +610,7 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 		NavigableMap<Long, byte[]> versionMap = cfResults.get(qualifier);
 		for (Long version : versionMap.keySet()) {
 			byte[] cell = versionMap.get(version);
-
+			 
 			// YA 20130114 Positions should be in a bag, interpretted as
 			// integers
 			// DataByteArray value =
@@ -623,7 +623,8 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 				nullTuple.setNull(true);
 				value.add(nullTuple);
 			} else {
-				for (byte pos : cell) {
+				DataByteArray valBytes = new DataByteArray(cell);
+				for (byte pos : valBytes.get()) {
 					Tuple posTuple = TupleFactory.getInstance().newTuple(1);
 					posTuple.set(0, (int) (0xff & pos));
 					value.add(posTuple);
