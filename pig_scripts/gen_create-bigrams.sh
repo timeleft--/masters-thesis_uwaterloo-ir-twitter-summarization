@@ -1,18 +1,19 @@
 #!/bin/bash
-echo "SPLIT $1 INTO "
+orig=${1}
+echo "SPLIT ${orig} INTO "
 for x in {0..69}
 do
-  echo "  $2$x IF $2==$x,"
+  echo "  ${orig}P$x IF pos==${x},"
 done
 
 for x in {0..68}
 do
-  y=`expr $x+1`
-  echo "$1X2S$x = JOIN $2$x BY id, $2$y BY id;"
-  echo "$1C2S$x = FOREACH $1X2S$x GENERATE CONCAT(CONCAT($2$x::token, 'C'), $2$y::token) as token, $2$x::day as day, $2$x::id as id, $2$x::pos as pos;"
+  y=`expr ${x} + 1`
+  echo "${orig}X2S${x} = JOIN ${orig}P$x BY id, ${orig}P$y BY id;"
+  echo "${orig}C2S${x} = FOREACH ${orig}X2S${x} GENERATE CONCAT(CONCAT(${orig}P${x}::token, 'C'), ${orig}P${y}::token) as token, ${orig}P${x}::day as day, ${orig}P${x}::id as id, ${orig}P${x}::pos as pos;"
 done
 
-echo "ngramC2 = UNION "
+echo "bigrams = UNION "
 for x in {0..68}
 do
   echo "  $1C2S$x,"

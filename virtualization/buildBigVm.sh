@@ -13,12 +13,12 @@ do
 #  echo "Cleaning up yaboulna$x"
 #virsh destroy yaboulna$x
 #  virsh undefine yaboulna$x
-#  rm -rf ~/yaboulna$x.vm*
-  mv ~/yaboulna$x* ~/old/
+#  rm -rf /home/yaboulna/yaboulna$x.vm*
+  mv /home/yaboulna/yaboulna$x* /home/yaboulna/old/
   echo "Creating vm yaboulna$x "
-  mkdir ~/yaboulna$x.vm
+  mkdir /home/yaboulna/yaboulna$x.vm
   echo UWPa55w0rt | sudo -S vmbuilder kvm ubuntu \
-	-t ~/tmp \
+	-t /home/yaboulna/tmp \
 	--mirror=http://mirror.cs.uwaterloo.ca/ubuntu \
 	--suite=precise \
 	--flavour=server \
@@ -41,15 +41,15 @@ do
 	--addpkg=nfs-common \
 	--firstboot=/home/yaboulna/nfs/vmshared/Code/thesis/virtualization/vm1stboot.sh \
 	--timezone='Canada/Eastern' \
-        --dest=~/yaboulna$x.vm > ~/yaboulna$x.out 2> ~/yaboulna$x.err 
+        --dest=/home/yaboulna/yaboulna$x.vm > /home/yaboulna/yaboulna$x.out 2> /home/yaboulna/yaboulna$x.err 
 #	--bridge=br0 \
 #  echo "Done creating yaboulna$x"
 #&  virsh start yaboulna$x
 #  --user=yaboulna \
 #        --name='Younos Aboulnaga'\
 #         --pass=anboulna \
-  cat ./buildVms.sh >> ~/yaboulna$x.out
-  virsh dumpxml yaboulna$x > ~/yaboulna$x.xml
+  cat ./buildVms.sh >> /home/yaboulna/yaboulna$x.out
+  virsh dumpxml yaboulna$x > /home/yaboulna/yaboulna$x.xml
   x=`expr $x + 1`
 done
 #tail -f 10 yaboulna`expr $x - 1`.err
