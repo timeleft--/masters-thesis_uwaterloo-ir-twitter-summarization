@@ -687,10 +687,10 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
    */
   @SuppressWarnings({ "rawtypes", "unchecked" })
   private void addHBaseDelegationToken(Configuration hbaseConf, Job job) {
-   //FIXME equivalent for versions prior to 0.10 
-   // if (!UDFContext.getUDFContext().isFrontend()) {
-   //   return;
-   // }
+    
+    if (!UDFContext.getUDFContext().isFrontend()) {
+      return;
+    }
     
     if ("kerberos".equalsIgnoreCase(hbaseConf.get(HBASE_SECURITY_CONF_KEY))) {
       try {
@@ -923,9 +923,8 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface, LoadPu
       return caster.toBytes((Integer) o);
     case DataType.LONG:
       return caster.toBytes((Long) o);
-    //FIXME: if version 0.10 is targetted make sure to turn this back on
-    //case DataType.BOOLEAN:
-    //  return caster.toBytes((Boolean) o);
+    case DataType.BOOLEAN:
+      return caster.toBytes((Boolean) o);
       
       // The type conversion here is unchecked.
       // Relying on DataType.findType to do the right thing.

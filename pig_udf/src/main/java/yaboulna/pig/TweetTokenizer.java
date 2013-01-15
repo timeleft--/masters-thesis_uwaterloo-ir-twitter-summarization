@@ -57,7 +57,7 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
           tokenPosList = new DataByteArray();
           resMap.put(token, tokenPosList);
         }
-        tokenPosList.append(new DataByteArray(pos));
+        tokenPosList.append(pos);
         ++pos[0];
       }
       
