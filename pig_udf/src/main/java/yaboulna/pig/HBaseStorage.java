@@ -177,6 +177,9 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 						"noWAL",
 						false,
 						"Sets the write ahead to false for faster loading. To be used with extreme caution since this could result in data loss (see http://hbase.apache.org/book.html#perf.hbase.client.putwal).");
+	  //yaboulna 20130114 Equals option
+		validOptions_.addOption("eq", true,
+				"Records must be  equal to this value");
 	}
 
 	/**
@@ -242,7 +245,9 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 			HelpFormatter formatter = new HelpFormatter();
 			formatter
 					.printHelp(
-							"[-loadKey] [-gt] [-gte] [-lt] [-lte] [-columnPrefix] [-caching] [-caster] [-noWAL] [-limit] [-delim] [-ignoreWhitespace]",
+							// yaboulna 2013014 Equal
+//							"[-loadKey] [-gt] [-gte] [-lt] [-lte] [-columnPrefix] [-caching] [-caster] [-noWAL] [-limit] [-delim] [-ignoreWhitespace]",
+							"[-loadKey] [-gt] [-gte] [-lt] [-lte] [-eq] [-columnPrefix] [-caching] [-caster] [-noWAL] [-limit] [-delim] [-ignoreWhitespace]",
 							validOptions_);
 			throw e;
 		}
