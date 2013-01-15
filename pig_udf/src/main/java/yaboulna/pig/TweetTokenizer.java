@@ -45,26 +45,42 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
       tokenIter.setRepeatHashTag(true);
       tokenIter.setRepeatedHashTagAtTheEnd(true);
       
-      
-      // This will overflow for anything over 127, make sure to interpret it properly
-      byte[] pos = new byte[] {0};
-      
-      LinkedHashMap<String, DataByteArray> resMap = Maps.newLinkedHashMap();
+      // Change array of bytes into bag of ints
+//      // This will overflow for anything over 127, make sure to interpret it properly
+//      byte[] pos = new byte[] {0};
+//      
+//      LinkedHashMap<String, DataByteArray> resMap = Maps.newLinkedHashMap();
+//      while (tokenIter.hasNext()) {
+//        String token = tokenIter.next();
+//        DataByteArray tokenPosList = resMap.get(token);
+//        if (tokenPosList == null) {
+//          tokenPosList = new DataByteArray();
+//          resMap.put(token, tokenPosList);
+//        }
+//        tokenPosList.append(pos);
+//        ++pos[0];
+//      }
+     int pos = 0; 
+      LinkedHashMap<String, DataBag> resMap = Maps.newLinkedHashMap();
       while (tokenIter.hasNext()) {
         String token = tokenIter.next();
-        DataByteArray tokenPosList = resMap.get(token);
-        if (tokenPosList == null) {
-          tokenPosList = new DataByteArray();
-          resMap.put(token, tokenPosList);
+        DataBag tokenPosBag = resMap.get(token);
+        if (tokenPosBag == null) {
+          tokenPosBag = BagFactory.getInstance().newDefaultBag();
+          resMap.put(token, tokenPosBag);
         }
-        tokenPosList.append(pos);
-        ++pos[0];
+        Tuple posTuple = TupleFactory.getInstance().newTuple(1);
+        posTuple.set(0, pos);
+        tokenPosBag.add(posTuple);
+        ++pos;
       }
       
+// END change array to bag      
       Tuple[] resArr = new Tuple[resMap.size()];
       int i=0;
       for (String token : resMap.keySet()) {
-        DataByteArray tokenPosList = resMap.get(token);
+//        DataByteArray tokenPosList = resMap.get(token);
+    	DataBag tokenPosList = resMap.get(token);
         Tuple tokenTuple = TupleFactory.getInstance().newTuple(2);
         tokenTuple.set(0, token);
         tokenTuple.set(1, (tokenPosList));
@@ -84,11 +100,18 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
   public Schema outputSchema(Schema input) {
     try {
       Schema.FieldSchema tokenFs = new Schema.FieldSchema("token", DataType.CHARARRAY);
-      Schema.FieldSchema posFS = new Schema.FieldSchema("positions", DataType.BYTEARRAY);
-      // cannot be handled by FOREACH DataType.BYTE);
+//      Schema.FieldSchema posFS = new Schema.FieldSchema("positions", DataType.BYTEARRAY);
+//      // cannot be handled by FOREACH DataType.BYTE);
+//      
+//      Schema tupleSchema = new Schema(Arrays.asList(tokenFs, posFS));
+
       
-      Schema tupleSchema = new Schema(Arrays.asList(tokenFs, posFS));
+      Schema.FieldSchema posFS = new Schema.FieldSchema("positions", DataType.INTEGER);
+      Schema posBag = new Schema(new Schema.FieldSchema("tuple_of_pos", new Schema(posFS), DataType.TUPLE));
+      Schema.FieldSchema posBagFS = new Schema.FieldSchema("bag_of_tuple_of_pos", posBag, DataType.BAG);
       
+      Schema tupleSchema = new Schema(Arrays.asList(tokenFs, posBagFS));
+
       Schema.FieldSchema tupleFs = new Schema.FieldSchema("tuple_of_token-pos", tupleSchema,
           DataType.TUPLE);
       
