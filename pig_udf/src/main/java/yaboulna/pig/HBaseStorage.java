@@ -137,6 +137,9 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 	private final long limit_;
 	private final int caching_;
 	private final boolean noWAL_;
+	
+	//YA 20130114 versions option
+	private final int versions_;
 
 	protected transient byte[] gt_;
 	protected transient byte[] gte_;
@@ -177,9 +180,11 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 						"noWAL",
 						false,
 						"Sets the write ahead to false for faster loading. To be used with extreme caution since this could result in data loss (see http://hbase.apache.org/book.html#perf.hbase.client.putwal).");
-	  //yaboulna 20130114 Equals option
+	  //yaboulna 20130114 Equals and Versions options
 		validOptions_.addOption("eq", true,
 				"Records must be  equal to this value");
+		validOptions_.addOption("versions", true,
+				"Number of versions to return for each cell");
 	}
 
 	/**
@@ -245,9 +250,9 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 			HelpFormatter formatter = new HelpFormatter();
 			formatter
 					.printHelp(
-							// yaboulna 2013014 Equal
+							// yaboulna 2013014 Equal + versions
 //							"[-loadKey] [-gt] [-gte] [-lt] [-lte] [-columnPrefix] [-caching] [-caster] [-noWAL] [-limit] [-delim] [-ignoreWhitespace]",
-							"[-loadKey] [-gt] [-gte] [-lt] [-lte] [-eq] [-columnPrefix] [-caching] [-caster] [-noWAL] [-limit] [-delim] [-ignoreWhitespace]",
+							"[-loadKey] [-gt] [-gte] [-lt] [-lte] [-eq] [-columnPrefix] [-caching] [-caster] [-noWAL] [-limit] [-delim] [-ignoreWhitespace] [-versions]",
 							validOptions_);
 			throw e;
 		}
@@ -303,6 +308,9 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 				"100"));
 		limit_ = Long.valueOf(configuredOptions_.getOptionValue("limit", "-1"));
 		noWAL_ = configuredOptions_.hasOption("noWAL");
+		
+		//YA20130114 versions option
+		versions_ = Integer.valueOf(configuredOptions_.getOptionValue("versions", ""+Integer.MAX_VALUE));
 		initScan();
 	}
 
@@ -366,7 +374,8 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 	private void initScan() {
 		scan = new Scan();
 		// YA 20121212 Always get all available versions
-		scan.setMaxVersions();
+//		scan.setMaxVersions();
+		scan.setMaxVersions(versions_);
 		// Map-reduce jobs should not run with cacheBlocks
 		scan.setCacheBlocks(false);
 
@@ -588,6 +597,7 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 	private void addQualifierVersions(byte[] qualifier,
 			NavigableMap<byte[], NavigableMap<Long, byte[]>> cfResults,
 			DataBag cfBag) throws ExecException {
+		
 		DataBag verBag = BagFactory.getInstance().newDefaultBag();
 
 		Tuple qualifierVersTuple = TupleFactory.getInstance().newTuple(2);
@@ -627,12 +637,14 @@ public class HBaseStorage extends LoadFunc implements StoreFuncInterface,
 			verValueTuple.set(1, value);
 
 			verBag.add(verValueTuple);
+		
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Added qualifier version: ("
 						+ Arrays.toString(qualifier) + ", " + version + ", "
 						+ value);
 			}
 		}
+		
 	}
 
 	@SuppressWarnings("rawtypes")
