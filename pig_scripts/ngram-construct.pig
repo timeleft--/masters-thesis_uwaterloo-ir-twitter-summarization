@@ -282,3 +282,5 @@ ngram2 = UNION
   ngram1C2S66,
   ngram1C2S67,
   ngram1C2S68;
+  
+STORE ngram2 INTO 'debug_ngrams/bigrams' USING PigStorage('\t');
