@@ -1,279 +1,279 @@
-SPLIT unigrams INTO 
-  unigramsP0 IF pos==0,
-  unigramsP1 IF pos==1,
-  unigramsP2 IF pos==2,
-  unigramsP3 IF pos==3,
-  unigramsP4 IF pos==4,
-  unigramsP5 IF pos==5,
-  unigramsP6 IF pos==6,
-  unigramsP7 IF pos==7,
-  unigramsP8 IF pos==8,
-  unigramsP9 IF pos==9,
-  unigramsP10 IF pos==10,
-  unigramsP11 IF pos==11,
-  unigramsP12 IF pos==12,
-  unigramsP13 IF pos==13,
-  unigramsP14 IF pos==14,
-  unigramsP15 IF pos==15,
-  unigramsP16 IF pos==16,
-  unigramsP17 IF pos==17,
-  unigramsP18 IF pos==18,
-  unigramsP19 IF pos==19,
-  unigramsP20 IF pos==20,
-  unigramsP21 IF pos==21,
-  unigramsP22 IF pos==22,
-  unigramsP23 IF pos==23,
-  unigramsP24 IF pos==24,
-  unigramsP25 IF pos==25,
-  unigramsP26 IF pos==26,
-  unigramsP27 IF pos==27,
-  unigramsP28 IF pos==28,
-  unigramsP29 IF pos==29,
-  unigramsP30 IF pos==30,
-  unigramsP31 IF pos==31,
-  unigramsP32 IF pos==32,
-  unigramsP33 IF pos==33,
-  unigramsP34 IF pos==34,
-  unigramsP35 IF pos==35,
-  unigramsP36 IF pos==36,
-  unigramsP37 IF pos==37,
-  unigramsP38 IF pos==38,
-  unigramsP39 IF pos==39,
-  unigramsP40 IF pos==40,
-  unigramsP41 IF pos==41,
-  unigramsP42 IF pos==42,
-  unigramsP43 IF pos==43,
-  unigramsP44 IF pos==44,
-  unigramsP45 IF pos==45,
-  unigramsP46 IF pos==46,
-  unigramsP47 IF pos==47,
-  unigramsP48 IF pos==48,
-  unigramsP49 IF pos==49,
-  unigramsP50 IF pos==50,
-  unigramsP51 IF pos==51,
-  unigramsP52 IF pos==52,
-  unigramsP53 IF pos==53,
-  unigramsP54 IF pos==54,
-  unigramsP55 IF pos==55,
-  unigramsP56 IF pos==56,
-  unigramsP57 IF pos==57,
-  unigramsP58 IF pos==58,
-  unigramsP59 IF pos==59,
-  unigramsP60 IF pos==60,
-  unigramsP61 IF pos==61,
-  unigramsP62 IF pos==62,
-  unigramsP63 IF pos==63,
-  unigramsP64 IF pos==64,
-  unigramsP65 IF pos==65,
-  unigramsP66 IF pos==66,
-  unigramsP67 IF pos==67,
-  unigramsP68 IF pos==68,
-  unigramsP69 IF pos==69;
-unigramsX2S0 = JOIN unigramsP0 BY id, unigramsP1 BY id;
-unigramsC2S0 = FOREACH unigramsX2S0 GENERATE CONCAT(CONCAT(unigramsP0::token, 'C'), unigramsP1::token) as token, unigramsP0::day as day, unigramsP0::id as id, unigramsP0::pos as pos;
-unigramsX2S1 = JOIN unigramsP1 BY id, unigramsP2 BY id;
-unigramsC2S1 = FOREACH unigramsX2S1 GENERATE CONCAT(CONCAT(unigramsP1::token, 'C'), unigramsP2::token) as token, unigramsP1::day as day, unigramsP1::id as id, unigramsP1::pos as pos;
-unigramsX2S2 = JOIN unigramsP2 BY id, unigramsP3 BY id;
-unigramsC2S2 = FOREACH unigramsX2S2 GENERATE CONCAT(CONCAT(unigramsP2::token, 'C'), unigramsP3::token) as token, unigramsP2::day as day, unigramsP2::id as id, unigramsP2::pos as pos;
-unigramsX2S3 = JOIN unigramsP3 BY id, unigramsP4 BY id;
-unigramsC2S3 = FOREACH unigramsX2S3 GENERATE CONCAT(CONCAT(unigramsP3::token, 'C'), unigramsP4::token) as token, unigramsP3::day as day, unigramsP3::id as id, unigramsP3::pos as pos;
-unigramsX2S4 = JOIN unigramsP4 BY id, unigramsP5 BY id;
-unigramsC2S4 = FOREACH unigramsX2S4 GENERATE CONCAT(CONCAT(unigramsP4::token, 'C'), unigramsP5::token) as token, unigramsP4::day as day, unigramsP4::id as id, unigramsP4::pos as pos;
-unigramsX2S5 = JOIN unigramsP5 BY id, unigramsP6 BY id;
-unigramsC2S5 = FOREACH unigramsX2S5 GENERATE CONCAT(CONCAT(unigramsP5::token, 'C'), unigramsP6::token) as token, unigramsP5::day as day, unigramsP5::id as id, unigramsP5::pos as pos;
-unigramsX2S6 = JOIN unigramsP6 BY id, unigramsP7 BY id;
-unigramsC2S6 = FOREACH unigramsX2S6 GENERATE CONCAT(CONCAT(unigramsP6::token, 'C'), unigramsP7::token) as token, unigramsP6::day as day, unigramsP6::id as id, unigramsP6::pos as pos;
-unigramsX2S7 = JOIN unigramsP7 BY id, unigramsP8 BY id;
-unigramsC2S7 = FOREACH unigramsX2S7 GENERATE CONCAT(CONCAT(unigramsP7::token, 'C'), unigramsP8::token) as token, unigramsP7::day as day, unigramsP7::id as id, unigramsP7::pos as pos;
-unigramsX2S8 = JOIN unigramsP8 BY id, unigramsP9 BY id;
-unigramsC2S8 = FOREACH unigramsX2S8 GENERATE CONCAT(CONCAT(unigramsP8::token, 'C'), unigramsP9::token) as token, unigramsP8::day as day, unigramsP8::id as id, unigramsP8::pos as pos;
-unigramsX2S9 = JOIN unigramsP9 BY id, unigramsP10 BY id;
-unigramsC2S9 = FOREACH unigramsX2S9 GENERATE CONCAT(CONCAT(unigramsP9::token, 'C'), unigramsP10::token) as token, unigramsP9::day as day, unigramsP9::id as id, unigramsP9::pos as pos;
-unigramsX2S10 = JOIN unigramsP10 BY id, unigramsP11 BY id;
-unigramsC2S10 = FOREACH unigramsX2S10 GENERATE CONCAT(CONCAT(unigramsP10::token, 'C'), unigramsP11::token) as token, unigramsP10::day as day, unigramsP10::id as id, unigramsP10::pos as pos;
-unigramsX2S11 = JOIN unigramsP11 BY id, unigramsP12 BY id;
-unigramsC2S11 = FOREACH unigramsX2S11 GENERATE CONCAT(CONCAT(unigramsP11::token, 'C'), unigramsP12::token) as token, unigramsP11::day as day, unigramsP11::id as id, unigramsP11::pos as pos;
-unigramsX2S12 = JOIN unigramsP12 BY id, unigramsP13 BY id;
-unigramsC2S12 = FOREACH unigramsX2S12 GENERATE CONCAT(CONCAT(unigramsP12::token, 'C'), unigramsP13::token) as token, unigramsP12::day as day, unigramsP12::id as id, unigramsP12::pos as pos;
-unigramsX2S13 = JOIN unigramsP13 BY id, unigramsP14 BY id;
-unigramsC2S13 = FOREACH unigramsX2S13 GENERATE CONCAT(CONCAT(unigramsP13::token, 'C'), unigramsP14::token) as token, unigramsP13::day as day, unigramsP13::id as id, unigramsP13::pos as pos;
-unigramsX2S14 = JOIN unigramsP14 BY id, unigramsP15 BY id;
-unigramsC2S14 = FOREACH unigramsX2S14 GENERATE CONCAT(CONCAT(unigramsP14::token, 'C'), unigramsP15::token) as token, unigramsP14::day as day, unigramsP14::id as id, unigramsP14::pos as pos;
-unigramsX2S15 = JOIN unigramsP15 BY id, unigramsP16 BY id;
-unigramsC2S15 = FOREACH unigramsX2S15 GENERATE CONCAT(CONCAT(unigramsP15::token, 'C'), unigramsP16::token) as token, unigramsP15::day as day, unigramsP15::id as id, unigramsP15::pos as pos;
-unigramsX2S16 = JOIN unigramsP16 BY id, unigramsP17 BY id;
-unigramsC2S16 = FOREACH unigramsX2S16 GENERATE CONCAT(CONCAT(unigramsP16::token, 'C'), unigramsP17::token) as token, unigramsP16::day as day, unigramsP16::id as id, unigramsP16::pos as pos;
-unigramsX2S17 = JOIN unigramsP17 BY id, unigramsP18 BY id;
-unigramsC2S17 = FOREACH unigramsX2S17 GENERATE CONCAT(CONCAT(unigramsP17::token, 'C'), unigramsP18::token) as token, unigramsP17::day as day, unigramsP17::id as id, unigramsP17::pos as pos;
-unigramsX2S18 = JOIN unigramsP18 BY id, unigramsP19 BY id;
-unigramsC2S18 = FOREACH unigramsX2S18 GENERATE CONCAT(CONCAT(unigramsP18::token, 'C'), unigramsP19::token) as token, unigramsP18::day as day, unigramsP18::id as id, unigramsP18::pos as pos;
-unigramsX2S19 = JOIN unigramsP19 BY id, unigramsP20 BY id;
-unigramsC2S19 = FOREACH unigramsX2S19 GENERATE CONCAT(CONCAT(unigramsP19::token, 'C'), unigramsP20::token) as token, unigramsP19::day as day, unigramsP19::id as id, unigramsP19::pos as pos;
-unigramsX2S20 = JOIN unigramsP20 BY id, unigramsP21 BY id;
-unigramsC2S20 = FOREACH unigramsX2S20 GENERATE CONCAT(CONCAT(unigramsP20::token, 'C'), unigramsP21::token) as token, unigramsP20::day as day, unigramsP20::id as id, unigramsP20::pos as pos;
-unigramsX2S21 = JOIN unigramsP21 BY id, unigramsP22 BY id;
-unigramsC2S21 = FOREACH unigramsX2S21 GENERATE CONCAT(CONCAT(unigramsP21::token, 'C'), unigramsP22::token) as token, unigramsP21::day as day, unigramsP21::id as id, unigramsP21::pos as pos;
-unigramsX2S22 = JOIN unigramsP22 BY id, unigramsP23 BY id;
-unigramsC2S22 = FOREACH unigramsX2S22 GENERATE CONCAT(CONCAT(unigramsP22::token, 'C'), unigramsP23::token) as token, unigramsP22::day as day, unigramsP22::id as id, unigramsP22::pos as pos;
-unigramsX2S23 = JOIN unigramsP23 BY id, unigramsP24 BY id;
-unigramsC2S23 = FOREACH unigramsX2S23 GENERATE CONCAT(CONCAT(unigramsP23::token, 'C'), unigramsP24::token) as token, unigramsP23::day as day, unigramsP23::id as id, unigramsP23::pos as pos;
-unigramsX2S24 = JOIN unigramsP24 BY id, unigramsP25 BY id;
-unigramsC2S24 = FOREACH unigramsX2S24 GENERATE CONCAT(CONCAT(unigramsP24::token, 'C'), unigramsP25::token) as token, unigramsP24::day as day, unigramsP24::id as id, unigramsP24::pos as pos;
-unigramsX2S25 = JOIN unigramsP25 BY id, unigramsP26 BY id;
-unigramsC2S25 = FOREACH unigramsX2S25 GENERATE CONCAT(CONCAT(unigramsP25::token, 'C'), unigramsP26::token) as token, unigramsP25::day as day, unigramsP25::id as id, unigramsP25::pos as pos;
-unigramsX2S26 = JOIN unigramsP26 BY id, unigramsP27 BY id;
-unigramsC2S26 = FOREACH unigramsX2S26 GENERATE CONCAT(CONCAT(unigramsP26::token, 'C'), unigramsP27::token) as token, unigramsP26::day as day, unigramsP26::id as id, unigramsP26::pos as pos;
-unigramsX2S27 = JOIN unigramsP27 BY id, unigramsP28 BY id;
-unigramsC2S27 = FOREACH unigramsX2S27 GENERATE CONCAT(CONCAT(unigramsP27::token, 'C'), unigramsP28::token) as token, unigramsP27::day as day, unigramsP27::id as id, unigramsP27::pos as pos;
-unigramsX2S28 = JOIN unigramsP28 BY id, unigramsP29 BY id;
-unigramsC2S28 = FOREACH unigramsX2S28 GENERATE CONCAT(CONCAT(unigramsP28::token, 'C'), unigramsP29::token) as token, unigramsP28::day as day, unigramsP28::id as id, unigramsP28::pos as pos;
-unigramsX2S29 = JOIN unigramsP29 BY id, unigramsP30 BY id;
-unigramsC2S29 = FOREACH unigramsX2S29 GENERATE CONCAT(CONCAT(unigramsP29::token, 'C'), unigramsP30::token) as token, unigramsP29::day as day, unigramsP29::id as id, unigramsP29::pos as pos;
-unigramsX2S30 = JOIN unigramsP30 BY id, unigramsP31 BY id;
-unigramsC2S30 = FOREACH unigramsX2S30 GENERATE CONCAT(CONCAT(unigramsP30::token, 'C'), unigramsP31::token) as token, unigramsP30::day as day, unigramsP30::id as id, unigramsP30::pos as pos;
-unigramsX2S31 = JOIN unigramsP31 BY id, unigramsP32 BY id;
-unigramsC2S31 = FOREACH unigramsX2S31 GENERATE CONCAT(CONCAT(unigramsP31::token, 'C'), unigramsP32::token) as token, unigramsP31::day as day, unigramsP31::id as id, unigramsP31::pos as pos;
-unigramsX2S32 = JOIN unigramsP32 BY id, unigramsP33 BY id;
-unigramsC2S32 = FOREACH unigramsX2S32 GENERATE CONCAT(CONCAT(unigramsP32::token, 'C'), unigramsP33::token) as token, unigramsP32::day as day, unigramsP32::id as id, unigramsP32::pos as pos;
-unigramsX2S33 = JOIN unigramsP33 BY id, unigramsP34 BY id;
-unigramsC2S33 = FOREACH unigramsX2S33 GENERATE CONCAT(CONCAT(unigramsP33::token, 'C'), unigramsP34::token) as token, unigramsP33::day as day, unigramsP33::id as id, unigramsP33::pos as pos;
-unigramsX2S34 = JOIN unigramsP34 BY id, unigramsP35 BY id;
-unigramsC2S34 = FOREACH unigramsX2S34 GENERATE CONCAT(CONCAT(unigramsP34::token, 'C'), unigramsP35::token) as token, unigramsP34::day as day, unigramsP34::id as id, unigramsP34::pos as pos;
-unigramsX2S35 = JOIN unigramsP35 BY id, unigramsP36 BY id;
-unigramsC2S35 = FOREACH unigramsX2S35 GENERATE CONCAT(CONCAT(unigramsP35::token, 'C'), unigramsP36::token) as token, unigramsP35::day as day, unigramsP35::id as id, unigramsP35::pos as pos;
-unigramsX2S36 = JOIN unigramsP36 BY id, unigramsP37 BY id;
-unigramsC2S36 = FOREACH unigramsX2S36 GENERATE CONCAT(CONCAT(unigramsP36::token, 'C'), unigramsP37::token) as token, unigramsP36::day as day, unigramsP36::id as id, unigramsP36::pos as pos;
-unigramsX2S37 = JOIN unigramsP37 BY id, unigramsP38 BY id;
-unigramsC2S37 = FOREACH unigramsX2S37 GENERATE CONCAT(CONCAT(unigramsP37::token, 'C'), unigramsP38::token) as token, unigramsP37::day as day, unigramsP37::id as id, unigramsP37::pos as pos;
-unigramsX2S38 = JOIN unigramsP38 BY id, unigramsP39 BY id;
-unigramsC2S38 = FOREACH unigramsX2S38 GENERATE CONCAT(CONCAT(unigramsP38::token, 'C'), unigramsP39::token) as token, unigramsP38::day as day, unigramsP38::id as id, unigramsP38::pos as pos;
-unigramsX2S39 = JOIN unigramsP39 BY id, unigramsP40 BY id;
-unigramsC2S39 = FOREACH unigramsX2S39 GENERATE CONCAT(CONCAT(unigramsP39::token, 'C'), unigramsP40::token) as token, unigramsP39::day as day, unigramsP39::id as id, unigramsP39::pos as pos;
-unigramsX2S40 = JOIN unigramsP40 BY id, unigramsP41 BY id;
-unigramsC2S40 = FOREACH unigramsX2S40 GENERATE CONCAT(CONCAT(unigramsP40::token, 'C'), unigramsP41::token) as token, unigramsP40::day as day, unigramsP40::id as id, unigramsP40::pos as pos;
-unigramsX2S41 = JOIN unigramsP41 BY id, unigramsP42 BY id;
-unigramsC2S41 = FOREACH unigramsX2S41 GENERATE CONCAT(CONCAT(unigramsP41::token, 'C'), unigramsP42::token) as token, unigramsP41::day as day, unigramsP41::id as id, unigramsP41::pos as pos;
-unigramsX2S42 = JOIN unigramsP42 BY id, unigramsP43 BY id;
-unigramsC2S42 = FOREACH unigramsX2S42 GENERATE CONCAT(CONCAT(unigramsP42::token, 'C'), unigramsP43::token) as token, unigramsP42::day as day, unigramsP42::id as id, unigramsP42::pos as pos;
-unigramsX2S43 = JOIN unigramsP43 BY id, unigramsP44 BY id;
-unigramsC2S43 = FOREACH unigramsX2S43 GENERATE CONCAT(CONCAT(unigramsP43::token, 'C'), unigramsP44::token) as token, unigramsP43::day as day, unigramsP43::id as id, unigramsP43::pos as pos;
-unigramsX2S44 = JOIN unigramsP44 BY id, unigramsP45 BY id;
-unigramsC2S44 = FOREACH unigramsX2S44 GENERATE CONCAT(CONCAT(unigramsP44::token, 'C'), unigramsP45::token) as token, unigramsP44::day as day, unigramsP44::id as id, unigramsP44::pos as pos;
-unigramsX2S45 = JOIN unigramsP45 BY id, unigramsP46 BY id;
-unigramsC2S45 = FOREACH unigramsX2S45 GENERATE CONCAT(CONCAT(unigramsP45::token, 'C'), unigramsP46::token) as token, unigramsP45::day as day, unigramsP45::id as id, unigramsP45::pos as pos;
-unigramsX2S46 = JOIN unigramsP46 BY id, unigramsP47 BY id;
-unigramsC2S46 = FOREACH unigramsX2S46 GENERATE CONCAT(CONCAT(unigramsP46::token, 'C'), unigramsP47::token) as token, unigramsP46::day as day, unigramsP46::id as id, unigramsP46::pos as pos;
-unigramsX2S47 = JOIN unigramsP47 BY id, unigramsP48 BY id;
-unigramsC2S47 = FOREACH unigramsX2S47 GENERATE CONCAT(CONCAT(unigramsP47::token, 'C'), unigramsP48::token) as token, unigramsP47::day as day, unigramsP47::id as id, unigramsP47::pos as pos;
-unigramsX2S48 = JOIN unigramsP48 BY id, unigramsP49 BY id;
-unigramsC2S48 = FOREACH unigramsX2S48 GENERATE CONCAT(CONCAT(unigramsP48::token, 'C'), unigramsP49::token) as token, unigramsP48::day as day, unigramsP48::id as id, unigramsP48::pos as pos;
-unigramsX2S49 = JOIN unigramsP49 BY id, unigramsP50 BY id;
-unigramsC2S49 = FOREACH unigramsX2S49 GENERATE CONCAT(CONCAT(unigramsP49::token, 'C'), unigramsP50::token) as token, unigramsP49::day as day, unigramsP49::id as id, unigramsP49::pos as pos;
-unigramsX2S50 = JOIN unigramsP50 BY id, unigramsP51 BY id;
-unigramsC2S50 = FOREACH unigramsX2S50 GENERATE CONCAT(CONCAT(unigramsP50::token, 'C'), unigramsP51::token) as token, unigramsP50::day as day, unigramsP50::id as id, unigramsP50::pos as pos;
-unigramsX2S51 = JOIN unigramsP51 BY id, unigramsP52 BY id;
-unigramsC2S51 = FOREACH unigramsX2S51 GENERATE CONCAT(CONCAT(unigramsP51::token, 'C'), unigramsP52::token) as token, unigramsP51::day as day, unigramsP51::id as id, unigramsP51::pos as pos;
-unigramsX2S52 = JOIN unigramsP52 BY id, unigramsP53 BY id;
-unigramsC2S52 = FOREACH unigramsX2S52 GENERATE CONCAT(CONCAT(unigramsP52::token, 'C'), unigramsP53::token) as token, unigramsP52::day as day, unigramsP52::id as id, unigramsP52::pos as pos;
-unigramsX2S53 = JOIN unigramsP53 BY id, unigramsP54 BY id;
-unigramsC2S53 = FOREACH unigramsX2S53 GENERATE CONCAT(CONCAT(unigramsP53::token, 'C'), unigramsP54::token) as token, unigramsP53::day as day, unigramsP53::id as id, unigramsP53::pos as pos;
-unigramsX2S54 = JOIN unigramsP54 BY id, unigramsP55 BY id;
-unigramsC2S54 = FOREACH unigramsX2S54 GENERATE CONCAT(CONCAT(unigramsP54::token, 'C'), unigramsP55::token) as token, unigramsP54::day as day, unigramsP54::id as id, unigramsP54::pos as pos;
-unigramsX2S55 = JOIN unigramsP55 BY id, unigramsP56 BY id;
-unigramsC2S55 = FOREACH unigramsX2S55 GENERATE CONCAT(CONCAT(unigramsP55::token, 'C'), unigramsP56::token) as token, unigramsP55::day as day, unigramsP55::id as id, unigramsP55::pos as pos;
-unigramsX2S56 = JOIN unigramsP56 BY id, unigramsP57 BY id;
-unigramsC2S56 = FOREACH unigramsX2S56 GENERATE CONCAT(CONCAT(unigramsP56::token, 'C'), unigramsP57::token) as token, unigramsP56::day as day, unigramsP56::id as id, unigramsP56::pos as pos;
-unigramsX2S57 = JOIN unigramsP57 BY id, unigramsP58 BY id;
-unigramsC2S57 = FOREACH unigramsX2S57 GENERATE CONCAT(CONCAT(unigramsP57::token, 'C'), unigramsP58::token) as token, unigramsP57::day as day, unigramsP57::id as id, unigramsP57::pos as pos;
-unigramsX2S58 = JOIN unigramsP58 BY id, unigramsP59 BY id;
-unigramsC2S58 = FOREACH unigramsX2S58 GENERATE CONCAT(CONCAT(unigramsP58::token, 'C'), unigramsP59::token) as token, unigramsP58::day as day, unigramsP58::id as id, unigramsP58::pos as pos;
-unigramsX2S59 = JOIN unigramsP59 BY id, unigramsP60 BY id;
-unigramsC2S59 = FOREACH unigramsX2S59 GENERATE CONCAT(CONCAT(unigramsP59::token, 'C'), unigramsP60::token) as token, unigramsP59::day as day, unigramsP59::id as id, unigramsP59::pos as pos;
-unigramsX2S60 = JOIN unigramsP60 BY id, unigramsP61 BY id;
-unigramsC2S60 = FOREACH unigramsX2S60 GENERATE CONCAT(CONCAT(unigramsP60::token, 'C'), unigramsP61::token) as token, unigramsP60::day as day, unigramsP60::id as id, unigramsP60::pos as pos;
-unigramsX2S61 = JOIN unigramsP61 BY id, unigramsP62 BY id;
-unigramsC2S61 = FOREACH unigramsX2S61 GENERATE CONCAT(CONCAT(unigramsP61::token, 'C'), unigramsP62::token) as token, unigramsP61::day as day, unigramsP61::id as id, unigramsP61::pos as pos;
-unigramsX2S62 = JOIN unigramsP62 BY id, unigramsP63 BY id;
-unigramsC2S62 = FOREACH unigramsX2S62 GENERATE CONCAT(CONCAT(unigramsP62::token, 'C'), unigramsP63::token) as token, unigramsP62::day as day, unigramsP62::id as id, unigramsP62::pos as pos;
-unigramsX2S63 = JOIN unigramsP63 BY id, unigramsP64 BY id;
-unigramsC2S63 = FOREACH unigramsX2S63 GENERATE CONCAT(CONCAT(unigramsP63::token, 'C'), unigramsP64::token) as token, unigramsP63::day as day, unigramsP63::id as id, unigramsP63::pos as pos;
-unigramsX2S64 = JOIN unigramsP64 BY id, unigramsP65 BY id;
-unigramsC2S64 = FOREACH unigramsX2S64 GENERATE CONCAT(CONCAT(unigramsP64::token, 'C'), unigramsP65::token) as token, unigramsP64::day as day, unigramsP64::id as id, unigramsP64::pos as pos;
-unigramsX2S65 = JOIN unigramsP65 BY id, unigramsP66 BY id;
-unigramsC2S65 = FOREACH unigramsX2S65 GENERATE CONCAT(CONCAT(unigramsP65::token, 'C'), unigramsP66::token) as token, unigramsP65::day as day, unigramsP65::id as id, unigramsP65::pos as pos;
-unigramsX2S66 = JOIN unigramsP66 BY id, unigramsP67 BY id;
-unigramsC2S66 = FOREACH unigramsX2S66 GENERATE CONCAT(CONCAT(unigramsP66::token, 'C'), unigramsP67::token) as token, unigramsP66::day as day, unigramsP66::id as id, unigramsP66::pos as pos;
-unigramsX2S67 = JOIN unigramsP67 BY id, unigramsP68 BY id;
-unigramsC2S67 = FOREACH unigramsX2S67 GENERATE CONCAT(CONCAT(unigramsP67::token, 'C'), unigramsP68::token) as token, unigramsP67::day as day, unigramsP67::id as id, unigramsP67::pos as pos;
-unigramsX2S68 = JOIN unigramsP68 BY id, unigramsP69 BY id;
-unigramsC2S68 = FOREACH unigramsX2S68 GENERATE CONCAT(CONCAT(unigramsP68::token, 'C'), unigramsP69::token) as token, unigramsP68::day as day, unigramsP68::id as id, unigramsP68::pos as pos;
-bigrams = UNION 
-  unigramsC2S0,
-  unigramsC2S1,
-  unigramsC2S2,
-  unigramsC2S3,
-  unigramsC2S4,
-  unigramsC2S5,
-  unigramsC2S6,
-  unigramsC2S7,
-  unigramsC2S8,
-  unigramsC2S9,
-  unigramsC2S10,
-  unigramsC2S11,
-  unigramsC2S12,
-  unigramsC2S13,
-  unigramsC2S14,
-  unigramsC2S15,
-  unigramsC2S16,
-  unigramsC2S17,
-  unigramsC2S18,
-  unigramsC2S19,
-  unigramsC2S20,
-  unigramsC2S21,
-  unigramsC2S22,
-  unigramsC2S23,
-  unigramsC2S24,
-  unigramsC2S25,
-  unigramsC2S26,
-  unigramsC2S27,
-  unigramsC2S28,
-  unigramsC2S29,
-  unigramsC2S30,
-  unigramsC2S31,
-  unigramsC2S32,
-  unigramsC2S33,
-  unigramsC2S34,
-  unigramsC2S35,
-  unigramsC2S36,
-  unigramsC2S37,
-  unigramsC2S38,
-  unigramsC2S39,
-  unigramsC2S40,
-  unigramsC2S41,
-  unigramsC2S42,
-  unigramsC2S43,
-  unigramsC2S44,
-  unigramsC2S45,
-  unigramsC2S46,
-  unigramsC2S47,
-  unigramsC2S48,
-  unigramsC2S49,
-  unigramsC2S50,
-  unigramsC2S51,
-  unigramsC2S52,
-  unigramsC2S53,
-  unigramsC2S54,
-  unigramsC2S55,
-  unigramsC2S56,
-  unigramsC2S57,
-  unigramsC2S58,
-  unigramsC2S59,
-  unigramsC2S60,
-  unigramsC2S61,
-  unigramsC2S62,
-  unigramsC2S63,
-  unigramsC2S64,
-  unigramsC2S65,
-  unigramsC2S66,
-  unigramsC2S67,
-  unigramsC2S68;
+SPLIT ngram1 INTO 
+  ngram1P0 IF pos==0,
+  ngram1P1 IF pos==1,
+  ngram1P2 IF pos==2,
+  ngram1P3 IF pos==3,
+  ngram1P4 IF pos==4,
+  ngram1P5 IF pos==5,
+  ngram1P6 IF pos==6,
+  ngram1P7 IF pos==7,
+  ngram1P8 IF pos==8,
+  ngram1P9 IF pos==9,
+  ngram1P10 IF pos==10,
+  ngram1P11 IF pos==11,
+  ngram1P12 IF pos==12,
+  ngram1P13 IF pos==13,
+  ngram1P14 IF pos==14,
+  ngram1P15 IF pos==15,
+  ngram1P16 IF pos==16,
+  ngram1P17 IF pos==17,
+  ngram1P18 IF pos==18,
+  ngram1P19 IF pos==19,
+  ngram1P20 IF pos==20,
+  ngram1P21 IF pos==21,
+  ngram1P22 IF pos==22,
+  ngram1P23 IF pos==23,
+  ngram1P24 IF pos==24,
+  ngram1P25 IF pos==25,
+  ngram1P26 IF pos==26,
+  ngram1P27 IF pos==27,
+  ngram1P28 IF pos==28,
+  ngram1P29 IF pos==29,
+  ngram1P30 IF pos==30,
+  ngram1P31 IF pos==31,
+  ngram1P32 IF pos==32,
+  ngram1P33 IF pos==33,
+  ngram1P34 IF pos==34,
+  ngram1P35 IF pos==35,
+  ngram1P36 IF pos==36,
+  ngram1P37 IF pos==37,
+  ngram1P38 IF pos==38,
+  ngram1P39 IF pos==39,
+  ngram1P40 IF pos==40,
+  ngram1P41 IF pos==41,
+  ngram1P42 IF pos==42,
+  ngram1P43 IF pos==43,
+  ngram1P44 IF pos==44,
+  ngram1P45 IF pos==45,
+  ngram1P46 IF pos==46,
+  ngram1P47 IF pos==47,
+  ngram1P48 IF pos==48,
+  ngram1P49 IF pos==49,
+  ngram1P50 IF pos==50,
+  ngram1P51 IF pos==51,
+  ngram1P52 IF pos==52,
+  ngram1P53 IF pos==53,
+  ngram1P54 IF pos==54,
+  ngram1P55 IF pos==55,
+  ngram1P56 IF pos==56,
+  ngram1P57 IF pos==57,
+  ngram1P58 IF pos==58,
+  ngram1P59 IF pos==59,
+  ngram1P60 IF pos==60,
+  ngram1P61 IF pos==61,
+  ngram1P62 IF pos==62,
+  ngram1P63 IF pos==63,
+  ngram1P64 IF pos==64,
+  ngram1P65 IF pos==65,
+  ngram1P66 IF pos==66,
+  ngram1P67 IF pos==67,
+  ngram1P68 IF pos==68,
+  ngram1P69 IF pos==69;
+ngram1X2S0 = JOIN ngram1P0 BY id, ngram1P1 BY id;
+ngram1C2S0 = FOREACH ngram1X2S0 GENERATE CONCAT(CONCAT(ngram1P0::token, 'C'), ngram1P1::token) as token, ngram1P0::date as date, ngram1P0::id as id, ngram1P0::pos as pos, ngram1P0::timeMillis as timeMillis, (ngram1P0::len + ngram1P1::len) as len;
+ngram1X2S1 = JOIN ngram1P1 BY id, ngram1P2 BY id;
+ngram1C2S1 = FOREACH ngram1X2S1 GENERATE CONCAT(CONCAT(ngram1P1::token, 'C'), ngram1P2::token) as token, ngram1P1::date as date, ngram1P1::id as id, ngram1P1::pos as pos, ngram1P1::timeMillis as timeMillis, (ngram1P1::len + ngram1P2::len) as len;
+ngram1X2S2 = JOIN ngram1P2 BY id, ngram1P3 BY id;
+ngram1C2S2 = FOREACH ngram1X2S2 GENERATE CONCAT(CONCAT(ngram1P2::token, 'C'), ngram1P3::token) as token, ngram1P2::date as date, ngram1P2::id as id, ngram1P2::pos as pos, ngram1P2::timeMillis as timeMillis, (ngram1P2::len + ngram1P3::len) as len;
+ngram1X2S3 = JOIN ngram1P3 BY id, ngram1P4 BY id;
+ngram1C2S3 = FOREACH ngram1X2S3 GENERATE CONCAT(CONCAT(ngram1P3::token, 'C'), ngram1P4::token) as token, ngram1P3::date as date, ngram1P3::id as id, ngram1P3::pos as pos, ngram1P3::timeMillis as timeMillis, (ngram1P3::len + ngram1P4::len) as len;
+ngram1X2S4 = JOIN ngram1P4 BY id, ngram1P5 BY id;
+ngram1C2S4 = FOREACH ngram1X2S4 GENERATE CONCAT(CONCAT(ngram1P4::token, 'C'), ngram1P5::token) as token, ngram1P4::date as date, ngram1P4::id as id, ngram1P4::pos as pos, ngram1P4::timeMillis as timeMillis, (ngram1P4::len + ngram1P5::len) as len;
+ngram1X2S5 = JOIN ngram1P5 BY id, ngram1P6 BY id;
+ngram1C2S5 = FOREACH ngram1X2S5 GENERATE CONCAT(CONCAT(ngram1P5::token, 'C'), ngram1P6::token) as token, ngram1P5::date as date, ngram1P5::id as id, ngram1P5::pos as pos, ngram1P5::timeMillis as timeMillis, (ngram1P5::len + ngram1P6::len) as len;
+ngram1X2S6 = JOIN ngram1P6 BY id, ngram1P7 BY id;
+ngram1C2S6 = FOREACH ngram1X2S6 GENERATE CONCAT(CONCAT(ngram1P6::token, 'C'), ngram1P7::token) as token, ngram1P6::date as date, ngram1P6::id as id, ngram1P6::pos as pos, ngram1P6::timeMillis as timeMillis, (ngram1P6::len + ngram1P7::len) as len;
+ngram1X2S7 = JOIN ngram1P7 BY id, ngram1P8 BY id;
+ngram1C2S7 = FOREACH ngram1X2S7 GENERATE CONCAT(CONCAT(ngram1P7::token, 'C'), ngram1P8::token) as token, ngram1P7::date as date, ngram1P7::id as id, ngram1P7::pos as pos, ngram1P7::timeMillis as timeMillis, (ngram1P7::len + ngram1P8::len) as len;
+ngram1X2S8 = JOIN ngram1P8 BY id, ngram1P9 BY id;
+ngram1C2S8 = FOREACH ngram1X2S8 GENERATE CONCAT(CONCAT(ngram1P8::token, 'C'), ngram1P9::token) as token, ngram1P8::date as date, ngram1P8::id as id, ngram1P8::pos as pos, ngram1P8::timeMillis as timeMillis, (ngram1P8::len + ngram1P9::len) as len;
+ngram1X2S9 = JOIN ngram1P9 BY id, ngram1P10 BY id;
+ngram1C2S9 = FOREACH ngram1X2S9 GENERATE CONCAT(CONCAT(ngram1P9::token, 'C'), ngram1P10::token) as token, ngram1P9::date as date, ngram1P9::id as id, ngram1P9::pos as pos, ngram1P9::timeMillis as timeMillis, (ngram1P9::len + ngram1P10::len) as len;
+ngram1X2S10 = JOIN ngram1P10 BY id, ngram1P11 BY id;
+ngram1C2S10 = FOREACH ngram1X2S10 GENERATE CONCAT(CONCAT(ngram1P10::token, 'C'), ngram1P11::token) as token, ngram1P10::date as date, ngram1P10::id as id, ngram1P10::pos as pos, ngram1P10::timeMillis as timeMillis, (ngram1P10::len + ngram1P11::len) as len;
+ngram1X2S11 = JOIN ngram1P11 BY id, ngram1P12 BY id;
+ngram1C2S11 = FOREACH ngram1X2S11 GENERATE CONCAT(CONCAT(ngram1P11::token, 'C'), ngram1P12::token) as token, ngram1P11::date as date, ngram1P11::id as id, ngram1P11::pos as pos, ngram1P11::timeMillis as timeMillis, (ngram1P11::len + ngram1P12::len) as len;
+ngram1X2S12 = JOIN ngram1P12 BY id, ngram1P13 BY id;
+ngram1C2S12 = FOREACH ngram1X2S12 GENERATE CONCAT(CONCAT(ngram1P12::token, 'C'), ngram1P13::token) as token, ngram1P12::date as date, ngram1P12::id as id, ngram1P12::pos as pos, ngram1P12::timeMillis as timeMillis, (ngram1P12::len + ngram1P13::len) as len;
+ngram1X2S13 = JOIN ngram1P13 BY id, ngram1P14 BY id;
+ngram1C2S13 = FOREACH ngram1X2S13 GENERATE CONCAT(CONCAT(ngram1P13::token, 'C'), ngram1P14::token) as token, ngram1P13::date as date, ngram1P13::id as id, ngram1P13::pos as pos, ngram1P13::timeMillis as timeMillis, (ngram1P13::len + ngram1P14::len) as len;
+ngram1X2S14 = JOIN ngram1P14 BY id, ngram1P15 BY id;
+ngram1C2S14 = FOREACH ngram1X2S14 GENERATE CONCAT(CONCAT(ngram1P14::token, 'C'), ngram1P15::token) as token, ngram1P14::date as date, ngram1P14::id as id, ngram1P14::pos as pos, ngram1P14::timeMillis as timeMillis, (ngram1P14::len + ngram1P15::len) as len;
+ngram1X2S15 = JOIN ngram1P15 BY id, ngram1P16 BY id;
+ngram1C2S15 = FOREACH ngram1X2S15 GENERATE CONCAT(CONCAT(ngram1P15::token, 'C'), ngram1P16::token) as token, ngram1P15::date as date, ngram1P15::id as id, ngram1P15::pos as pos, ngram1P15::timeMillis as timeMillis, (ngram1P15::len + ngram1P16::len) as len;
+ngram1X2S16 = JOIN ngram1P16 BY id, ngram1P17 BY id;
+ngram1C2S16 = FOREACH ngram1X2S16 GENERATE CONCAT(CONCAT(ngram1P16::token, 'C'), ngram1P17::token) as token, ngram1P16::date as date, ngram1P16::id as id, ngram1P16::pos as pos, ngram1P16::timeMillis as timeMillis, (ngram1P16::len + ngram1P17::len) as len;
+ngram1X2S17 = JOIN ngram1P17 BY id, ngram1P18 BY id;
+ngram1C2S17 = FOREACH ngram1X2S17 GENERATE CONCAT(CONCAT(ngram1P17::token, 'C'), ngram1P18::token) as token, ngram1P17::date as date, ngram1P17::id as id, ngram1P17::pos as pos, ngram1P17::timeMillis as timeMillis, (ngram1P17::len + ngram1P18::len) as len;
+ngram1X2S18 = JOIN ngram1P18 BY id, ngram1P19 BY id;
+ngram1C2S18 = FOREACH ngram1X2S18 GENERATE CONCAT(CONCAT(ngram1P18::token, 'C'), ngram1P19::token) as token, ngram1P18::date as date, ngram1P18::id as id, ngram1P18::pos as pos, ngram1P18::timeMillis as timeMillis, (ngram1P18::len + ngram1P19::len) as len;
+ngram1X2S19 = JOIN ngram1P19 BY id, ngram1P20 BY id;
+ngram1C2S19 = FOREACH ngram1X2S19 GENERATE CONCAT(CONCAT(ngram1P19::token, 'C'), ngram1P20::token) as token, ngram1P19::date as date, ngram1P19::id as id, ngram1P19::pos as pos, ngram1P19::timeMillis as timeMillis, (ngram1P19::len + ngram1P20::len) as len;
+ngram1X2S20 = JOIN ngram1P20 BY id, ngram1P21 BY id;
+ngram1C2S20 = FOREACH ngram1X2S20 GENERATE CONCAT(CONCAT(ngram1P20::token, 'C'), ngram1P21::token) as token, ngram1P20::date as date, ngram1P20::id as id, ngram1P20::pos as pos, ngram1P20::timeMillis as timeMillis, (ngram1P20::len + ngram1P21::len) as len;
+ngram1X2S21 = JOIN ngram1P21 BY id, ngram1P22 BY id;
+ngram1C2S21 = FOREACH ngram1X2S21 GENERATE CONCAT(CONCAT(ngram1P21::token, 'C'), ngram1P22::token) as token, ngram1P21::date as date, ngram1P21::id as id, ngram1P21::pos as pos, ngram1P21::timeMillis as timeMillis, (ngram1P21::len + ngram1P22::len) as len;
+ngram1X2S22 = JOIN ngram1P22 BY id, ngram1P23 BY id;
+ngram1C2S22 = FOREACH ngram1X2S22 GENERATE CONCAT(CONCAT(ngram1P22::token, 'C'), ngram1P23::token) as token, ngram1P22::date as date, ngram1P22::id as id, ngram1P22::pos as pos, ngram1P22::timeMillis as timeMillis, (ngram1P22::len + ngram1P23::len) as len;
+ngram1X2S23 = JOIN ngram1P23 BY id, ngram1P24 BY id;
+ngram1C2S23 = FOREACH ngram1X2S23 GENERATE CONCAT(CONCAT(ngram1P23::token, 'C'), ngram1P24::token) as token, ngram1P23::date as date, ngram1P23::id as id, ngram1P23::pos as pos, ngram1P23::timeMillis as timeMillis, (ngram1P23::len + ngram1P24::len) as len;
+ngram1X2S24 = JOIN ngram1P24 BY id, ngram1P25 BY id;
+ngram1C2S24 = FOREACH ngram1X2S24 GENERATE CONCAT(CONCAT(ngram1P24::token, 'C'), ngram1P25::token) as token, ngram1P24::date as date, ngram1P24::id as id, ngram1P24::pos as pos, ngram1P24::timeMillis as timeMillis, (ngram1P24::len + ngram1P25::len) as len;
+ngram1X2S25 = JOIN ngram1P25 BY id, ngram1P26 BY id;
+ngram1C2S25 = FOREACH ngram1X2S25 GENERATE CONCAT(CONCAT(ngram1P25::token, 'C'), ngram1P26::token) as token, ngram1P25::date as date, ngram1P25::id as id, ngram1P25::pos as pos, ngram1P25::timeMillis as timeMillis, (ngram1P25::len + ngram1P26::len) as len;
+ngram1X2S26 = JOIN ngram1P26 BY id, ngram1P27 BY id;
+ngram1C2S26 = FOREACH ngram1X2S26 GENERATE CONCAT(CONCAT(ngram1P26::token, 'C'), ngram1P27::token) as token, ngram1P26::date as date, ngram1P26::id as id, ngram1P26::pos as pos, ngram1P26::timeMillis as timeMillis, (ngram1P26::len + ngram1P27::len) as len;
+ngram1X2S27 = JOIN ngram1P27 BY id, ngram1P28 BY id;
+ngram1C2S27 = FOREACH ngram1X2S27 GENERATE CONCAT(CONCAT(ngram1P27::token, 'C'), ngram1P28::token) as token, ngram1P27::date as date, ngram1P27::id as id, ngram1P27::pos as pos, ngram1P27::timeMillis as timeMillis, (ngram1P27::len + ngram1P28::len) as len;
+ngram1X2S28 = JOIN ngram1P28 BY id, ngram1P29 BY id;
+ngram1C2S28 = FOREACH ngram1X2S28 GENERATE CONCAT(CONCAT(ngram1P28::token, 'C'), ngram1P29::token) as token, ngram1P28::date as date, ngram1P28::id as id, ngram1P28::pos as pos, ngram1P28::timeMillis as timeMillis, (ngram1P28::len + ngram1P29::len) as len;
+ngram1X2S29 = JOIN ngram1P29 BY id, ngram1P30 BY id;
+ngram1C2S29 = FOREACH ngram1X2S29 GENERATE CONCAT(CONCAT(ngram1P29::token, 'C'), ngram1P30::token) as token, ngram1P29::date as date, ngram1P29::id as id, ngram1P29::pos as pos, ngram1P29::timeMillis as timeMillis, (ngram1P29::len + ngram1P30::len) as len;
+ngram1X2S30 = JOIN ngram1P30 BY id, ngram1P31 BY id;
+ngram1C2S30 = FOREACH ngram1X2S30 GENERATE CONCAT(CONCAT(ngram1P30::token, 'C'), ngram1P31::token) as token, ngram1P30::date as date, ngram1P30::id as id, ngram1P30::pos as pos, ngram1P30::timeMillis as timeMillis, (ngram1P30::len + ngram1P31::len) as len;
+ngram1X2S31 = JOIN ngram1P31 BY id, ngram1P32 BY id;
+ngram1C2S31 = FOREACH ngram1X2S31 GENERATE CONCAT(CONCAT(ngram1P31::token, 'C'), ngram1P32::token) as token, ngram1P31::date as date, ngram1P31::id as id, ngram1P31::pos as pos, ngram1P31::timeMillis as timeMillis, (ngram1P31::len + ngram1P32::len) as len;
+ngram1X2S32 = JOIN ngram1P32 BY id, ngram1P33 BY id;
+ngram1C2S32 = FOREACH ngram1X2S32 GENERATE CONCAT(CONCAT(ngram1P32::token, 'C'), ngram1P33::token) as token, ngram1P32::date as date, ngram1P32::id as id, ngram1P32::pos as pos, ngram1P32::timeMillis as timeMillis, (ngram1P32::len + ngram1P33::len) as len;
+ngram1X2S33 = JOIN ngram1P33 BY id, ngram1P34 BY id;
+ngram1C2S33 = FOREACH ngram1X2S33 GENERATE CONCAT(CONCAT(ngram1P33::token, 'C'), ngram1P34::token) as token, ngram1P33::date as date, ngram1P33::id as id, ngram1P33::pos as pos, ngram1P33::timeMillis as timeMillis, (ngram1P33::len + ngram1P34::len) as len;
+ngram1X2S34 = JOIN ngram1P34 BY id, ngram1P35 BY id;
+ngram1C2S34 = FOREACH ngram1X2S34 GENERATE CONCAT(CONCAT(ngram1P34::token, 'C'), ngram1P35::token) as token, ngram1P34::date as date, ngram1P34::id as id, ngram1P34::pos as pos, ngram1P34::timeMillis as timeMillis, (ngram1P34::len + ngram1P35::len) as len;
+ngram1X2S35 = JOIN ngram1P35 BY id, ngram1P36 BY id;
+ngram1C2S35 = FOREACH ngram1X2S35 GENERATE CONCAT(CONCAT(ngram1P35::token, 'C'), ngram1P36::token) as token, ngram1P35::date as date, ngram1P35::id as id, ngram1P35::pos as pos, ngram1P35::timeMillis as timeMillis, (ngram1P35::len + ngram1P36::len) as len;
+ngram1X2S36 = JOIN ngram1P36 BY id, ngram1P37 BY id;
+ngram1C2S36 = FOREACH ngram1X2S36 GENERATE CONCAT(CONCAT(ngram1P36::token, 'C'), ngram1P37::token) as token, ngram1P36::date as date, ngram1P36::id as id, ngram1P36::pos as pos, ngram1P36::timeMillis as timeMillis, (ngram1P36::len + ngram1P37::len) as len;
+ngram1X2S37 = JOIN ngram1P37 BY id, ngram1P38 BY id;
+ngram1C2S37 = FOREACH ngram1X2S37 GENERATE CONCAT(CONCAT(ngram1P37::token, 'C'), ngram1P38::token) as token, ngram1P37::date as date, ngram1P37::id as id, ngram1P37::pos as pos, ngram1P37::timeMillis as timeMillis, (ngram1P37::len + ngram1P38::len) as len;
+ngram1X2S38 = JOIN ngram1P38 BY id, ngram1P39 BY id;
+ngram1C2S38 = FOREACH ngram1X2S38 GENERATE CONCAT(CONCAT(ngram1P38::token, 'C'), ngram1P39::token) as token, ngram1P38::date as date, ngram1P38::id as id, ngram1P38::pos as pos, ngram1P38::timeMillis as timeMillis, (ngram1P38::len + ngram1P39::len) as len;
+ngram1X2S39 = JOIN ngram1P39 BY id, ngram1P40 BY id;
+ngram1C2S39 = FOREACH ngram1X2S39 GENERATE CONCAT(CONCAT(ngram1P39::token, 'C'), ngram1P40::token) as token, ngram1P39::date as date, ngram1P39::id as id, ngram1P39::pos as pos, ngram1P39::timeMillis as timeMillis, (ngram1P39::len + ngram1P40::len) as len;
+ngram1X2S40 = JOIN ngram1P40 BY id, ngram1P41 BY id;
+ngram1C2S40 = FOREACH ngram1X2S40 GENERATE CONCAT(CONCAT(ngram1P40::token, 'C'), ngram1P41::token) as token, ngram1P40::date as date, ngram1P40::id as id, ngram1P40::pos as pos, ngram1P40::timeMillis as timeMillis, (ngram1P40::len + ngram1P41::len) as len;
+ngram1X2S41 = JOIN ngram1P41 BY id, ngram1P42 BY id;
+ngram1C2S41 = FOREACH ngram1X2S41 GENERATE CONCAT(CONCAT(ngram1P41::token, 'C'), ngram1P42::token) as token, ngram1P41::date as date, ngram1P41::id as id, ngram1P41::pos as pos, ngram1P41::timeMillis as timeMillis, (ngram1P41::len + ngram1P42::len) as len;
+ngram1X2S42 = JOIN ngram1P42 BY id, ngram1P43 BY id;
+ngram1C2S42 = FOREACH ngram1X2S42 GENERATE CONCAT(CONCAT(ngram1P42::token, 'C'), ngram1P43::token) as token, ngram1P42::date as date, ngram1P42::id as id, ngram1P42::pos as pos, ngram1P42::timeMillis as timeMillis, (ngram1P42::len + ngram1P43::len) as len;
+ngram1X2S43 = JOIN ngram1P43 BY id, ngram1P44 BY id;
+ngram1C2S43 = FOREACH ngram1X2S43 GENERATE CONCAT(CONCAT(ngram1P43::token, 'C'), ngram1P44::token) as token, ngram1P43::date as date, ngram1P43::id as id, ngram1P43::pos as pos, ngram1P43::timeMillis as timeMillis, (ngram1P43::len + ngram1P44::len) as len;
+ngram1X2S44 = JOIN ngram1P44 BY id, ngram1P45 BY id;
+ngram1C2S44 = FOREACH ngram1X2S44 GENERATE CONCAT(CONCAT(ngram1P44::token, 'C'), ngram1P45::token) as token, ngram1P44::date as date, ngram1P44::id as id, ngram1P44::pos as pos, ngram1P44::timeMillis as timeMillis, (ngram1P44::len + ngram1P45::len) as len;
+ngram1X2S45 = JOIN ngram1P45 BY id, ngram1P46 BY id;
+ngram1C2S45 = FOREACH ngram1X2S45 GENERATE CONCAT(CONCAT(ngram1P45::token, 'C'), ngram1P46::token) as token, ngram1P45::date as date, ngram1P45::id as id, ngram1P45::pos as pos, ngram1P45::timeMillis as timeMillis, (ngram1P45::len + ngram1P46::len) as len;
+ngram1X2S46 = JOIN ngram1P46 BY id, ngram1P47 BY id;
+ngram1C2S46 = FOREACH ngram1X2S46 GENERATE CONCAT(CONCAT(ngram1P46::token, 'C'), ngram1P47::token) as token, ngram1P46::date as date, ngram1P46::id as id, ngram1P46::pos as pos, ngram1P46::timeMillis as timeMillis, (ngram1P46::len + ngram1P47::len) as len;
+ngram1X2S47 = JOIN ngram1P47 BY id, ngram1P48 BY id;
+ngram1C2S47 = FOREACH ngram1X2S47 GENERATE CONCAT(CONCAT(ngram1P47::token, 'C'), ngram1P48::token) as token, ngram1P47::date as date, ngram1P47::id as id, ngram1P47::pos as pos, ngram1P47::timeMillis as timeMillis, (ngram1P47::len + ngram1P48::len) as len;
+ngram1X2S48 = JOIN ngram1P48 BY id, ngram1P49 BY id;
+ngram1C2S48 = FOREACH ngram1X2S48 GENERATE CONCAT(CONCAT(ngram1P48::token, 'C'), ngram1P49::token) as token, ngram1P48::date as date, ngram1P48::id as id, ngram1P48::pos as pos, ngram1P48::timeMillis as timeMillis, (ngram1P48::len + ngram1P49::len) as len;
+ngram1X2S49 = JOIN ngram1P49 BY id, ngram1P50 BY id;
+ngram1C2S49 = FOREACH ngram1X2S49 GENERATE CONCAT(CONCAT(ngram1P49::token, 'C'), ngram1P50::token) as token, ngram1P49::date as date, ngram1P49::id as id, ngram1P49::pos as pos, ngram1P49::timeMillis as timeMillis, (ngram1P49::len + ngram1P50::len) as len;
+ngram1X2S50 = JOIN ngram1P50 BY id, ngram1P51 BY id;
+ngram1C2S50 = FOREACH ngram1X2S50 GENERATE CONCAT(CONCAT(ngram1P50::token, 'C'), ngram1P51::token) as token, ngram1P50::date as date, ngram1P50::id as id, ngram1P50::pos as pos, ngram1P50::timeMillis as timeMillis, (ngram1P50::len + ngram1P51::len) as len;
+ngram1X2S51 = JOIN ngram1P51 BY id, ngram1P52 BY id;
+ngram1C2S51 = FOREACH ngram1X2S51 GENERATE CONCAT(CONCAT(ngram1P51::token, 'C'), ngram1P52::token) as token, ngram1P51::date as date, ngram1P51::id as id, ngram1P51::pos as pos, ngram1P51::timeMillis as timeMillis, (ngram1P51::len + ngram1P52::len) as len;
+ngram1X2S52 = JOIN ngram1P52 BY id, ngram1P53 BY id;
+ngram1C2S52 = FOREACH ngram1X2S52 GENERATE CONCAT(CONCAT(ngram1P52::token, 'C'), ngram1P53::token) as token, ngram1P52::date as date, ngram1P52::id as id, ngram1P52::pos as pos, ngram1P52::timeMillis as timeMillis, (ngram1P52::len + ngram1P53::len) as len;
+ngram1X2S53 = JOIN ngram1P53 BY id, ngram1P54 BY id;
+ngram1C2S53 = FOREACH ngram1X2S53 GENERATE CONCAT(CONCAT(ngram1P53::token, 'C'), ngram1P54::token) as token, ngram1P53::date as date, ngram1P53::id as id, ngram1P53::pos as pos, ngram1P53::timeMillis as timeMillis, (ngram1P53::len + ngram1P54::len) as len;
+ngram1X2S54 = JOIN ngram1P54 BY id, ngram1P55 BY id;
+ngram1C2S54 = FOREACH ngram1X2S54 GENERATE CONCAT(CONCAT(ngram1P54::token, 'C'), ngram1P55::token) as token, ngram1P54::date as date, ngram1P54::id as id, ngram1P54::pos as pos, ngram1P54::timeMillis as timeMillis, (ngram1P54::len + ngram1P55::len) as len;
+ngram1X2S55 = JOIN ngram1P55 BY id, ngram1P56 BY id;
+ngram1C2S55 = FOREACH ngram1X2S55 GENERATE CONCAT(CONCAT(ngram1P55::token, 'C'), ngram1P56::token) as token, ngram1P55::date as date, ngram1P55::id as id, ngram1P55::pos as pos, ngram1P55::timeMillis as timeMillis, (ngram1P55::len + ngram1P56::len) as len;
+ngram1X2S56 = JOIN ngram1P56 BY id, ngram1P57 BY id;
+ngram1C2S56 = FOREACH ngram1X2S56 GENERATE CONCAT(CONCAT(ngram1P56::token, 'C'), ngram1P57::token) as token, ngram1P56::date as date, ngram1P56::id as id, ngram1P56::pos as pos, ngram1P56::timeMillis as timeMillis, (ngram1P56::len + ngram1P57::len) as len;
+ngram1X2S57 = JOIN ngram1P57 BY id, ngram1P58 BY id;
+ngram1C2S57 = FOREACH ngram1X2S57 GENERATE CONCAT(CONCAT(ngram1P57::token, 'C'), ngram1P58::token) as token, ngram1P57::date as date, ngram1P57::id as id, ngram1P57::pos as pos, ngram1P57::timeMillis as timeMillis, (ngram1P57::len + ngram1P58::len) as len;
+ngram1X2S58 = JOIN ngram1P58 BY id, ngram1P59 BY id;
+ngram1C2S58 = FOREACH ngram1X2S58 GENERATE CONCAT(CONCAT(ngram1P58::token, 'C'), ngram1P59::token) as token, ngram1P58::date as date, ngram1P58::id as id, ngram1P58::pos as pos, ngram1P58::timeMillis as timeMillis, (ngram1P58::len + ngram1P59::len) as len;
+ngram1X2S59 = JOIN ngram1P59 BY id, ngram1P60 BY id;
+ngram1C2S59 = FOREACH ngram1X2S59 GENERATE CONCAT(CONCAT(ngram1P59::token, 'C'), ngram1P60::token) as token, ngram1P59::date as date, ngram1P59::id as id, ngram1P59::pos as pos, ngram1P59::timeMillis as timeMillis, (ngram1P59::len + ngram1P60::len) as len;
+ngram1X2S60 = JOIN ngram1P60 BY id, ngram1P61 BY id;
+ngram1C2S60 = FOREACH ngram1X2S60 GENERATE CONCAT(CONCAT(ngram1P60::token, 'C'), ngram1P61::token) as token, ngram1P60::date as date, ngram1P60::id as id, ngram1P60::pos as pos, ngram1P60::timeMillis as timeMillis, (ngram1P60::len + ngram1P61::len) as len;
+ngram1X2S61 = JOIN ngram1P61 BY id, ngram1P62 BY id;
+ngram1C2S61 = FOREACH ngram1X2S61 GENERATE CONCAT(CONCAT(ngram1P61::token, 'C'), ngram1P62::token) as token, ngram1P61::date as date, ngram1P61::id as id, ngram1P61::pos as pos, ngram1P61::timeMillis as timeMillis, (ngram1P61::len + ngram1P62::len) as len;
+ngram1X2S62 = JOIN ngram1P62 BY id, ngram1P63 BY id;
+ngram1C2S62 = FOREACH ngram1X2S62 GENERATE CONCAT(CONCAT(ngram1P62::token, 'C'), ngram1P63::token) as token, ngram1P62::date as date, ngram1P62::id as id, ngram1P62::pos as pos, ngram1P62::timeMillis as timeMillis, (ngram1P62::len + ngram1P63::len) as len;
+ngram1X2S63 = JOIN ngram1P63 BY id, ngram1P64 BY id;
+ngram1C2S63 = FOREACH ngram1X2S63 GENERATE CONCAT(CONCAT(ngram1P63::token, 'C'), ngram1P64::token) as token, ngram1P63::date as date, ngram1P63::id as id, ngram1P63::pos as pos, ngram1P63::timeMillis as timeMillis, (ngram1P63::len + ngram1P64::len) as len;
+ngram1X2S64 = JOIN ngram1P64 BY id, ngram1P65 BY id;
+ngram1C2S64 = FOREACH ngram1X2S64 GENERATE CONCAT(CONCAT(ngram1P64::token, 'C'), ngram1P65::token) as token, ngram1P64::date as date, ngram1P64::id as id, ngram1P64::pos as pos, ngram1P64::timeMillis as timeMillis, (ngram1P64::len + ngram1P65::len) as len;
+ngram1X2S65 = JOIN ngram1P65 BY id, ngram1P66 BY id;
+ngram1C2S65 = FOREACH ngram1X2S65 GENERATE CONCAT(CONCAT(ngram1P65::token, 'C'), ngram1P66::token) as token, ngram1P65::date as date, ngram1P65::id as id, ngram1P65::pos as pos, ngram1P65::timeMillis as timeMillis, (ngram1P65::len + ngram1P66::len) as len;
+ngram1X2S66 = JOIN ngram1P66 BY id, ngram1P67 BY id;
+ngram1C2S66 = FOREACH ngram1X2S66 GENERATE CONCAT(CONCAT(ngram1P66::token, 'C'), ngram1P67::token) as token, ngram1P66::date as date, ngram1P66::id as id, ngram1P66::pos as pos, ngram1P66::timeMillis as timeMillis, (ngram1P66::len + ngram1P67::len) as len;
+ngram1X2S67 = JOIN ngram1P67 BY id, ngram1P68 BY id;
+ngram1C2S67 = FOREACH ngram1X2S67 GENERATE CONCAT(CONCAT(ngram1P67::token, 'C'), ngram1P68::token) as token, ngram1P67::date as date, ngram1P67::id as id, ngram1P67::pos as pos, ngram1P67::timeMillis as timeMillis, (ngram1P67::len + ngram1P68::len) as len;
+ngram1X2S68 = JOIN ngram1P68 BY id, ngram1P69 BY id;
+ngram1C2S68 = FOREACH ngram1X2S68 GENERATE CONCAT(CONCAT(ngram1P68::token, 'C'), ngram1P69::token) as token, ngram1P68::date as date, ngram1P68::id as id, ngram1P68::pos as pos, ngram1P68::timeMillis as timeMillis, (ngram1P68::len + ngram1P69::len) as len;
+ngram2 = UNION 
+  ngram1C2S0,
+  ngram1C2S1,
+  ngram1C2S2,
+  ngram1C2S3,
+  ngram1C2S4,
+  ngram1C2S5,
+  ngram1C2S6,
+  ngram1C2S7,
+  ngram1C2S8,
+  ngram1C2S9,
+  ngram1C2S10,
+  ngram1C2S11,
+  ngram1C2S12,
+  ngram1C2S13,
+  ngram1C2S14,
+  ngram1C2S15,
+  ngram1C2S16,
+  ngram1C2S17,
+  ngram1C2S18,
+  ngram1C2S19,
+  ngram1C2S20,
+  ngram1C2S21,
+  ngram1C2S22,
+  ngram1C2S23,
+  ngram1C2S24,
+  ngram1C2S25,
+  ngram1C2S26,
+  ngram1C2S27,
+  ngram1C2S28,
+  ngram1C2S29,
+  ngram1C2S30,
+  ngram1C2S31,
+  ngram1C2S32,
+  ngram1C2S33,
+  ngram1C2S34,
+  ngram1C2S35,
+  ngram1C2S36,
+  ngram1C2S37,
+  ngram1C2S38,
+  ngram1C2S39,
+  ngram1C2S40,
+  ngram1C2S41,
+  ngram1C2S42,
+  ngram1C2S43,
+  ngram1C2S44,
+  ngram1C2S45,
+  ngram1C2S46,
+  ngram1C2S47,
+  ngram1C2S48,
+  ngram1C2S49,
+  ngram1C2S50,
+  ngram1C2S51,
+  ngram1C2S52,
+  ngram1C2S53,
+  ngram1C2S54,
+  ngram1C2S55,
+  ngram1C2S56,
+  ngram1C2S57,
+  ngram1C2S58,
+  ngram1C2S59,
+  ngram1C2S60,
+  ngram1C2S61,
+  ngram1C2S62,
+  ngram1C2S63,
+  ngram1C2S64,
+  ngram1C2S65,
+  ngram1C2S66,
+  ngram1C2S67,
+  ngram1C2S68;
