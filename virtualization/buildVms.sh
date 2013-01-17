@@ -41,7 +41,7 @@ do
 	--addpkg=nfs-common \
 	--firstboot=/home/yaboulna/nfs/vmshared/Code/thesis/virtualization/vm1stboot.sh \
 	--timezone='Canada/Eastern' \
-        --dest=/home/yaboulna/yaboulna$x.vm > /home/yaboulna/yaboulna$x.out 2> /home/yaboulna/yaboulna$x.err 
+        --dest=/home/yaboulna/yaboulna$x.vm > /home/yaboulna/yaboulna$x.out 2> /home/yaboulna/yaboulna$x.err & 
 #	--bridge=br0 \
 #  echo "Done creating yaboulna$x"
 #&  virsh start yaboulna$x

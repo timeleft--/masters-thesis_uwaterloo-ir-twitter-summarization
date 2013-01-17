@@ -24,8 +24,8 @@ do
 	--flavour=server \
 	--arch=amd64 \
 	-o -v \
-	--cpus=50 \
-	--mem=204800 \
+	--cpus=41 \
+	--mem=85983232 \
         --libvirt=qemu:///system \
 	--ip=192.168.122.$x \
 	--hostname=yaboulna$x \
@@ -41,7 +41,7 @@ do
 	--addpkg=nfs-common \
 	--firstboot=/home/yaboulna/nfs/vmshared/Code/thesis/virtualization/vm1stboot.sh \
 	--timezone='Canada/Eastern' \
-        --dest=/home/yaboulna/yaboulna$x.vm > /home/yaboulna/yaboulna$x.out 2> /home/yaboulna/yaboulna$x.err 
+        --dest=/home/yaboulna/yaboulna$x.vm > /home/yaboulna/yaboulna$x.out 2> /home/yaboulna/yaboulna$x.err & 
 #	--bridge=br0 \
 #  echo "Done creating yaboulna$x"
 #&  virsh start yaboulna$x
