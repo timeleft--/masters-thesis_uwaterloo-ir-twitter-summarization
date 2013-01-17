@@ -1,4 +1,4 @@
-REGISTER file:///home/yaboulna/vmshared/Code/thesis/pig_udf/target/yaboulna-udf-0.0.1-SNAPSHOT.jar; 
+REGISTER file:///$vmshared/Code/thesis/pig_udf/target/yaboulna-udf-0.0.1-SNAPSHOT.jar; 
 -- hdfs://yaboulna222:8020/user/younos/
 --spritzer_debug.bz
 -- spritzer_2012-09-14_2013-01-11.bz
