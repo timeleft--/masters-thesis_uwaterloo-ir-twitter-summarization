@@ -36,7 +36,16 @@ public class TweetToknizerTest extends TokenIteratorTest {
     protected String computeNext() {
       if (iter.hasNext()) {
         try {
-          return (String) iter.next().get(0);
+//          return (String) iter.next().get(0);
+        	Tuple ngramTuple = (Tuple) iter.next().get(0);
+        	if(ngramTuple.size() == 1) {
+        		return (String) ngramTuple.get(0);
+        	} else {
+        		// TODO properly test bigrams and hashtag ngrams
+        		// for now, just emmit them so that I look at them
+        		System.out.println("NGRAM TUPLE: " + ngramTuple.toString());
+        		return computeNext();
+        	}
         } catch (ExecException e) {
           return "ExecException: " + e.getMessage();
         }
@@ -57,12 +66,14 @@ public class TweetToknizerTest extends TokenIteratorTest {
     // TokenIterator target = new TokenIterator(
     @SuppressWarnings("unchecked")
     AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
-        .newInstance("#hashtag1 #hashtag2 repeated");
+        .newInstance("#hashtag1 #hashtag2 repeated #hashtag3");
     assertEquals("hashtag1", target.next());
     assertEquals("hashtag2", target.next());
     assertEquals("repeated", target.next());
+    assertEquals("hashtag3", target.next());
     assertEquals("#hashtag1", target.next());
     assertEquals("#hashtag2", target.next());
+    assertEquals("#hashtag3", target.next());
     assertFalse(target.hasNext());
   }
   

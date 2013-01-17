@@ -1,7 +1,5 @@
 package yaboulna.pig;
 
-import java.io.IOException;
-
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 
@@ -24,7 +22,7 @@ public class PigStorage extends org.apache.pig.builtin.PigStorage {
    * directly.. didn't work even when I was compressing the csv files into gzipped ones
    */
   @Override
-  public void prepareToRead(RecordReader reader, PigSplit split) {
+  public void prepareToRead(@SuppressWarnings("rawtypes") RecordReader reader, PigSplit split) {
     super.prepareToRead(reader, split);
 //    try {
       // if (reader.nextKeyValue()) {
