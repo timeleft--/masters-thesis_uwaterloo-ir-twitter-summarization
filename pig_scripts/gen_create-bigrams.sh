@@ -12,7 +12,7 @@ for x in {0..68}
 do
   y=`expr ${x} + 1`
   echo "${orig}X2S${x} = JOIN ${orig}P$x BY id, ${orig}P$y BY id;"
-  echo "${orig}C2S${x} = FOREACH ${orig}X2S${x} GENERATE CONCAT(CONCAT(${orig}P${x}::token, 'C'), ${orig}P${y}::token) as token, ${orig}P${x}::date as date, ${orig}P${x}::id as id, ${orig}P${x}::pos as pos, ${orig}P${x}::timeMillis as timeMillis, (${orig}P${x}::len + ${orig}P${y}::len) as len;"
+  echo "${orig}C2S${x} = FOREACH ${orig}X2S${x} GENERATE (${orig}P${x}::token, ${orig}P${y}::token) as token, ${orig}P${x}::date as date, ${orig}P${x}::id as id, ${orig}P${x}::pos as pos, ${orig}P${x}::timeMillis as timeMillis, (${orig}P${x}::len + ${orig}P${y}::len) as len;"
 done
 
 #TODO: generalize
