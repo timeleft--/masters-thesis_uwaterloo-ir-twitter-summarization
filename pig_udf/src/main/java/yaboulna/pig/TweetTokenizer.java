@@ -70,7 +70,6 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
       Set<String> hashtagsStripped = Sets.newHashSet();
 
       int pos = 0;
-      int tweetLen = -1;
 
       LinkedHashMap<Tuple, DataBag> resMap = Maps.newLinkedHashMap();
 
@@ -83,12 +82,6 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
           hashtags.add(token);
 
           hashtagsStripped.add(token.substring(1));
-
-          // As long as repeat hashtags is set tobe at the end, seeing a hashtag indicates that
-          // we have reached the end of the tweet, and the length is the current pos
-          if (tokenIter.getRepeatHashTag() && tokenIter.isRepeatedHashTagAtTheEnd()) {
-            tweetLen = pos;
-          }
 
           // since we will combine them with all ngrams there is no point of emmitting them
           // here, they will be emitted in all combinations later
@@ -173,9 +166,7 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
         tokenTuple.set(0, ngramTuple);
         tokenTuple.set(1, ngramTuple.size());
         // Tweet length: works well with repeat hashtag at the end FIXME: I don't know what the pos will actually mean
-        tokenTuple.set(2, ((tokenIter.getRepeatHashTag() && tokenIter.isRepeatedHashTagAtTheEnd())
-            ? tweetLen
-            : pos));
+        tokenTuple.set(2, pos);
         tokenTuple.set(3, (tokenPosList));
         resArr[i++] = tokenTuple;
       }
