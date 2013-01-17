@@ -6,7 +6,7 @@ package yaboulna.pig;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.commons.lang.StringEscapeUtils;
@@ -21,7 +21,6 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import ca.uwaterloo.twitter.TokenIterator.LatinTokenIterator;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -65,16 +64,16 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
 // ++pos[0];
 // }
       String prevToken = null;
-      
-      List<String> hashtags = Lists.newLinkedList();
-    //Stripped hashtags so that we don't correlate hashtag with them
+
+      LinkedHashSet<String> hashtags = Sets.newLinkedHashSet();
+      // Stripped hashtags so that we don't correlate hashtag with them
       Set<String> hashtagsStripped = Sets.newHashSet();
-      
+
       int pos = 0;
       int tweetLen = -1;
-      
+
       LinkedHashMap<Tuple, DataBag> resMap = Maps.newLinkedHashMap();
-      
+
       while (tokenIter.hasNext()) {
         String token = tokenIter.next();
 
@@ -84,7 +83,7 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
           hashtags.add(token);
 
           hashtagsStripped.add(token.substring(1));
-          
+
           // As long as repeat hashtags is set tobe at the end, seeing a hashtag indicates that
           // we have reached the end of the tweet, and the length is the current pos
           if (tokenIter.getRepeatHashTag() && tokenIter.isRepeatedHashTagAtTheEnd()) {
@@ -109,25 +108,28 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
 
       // These are the token that we will combine the hashtags with, take a snapshot now
       Tuple[] existingKeys = null;
-      if(hashtags.size() > 0){
+      if (hashtags.size() > 0) {
         existingKeys = resMap.keySet().toArray(new Tuple[0]);
       }
-      
-      Set<Set<String>> hashtagsPowerSet = Sets.powerSet(Sets.newCopyOnWriteArraySet(hashtags));
-      
+
+      // This doesn't work in the context of Pig where apparently the Guava version is 11.0.2 regardless of
+      // the Guava I include with the project.. maybe I should also inclde some Mangos
+// Set<Set<String>> hashtagsPowerSet = Sets.powerSet(Sets.newCopyOnWriteArraySet(hashtags));
+      Set<Set<String>> hashtagsPowerSet = Sets.powerSet(hashtags);
+
       for (Set<String> htagSet : hashtagsPowerSet) {
         if (htagSet.size() == 0) {
           continue; // phi
         }
-        
+
         // Add the hashtag (combination) itself
         Tuple htagSetTuple = TupleFactory.getInstance().newTuple(htagSet.size());
         int s = 0;
-        for(String htag: htagSet){
+        for (String htag : htagSet) {
           htagSetTuple.set(s++, htag);
         }
         addTokenToResMap(htagSetTuple, pos, resMap);
-        
+
         // Add the combination with all of ngrams as well
         for (Tuple ngramTuple : existingKeys) {
           Tuple htagNgram = TupleFactory.getInstance().newTuple(ngramTuple.size() + htagSet.size());

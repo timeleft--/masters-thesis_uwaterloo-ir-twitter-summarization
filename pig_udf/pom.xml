@@ -244,7 +244,10 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>13.0.1</version>
+<!-- This doesn't work in the context of Pig where apparently the Guava version is 11.0.2 regardless of -->
+<!--       // the Guava I include with the project.. maybe I should also inclde some Mangos -->
+			<version>11.0.2</version>
+<!-- 			<version>13.0.1</version> -->
 		</dependency>
 	</dependencies>
 	<build>
