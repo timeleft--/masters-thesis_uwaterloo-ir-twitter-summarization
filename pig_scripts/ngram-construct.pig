@@ -4,8 +4,8 @@ REGISTER file:///nfs/vmshared/Code/thesis/pig_udf/target/yaboulna-udf-0.0.1-SNAP
 -- spritzer_2012-09-14_2013-01-11.bz
 tweets = LOAD 'tweets_raw/spritzer_2012-09-14_2013-01-11_csv/[^_.]*[^g]' USING PigStorage('\t') AS (id:long, screenname:chararray, timestamp:long, tweet:chararray); 
 tokenPosBag = FOREACH tweets GENERATE id, FLATTEN(yaboulna.pig.DateFromSnowflake(id)) as (timeMillis, date), FLATTEN(yaboulna.pig.TweetTokenizer(tweet)) as (token, positions);
-ngram1 = FOREACH tokenPosBag GENERATE id, timeMillis, date, token, FLATTEN(positions) as pos, 1 as len;
-
+ngram1 = FOREACH tokenPosBag GENERATE token, date, id, FLATTEN(positions) as pos, timeMillis,  1 as len;
+STORE ngram1 into 'ngrams/ngram1' USING PigStorage('\t');
 
 SPLIT ngram1 INTO 
   ngram1P0 IF pos==0,
@@ -287,4 +287,4 @@ ngram2 = UNION
   ngram1C2S67,
   ngram1C2S68;
   
-STORE ngram2 INTO 'ngrams/debug_bigram-tuples' USING PigStorage('\t');
+STORE ngram2 INTO 'ngrams/ngram2' USING PigStorage('\t');
