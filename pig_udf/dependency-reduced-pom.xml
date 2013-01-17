@@ -71,6 +71,12 @@
       <version>0.0.1-SNAPSHOT</version>
       <type>test-jar</type>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>guava</artifactId>
+          <groupId>com.google.guava</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -78,6 +84,10 @@
       <version>2.0.0-mr1-cdh4.1.2</version>
       <scope>provided</scope>
       <exclusions>
+        <exclusion>
+          <artifactId>guava</artifactId>
+          <groupId>com.google.guava</groupId>
+        </exclusion>
         <exclusion>
           <artifactId>hadoop-common</artifactId>
           <groupId>org.apache.hadoop</groupId>
