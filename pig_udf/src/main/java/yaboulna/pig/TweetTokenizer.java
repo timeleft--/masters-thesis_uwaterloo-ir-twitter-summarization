@@ -67,7 +67,8 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
 
       LinkedHashSet<String> hashtags = Sets.newLinkedHashSet();
       // Stripped hashtags so that we don't correlate hashtag with them
-      Set<String> hashtagsStripped = Sets.newHashSet();
+      // YA 130117 Less objects, more efficien -- YA-LOME
+      // Set<String> hashtagsStripped = Sets.newHashSet();
 
       int pos = 0;
 
@@ -81,7 +82,7 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
           // so now just put it in a structure for later
           hashtags.add(token);
 
-          hashtagsStripped.add(token.substring(1));
+          // YA-LOME hashtagsStripped.add(token.substring(1));
 
           // since we will combine them with all ngrams there is no point of emmitting them
           // here, they will be emitted in all combinations later
@@ -129,7 +130,8 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
           int i = 0;
           for (; i < ngramTuple.size(); ++i) {
             String token = (String) ngramTuple.get(i);
-            if (hashtagsStripped.contains(token)) {
+            // YA-LOME if (hashtagsStripped.contains(token)) {
+            if (isStrippedHashtag(hashtags, token)) {
               // this is an ngram with our artificially created stripped hashtag
               // so the correlation between this hashtag and other words is arleady
               // accounted for, and we are about to get an artificial correlation
@@ -179,6 +181,24 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
       throw new IOException("Caught exception processing input row "
           + input.toDelimitedString("\t"), e);
     }
+  }
+
+  private boolean isStrippedHashtag(LinkedHashSet<String> hashtags, String token) {
+    for (String tag : hashtags) {
+      if (tag.length() != token.length() + 1) {
+        continue;
+      }
+      int i = 0;
+      for (; i < token.length(); ++i) {
+        if (tag.charAt(i + 1) != token.charAt(i)) {
+          break;
+        }
+      }
+      if (i == tag.length() - 1) {
+        return true;
+      }
+    }
+    return false;
   }
   private void addTokenToResMap(Tuple ngram, int pos,
       LinkedHashMap<Tuple, DataBag> resMap) throws ExecException {

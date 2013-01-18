@@ -66,7 +66,7 @@ public class TweetToknizerTest extends TokenIteratorTest {
     // TokenIterator target = new TokenIterator(
     @SuppressWarnings("unchecked")
     AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
-        .newInstance("#hashtag1 #hashtag2 repeated #hashtag3");
+        .newInstance("#hashtg1 #htag2 repeated #hashtag3");
     assertEquals("hashtag1", target.next());
     assertEquals("hashtag2", target.next());
     assertEquals("repeated", target.next());
