@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang.StringEscapeUtils;
@@ -21,6 +22,7 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import ca.uwaterloo.twitter.TokenIterator.LatinTokenIterator;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -111,22 +113,86 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
 // Set<Set<String>> hashtagsPowerSet = Sets.powerSet(Sets.newCopyOnWriteArraySet(hashtags));
       Set<Set<String>> hashtagsPowerSet = Sets.powerSet(hashtags);
 
-      for (Set<String> htagSet : hashtagsPowerSet) {
-        if (htagSet.size() == 0) {
-          continue; // phi
-        }
+      // Merge the two loops into one
+// for (Set<String> htagSet : hashtagsPowerSet) {
+// if (htagSet.size() == 0) {
+// continue; // phi
+// }
+//
+// // Add the hashtag (combination) itself
+// Tuple htagSetTuple = TupleFactory.getInstance().newTuple(htagSet.size());
+// int s = 0;
+// for (String htag : htagSet) {
+// htagSetTuple.set(s++, htag);
+// }
+// addTokenToResMap(htagSetTuple, pos, resMap);
+//
+// // Add the combination with all of ngrams as well
+// for (Tuple ngramTuple : existingKeys) {
+// Tuple htagNgram = TupleFactory.getInstance().newTuple(ngramTuple.size() + htagSet.size());
+// int i = 0;
+// for (; i < ngramTuple.size(); ++i) {
+// String token = (String) ngramTuple.get(i);
+// // YA-LOME if (hashtagsStripped.contains(token)) {
+// if (isStrippedHashtag(hashtags, token)) {
+// // this is an ngram with our artificially created stripped hashtag
+// // so the correlation between this hashtag and other words is arleady
+// // accounted for, and we are about to get an artificial correlation
+// break;
+// }
+// htagNgram.set(i, token);
+//
+// }
+// if (i < ngramTuple.size()) {
+// // break from prev loop
+// continue;
+// }
+// for (String htag : htagSet) {
+// htagNgram.set(i++, htag);
+// }
+// // add the tuple as if this ngram starts at the end of the Tweet, but without incrementing pos
+// // so that all hashtag ngrams has pos == Tweet length, so we treat them specially
+// // Iterator<Tuple> tokenPosIter = resMap.get(ngramTuple).iterator();
+// // while(tokenPosIter.hasNext()){
+// // Integer p = (Integer) tokenPosIter.next().get(0);
+// // addTokenToResMap(htagNgram, p, resMap);
+// // }
+// addTokenToResMap(htagNgram, pos, resMap);
+// }
+// }
+//
+// // END change array to bag
+// Tuple[] resArr = new Tuple[resMap.size()];
+// int i = 0;
+// for (Tuple ngramTuple : resMap.keySet()) {
+// // DataByteArray tokenPosList = resMap.get(token);
+// DataBag tokenPosList = resMap.get(ngramTuple);
+// Tuple tokenTuple = TupleFactory.getInstance().newTuple(4);
+// tokenTuple.set(0, ngramTuple);
+// tokenTuple.set(1, ngramTuple.size());
+// // Tweet length: works well with repeat hashtag at the end FIXME: I don't know what the pos will actually mean
+// tokenTuple.set(2, pos);
+// tokenTuple.set(3, (tokenPosList));
+// resArr[i++] = tokenTuple;
+// }
+// DataBag result = BagFactory.getInstance().newDefaultBag(Arrays.asList(resArr));
 
-        // Add the hashtag (combination) itself
-        Tuple htagSetTuple = TupleFactory.getInstance().newTuple(htagSet.size());
-        int s = 0;
-        for (String htag : htagSet) {
-          htagSetTuple.set(s++, htag);
-        }
-        addTokenToResMap(htagSetTuple, pos, resMap);
+      Integer tweetLen = pos;
+      DataBag hashtagPosBag = BagFactory.getInstance().newDefaultBag();
+      hashtagPosBag.add(TupleFactory.getInstance().newTuple(((Object) tweetLen)));
 
-        // Add the combination with all of ngrams as well
-        for (Tuple ngramTuple : existingKeys) {
-          Tuple htagNgram = TupleFactory.getInstance().newTuple(ngramTuple.size() + htagSet.size());
+      List<Tuple> resTuples = Lists.newLinkedList();
+
+      for (Tuple ngramTuple : existingKeys) {
+        DataBag tokenPosBag = resMap.get(ngramTuple);
+        addTupleToResultTuples(ngramTuple, tweetLen, tokenPosBag, resTuples);
+
+        // combine with hashtag powerset
+        for (Set<String> htagSet : hashtagsPowerSet) {
+          if (htagSet.size() == 0) {
+            continue; // phi
+          }
+
           int i = 0;
           for (; i < ngramTuple.size(); ++i) {
             String token = (String) ngramTuple.get(i);
@@ -137,43 +203,39 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
               // accounted for, and we are about to get an artificial correlation
               break;
             }
-            htagNgram.set(i, token);
+          }
+          if (i == ngramTuple.size()) {
 
+            // no break from prev loop, we can construct the object.. yeah looping twice to prevent GC limit exceeded
+            Tuple htagNgram = TupleFactory.getInstance().newTuple(
+                ngramTuple.size() + htagSet.size());
+            for (i = 0; i < ngramTuple.size(); ++i) {
+              htagNgram.set(i, ngramTuple.get(i));
+            }
+            for (String htag : htagSet) {
+              htagNgram.set(i++, htag);
+            }
+            addTupleToResultTuples(htagNgram, tweetLen, hashtagPosBag, resTuples);
           }
-          if (i < ngramTuple.size()) {
-            // break from prev loop
-            continue;
-          }
-          for (String htag : htagSet) {
-            htagNgram.set(i++, htag);
-          }
-          // add the tuple as if this ngram starts at the end of the Tweet, but without incrementing pos
-          // so that all hashtag ngrams has pos == Tweet length, so we treat them specially
-// Iterator<Tuple> tokenPosIter = resMap.get(ngramTuple).iterator();
-// while(tokenPosIter.hasNext()){
-// Integer p = (Integer) tokenPosIter.next().get(0);
-// addTokenToResMap(htagNgram, p, resMap);
-// }
-          addTokenToResMap(htagNgram, pos, resMap);
         }
       }
 
-// END change array to bag
-      Tuple[] resArr = new Tuple[resMap.size()];
-      int i = 0;
-      for (Tuple ngramTuple : resMap.keySet()) {
-// DataByteArray tokenPosList = resMap.get(token);
-        DataBag tokenPosList = resMap.get(ngramTuple);
-        Tuple tokenTuple = TupleFactory.getInstance().newTuple(4);
-        tokenTuple.set(0, ngramTuple);
-        tokenTuple.set(1, ngramTuple.size());
-        // Tweet length: works well with repeat hashtag at the end FIXME: I don't know what the pos will actually mean
-        tokenTuple.set(2, pos);
-        tokenTuple.set(3, (tokenPosList));
-        resArr[i++] = tokenTuple;
+      // Add the hashtag (combination) itself
+      for (Set<String> htagSet : hashtagsPowerSet) {
+        if (htagSet.size() == 0) {
+          continue; // phi
+        }
+
+        Tuple htagSetTuple = TupleFactory.getInstance().newTuple(htagSet.size());
+        int s = 0;
+        for (String htag : htagSet) {
+          htagSetTuple.set(s++, htag);
+        }
+
+        addTupleToResultTuples(htagSetTuple, tweetLen, hashtagPosBag, resTuples);
       }
 
-      DataBag result = BagFactory.getInstance().newDefaultBag(Arrays.asList(resArr));
+      DataBag result = BagFactory.getInstance().newDefaultBag(resTuples);
 
       return result;
 
@@ -181,6 +243,16 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
       throw new IOException("Caught exception processing input row "
           + input.toDelimitedString("\t"), e);
     }
+  }
+  private void addTupleToResultTuples(Tuple ngramTuple, Integer tweetLen, DataBag posBag,
+      List<Tuple> resTupleList) throws ExecException {
+    Tuple resultsTuple = TupleFactory.getInstance().newTuple(4);
+    resultsTuple.set(0, ngramTuple);
+    resultsTuple.set(1, ngramTuple.size());
+    // Tweet length: works well with repeat hashtag at the end FIXME: I don't know what the pos will actually mean
+    resultsTuple.set(2, tweetLen);
+    resultsTuple.set(3, posBag);
+    resTupleList.add(resultsTuple);
   }
 
   private boolean isStrippedHashtag(LinkedHashSet<String> hashtags, String token) {

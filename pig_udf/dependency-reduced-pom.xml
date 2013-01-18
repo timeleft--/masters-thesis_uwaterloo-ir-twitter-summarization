@@ -71,12 +71,6 @@
       <version>0.0.1-SNAPSHOT</version>
       <type>test-jar</type>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>guava</artifactId>
-          <groupId>com.google.guava</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
