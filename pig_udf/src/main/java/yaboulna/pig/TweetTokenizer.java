@@ -103,10 +103,8 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
       }
 
       // These are the token that we will combine the hashtags with, take a snapshot now
-      Tuple[] existingKeys = null;
-      if (hashtags.size() > 0) {
-        existingKeys = resMap.keySet().toArray(new Tuple[0]);
-      }
+      Tuple[] existingKeys = new Tuple[resMap.size()];
+      resMap.keySet().toArray(existingKeys);
 
       // This doesn't work in the context of Pig where apparently the Guava version is 11.0.2 regardless of
       // the Guava I include with the project.. maybe I should also inclde some Mangos
