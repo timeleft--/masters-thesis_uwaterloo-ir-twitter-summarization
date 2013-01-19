@@ -37,7 +37,8 @@ public class TweetToknizerTest extends TokenIteratorTest {
       if (iter.hasNext()) {
         try {
 //          return (String) iter.next().get(0);
-        	Tuple ngramTuple = (Tuple) iter.next().get(0);
+          Object nextObj = iter.next();
+        	Tuple ngramTuple = (Tuple) ((Tuple)nextObj).get(0);
         	if(ngramTuple.size() == 1) {
         		return (String) ngramTuple.get(0);
         	} else {
@@ -66,15 +67,36 @@ public class TweetToknizerTest extends TokenIteratorTest {
     // TokenIterator target = new TokenIterator(
     @SuppressWarnings("unchecked")
     AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
-        .newInstance("#hshtg1 #htag2 repeated #hashtag3");
+        .newInstance("#hshtg1 #htag2 word1 word2 #hashtag3");
     assertEquals("hshtg1", target.next());
     assertEquals("htag2", target.next());
-    assertEquals("repeated", target.next());
+    assertEquals("word1", target.next());
+    assertEquals("word2", target.next());
     assertEquals("hashtag3", target.next());
     assertEquals("#hshtg1", target.next());
     assertEquals("#htag2", target.next());
     assertEquals("#hashtag3", target.next());
     assertFalse(target.hasNext());
+  }
+  
+  @Test
+  public void testTooManyHashtags() 
+    throws InstantiationException, IllegalAccessException,
+    IllegalArgumentException, InvocationTargetException, SecurityException {
+  // TokenIterator target = new TokenIterator(
+  @SuppressWarnings("unchecked")
+  AbstractIterator<String> target = (AbstractIterator<String>) targetClazz.getConstructors()[0]
+      .newInstance("#hshtg1 #htag2 #hashtag3 #hashtag4 #ht5");
+  assertEquals("hshtg1", target.next());
+  assertEquals("htag2", target.next());
+  assertEquals("hashtag3", target.next());
+  assertEquals("hashtag4", target.next());
+  assertEquals("ht5", target.next());
+  assertEquals("#hshtg1", target.next());
+  assertEquals("#htag2", target.next());
+  assertEquals("#hashtag3", target.next());
+  assertEquals("#hashtag4", target.next());
+  assertEquals("#ht5", target.next());
   }
   
   @Override
@@ -87,11 +109,11 @@ public class TweetToknizerTest extends TokenIteratorTest {
         "http://youtube.com/dsdf33 OK www.wikipedia.com GOOD https://www.bank.com GOTO HTTP://WATCH.THIS www2012_conference");
     assertEquals("URL", target.next());
     assertEquals("ok", target.next());
-//    assertEquals("URL", target.next());
+    assertEquals("URL", target.next());
     assertEquals("good", target.next());
-//    assertEquals("URL", target.next());
+    assertEquals("URL", target.next());
     assertEquals("goto", target.next());
-//    assertEquals("URL", target.next());
+    assertEquals("URL", target.next());
     assertEquals("www2012_conference", target.next());
     assertFalse(target.hasNext());
     

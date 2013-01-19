@@ -5,7 +5,6 @@ package yaboulna.pig;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,8 +21,8 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 import ca.uwaterloo.twitter.TokenIterator.LatinTokenIterator;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 /**
@@ -32,6 +31,9 @@ import com.google.common.collect.Sets;
  */
 public class TweetTokenizer extends EvalFunc<DataBag> {
 
+  // After implementing this I figured that this is probably gonna bloat the  data,
+  // so I left it for my FIM algorithm to decide what to cross.. what was I thinking?
+  private boolean generateCrossOfHashtagsAndNGrams = false;
   /*
    * (non-Javadoc)
    * 
@@ -74,7 +76,8 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
 
       int pos = 0;
 
-      LinkedHashMap<Tuple, DataBag> resMap = Maps.newLinkedHashMap();
+// LinkedHashMap<Tuple, DataBag> resMap = Maps.newLinkedHashMap();
+      List<Tuple> resList = Lists.newArrayListWithExpectedSize(28);
 
       while (tokenIter.hasNext()) {
         String token = tokenIter.next();
@@ -91,25 +94,56 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
           continue;
         }
 
-        addTokenToResMap(TupleFactory.getInstance().newTuple(token), pos, resMap);
-        if (prevToken != null) {
-          Tuple bigram = TupleFactory.getInstance().newTuple(2);
-          bigram.set(0, prevToken);
-          bigram.set(1, token);
-          addTokenToResMap(bigram, pos - 1, resMap);
-        }
+// addTokenToResMap(TupleFactory.getInstance().newTuple(token), pos, resList);
+        resList.add(pos, TupleFactory.getInstance().newTuple(token));
+
+// if (prevToken != null) {
+// Tuple bigram = TupleFactory.getInstance().newTuple(2);
+// bigram.set(0, prevToken);
+// bigram.set(1, token);
+// // addTokenToResMap(bigram, pos - 1, resList); //resMap);
+// resList.add(pos - 1, bigram);
+// }
         ++pos;
-        prevToken = token;
+// prevToken = token;
       }
 
       // These are the token that we will combine the hashtags with, take a snapshot now
-      Tuple[] existingKeys = new Tuple[resMap.size()];
-      resMap.keySet().toArray(existingKeys);
+// Tuple[] existingKeys = new Tuple[resMap.size()];
+// resMap.keySet().toArray(existingKeys);
+// List<Tuple> existingKeys = Lists.newArrayList(resList);
+
+      Integer tweetLen = pos;
 
       // This doesn't work in the context of Pig where apparently the Guava version is 11.0.2 regardless of
       // the Guava I include with the project.. maybe I should also inclde some Mangos
 // Set<Set<String>> hashtagsPowerSet = Sets.powerSet(Sets.newCopyOnWriteArraySet(hashtags));
-      Set<Set<String>> hashtagsPowerSet = Sets.powerSet(hashtags);
+      Set<Set<String>> hashtagsPowerSet;
+      if (hashtags.size() < 5) {
+        hashtagsPowerSet = Sets.powerSet(hashtags);
+      } else {
+        // tooo many combinations will result, and these are probably spam tags.. FIXME: HUERISTIC
+        hashtagsPowerSet = Sets.newLinkedHashSetWithExpectedSize(hashtags.size() + 1);
+        for (String htag : hashtags) {
+          hashtagsPowerSet.add(ImmutableSet.of(htag));
+        }
+        hashtagsPowerSet.add(ImmutableSet.copyOf(hashtags));
+      }
+
+      // Add the hashtag (combination) itself
+      for (Set<String> htagSet : hashtagsPowerSet) {
+        if (htagSet.size() == 0) {
+          continue; // phi
+        }
+
+        Tuple htagSetTuple = TupleFactory.getInstance().newTuple(htagSet.size());
+        int s = 0;
+        for (String htag : htagSet) {
+          htagSetTuple.set(s++, htag);
+        }
+
+        addTupleToResultTuples(htagSetTuple, tweetLen, tweetLen, resList, true); // , resTuples);
+      }
 
       // Merge the two loops into one
 // for (Set<String> htagSet : hashtagsPowerSet) {
@@ -175,65 +209,88 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
 // }
 // DataBag result = BagFactory.getInstance().newDefaultBag(Arrays.asList(resArr));
 
-      Integer tweetLen = pos;
-      DataBag hashtagPosBag = BagFactory.getInstance().newDefaultBag();
-      hashtagPosBag.add(TupleFactory.getInstance().newTuple(((Object) tweetLen)));
+// DataBag hashtagPosBag = BagFactory.getInstance().newDefaultBag();
+// hashtagPosBag.add(TupleFactory.getInstance().newTuple(((Object) tweetLen)));
 
-      List<Tuple> resTuples = Lists.newLinkedList();
+// List<Tuple> resTuples = Lists.newLinkedList();
 
-      for (Tuple ngramTuple : existingKeys) {
-        DataBag tokenPosBag = resMap.get(ngramTuple);
-        addTupleToResultTuples(ngramTuple, tweetLen, tokenPosBag, resTuples);
+      for (int t = 0; t < tweetLen; ++t) {
+// for (Tuple ngramTuple : existingKeys) {
+        Tuple tokenTuple = resList.remove(t);
+        String token = (String) tokenTuple.get(0);
+        // DataBag tokenPosBag = resMap.get(ngramTuple);
+        // addTupleToResultTuples(ngramTuple, tweetLen, tokenPosBag, resTuples);
+        addTupleToResultTuples(tokenTuple, tweetLen, t, resList, false); // resTuples);
+        Tuple bigram = null;
+        if (prevToken != null) {
+          bigram = TupleFactory.getInstance().newTuple(2);
+          bigram.set(0, prevToken);
+          bigram.set(1, token);
+// addTokenToResMap(bigram, pos - 1, resList); //resMap);
+// resList.add(pos - 1, bigram);
+          addTupleToResultTuples(bigram, tweetLen, t - 1, resList, true);
+        }
 
-        // combine with hashtag powerset
-        for (Set<String> htagSet : hashtagsPowerSet) {
-          if (htagSet.size() == 0) {
-            continue; // phi
-          }
+        if (generateCrossOfHashtagsAndNGrams) {
+          boolean tokenHashtag = isStrippedHashtag(hashtags, token);
 
-          int i = 0;
-          for (; i < ngramTuple.size(); ++i) {
-            String token = (String) ngramTuple.get(i);
-            // YA-LOME if (hashtagsStripped.contains(token)) {
-            if (isStrippedHashtag(hashtags, token)) {
-              // this is an ngram with our artificially created stripped hashtag
-              // so the correlation between this hashtag and other words is arleady
-              // accounted for, and we are about to get an artificial correlation
-              break;
+          // combine with hashtag powerset
+          if (!tokenHashtag) {
+            boolean prevTokenHashtag = isStrippedHashtag(hashtags, prevToken);
+            for (Set<String> htagSet : hashtagsPowerSet) {
+              if (htagSet.size() == 0) {
+                continue; // phi
+              }
+
+// int i = 0;
+// for (; i < ngramTuple.size(); ++i) {
+// String token = (String) ngramTuple.get(i);
+// // YA-LOME if (hashtagsStripped.contains(token)) {
+// if (isStrippedHashtag(hashtags, token)) {
+// // this is an ngram with our artificially created stripped hashtag
+// // so the correlation between this hashtag and other words is arleady
+// // accounted for, and we are about to get an artificial correlation
+// break;
+// }
+// }
+// if (i == ngramTuple.size()) {
+//
+// // no break from prev loop, we can construct the object.. yeah looping twice to prevent GC limit exceeded
+// Tuple htagNgram = TupleFactory.getInstance().newTuple(
+// ngramTuple.size() + htagSet.size());
+
+              Tuple htagTokenTuple = TupleFactory.getInstance().newTuple(1 +
+                  htagSet.size());
+              htagTokenTuple.set(0, token);
+
+              int i = 1;
+              for (String htag : htagSet) {
+                htagTokenTuple.set(i++, htag);
+              }
+// addTupleToResultTuples(htagNgram, tweetLen, hashtagPosBag, resTuples);
+              addTupleToResultTuples(htagTokenTuple, tweetLen, tweetLen, resList, true); // , resTuples);
+
+              if (!prevTokenHashtag) {
+
+                Tuple htagBigramTuple = TupleFactory.getInstance().newTuple(2 +
+                    htagSet.size());
+                htagBigramTuple.set(0, prevToken);
+                htagBigramTuple.set(1, token);
+                i = 2;
+                for (String htag : htagSet) {
+                  htagBigramTuple.set(i++, htag);
+                }
+
+                addTupleToResultTuples(htagBigramTuple, tweetLen, tweetLen, resList, true); // , resTuples);
+
+              }
             }
-          }
-          if (i == ngramTuple.size()) {
-
-            // no break from prev loop, we can construct the object.. yeah looping twice to prevent GC limit exceeded
-            Tuple htagNgram = TupleFactory.getInstance().newTuple(
-                ngramTuple.size() + htagSet.size());
-            for (i = 0; i < ngramTuple.size(); ++i) {
-              htagNgram.set(i, ngramTuple.get(i));
-            }
-            for (String htag : htagSet) {
-              htagNgram.set(i++, htag);
-            }
-            addTupleToResultTuples(htagNgram, tweetLen, hashtagPosBag, resTuples);
           }
         }
+        prevToken = token;
       }
 
-      // Add the hashtag (combination) itself
-      for (Set<String> htagSet : hashtagsPowerSet) {
-        if (htagSet.size() == 0) {
-          continue; // phi
-        }
-
-        Tuple htagSetTuple = TupleFactory.getInstance().newTuple(htagSet.size());
-        int s = 0;
-        for (String htag : htagSet) {
-          htagSetTuple.set(s++, htag);
-        }
-
-        addTupleToResultTuples(htagSetTuple, tweetLen, hashtagPosBag, resTuples);
-      }
-
-      DataBag result = BagFactory.getInstance().newDefaultBag(resTuples);
+      DataBag result = BagFactory.getInstance().newDefaultBag(resList); // resTuples);
 
       return result;
 
@@ -242,18 +299,26 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
           + input.toDelimitedString("\t"), e);
     }
   }
-  private void addTupleToResultTuples(Tuple ngramTuple, Integer tweetLen, DataBag posBag,
-      List<Tuple> resTupleList) throws ExecException {
+  private void addTupleToResultTuples(Tuple ngramTuple, Integer tweetLen, Integer pos,
+      List<Tuple> resTupleList, boolean appendToEnd) throws ExecException {
     Tuple resultsTuple = TupleFactory.getInstance().newTuple(4);
     resultsTuple.set(0, ngramTuple);
     resultsTuple.set(1, ngramTuple.size());
     // Tweet length: works well with repeat hashtag at the end FIXME: I don't know what the pos will actually mean
     resultsTuple.set(2, tweetLen);
-    resultsTuple.set(3, posBag);
-    resTupleList.add(resultsTuple);
+
+    resultsTuple.set(3, pos);
+    if (!appendToEnd) {
+      resTupleList.add(pos, resultsTuple);
+    } else {
+      resTupleList.add(resultsTuple);
+    }
   }
 
   private boolean isStrippedHashtag(LinkedHashSet<String> hashtags, String token) {
+    if (token == null) {
+      return true;
+    }
     for (String tag : hashtags) {
       if (tag.length() != token.length() + 1) {
         continue;
@@ -270,18 +335,18 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
     }
     return false;
   }
-  private void addTokenToResMap(Tuple ngram, int pos,
-      LinkedHashMap<Tuple, DataBag> resMap) throws ExecException {
-    DataBag tokenPosBag = resMap.get(ngram);
-    if (tokenPosBag == null) {
-      tokenPosBag = BagFactory.getInstance().newDefaultBag();
-      resMap.put(ngram, tokenPosBag);
-    }
-    Tuple posTuple = TupleFactory.getInstance().newTuple(1);
-    posTuple.set(0, pos);
-    tokenPosBag.add(posTuple);
-
-  }
+// private void addTokenToResMap(Tuple ngram, int pos,
+// List<Tuple> resList) throws ExecException {
+// // DataBag tokenPosBag = resList.get(ngram);
+// // if (tokenPosBag == null) {
+// // tokenPosBag = BagFactory.getInstance().newDefaultBag();
+// // resList.put(ngram, tokenPosBag);
+// // }
+// // Tuple posTuple = TupleFactory.getInstance().newTuple(1);
+// // posTuple.set(0, pos);
+// // tokenPosBag.add(posTuple);
+// resList.add(pos, ngram);
+// }
 
   public Schema outputSchema(Schema input) {
     try {
@@ -294,11 +359,13 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
 //
 // Schema tupleSchema = new Schema(Arrays.asList(tokenFs, posFS));
 
-      Schema.FieldSchema posFS = new Schema.FieldSchema("posF", DataType.INTEGER);
-      Schema posBag = new Schema(new Schema.FieldSchema("posT", new Schema(posFS), DataType.TUPLE));
-      Schema.FieldSchema posBagFS = new Schema.FieldSchema("pos", posBag, DataType.BAG);
+// Schema.FieldSchema posFS = new Schema.FieldSchema("posF", DataType.INTEGER);
+// Schema posBag = new Schema(new Schema.FieldSchema("posT", new Schema(posFS), DataType.TUPLE));
+// Schema.FieldSchema posBagFS = new Schema.FieldSchema("pos", posBag, DataType.BAG);
+// Schema tupleSchema = new Schema(Arrays.asList(ngramFs, ngramLenFs, tweetLenFs, posBagFS));
 
-      Schema tupleSchema = new Schema(Arrays.asList(ngramFs, ngramLenFs, tweetLenFs, posBagFS));
+      Schema.FieldSchema posFS = new Schema.FieldSchema("pos", DataType.INTEGER);
+      Schema tupleSchema = new Schema(Arrays.asList(ngramFs, ngramLenFs, tweetLenFs, posFS));
 
       Schema.FieldSchema tupleFs = new Schema.FieldSchema("ngram-ngramLen-tweetLen-pos_tuple",
           tupleSchema,
