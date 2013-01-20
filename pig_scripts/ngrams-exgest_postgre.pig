@@ -1,3 +1,4 @@
+REGISTER piggybank.jar;
 REGISTER file://$jdbcjar;
 ngramsTokenizer = LOAD 'ngrams/ngramTokenizer' USING PigStorage('\t') AS (id: long, timeMillis: long, date: int, ngram: chararray, ngramLen: int, tweetLen: int,  position: int);
 SPLIT ngramsTokenizer INTO ngrams IF position < tweetLen, htags OTHERWISE;
