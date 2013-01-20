@@ -118,6 +118,7 @@ public class TweetTokenizer extends EvalFunc<DataBag> {
       // This doesn't work in the context of Pig where apparently the Guava version is 11.0.2 regardless of
       // the Guava I include with the project.. maybe I should also inclde some Mangos
 // Set<Set<String>> hashtagsPowerSet = Sets.powerSet(Sets.newCopyOnWriteArraySet(hashtags));
+      //TODO: create an object only if hashtags.size > 0.. this will require some null checking in loops
       Set<Set<String>> hashtagsPowerSet;
       if (hashtags.size() < 5) {
         hashtagsPowerSet = Sets.powerSet(hashtags);
