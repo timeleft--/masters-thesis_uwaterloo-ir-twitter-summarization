@@ -22,6 +22,23 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.0</version>
+				<configuration>
+					<!-- put your configurations here -->
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<encoding>UTF-8</encoding>
@@ -30,65 +47,24 @@
 					<optimize>true</optimize>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>copy-dependencies</id>
-						<phase>package</phase>
-						<goals>
-							<goal>copy-dependencies</goal>
-						</goals>
-						<configuration>
-							<!-- configure the plugin here -->
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<!-- create examples hadoop job jar -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>job</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-						<configuration>
-							<!-- <skipAssembly>${mahout.skip.example}</skipAssembly> -->
-							<descriptors>
-								<descriptor>src/main/assembly/job.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-remote-resources-plugin</artifactId>
-				<configuration>
-					<appendedResourcesDirectory>src/main/appended-resources</appendedResourcesDirectory>
-					<resourceBundles>
-						<resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
-					</resourceBundles>
-					<supplementalModels>
-						<supplementalModel>supplemental-models.xml</supplementalModel>
-					</supplementalModels>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<artifactId>maven-source-plugin</artifactId>
-			</plugin>
 		</plugins>
 
+
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>2.3.2</version>
+					<configuration>
+						<source>1.6</source>
+						<target>1.6</target>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
+
 
 	<dependencies>
 		<dependency>
@@ -159,12 +135,5 @@
 		</dependency>
 	</dependencies>
 
-	<profiles>
-		<profile>
-			<id>release.prepare</id>
-			<properties>
-				<mahout.skip.example>true</mahout.skip.example>
-			</properties>
-		</profile>
-	</profiles>
+	
 </project>
