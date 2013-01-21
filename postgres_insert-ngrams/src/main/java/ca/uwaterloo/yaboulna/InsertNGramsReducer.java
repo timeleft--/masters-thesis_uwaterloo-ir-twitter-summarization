@@ -40,16 +40,17 @@ public class InsertNGramsReducer extends
        
       Statement stmt = conn.createStatement();
       try {
-        String ngramTableName = "ngrams_" + keyIn.get();
-        String htagTableName = "htags_" + keyIn.get();
+        String ngramTableName = "ngram_" + keyIn.get();
+        String htagTableName = "htag_" + keyIn.get();
 
-        
-        stmt.execute("CREATE UNLOGGED TABLE "
+        //UNLOGGED
+        stmt.execute("CREATE  TABLE "
             + ngramTableName
             + " (id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
 // stmt.execute("CREATE INDEX " +ngramTableName+"_date ON " + ngramTableName +"(date)");
 
-        stmt.execute("CREATE UNLOGGED TABLE "
+        //UNLOGGED
+        stmt.execute("CREATE  TABLE "
             + htagTableName
             + " (id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
 // stmt.execute("CREATE INDEX " +htagTableName+"_date ON " + htagTableName +"(date)");
