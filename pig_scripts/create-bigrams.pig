@@ -46,4 +46,4 @@ ngram2 = UNION
   ngram1C2S8,
   ngram1C2S9;
   
-store ngram2 INTO 'ngrams/bigramsOldVer' Using PigStorage('\t');
+--store ngram2 INTO 'ngrams/bigramsOldVer' Using PigStorage('\t');
