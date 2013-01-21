@@ -22,7 +22,7 @@ public class InsertNGramsReducer extends
     Reducer<PairOfIntLong, Record, PairOfIntLong, Record> {
 
   protected void reduce(PairOfIntLong keyIn, java.lang.Iterable<Record> valuesIn,
-      org.apache.hadoop.mapreduce.Reducer<PairOfIntLong, Record, PairOfIntLong, Record>.Context cxt)
+      org.apache.hadoop.mapreduce.Reducer<PairOfIntLong, Record, PairOfIntLong, Record>.Context ctxt)
       throws IOException, InterruptedException {
     try {
       Class.forName("org.postgresql.Driver");
@@ -38,8 +38,8 @@ public class InsertNGramsReducer extends
 
       Statement stmt = conn.createStatement();
       try {
-        String ngramTableName = "ngrams_" + keyIn.getLeftElement();
-        String htagTableName = "htags_" + keyIn.getLeftElement();
+        String ngramTableName = "ngram_" + keyIn.getLeftElement();
+        String htagTableName = "htag_" + keyIn.getLeftElement();
 
         stmt.execute("CREATE UNLOGGED TABLE "
             + ngramTableName
@@ -75,6 +75,11 @@ public class InsertNGramsReducer extends
             stmt.clearBatch();
 // stmt.clearParameters();
           }
+          
+          // but I'm afraid this will slow things down
+////           as a side effect, we can also dump the db
+//          ctxt.write(keyIn, value);
+          
         }
         stmt.executeBatch();
       } finally {
