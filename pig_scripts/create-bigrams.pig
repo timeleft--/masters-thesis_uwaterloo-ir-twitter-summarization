@@ -16,23 +16,23 @@ SPLIT ngram1 INTO
 ngram1X2S0 = JOIN ngram1P0 BY id, ngram1P1 BY id;
 ngram1C2S0 = FOREACH ngram1X2S0 GENERATE (ngram1P0::ngram, ngram1P1::ngram) as ngram, ngram1P0::date as date, ngram1P0::id as id, ngram1P0::pos as pos, ngram1P0::timeMillis as timeMillis, (ngram1P0::ngramLen + ngram1P1::ngramLen) as ngramLen, ngram1P0::tweetLen as tweetLen;
 ngram1X2S1 = JOIN ngram1P1 BY id, ngram1P2 BY id;
-ngram1C2S1 = FOREACH ngram1X2S1 GENERATE (ngram1P1::ngram, ngram1P2::ngram) as ngram, ngram1P1::date as date, ngram1P1::id as id, ngram1P1::pos as pos, ngram1P1::timeMillis as timeMillis, (ngram1P1::ngramLen + ngram1P2::ngramLen) as ngramLen, ngram1P0::tweetLen as tweetLen;
+ngram1C2S1 = FOREACH ngram1X2S1 GENERATE (ngram1P1::ngram, ngram1P2::ngram) as ngram, ngram1P1::date as date, ngram1P1::id as id, ngram1P1::pos as pos, ngram1P1::timeMillis as timeMillis, (ngram1P1::ngramLen + ngram1P2::ngramLen) as ngramLen, ngram1P1::tweetLen as tweetLen;
 ngram1X2S2 = JOIN ngram1P2 BY id, ngram1P3 BY id;
-ngram1C2S2 = FOREACH ngram1X2S2 GENERATE (ngram1P2::ngram, ngram1P3::ngram) as ngram, ngram1P2::date as date, ngram1P2::id as id, ngram1P2::pos as pos, ngram1P2::timeMillis as timeMillis, (ngram1P2::ngramLen + ngram1P3::ngramLen) as ngramLen, ngram1P0::tweetLen as tweetLen;
+ngram1C2S2 = FOREACH ngram1X2S2 GENERATE (ngram1P2::ngram, ngram1P3::ngram) as ngram, ngram1P2::date as date, ngram1P2::id as id, ngram1P2::pos as pos, ngram1P2::timeMillis as timeMillis, (ngram1P2::ngramLen + ngram1P3::ngramLen) as ngramLen, ngram1P2::tweetLen as tweetLen;
 ngram1X2S3 = JOIN ngram1P3 BY id, ngram1P4 BY id;
-ngram1C2S3 = FOREACH ngram1X2S3 GENERATE (ngram1P3::ngram, ngram1P4::ngram) as ngram, ngram1P3::date as date, ngram1P3::id as id, ngram1P3::pos as pos, ngram1P3::timeMillis as timeMillis, (ngram1P3::ngramLen + ngram1P4::ngramLen) as ngramLen, ngram1P0::tweetLen as tweetLen;
+ngram1C2S3 = FOREACH ngram1X2S3 GENERATE (ngram1P3::ngram, ngram1P4::ngram) as ngram, ngram1P3::date as date, ngram1P3::id as id, ngram1P3::pos as pos, ngram1P3::timeMillis as timeMillis, (ngram1P3::ngramLen + ngram1P4::ngramLen) as ngramLen, ngram1P3::tweetLen as tweetLen;
 ngram1X2S4 = JOIN ngram1P4 BY id, ngram1P5 BY id;
-ngram1C2S4 = FOREACH ngram1X2S4 GENERATE (ngram1P4::ngram, ngram1P5::ngram) as ngram, ngram1P4::date as date, ngram1P4::id as id, ngram1P4::pos as pos, ngram1P4::timeMillis as timeMillis, (ngram1P4::ngramLen + ngram1P5::ngramLen) as ngramLen, ngram1P0::tweetLen as tweetLen;
+ngram1C2S4 = FOREACH ngram1X2S4 GENERATE (ngram1P4::ngram, ngram1P5::ngram) as ngram, ngram1P4::date as date, ngram1P4::id as id, ngram1P4::pos as pos, ngram1P4::timeMillis as timeMillis, (ngram1P4::ngramLen + ngram1P5::ngramLen) as ngramLen, ngram1P4::tweetLen as tweetLen;
 ngram1X2S5 = JOIN ngram1P5 BY id, ngram1P6 BY id;
-ngram1C2S5 = FOREACH ngram1X2S5 GENERATE (ngram1P5::ngram, ngram1P6::ngram) as ngram, ngram1P5::date as date, ngram1P5::id as id, ngram1P5::pos as pos, ngram1P5::timeMillis as timeMillis, (ngram1P5::ngramLen + ngram1P6::ngramLen) as ngramLen, ngram1P0::tweetLen as tweetLen;
+ngram1C2S5 = FOREACH ngram1X2S5 GENERATE (ngram1P5::ngram, ngram1P6::ngram) as ngram, ngram1P5::date as date, ngram1P5::id as id, ngram1P5::pos as pos, ngram1P5::timeMillis as timeMillis, (ngram1P5::ngramLen + ngram1P6::ngramLen) as ngramLen, ngram1P5::tweetLen as tweetLen;
 ngram1X2S6 = JOIN ngram1P6 BY id, ngram1P7 BY id;
-ngram1C2S6 = FOREACH ngram1X2S6 GENERATE (ngram1P6::ngram, ngram1P7::ngram) as ngram, ngram1P6::date as date, ngram1P6::id as id, ngram1P6::pos as pos, ngram1P6::timeMillis as timeMillis, (ngram1P6::ngramLen + ngram1P7::ngramLen) as ngramLen, ngram1P0::tweetLen as tweetLen;
+ngram1C2S6 = FOREACH ngram1X2S6 GENERATE (ngram1P6::ngram, ngram1P7::ngram) as ngram, ngram1P6::date as date, ngram1P6::id as id, ngram1P6::pos as pos, ngram1P6::timeMillis as timeMillis, (ngram1P6::ngramLen + ngram1P7::ngramLen) as ngramLen, ngram1P6::tweetLen as tweetLen;
 ngram1X2S7 = JOIN ngram1P7 BY id, ngram1P8 BY id;
-ngram1C2S7 = FOREACH ngram1X2S7 GENERATE (ngram1P7::ngram, ngram1P8::ngram) as ngram, ngram1P7::date as date, ngram1P7::id as id, ngram1P7::pos as pos, ngram1P7::timeMillis as timeMillis, (ngram1P7::ngramLen + ngram1P8::ngramLen) as ngramLen, ngram1P0::tweetLen as tweetLen;
+ngram1C2S7 = FOREACH ngram1X2S7 GENERATE (ngram1P7::ngram, ngram1P8::ngram) as ngram, ngram1P7::date as date, ngram1P7::id as id, ngram1P7::pos as pos, ngram1P7::timeMillis as timeMillis, (ngram1P7::ngramLen + ngram1P8::ngramLen) as ngramLen, ngram1P7::tweetLen as tweetLen;
 ngram1X2S8 = JOIN ngram1P8 BY id, ngram1P9 BY id;
-ngram1C2S8 = FOREACH ngram1X2S8 GENERATE (ngram1P8::ngram, ngram1P9::ngram) as ngram, ngram1P8::date as date, ngram1P8::id as id, ngram1P8::pos as pos, ngram1P8::timeMillis as timeMillis, (ngram1P8::ngramLen + ngram1P9::ngramLen) as ngramLen, ngram1P0::tweetLen as tweetLen;
+ngram1C2S8 = FOREACH ngram1X2S8 GENERATE (ngram1P8::ngram, ngram1P9::ngram) as ngram, ngram1P8::date as date, ngram1P8::id as id, ngram1P8::pos as pos, ngram1P8::timeMillis as timeMillis, (ngram1P8::ngramLen + ngram1P9::ngramLen) as ngramLen, ngram1P8::tweetLen as tweetLen;
 ngram1X2S9 = JOIN ngram1P9 BY id, ngram1P10 BY id;
-ngram1C2S9 = FOREACH ngram1X2S9 GENERATE (ngram1P9::ngram, ngram1P10::ngram) as ngram, ngram1P9::date as date, ngram1P9::id as id, ngram1P9::pos as pos, ngram1P9::timeMillis as timeMillis, (ngram1P9::ngramLen + ngram1P10::ngramLen) as ngramLen, ngram1P0::tweetLen as tweetLen;
+ngram1C2S9 = FOREACH ngram1X2S9 GENERATE (ngram1P9::ngram, ngram1P10::ngram) as ngram, ngram1P9::date as date, ngram1P9::id as id, ngram1P9::pos as pos, ngram1P9::timeMillis as timeMillis, (ngram1P9::ngramLen + ngram1P10::ngramLen) as ngramLen, ngram1P9::tweetLen as tweetLen;
 
 ngram2 = UNION 
   ngram1C2S0,
