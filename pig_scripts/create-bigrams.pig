@@ -11,7 +11,7 @@ SPLIT ngram1 INTO
   ngram1P7 IF pos==7,
   ngram1P8 IF pos==8,
   ngram1P9 IF pos==9,
-  ngram1P10 IF OTHERWISE;
+  ngram1P10 OTHERWISE;
  
 ngram1X2S0 = JOIN ngram1P0 BY id, ngram1P1 BY id;
 ngram1C2S0 = FOREACH ngram1X2S0 GENERATE (ngram1P0::token, ngram1P1::token) as token, ngram1P0::date as date, ngram1P0::id as id, ngram1P0::pos as pos, ngram1P0::timeMillis as timeMillis, (ngram1P0::len + ngram1P1::len) as len;
