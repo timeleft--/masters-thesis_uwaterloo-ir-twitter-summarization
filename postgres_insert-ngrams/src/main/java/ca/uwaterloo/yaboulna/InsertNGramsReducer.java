@@ -24,23 +24,25 @@ public class InsertNGramsReducer extends
   protected void reduce(PairOfIntLong keyIn, java.lang.Iterable<Record> valuesIn,
       org.apache.hadoop.mapreduce.Reducer<PairOfIntLong, Record, PairOfIntLong, Record>.Context ctxt)
       throws IOException, InterruptedException {
+    ctxt.setStatus("Processing day: " + keyIn.getLeftElement());
     try {
       Class.forName("org.postgresql.Driver");
 
       String url = "jdbc:postgresql://localhost:5433/spritzer";
       Properties props = new Properties();
-      props.setProperty("user", "uspritzer");
-      props.setProperty("password", "Spritz3rU");
+      props.setProperty("user", "yaboulna");// "uspritzer");
+      props.setProperty("password", "UWPa55w0rt"); //"Spritz3rU");
 //      props.setProperty("ssl", "false");
       Connection conn = DriverManager.getConnection(url, props);
 
       conn.setAutoCommit(false);
-
+       
       Statement stmt = conn.createStatement();
       try {
-        String ngramTableName = "ngram_" + keyIn.getLeftElement();
-        String htagTableName = "htag_" + keyIn.getLeftElement();
+        String ngramTableName = "ngrams_" + keyIn.getLeftElement();
+        String htagTableName = "htags_" + keyIn.getLeftElement();
 
+        
         stmt.execute("CREATE UNLOGGED TABLE "
             + ngramTableName
             + " (id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
@@ -50,6 +52,8 @@ public class InsertNGramsReducer extends
             + htagTableName
             + " (id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
 // stmt.execute("CREATE INDEX " +htagTableName+"_date ON " + htagTableName +"(date)");
+
+        ctxt.setStatus("Created tables: " + ngramTableName + ", " + htagTableName);
         
         int count = 0;
         for (Record value : valuesIn) {
@@ -74,6 +78,7 @@ public class InsertNGramsReducer extends
             stmt.executeBatch();
             stmt.clearBatch();
 // stmt.clearParameters();
+            ctxt.setStatus("Excuted batch");
           }
           
           // but I'm afraid this will slow things down
@@ -82,8 +87,10 @@ public class InsertNGramsReducer extends
           
         }
         stmt.executeBatch();
+        ctxt.setStatus("Excuted last batch.. committing");
       } finally {
         stmt.close();
+        conn.commit();
         conn.close();
       }
     } catch (BatchUpdateException e){
