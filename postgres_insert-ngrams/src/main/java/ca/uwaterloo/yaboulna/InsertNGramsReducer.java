@@ -32,31 +32,31 @@ public class InsertNGramsReducer extends
       String url = "jdbc:postgresql://localhost:5433/spritzer";
       Properties props = new Properties();
       props.setProperty("user", "yaboulna");// "uspritzer");
-      props.setProperty("password", "5#afraPG"); //"Spritz3rU");
-//      props.setProperty("ssl", "false");
+      props.setProperty("password", "5#afraPG"); // "Spritz3rU");
+// props.setProperty("ssl", "false");
       Connection conn = DriverManager.getConnection(url, props);
 
-//      conn.setAutoCommit(false);
-       
+// conn.setAutoCommit(false);
+
       Statement stmt = conn.createStatement();
       try {
-        String ngramTableName = "ngram_" + keyIn.get();
-        String htagTableName = "htag_" + keyIn.get();
+        String ngramTableName = "ngrams_" + keyIn.get();
+        String htagTableName = "htags_" + keyIn.get();
 
-        //UNLOGGED
+        // UNLOGGED
         stmt.execute("CREATE  TABLE "
             + ngramTableName
             + " (id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
 // stmt.execute("CREATE INDEX " +ngramTableName+"_date ON " + ngramTableName +"(date)");
 
-        //UNLOGGED
+        // UNLOGGED
         stmt.execute("CREATE  TABLE "
             + htagTableName
             + " (id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
 // stmt.execute("CREATE INDEX " +htagTableName+"_date ON " + htagTableName +"(date)");
 
         ctxt.setStatus("Created tables: " + ngramTableName + ", " + htagTableName);
-        
+
         int count = 0;
         for (Record value : valuesIn) {
           String tablename;
@@ -82,20 +82,21 @@ public class InsertNGramsReducer extends
 // stmt.clearParameters();
             ctxt.setStatus("Excuted batch");
           }
-          
+
           // but I'm afraid this will slow things down
-////           as a side effect, we can also dump the db
-//          ctxt.write(keyIn, value);
-          
+// // as a side effect, we can also dump the db
+// ctxt.write(keyIn, value);
+
         }
         stmt.executeBatch();
         ctxt.setStatus("Excuted last batch.. committing");
       } finally {
         stmt.close();
-        conn.commit();
+        if (!conn.getAutoCommit())
+          conn.commit();
         conn.close();
       }
-    } catch (BatchUpdateException e){
+    } catch (BatchUpdateException e) {
       throw new IOException(e.getNextException());
     } catch (SQLException e) {
       throw new IOException(e);
@@ -123,12 +124,12 @@ public class InsertNGramsReducer extends
 
     String url = "jdbc:postgresql://hops.cs.uwaterloo.ca:5433/spritzer";
     Properties props = new Properties();
-    props.setProperty("user", "uspritzer");
-    props.setProperty("password", "Spritz3rU");
-//    props.setProperty("ssl", "false");
+    props.setProperty("user", "yaboulna");
+    props.setProperty("password", "5#afraPG");
+// props.setProperty("ssl", "false");
     Connection conn = DriverManager.getConnection(url, props);
 
-    conn.setAutoCommit(false);
+// conn.setAutoCommit(false);
 
     Statement stmt = conn.createStatement();
     try {
@@ -159,6 +160,8 @@ public class InsertNGramsReducer extends
       stmt.clearBatch();
     } finally {
       stmt.close();
+      if (!conn.getAutoCommit())
+        conn.commit();
       conn.close();
     }
   }
