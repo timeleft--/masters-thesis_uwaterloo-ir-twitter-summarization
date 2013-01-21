@@ -1,4 +1,4 @@
-ngramngramizer = LOAD 'ngrams/ngramngramizer' USING PigStorage('\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
+ngramngramizer = LOAD 'ngrams/ngramTokenizer' USING PigStorage('\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
 ngram1 = FILTER ngramngramizer BY ngramLen == 1;
 SPLIT ngram1 INTO 
   ngram1P0 IF pos==0,
