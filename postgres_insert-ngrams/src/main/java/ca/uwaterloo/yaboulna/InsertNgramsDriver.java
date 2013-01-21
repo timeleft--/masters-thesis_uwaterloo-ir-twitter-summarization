@@ -124,7 +124,7 @@ public final class InsertNgramsDriver extends Configured implements Tool {
     
     boolean allCompleted;
     do {
-      Thread.sleep(1000);
+      Thread.sleep(10000);
       allCompleted = true;
       for (j = 0; j < jobArr.length; ++j) {
         if (jobArr[j] == null) {

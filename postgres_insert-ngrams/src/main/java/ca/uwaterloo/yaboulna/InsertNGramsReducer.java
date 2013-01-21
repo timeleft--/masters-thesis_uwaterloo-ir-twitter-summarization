@@ -1,6 +1,7 @@
 package ca.uwaterloo.yaboulna;
 
 import java.io.IOException;
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -49,7 +50,7 @@ public class InsertNGramsReducer extends
             + htagTableName
             + " (id int8, timeMillis timestamp, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
 // stmt.execute("CREATE INDEX " +htagTableName+"_date ON " + htagTableName +"(date)");
-
+        
         int count = 0;
         for (Record value : valuesIn) {
           String tablename;
@@ -80,6 +81,8 @@ public class InsertNGramsReducer extends
         stmt.close();
         conn.close();
       }
+    } catch (BatchUpdateException e){
+      throw new IOException(e.getNextException());
     } catch (SQLException e) {
       throw new IOException(e);
     } catch (ClassNotFoundException e) {
