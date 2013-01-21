@@ -31,7 +31,7 @@ public class InsertNGramsReducer extends
       String url = "jdbc:postgresql://localhost:5433/spritzer";
       Properties props = new Properties();
       props.setProperty("user", "yaboulna");// "uspritzer");
-      props.setProperty("password", "UWPa55w0rt"); //"Spritz3rU");
+      props.setProperty("password", "5#afraPG"); //"Spritz3rU");
 //      props.setProperty("ssl", "false");
       Connection conn = DriverManager.getConnection(url, props);
 
