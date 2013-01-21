@@ -40,24 +40,24 @@ public class InsertNGramsReducer extends
 
       Statement stmt = conn.createStatement();
       try {
-        String ngramTableName = "ngrams";
-      String htagTableName = "htags";
-//        String ngramTableName = "ngrams_" + keyIn.get();
-//        String htagTableName = "htags_" + keyIn.get();
-//
-//        // UNLOGGED
-//        stmt.execute("CREATE  TABLE "
-//            + ngramTableName
-//            + " (id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
-//// stmt.execute("CREATE INDEX " +ngramTableName+"_date ON " + ngramTableName +"(date)");
-//
-//        // UNLOGGED
-//        stmt.execute("CREATE  TABLE "
-//            + htagTableName
-//            + " (id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
-//// stmt.execute("CREATE INDEX " +htagTableName+"_date ON " + htagTableName +"(date)");
-//
-//        ctxt.setStatus("Created tables: " + ngramTableName + ", " + htagTableName);
+// String ngramTableName = "ngrams";
+// String htagTableName = "htags";
+        String ngramTableName = "ngrams_" + keyIn.get();
+        String htagTableName = "htags_" + keyIn.get();
+
+        // UNLOGGED
+        stmt.execute("CREATE  TABLE "
+            + ngramTableName
+            + " ( id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2, pkey serial Primary key)");
+// stmt.execute("CREATE INDEX " +ngramTableName+"_date ON " + ngramTableName +"(date)");
+
+        // UNLOGGED
+        stmt.execute("CREATE  TABLE "
+            + htagTableName
+            + " ( id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2, pkey serial Primary key)");
+// stmt.execute("CREATE INDEX " +htagTableName+"_date ON " + htagTableName +"(date)");
+
+        ctxt.setStatus("Created tables: " + ngramTableName + ", " + htagTableName);
 
         int count = 0;
         for (Record value : valuesIn) {
@@ -135,7 +135,8 @@ public class InsertNGramsReducer extends
 
     Statement stmt = conn.createStatement();
     try {
-      stmt.execute("CREATE TABLE test(arr text[])");
+      stmt.execute("DROP TABLE test");
+      stmt.execute("CREATE TABLE test(arr text[], pkey serial Primary key)");
 
       String[] ngrams = {"you", "your mother", "your dog"};
       stmt.addBatch("INSERT INTO test VALUES(" + obj.toSQLArray(ngrams) + ")");
@@ -152,9 +153,11 @@ public class InsertNGramsReducer extends
       while (ret.next()) {
         System.out.println(ret.getArray(1));
       }
-
-      stmt.executeBatch();
-
+      try {
+        stmt.executeBatch();
+      } catch (BatchUpdateException e) {
+        throw new SQLException(e.getNextException());
+      }
       ret = stmt.executeQuery("Select * from test");
       while (ret.next()) {
         System.out.println(ret.getArray(1));
