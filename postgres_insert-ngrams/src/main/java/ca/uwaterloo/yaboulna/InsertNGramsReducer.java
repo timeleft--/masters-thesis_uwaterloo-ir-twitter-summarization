@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import ca.uwaterloo.yaboulna.CSVNGramRecordReader.Record;
@@ -21,10 +22,10 @@ import edu.umd.cloud9.io.pair.PairOfIntLong;
 public class InsertNGramsReducer extends
     Reducer<PairOfIntLong, Record, PairOfIntLong, Record> {
 
-  protected void reduce(PairOfIntLong keyIn, java.lang.Iterable<Record> valuesIn,
+  protected void reduce(IntWritable keyIn, java.lang.Iterable<Record> valuesIn,
       org.apache.hadoop.mapreduce.Reducer<PairOfIntLong, Record, PairOfIntLong, Record>.Context ctxt)
       throws IOException, InterruptedException {
-    ctxt.setStatus("Processing day: " + keyIn.getLeftElement());
+    ctxt.setStatus("Processing day: " + keyIn.get());
     try {
       Class.forName("org.postgresql.Driver");
 
@@ -35,12 +36,12 @@ public class InsertNGramsReducer extends
 //      props.setProperty("ssl", "false");
       Connection conn = DriverManager.getConnection(url, props);
 
-      conn.setAutoCommit(false);
+//      conn.setAutoCommit(false);
        
       Statement stmt = conn.createStatement();
       try {
-        String ngramTableName = "ngrams_" + keyIn.getLeftElement();
-        String htagTableName = "htags_" + keyIn.getLeftElement();
+        String ngramTableName = "ngrams_" + keyIn.get();
+        String htagTableName = "htags_" + keyIn.get();
 
         
         stmt.execute("CREATE UNLOGGED TABLE "
@@ -106,9 +107,9 @@ public class InsertNGramsReducer extends
   StringBuilder sqlArrayBuilder = new StringBuilder("ARRAY[");
   private String toSQLArray(String[] ngram) {
     sqlArrayBuilder.setLength(6);
-    sqlArrayBuilder.append('\'').append(ngram[0]).append('\'');
+    sqlArrayBuilder.append('\'').append(ngram[0].trim()).append('\'');
     for (int i = 1; i < ngram.length; ++i) {
-      sqlArrayBuilder.append(", '").append(ngram[i]).append('\'');
+      sqlArrayBuilder.append(", '").append(ngram[i].trim()).append('\'');
     }
     sqlArrayBuilder.append(']');
     return sqlArrayBuilder.toString();

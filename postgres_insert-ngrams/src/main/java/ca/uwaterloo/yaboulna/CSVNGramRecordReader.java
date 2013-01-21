@@ -9,6 +9,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -18,9 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.uwaterloo.yaboulna.CSVNGramRecordReader.Record;
-import edu.umd.cloud9.io.pair.PairOfIntLong;
 
-public class CSVNGramRecordReader extends RecordReader<PairOfIntLong, Record> {
+public class CSVNGramRecordReader extends RecordReader<IntWritable, Record> {
   private static final Pattern commaSplit = Pattern.compile(",");
   private static final Logger LOG = LoggerFactory.getLogger(CSVNGramRecordReader.class);
   private static final Pattern tabSplit = Pattern.compile("\\t");
@@ -79,7 +79,7 @@ public class CSVNGramRecordReader extends RecordReader<PairOfIntLong, Record> {
 
   private FSDataInputStream reader;
   // private TaskAttemptContext context;
-  private PairOfIntLong myKey;
+  private IntWritable myKey;
   private Record myValue;
 
   private Configuration conf;
@@ -136,7 +136,7 @@ public class CSVNGramRecordReader extends RecordReader<PairOfIntLong, Record> {
       rec.tweetLen = Integer.parseInt(fields[5]);
       rec.position = Integer.parseInt(fields[6]);
 
-      myKey = new PairOfIntLong(rec.date, rec.id);
+      myKey = new IntWritable(rec.date);
 
       myValue = rec;
 
@@ -164,7 +164,7 @@ public class CSVNGramRecordReader extends RecordReader<PairOfIntLong, Record> {
   }
 
   @Override
-  public PairOfIntLong getCurrentKey() throws IOException, InterruptedException {
+  public IntWritable getCurrentKey() throws IOException, InterruptedException {
     return myKey;
   }
 

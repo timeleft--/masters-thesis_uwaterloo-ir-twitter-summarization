@@ -6,6 +6,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.uwaterloo.yaboulna.CSVNGramRecordReader.Record;
-import edu.umd.cloud9.io.pair.PairOfIntLong;
 
 public final class InsertNgramsDriver extends Configured implements Tool {
   
@@ -108,7 +108,7 @@ public final class InsertNgramsDriver extends Configured implements Tool {
       
       job.setJarByClass(InsertNgramsDriver.class);
       
-      job.setOutputKeyClass(PairOfIntLong.class);
+      job.setOutputKeyClass(IntWritable.class);
       job.setOutputValueClass(Record.class);
       
        FileInputFormat.addInputPath(job, inputStatus.getPath());
