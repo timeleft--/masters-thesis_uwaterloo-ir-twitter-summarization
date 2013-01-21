@@ -8,6 +8,11 @@ import ca.uwaterloo.yaboulna.CSVNGramRecordReader.Record;
 public class InsertNGramsMapper extends
     Mapper<IntWritable, Record, IntWritable, Record> {
 
-  // Just the default identity mapper
+  
+  private static final IntWritable DUMMY = new IntWritable(-1);
 
+  // Just the default identity mapper
+protected void map(IntWritable key, Record value, org.apache.hadoop.mapreduce.Mapper<IntWritable,Record,IntWritable,Record>.Context context) throws java.io.IOException ,InterruptedException {
+ context.write(DUMMY, value);  
+};
 }
