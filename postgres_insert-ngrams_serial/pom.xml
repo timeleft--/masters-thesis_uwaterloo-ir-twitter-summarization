@@ -2,8 +2,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>yaboulna-thesis</groupId>
-	<artifactId>postgres_insert-ngrams</artifactId>
+	<artifactId>postgres_insert-ngrams_serial</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+
 	<repositories>
 		<repository>
 			<id>cloudera-releases</id>
@@ -17,7 +18,7 @@
 			</snapshots>
 		</repository>
 	</repositories>
-
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -64,9 +65,14 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-
+	
 
 	<dependencies>
+		<dependency>
+			<groupId>yaboulna-thesis</groupId>
+			<artifactId>postgres_insert-ngrams</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
@@ -134,6 +140,4 @@
 			<version>9.2-1002.jdbc4</version>
 		</dependency>
 	</dependencies>
-
-	
 </project>
