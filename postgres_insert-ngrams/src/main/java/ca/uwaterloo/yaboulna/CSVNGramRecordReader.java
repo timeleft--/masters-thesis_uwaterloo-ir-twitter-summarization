@@ -44,7 +44,7 @@ public class CSVNGramRecordReader extends RecordReader<PairOfIntLong, Record> {
       date = datain.readInt();
       ngram = commaSplit.split(datain.readUTF());
       ngram[0] = ngram[0].substring(1); // the opening bracket
-      ngram[ngram.length - 1] = ngram[ngram.length - 1].substring(0, ngram.length - 1); // closing bracket
+      ngram[ngram.length - 1] = ngram[ngram.length - 1].substring(0, ngram[ngram.length - 1].length() - 1); // closing bracket
       ngramLen = datain.readInt();
       tweetLen = datain.readInt();
       position = datain.readInt();
@@ -63,6 +63,7 @@ public class CSVNGramRecordReader extends RecordReader<PairOfIntLong, Record> {
       }
       ngramsBuilder.append(")");
       dataout.writeUTF(ngramsBuilder.toString());
+//      dataout.write... TODO: can I just serialize the array?
 
       dataout.writeInt(ngramLen);
       dataout.writeInt(tweetLen);
@@ -129,7 +130,7 @@ public class CSVNGramRecordReader extends RecordReader<PairOfIntLong, Record> {
 
       rec.ngram[0] = rec.ngram[0].substring(1); // the opening bracket
       rec.ngram[rec.ngram.length - 1] = rec.ngram[rec.ngram.length - 1].substring(0,
-          rec.ngram.length - 1); // closing bracket
+          rec.ngram[rec.ngram.length - 1].length() - 1); // closing bracket
 
       rec.ngramLen = Integer.parseInt(fields[4]);
       rec.tweetLen = Integer.parseInt(fields[5]);

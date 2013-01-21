@@ -43,12 +43,12 @@ public class InsertNGramsReducer extends
 
         stmt.execute("CREATE UNLOGGED TABLE "
             + ngramTableName
-            + " (id int8, timeMillis timestamp, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
+            + " (id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
 // stmt.execute("CREATE INDEX " +ngramTableName+"_date ON " + ngramTableName +"(date)");
 
         stmt.execute("CREATE UNLOGGED TABLE "
             + htagTableName
-            + " (id int8, timeMillis timestamp, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
+            + " (id int8, timeMillis int8, date int4, ngram text[], ngramLen int2, tweetLen int2, position int2)");
 // stmt.execute("CREATE INDEX " +htagTableName+"_date ON " + htagTableName +"(date)");
         
         int count = 0;
