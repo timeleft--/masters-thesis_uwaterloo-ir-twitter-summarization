@@ -29,7 +29,7 @@ public class InsertNGramsReducer extends
     try {
       Class.forName("org.postgresql.Driver");
 
-      String url = "jdbc:postgresql://localhost:5433/spritzer";
+      String url = "jdbc:postgresql://hops.cs.uwaterloo.ca:5433/spritzer";
       Properties props = new Properties();
       props.setProperty("user", "yaboulna");// "uspritzer");
       props.setProperty("password", "5#afraPG"); // "Spritz3rU");

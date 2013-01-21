@@ -94,9 +94,9 @@ public final class InsertNgramsDriver extends Configured implements Tool {
           + "org.apache.hadoop.io.serializer.WritableSerialization");
       
       
-      conf.set("mapred.compress.map.output", "true");
-      conf.set("mapred.output.compression.type", "BLOCK");
-      
+//      conf.set("mapred.compress.map.output", "true");
+//      conf.set("mapred.output.compression.type", "BLOCK");
+//      
       conf.set("mapred.child.java.opts", "-XX:-UseGCOverheadLimit -XX:+HeapDumpOnOutOfMemoryError");
       
       Job job = new Job(conf, "Parallel time sort and ngram inster running over input "
