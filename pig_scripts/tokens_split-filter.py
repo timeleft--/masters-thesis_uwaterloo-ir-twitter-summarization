@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import sys
-import string
+
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--root", help="The root of where the data is stored", default="")
@@ -14,8 +14,8 @@ if not printOnly:
 	Pig.set("default_parallel", "50")
 
 
-scriptStr =  Formatter.format("""
-ngramTokenizer = LOAD '{root}ngrams/ngramTokenizer' USING PigStorage('\\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);""",root=args.root)
+scriptStr =  """
+ngramTokenizer = LOAD '%(root)ngrams/ngramTokenizer' USING PigStorage('\\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);"""%{"root": args.root}
 scriptStr += """
 SPLIT ngramTokenizer INTO
 	ngrams1 IF (pos < tweetLen) AND ngramLen == 1,
