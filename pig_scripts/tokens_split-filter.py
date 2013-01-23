@@ -15,24 +15,24 @@ if not printOnly:
 
 
 scriptStr =  """
-ngramTokenizer = LOAD '%(root)sngrams/ngramTokenizer' USING PigStorage('\\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);"""%{"root": args.root}
+ngramTokenizer = LOAD '%(root)sngrams/ngramTokenizer' USING PigStorage('\\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);""" % {"root": args.root}
 scriptStr += """
 SPLIT ngramTokenizer INTO
 	ngrams1 IF (pos < tweetLen) AND ngramLen == 1,
 	ngrams2 IF  (pos < tweetLen) AND ngramLen == 2,
 	hashtags IF (pos == tweetLen),
 	unknown OTHERWISE;
-STORE ngrams1 INTO '{root}ngrams/len1' {storeFunc};
-STORE ngrams2 INTO '{root}ngrams/len2Tokenizer' {storeFunc};
-STORE hashtags INTO '{root}hashtags/powersets' {storeFunc};
-SPLIT ngrams1 INTO unigramsPos0 IF pos == 0""".format(storeFunc= " USING PigStorage('\\t') ", root=args.root)
-store = "STORE unigramsPos0 INTO '{root}unigrams/pos0' {storeFunc};".format(storeFunc= " USING PigStorage('\\t') ", root=args.root)
+STORE ngrams1 INTO '%(root)sngrams/len1' %(storeFunc)s;
+STORE ngrams2 INTO '%(root)sngrams/len2Tokenizer' %(storeFunc)s;
+STORE hashtags INTO '%(root)shashtags/powersets' %(storeFunc)s;
+SPLIT ngrams1 INTO unigramsPos0 IF pos == 0""" % {"storeFunc": " USING PigStorage('\\t') ", "root": args.root}
+store = "STORE unigramsPos0 INTO '%(root)sunigrams/pos0' %(storeFunc)s;" % {"storeFunc": " USING PigStorage('\\t') ", "root": args.root}
 
 for i in range(70):
 	scriptStr += """,
-		unigramsPos{p} IF pos == {p}""".format(p=str(i+1))
+		unigramsPos%(p)s IF pos == %(p)s""" % {"p": str(i+1)}
 	store += """
-	STORE  unigramsPos{p} INTO '{root}unigrams/pos{p}' {storeFunc};""".format(p=str(i+1),storeFunc= " USING PigStorage('\\t') ", root=args.root)
+	STORE  unigramsPos%(p)s INTO '%(root)sunigrams/pos%(p)s' %(storeFunc)s;""" % {"p": str(i+1),"storeFunc": " USING PigStorage('\\t') ", "root": args.root}
 	
 scriptStr += """;
  """ + store
