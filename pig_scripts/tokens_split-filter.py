@@ -13,11 +13,7 @@ args = parser.parse_args()
 printOnly=args.dry
 
 scriptStr = """
-ngramTokenizer = LOAD 'ngrams/ngramTokenizer' USING PigStorage('\\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);"""
-# Sampling should be done before tokenization, so that the whole tweet is included
-#if args.root:
-#	scriptStr += """
-#	ngramTokenizer = SAMPLE ngramTokenizer 0.01; """
+ngramTokenizer = LOAD '{root}ngrams/ngramTokenizer' USING PigStorage('\\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);""".format(root=args.root)
 scriptStr += """
 SPLIT ngramTokenizer INTO
 	ngrams1 IF (pos < tweetLen) AND ngramLen == 1,
