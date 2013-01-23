@@ -5,10 +5,11 @@ import sys
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("root", help="The root of where the data is stored")
+parser.add_argument("--root", help="The root of where the data is stored")
+parser.add_argument("--dry", help="Don't run the script, just print it out", action="store_true")
 args = parser.parse_args()
 
-printOnly=True
+printOnly=args.dry
 
 script = """
 ngrams{l} = LOAD '{root}ngrams/len{l}'  USING PigStorage('\\t') AS (id: long, timeMillis:long, date:chararray, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);

@@ -6,10 +6,11 @@ import sys
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("root", help="The root of where the data is stored")
+parser.add_argument("--root", help="The root of where the data is stored")
+parser.add_argument("--dry", help="Don't run the script, just print it out", action="store_true")
 args = parser.parse_args()
 
-printOnly=True
+printOnly=args.dry
 
 scriptStr = """
 ngramTokenizer = LOAD 'ngrams/ngramTokenizer' USING PigStorage('\\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);"""
@@ -27,7 +28,7 @@ STORE ngrams1 INTO '{root}ngrams/len1' {storeFunc};
 STORE ngrams2 INTO '{root}ngrams/len2Tokenizer' {storeFunc};
 STORE hashtags INTO '{root}hashtags/powersets' {storeFunc};
 SPLIT ngrams1 INTO unigramsPos0 IF pos == 0""".format(storeFunc= " USING PigStorage('\\t') ", root=args.root)
-store = "STORE unigramsPos0 INTO '{root}unigrams/pos0' {storeFunc};".format(storeFunc= " USING PigStorage('\\t') ", root=sample)
+store = "STORE unigramsPos0 INTO '{root}unigrams/pos0' {storeFunc};".format(storeFunc= " USING PigStorage('\\t') ", root=args.root)
 
 for i in range(70):
 	scriptStr += """,

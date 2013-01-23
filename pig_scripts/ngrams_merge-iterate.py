@@ -5,11 +5,14 @@ import sys
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("root", help="The root of where the data is stored")
+parser.add_argument("--root", help="The root of where the data is stored")
+parser.add_argument("--maxLength", help="The maximum length of ngrams. CAUTION! This should be set to the maximum Tweet length", type=int, default=71)
+parser.add_argument("--dry", help="Don't run the script, just print it out", action="store_true")
 args = parser.parse_args()
 
-printOnly = True
-maxLength = 71 #140 characters limit -> at most 71 tokens, of length 1 each
+printOnly=args.dry
+
+maxLength = args.maxLength #140 characters limit -> at most 71 tokens, of length 1 each
 
 params = { "ngramsPrevPath": "ngrams/len1" }
   
