@@ -15,7 +15,7 @@ if not printOnly:
 
 
 scriptStr =  """
-ngramTokenizer = LOAD '%(root)ngrams/ngramTokenizer' USING PigStorage('\\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);"""%{"root": args.root}
+ngramTokenizer = LOAD '%(root)sngrams/ngramTokenizer' USING PigStorage('\\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);"""%{"root": args.root}
 scriptStr += """
 SPLIT ngramTokenizer INTO
 	ngrams1 IF (pos < tweetLen) AND ngramLen == 1,
