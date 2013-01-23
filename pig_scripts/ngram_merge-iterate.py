@@ -3,7 +3,11 @@ import sys
 #from org.apache.pig.scripting import *
 #Pig.set("default_parallel", "50")
 
-sample = "" #"sample-0.01/"
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("root", help="The root of where the data is stored")
+args = parser.parse_args()
+
 printOnly = True
 maxLength = 71 #140 characters limit -> at most 71 tokens, of length 1 each
 
@@ -12,9 +16,9 @@ params = { "ngramsPrevPath": "ngrams/len1" }
 for i in range(maxLength-1):
     funcSchema = " USING PigStorage('\\t') AS (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int) "
     
-    ngramsLoad = " ngramsLen{l} = LOAD '{root}$ngramsPrevPath' {0};".format(funcSchema, l=str(i+1), root=sample)
+    ngramsLoad = " ngramsLen{l} = LOAD '{root}$ngramsPrevPath' {0};".format(funcSchema, l=str(i+1), root=args.root)
     
-    #unigramsLoad = " unigramsPos0 = LOAD '{root}unigrams/pos0' {0};".format(funcSchema, root=sample)
+    #unigramsLoad = " unigramsPos0 = LOAD '{root}unigrams/pos0' {0};".format(funcSchema, root=args.root)
     unigramsLoad = " "
     
     split = " SPLIT ngramsLen{l} INTO ngramsLen{l}Pos0 IF pos==0 ".format(l=str(i+1))
@@ -27,7 +31,7 @@ for i in range(maxLength-1):
     
     for x in range(1,maxLength-i):
         unigramsLoad += """
-         unigramsPos{o} = LOAD '{root}unigrams/pos{o}' {0};""".format(funcSchema, o=str(70-x), root=sample)
+         unigramsPos{o} = LOAD '{root}unigrams/pos{o}' {0};""".format(funcSchema, o=str(70-x), root=args.root)
         split += """,
              ngramsLen{l}Pos{p} IF pos=={p}""".format(p=str(x), l=str(i+1))
         joinConcat += """
@@ -48,7 +52,7 @@ for i in range(maxLength-1):
     union += ";"
     
     storePath = "ngrams/len{k}".format(k= str(i+2))
-    store = " STORE ngramsLen{k} INTO '{root}{0}' USING PigStorage('\\t'); ".format(storePath, k=str(i+2), root=sample)
+    store = " STORE ngramsLen{k} INTO '{root}{0}' USING PigStorage('\\t'); ".format(storePath, k=str(i+2), root=args.root)
     
     scriptStr = """ --- extending ngrams blindly 
      """ + ngramsLoad + """
@@ -89,7 +93,7 @@ for i in range(maxLength-1):
 #    Pig.compile("""
 #        ngramLen{k}Cnt = {cnt}; 
 #        STORE ngramLen{k}Cnt INTO '{root}ngrams/len{k}_cnt' USING PigStorage('\\t');
-#        """.format(k=str(i+2), cnt=ngramCurrCnt), root=sample).bind().run()
+#        """.format(k=str(i+2), cnt=ngramCurrCnt), root=args.root).bind().run()
         
     
     

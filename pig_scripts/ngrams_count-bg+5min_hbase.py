@@ -3,7 +3,11 @@ import sys
 #from org.apache.pig.scripting import *
 #Pig.set("default_parallel", "50")
 
-sample = "" #"sample-0.01/"
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("root", help="The root of where the data is stored")
+args = parser.parse_args()
+
 printOnly=True
 
 script = """
@@ -24,7 +28,7 @@ ngrams{l}Cnts5min = FOREACH ngrams{l}Grps {{
 }}
 STORE (UNION ngrams{l}Cnts5min, ngrams{l}AllCnt5min) INTO 'ngramCnts' USING org.apache.pig.backend.hadoop.hbase.HBaseStorage(
  'c:*');
-""".format(l='_', root=sample)
+""".format(l='_', root=args.root)
 
 print(script)
 
