@@ -1,12 +1,12 @@
 #!/usr/bin/python
 import sys
 
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument("--root", help="The root of where the data is stored")
-parser.add_argument("--maxLength", help="The maximum length of ngrams. CAUTION! This should be set to the maximum Tweet length", type=int, default=71)
-parser.add_argument("--dry", help="Don't run the script, just print it out", action="store_true")
-args = parser.parse_args()
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("--root", help="The root of where the data is stored", default="")
+parser.add_option("--maxLength", help="The maximum length of ngrams. CAUTION! This should be set to the maximum Tweet length", type="int", default=71)
+parser.add_option("--dry", help="Don't run the script, just print it out", action="store_true")
+(args, remainder) = parser.parse_args()
 
 printOnly=args.dry
 
@@ -34,7 +34,10 @@ for i in range(maxLength-1):
     #contact[:70-i] = " ngramsLen{k}Pos".format(k=str(i+2))
     joinConcat = "-- join ngrams with unigrams then concat to generate longer ngrams"
     
-    union = " ngramsLen{k} = UNION ngramsLen{k}Pos0 ".format(k=str(i+2))
+    if i <maxLength-2:
+        union = " ngramsLen{k} = UNION ngramsLen{k}Pos0 ".format(k=str(i+2))
+    else: 
+        union = " ngramsLen{k} = ngramsLen{k}Pos0 ".format(k=str(i+2))
     
     for x in range(1,maxLength-i):
         unigramsLoad += """
@@ -52,8 +55,10 @@ for i in range(maxLength-1):
             ngramsLen{l}Pos{u}::tweetLen as tweetLen, 
             ngramsLen{l}Pos{u}::pos as pos; 
         """.format(a=str(x+i), u=str(x-1), l=str(i+1), k=str(i+2))
-        union += """,
-            ngramsLen{k}Pos{p}""".format(p=str(x),k=str(i+2)) 
+        
+        if x < maxLength-i-1:
+            union += """,
+                ngramsLen{k}Pos{p}""".format(p=str(x),k=str(i+2)) 
         
     split += ";"
     union += ";"

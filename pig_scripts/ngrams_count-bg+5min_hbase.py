@@ -1,11 +1,11 @@
 #!/usr/bin/python
 import sys
 
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument("--root", help="The root of where the data is stored")
-parser.add_argument("--dry", help="Don't run the script, just print it out", action="store_true")
-args = parser.parse_args()
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("--root", help="The root of where the data is stored", default="")
+parser.add_option("--dry", help="Don't run the script, just print it out", action="store_true")
+(args, remainder) = parser.parse_args()
 
 printOnly=args.dry
 
