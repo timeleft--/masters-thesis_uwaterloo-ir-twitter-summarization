@@ -1,9 +1,6 @@
 #!/usr/bin/python
 import sys
 
-#from org.apache.pig.scripting import *
-#Pig.set("default_parallel", "50")
-
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--root", help="The root of where the data is stored")
@@ -11,6 +8,11 @@ parser.add_argument("--dry", help="Don't run the script, just print it out", act
 args = parser.parse_args()
 
 printOnly=args.dry
+
+if not printOnly:
+	from org.apache.pig.scripting import *
+	Pig.set("default_parallel", "50")
+
 
 scriptStr = """
 ngramTokenizer = LOAD '{root}ngrams/ngramTokenizer' USING PigStorage('\\t') as (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);""".format(root=args.root)

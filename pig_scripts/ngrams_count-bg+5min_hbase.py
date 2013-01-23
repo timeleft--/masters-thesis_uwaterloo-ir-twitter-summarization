@@ -1,7 +1,5 @@
 #!/usr/bin/python
 import sys
-#from org.apache.pig.scripting import *
-#Pig.set("default_parallel", "50")
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -10,6 +8,12 @@ parser.add_argument("--dry", help="Don't run the script, just print it out", act
 args = parser.parse_args()
 
 printOnly=args.dry
+
+
+if not printOnly:
+    from org.apache.pig.scripting import *
+    Pig.set("default_parallel", "50")
+
 
 script = """
 ngrams{l} = LOAD '{root}ngrams/len{l}'  USING PigStorage('\\t') AS (id: long, timeMillis:long, date:chararray, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);

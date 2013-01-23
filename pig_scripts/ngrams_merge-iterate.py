@@ -1,7 +1,5 @@
 #!/usr/bin/python
 import sys
-#from org.apache.pig.scripting import *
-#Pig.set("default_parallel", "50")
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -11,6 +9,12 @@ parser.add_argument("--dry", help="Don't run the script, just print it out", act
 args = parser.parse_args()
 
 printOnly=args.dry
+
+
+if not printOnly:
+    from org.apache.pig.scripting import *
+    Pig.set("default_parallel", "50")
+
 
 maxLength = args.maxLength #140 characters limit -> at most 71 tokens, of length 1 each
 
