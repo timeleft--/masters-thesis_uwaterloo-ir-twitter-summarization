@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import sys
-
+import string
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--root", help="The root of where the data is stored", default="")
