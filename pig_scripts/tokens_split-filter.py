@@ -10,7 +10,7 @@ parser.add_option("--dry", help="Don't run the script, just print it out", actio
 printOnly=args.dry
 
 if not printOnly:
-	from org.apache.pig.scripting import *
+	from org.apache.pig.scripting import Pig
 	Pig.set("default_parallel", "50")
 
 
