@@ -1,17 +1,20 @@
 #!/usr/bin/python
+import sys
 #from org.apache.pig.scripting import *
+#Pig.set("default_parallel", "50")
 
+sample = "" #"sample-0.01/"
+printOnly = True
+maxLength = 71 #140 characters limit -> at most 71 tokens, of length 1 each
 
-params = { 'ngramsPrevPath': 'ngrams/ngramsTokenizer' }
-
-maxLength = 30
+params = { "ngramsPrevPath": "ngrams/len1" }
   
 for i in range(maxLength-1):
-    loadSchema = " USING PigStorage('\\t') AS (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int); "
+    funcSchema = " USING PigStorage('\\t') AS (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int) "
     
-    ngramsLoad = " ngramsLen{l} = LOAD '$ngramsPrevPath' {0}".format(loadSchema, l=str(i+1))
+    ngramsLoad = " ngramsLen{l} = LOAD '{root}$ngramsPrevPath' {0};".format(funcSchema, l=str(i+1), root=sample)
     
-    #unigramsLoad = " unigramsPos0 = LOAD 'unigrams/pos0' {0}".format(loadSchema)
+    #unigramsLoad = " unigramsPos0 = LOAD '{root}unigrams/pos0' {0};".format(funcSchema, root=sample)
     unigramsLoad = " "
     
     split = " SPLIT ngramsLen{l} INTO ngramsLen{l}Pos0 IF pos==0 ".format(l=str(i+1))
@@ -24,7 +27,7 @@ for i in range(maxLength-1):
     
     for x in range(1,maxLength-i):
         unigramsLoad += """
-         unigramsPos{o} = LOAD 'unigrams/pos{o}' {0}""".format(loadSchema, o=str(70-x))
+         unigramsPos{o} = LOAD '{root}unigrams/pos{o}' {0};""".format(funcSchema, o=str(70-x), root=sample)
         split += """,
              ngramsLen{l}Pos{p} IF pos=={p}""".format(p=str(x), l=str(i+1))
         joinConcat += """
@@ -44,9 +47,10 @@ for i in range(maxLength-1):
     split += ";"
     union += ";"
     
-    store = " STORE ngramsLen{k} INTO 'ngrams/len{k}' USING PigStorage('\\t'); ".format(k= str(i+2))
+    storePath = "ngrams/len{k}".format(k= str(i+2))
+    store = " STORE ngramsLen{k} INTO '{root}{0}' USING PigStorage('\\t'); ".format(storePath, k=str(i+2), root=sample)
     
-    script = """ --- extending ngrams blindly 
+    scriptStr = """ --- extending ngrams blindly 
      """ + ngramsLoad + """
      """ + unigramsLoad + """
      """ + split + """
@@ -54,5 +58,39 @@ for i in range(maxLength-1):
      """ + union + """
      """ + store + """
      """
+    
      
-    print("Script iteration {0}: \n{1}\n").format(i,script)
+    print("Script iteration {0}: \n{1}\n").format(i,scriptStr)
+    
+    if printOnly:
+        continue
+    
+    script = Pig.compile(scriptStr)
+    
+    bound = script.bind(params)
+    
+    stats = bound.run()
+    
+    print("Script returned in " + stat.getDuration())
+
+    if stat.isSuccessful():
+        print("Completed with success, outputs written:\n")
+        for location in stat.getOutputLocations():
+            print(location + " --> " +getNumberRecords(location) + " records\n")
+    else:
+        print("Failed, with code: " + stat.getReturnCode() + " - Errors:\n ")
+        for e in stat.getAllErrorMessages:
+            print(e + "\n")
+            
+        sys.exit(1);
+
+# This is clever but I am afraid to rely on it then get surprised    
+#   ngramCurrCnt = getNumberRecords(storePath);
+#    Pig.compile("""
+#        ngramLen{k}Cnt = {cnt}; 
+#        STORE ngramLen{k}Cnt INTO '{root}ngrams/len{k}_cnt' USING PigStorage('\\t');
+#        """.format(k=str(i+2), cnt=ngramCurrCnt), root=sample).bind().run()
+        
+    
+    
+    params = { "ngramsPrevPath": storePath }
