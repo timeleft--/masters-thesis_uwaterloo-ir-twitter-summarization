@@ -4,12 +4,9 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.pig.data.DataType;
@@ -43,6 +40,7 @@ public class NGramsCountStorage extends SQLStorage {
         }
         sqlStrBuilder.append(" FROM ").append(tableName)
             .append(" WHERE ").append(split.getLocations()[0]);
+        // at the moment this is redundant, but it wouldn't hurt to have it in case partitioning changes
         if (!partitionWhereClause.isEmpty()) {
           sqlStrBuilder.append(" AND ").append(partitionWhereClause);
         }
@@ -161,83 +159,11 @@ public class NGramsCountStorage extends SQLStorage {
 
   }
 
-  public static class ModuloSplit extends InputSplit {
+  
 
-    final long len;
-    final String[] splitWhereClause;
+  public class NGramsCountsInputFormat extends SQLPartitionByDateInputFormat {
 
-    public ModuloSplit(int i, int chunks, long chunkSize) {
-      len = chunkSize;
-      splitWhereClause = new String[]{" pkey % " + chunks + " == " + i + " "};
-    }
-
-    @Override
-    public long getLength() throws IOException, InterruptedException {
-      return len;
-    }
-
-    @Override
-    public String[] getLocations() throws IOException, InterruptedException {
-      return splitWhereClause;
-    }
-
-  }
-
-  public class NGramsCountsInputFormat extends InputFormat<Long, Tuple> {
-
-    @Override
-    public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
-
-      ResultSet results = null;
-      try {
-        results = stmt.executeQuery("SELECT COUNT(*) FROM " + tableName);
-        results.next();
-
-        long count = results.getLong(1);
-        int chunks = context.getConfiguration().getInt("mapred.map.tasks", 1);
-        long chunkSize = (count / chunks);
-
-        results.close();
-        stmt.close();
-        stmt = null;
-
-        List<InputSplit> splits = new ArrayList<InputSplit>();
-
-// // Split the rows into n-number of chunks and adjust the last chunk
-// // accordingly
-// for (int i = 0; i < chunks; i++) {
-// DBInputSplit split;
-//
-// if ((i + 1) == chunks)
-// split = new DBInputSplit(i * chunkSize, count);
-// else
-// split = new DBInputSplit(i * chunkSize, (i * chunkSize)
-// + chunkSize);
-//
-// splits.add(split);
-// }
-        for (int i = 0; i < chunks; i++) {
-          splits.add(new ModuloSplit(i, chunks, chunkSize));
-        }
-
-        return splits;
-      } catch (SQLException e) {
-        throw new IOException("Got SQLException", e);
-      } finally {
-        try {
-          if (results != null) {
-            results.close();
-          }
-        } catch (SQLException e1) {
-        }
-        try {
-          if (stmt != null) {
-            stmt.close();
-          }
-        } catch (SQLException e1) {
-        }
-      }
-    }
+    
 
     @Override
     public NGramsCountRecordReader createRecordReader(InputSplit split, TaskAttemptContext context)

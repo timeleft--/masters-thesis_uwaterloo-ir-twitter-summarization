@@ -6,6 +6,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,8 @@ import java.util.Properties;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -35,6 +38,11 @@ import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.UDFContext;
 import org.apache.pig.impl.util.Utils;
 import org.apache.pig.parser.ParserException;
+import org.joda.time.DateTime;
+import org.joda.time.Days;
+import org.joda.time.MutableDateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -45,25 +53,51 @@ public abstract class SQLStorage extends LoadFunc
     LoadPushDown,
     LoadMetadata {
 
+  public static class WhereClauseSplit extends InputSplit {
+
+    String[] splitWhereClause;
+    long avgLen;
+
+    public WhereClauseSplit(String where, long avgLen) {
+      splitWhereClause = new String[]{where};
+      this.avgLen = avgLen;
+    }
+
+    @Override
+    public long getLength() throws IOException, InterruptedException {
+      return avgLen;
+    }
+
+    @Override
+    public String[] getLocations() throws IOException, InterruptedException {
+      return splitWhereClause;
+    }
+
+  }
   public enum Warnings {
-    NONZERO_SQL_RETCODE, STMT_NOT_NULL_REINIT, CONN_NOT_NULL_REINIT, SCHEMA_NAMES_NOT_MATCHING, RESULTSET_NOT_NULL_REINIT
+    NONZERO_SQL_RETCODE, STMT_NOT_NULL_REINIT, CONN_NOT_NULL_REINIT, SCHEMA_NAMES_NOT_MATCHING, NON_CONTIGOUS_PARTITION
+    // RESULTSET_NOT_NULL_REINIT,
   };
 
   protected static final String DEFAULT_SCHEMA_SELECTOR = "ngramsCnt";
   protected static final Map<String, String> SCHEMA_MAP = Maps.newHashMap();
-//  static {
-//    SCHEMA_MAP
-//        .put(
-//            "ngramsPos",
-//            "id: long, timeMillis: long, date: int, ngram: map[chararray], ngramLen: int, tweetLen: int,  pos: int");
-//  }
+// static {
+// SCHEMA_MAP
+// .put(
+// "ngramsPos",
+// "id: long, timeMillis: long, date: int, ngram: map[chararray], ngramLen: int, tweetLen: int,  pos: int");
+// }
   protected static final String DEFAULT_DRIVER = "org.postgresql.Driver";
   protected static final String DEFAULT_CONNECTION_URL = "jdbc:postgresql://hops.cs.uwaterloo.ca:5433/spritzer";
   protected static final String DEFAULT_USER = "yaboulna";
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
   protected static final int DEFAULT_BATCH_SIZE = 1000;
+  private static final long DEFAULT_NUMRECS_PER_CHUNK = 10000;
 
 // protected static Logger LOG = LoggerFactory.getLogger(PostgreSQLStorage.class);
+
+  // Not inforced since we are partitioning by date to guarantee that no tweet will be split between two partitions
+  protected long minNumRecordsPerChunk = DEFAULT_NUMRECS_PER_CHUNK;
 
   protected String tableName;
   protected Connection conn = null;
@@ -414,5 +448,97 @@ public abstract class SQLStorage extends LoadFunc
       throw new IOException(e);
     }
 
+  }
+
+  protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
+  public abstract class SQLPartitionByDateInputFormat extends InputFormat<Long, Tuple> {
+
+    protected final MutableDateTime date = new MutableDateTime();
+
+    @Override
+    public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
+
+      ResultSet results = null;
+      try {
+        results = stmt
+            .executeQuery(" SELECT COUNT(*), COUNT(DISTINCT date), MIN(date), MAX(date) FROM "
+                + tableName
+                + (partitionWhereClause.isEmpty() ? "; " : " WHERE " + partitionWhereClause + " ;"));
+        results.next();
+
+        long countRecs = results.getLong(1);
+        long countDates = results.getLong(2);
+
+        long avgLen = countRecs / countDates;
+
+// use this if you exchange date by pkey
+// long chunks = context.getConfiguration().getInt("mapred.map.tasks", 1);
+// long chunkSize = (count / chunks);
+// if (chunkSize < minNumRecordsPerChunk) {
+// if (count > chunkSize) {
+// chunkSize = minNumRecordsPerChunk;
+// chunks = count / chunkSize;
+// } else {
+// chunkSize = count;
+// chunks = 1;
+// }
+// }
+
+        long min = results.getLong(3);
+        long max = results.getLong(4);
+
+        results.close();
+        stmt.close();
+        stmt = null;
+
+        List<InputSplit> splits = new ArrayList<InputSplit>();
+
+        // The pkey blind split that guarantees equal chunk, but nothing about the chunk boundaries
+// // Split the rows into n-number of chunks and adjust the last chunk
+// // accordingly
+// for (int i = 0; i < chunks; i++) {
+// DBInputSplit split;
+//
+// if ((i + 1) == chunks)
+// split = new DBInputSplit(i * chunkSize, count);
+// else
+// split = new DBInputSplit(i * chunkSize, (i * chunkSize)
+// + chunkSize);
+//
+// splits.add(split);
+// }
+        DateTime minDate = dateFmt.parseDateTime("" + min);
+        DateTime maxDate = dateFmt.parseDateTime("" + max);
+        int daysDiff = Days.daysBetween(minDate, maxDate).getDays(); // .toDateMidnight()
+
+        if (countDates != daysDiff + 1) {
+          warn("Some dates are missing in the partition " + partitionWhereClause
+              + " and thus some jobs will have empty input", Warnings.NON_CONTIGOUS_PARTITION);
+        }
+
+        date.setDate(minDate);
+        for (int i = 0; i <= daysDiff; ++i) {
+          splits.add(new WhereClauseSplit(" date = " + dateFmt.print(date), avgLen));
+          date.addDays(1);
+        }
+
+        return splits;
+      } catch (SQLException e) {
+        throw new IOException("Got SQLException", e);
+      } finally {
+        try {
+          if (results != null) {
+            results.close();
+          }
+        } catch (SQLException e1) {
+        }
+        try {
+          if (stmt != null) {
+            stmt.close();
+          }
+        } catch (SQLException e1) {
+        }
+      }
+    }
   }
 }
