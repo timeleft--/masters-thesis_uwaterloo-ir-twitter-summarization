@@ -18,7 +18,7 @@ public class NGramsCountStorage extends SQLStorage {
   private static final String TABLE_NAME = "ngramsCnt";
 
   static {
-    SCHEMA_MAP.put(TABLE_NAME, "ngram: chararray, epochStartMillis: long, date: int, cnt: int");
+    SCHEMA_MAP.put(TABLE_NAME, "ngram: chararray, date: int, epochStartMillis: long, cnt: int");
   }
 
   public class NGramsCountRecordReader extends RecordReader<Long, Tuple> {
