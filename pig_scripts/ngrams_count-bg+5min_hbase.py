@@ -23,7 +23,7 @@ ngrams%(l)sAll = GROUP ngrams%(l)sPrj ALL;
 ngrams%(l)sAllCnt = FOREACH ngrams%(l)sAll GENERATE 'ALL' as ngram, COUNT($1) AS cnt;
 ngrams%(l)sGrps = GROUP ngrams%(l)sPrj BY ngram;
 ngrams%(l)sCnts = FOREACH ngrams%(l)sGrps GENERATE group AS ngram, COUNT($1) AS cnt;
-STORE (UNION ngrams%(l)sCnts, ngrams%(l)sAllCnt) INTO 'ngramCnts' USING org.apache.pig.backend.hadoop.hbase.HBaseStorage(
+STORE (UNION ngrams%(l)sCnts, ngrams%(l)sAllCnt) INTO 'ngramsCnt' USING org.apache.pig.backend.hadoop.hbase.HBaseStorage(
 -- CONCAT('c:', CONTACT(minMaxDate.minDate, CONCAT('-', CONCAT(minMaxDate.maxDate)))));
     'c:BG'); -- Back Ground Model
 ngrams%(l)sALLCnt5min = FOREACH (GROUP ngrams%(l)sPrj BY timeMillis/300000) GENERATE 'ALL' as ngram, TOMAP(group*300, COUNT($1)); --, $1.date as date (FOR PARTITIONING)
@@ -31,7 +31,7 @@ ngrams%(l)sCnts5min = FOREACH ngrams%(l)sGrps {
     ngram5min = FOREACH (GROUP ngrams%(l)sPrj BY timeMillis/300000) GENERATE $1.ngram as ngram, TOMAP(group*300, COUNT($1)); --, $1.date as date (FOR PARTITIONING)
     GENERATE ngram5min;
 }
-STORE (UNION ngrams%(l)sCnts5min, ngrams%(l)sAllCnt5min) INTO 'ngramCnts' USING org.apache.pig.backend.hadoop.hbase.HBaseStorage(
+STORE (UNION ngrams%(l)sCnts5min, ngrams%(l)sAllCnt5min) INTO 'ngramsCnt' USING org.apache.pig.backend.hadoop.hbase.HBaseStorage(
  'c:*');
 """ % {"l":"_", "root": args.root}
 
