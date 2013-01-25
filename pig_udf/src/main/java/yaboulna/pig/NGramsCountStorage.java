@@ -50,7 +50,7 @@ public class NGramsCountStorage extends SQLStorage {
           sqlStrBuilder.append(", pkey ");
         }
         sqlStrBuilder.append(" FROM ").append(tableName)
-            .append(" WHERE namespace =").append(bitmapNamespace)
+            .append(" WHERE namespace =").append(toQuotedStr(bitmapNamespace))
             .append(split.getLocations()[0]);
         // at the moment this is redundant, but it wouldn't hurt to have it in case partitioning changes
         if (!partitionWhereClause.isEmpty()) {
