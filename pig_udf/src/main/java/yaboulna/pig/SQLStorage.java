@@ -55,7 +55,7 @@ public abstract class SQLStorage extends LoadFunc
     LoadPushDown,
     LoadMetadata {
   public static Logger LOG = LoggerFactory.getLogger(SQLStorage.class);
-  
+
   public static class WhereClauseSplit extends InputSplit {
 
     String[] splitWhereClause;
@@ -96,7 +96,7 @@ public abstract class SQLStorage extends LoadFunc
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
   protected static final int DEFAULT_BATCH_SIZE = 1000;
   private static final long DEFAULT_NUMRECS_PER_CHUNK = 10000;
-  private static final String DEFAULT_NS = "DEFAULTNS"; //Read NameSpace
+  private static final String DEFAULT_NS = "DEFAULTNS"; // Read NameSpace
 
 // protected static Logger LOG = LoggerFactory.getLogger(PostgreSQLStorage.class);
 
@@ -119,7 +119,6 @@ public abstract class SQLStorage extends LoadFunc
   protected RecordReader<Long, DBWritable> reader;
 
   protected StringBuilder sqlStrBuilder = new StringBuilder();
-  
 
   public SQLStorage(String dbname) throws ClassNotFoundException, ParserException {
     Class.forName(DEFAULT_DRIVER);
@@ -153,7 +152,7 @@ public abstract class SQLStorage extends LoadFunc
       String sqlStr = "SELECT DISTINCT date FROM " + location + ";";
       LOG.info("Executing SQL: " + sqlStr);
       ResultSet rs = stmt.executeQuery(sqlStr);
-      
+
       List<String> result = Lists.newLinkedList();
       while (rs.next()) {
         result.add(rs.getString(1));
@@ -220,8 +219,10 @@ public abstract class SQLStorage extends LoadFunc
           if (stmt != null) {
             try {
               stmt.executeBatch();
-              conn.commit();
-              stmt.close();
+              if (!conn.getAutoCommit()) {
+                conn.commit();
+                stmt.close();
+              }
               conn.close();
               stmt = null;
               conn = null;
@@ -280,25 +281,25 @@ public abstract class SQLStorage extends LoadFunc
 
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
-    if(LOG.isDebugEnabled()) 
-      LOG.debug("setStoreLocation " + location); 
+    if (LOG.isDebugEnabled())
+      LOG.debug("setStoreLocation " + location);
     setLocation(location, job);
   }
 
   @Override
   public void setLocation(String location, Job job) throws IOException {
-    if(LOG.isDebugEnabled()) 
-      LOG.debug("setLocation "+location);
-     String[] slashSplits = location.split("\\/");
-     tableName = slashSplits[0];
-     if(LOG.isDebugEnabled()) 
-       LOG.debug("tableName set to: " + tableName);
-     if(slashSplits.length == 2){
+    if (LOG.isDebugEnabled())
+      LOG.debug("setLocation " + location);
+    String[] slashSplits = location.split("\\/");
+    tableName = slashSplits[0];
+    if (LOG.isDebugEnabled())
+      LOG.debug("tableName set to: " + tableName);
+    if (slashSplits.length > 1) {
       bitmapNamespace = slashSplits[1];
-      if(LOG.isDebugEnabled()) 
+      if (LOG.isDebugEnabled())
         LOG.debug("bitmapNamespace set to: " + bitmapNamespace);
-    } else if(slashSplits.length > 2) {
-      throw new UnsupportedOperationException("Maybe later");
+    } else if (slashSplits.length > 2) {
+      LOG.warn("Ignoring anything after second slash in: " + location);
     }
     setSchemaSelector(tableName);
   }
@@ -349,7 +350,7 @@ public abstract class SQLStorage extends LoadFunc
 
     try {
       String sqlStr = sqlStrBuilder.toString();
-      LOG.info("Adding SQL to batch: " + sqlStrBuilder.toString());
+      LOG.debug("Adding SQL to batch: " + sqlStrBuilder.toString());
       stmt.addBatch(sqlStr);
       if (++pendingBatchCount == batchSizeForCommit) {
         pendingBatchCount = 0;
@@ -376,7 +377,7 @@ public abstract class SQLStorage extends LoadFunc
 
   @Override
   public void setStoreFuncUDFContextSignature(String signature) {
-    if(LOG.isDebugEnabled()) 
+    if (LOG.isDebugEnabled())
       LOG.debug("udfcSignature " + signature);
     udfcSignature = signature;
   }
@@ -401,7 +402,8 @@ public abstract class SQLStorage extends LoadFunc
 // resultSet.close();
 // }
       if (stmt != null) {
-        stmt.close();
+        if (!conn.getAutoCommit())
+          stmt.close();
         stmt = null;
       }
       if (conn != null) {

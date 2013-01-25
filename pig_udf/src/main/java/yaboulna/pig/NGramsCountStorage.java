@@ -162,6 +162,7 @@ public class NGramsCountStorage extends SQLStorage {
           resultSet.close();
         }
         if (stmt != null) {
+          if(!conn.getAutoCommit())
           stmt.close();
           stmt = null;
         }
