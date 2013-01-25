@@ -60,6 +60,9 @@ public class NGramsCountStorage extends SQLStorage {
 
         String sqlStr = sqlStrBuilder.toString();
         LOG.info("Executing SQL: " + sqlStr);
+        if(stmt == null){
+          prepare();
+        }
         resultSet = stmt.executeQuery(sqlStr);
         resultMetadata = resultSet.getMetaData();
       } catch (SQLException e) {

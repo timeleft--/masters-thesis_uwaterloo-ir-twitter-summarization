@@ -170,6 +170,9 @@ public abstract class SQLStorage extends LoadFunc
     try {
       String sqlStr = "SELECT DISTINCT date FROM " + location + ";";
       LOG.info("Executing SQL: " + sqlStr);
+      if(stmt == null){
+        prepare();
+      }
       ResultSet rs = stmt.executeQuery(sqlStr);
 
       List<String> result = Lists.newLinkedList();
