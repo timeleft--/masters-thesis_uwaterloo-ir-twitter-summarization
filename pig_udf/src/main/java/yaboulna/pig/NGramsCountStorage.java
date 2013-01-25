@@ -49,6 +49,7 @@ public class NGramsCountStorage extends SQLStorage {
           conn = DriverManager.getConnection(url, props);
         }
         rrStmt = conn.createStatement();
+        rrStmt.setFetchSize(DEFAULT_FETCH_SIZE);
 
         expectedLen = split.getLength();
 

@@ -118,8 +118,9 @@ public abstract class SQLStorage extends LoadFunc
   protected static final String DEFAULT_USER = "yaboulna";
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
   protected static final int DEFAULT_BATCH_SIZE = 10000; // I don't what datastructure is used --> 00;
-  private static final long DEFAULT_NUMRECS_PER_CHUNK = 10000;
-  private static final String DEFAULT_NS = "DEFAULTNS"; // Read NameSpace
+  protected static final long DEFAULT_NUMRECS_PER_CHUNK = 10000;
+  protected static final int DEFAULT_FETCH_SIZE = 1000000; // 1M.. I was thinking of 10M, but nah (no network anyway!)
+  protected static final String DEFAULT_NS = "DEFAULTNS"; // Read NameSpace
   protected static final int NAMESPACE_OFFSET = 2;
 // protected static Logger LOG = LoggerFactory.getLogger(PostgreSQLStorage.class);
 
@@ -375,9 +376,11 @@ public abstract class SQLStorage extends LoadFunc
       }
 
       int tupleSize = t.size(); // - NAMESPACE_OFFSET;
-
+      
+      writeStmt.setString(1, bitmapNamespace);
+      
       for (int i = 0; i < tupleSize; ++i) {
-        int j = i + 1; // NAMESPACE_OFFSET; namespace doesn't have a corresponding IN param
+        int j = i + NAMESPACE_OFFSET;
         switch (parsedSchema.getFields()[i].getType()) {
 
 // case DataType.NULL:
@@ -517,8 +520,7 @@ public abstract class SQLStorage extends LoadFunc
   @Override
   public void prepareToWrite(RecordWriter writer) throws IOException {
     sqlStrBuilder.setLength(0);
-    sqlStrBuilder.append(" INSERT INTO " + tableName + " VALUES ("
-        + toQuotedStr(bitmapNamespace));
+    sqlStrBuilder.append(" INSERT INTO " + tableName + " VALUES (?"); // bitmapNamespace
     int numberOfCols = parsedSchema.fieldNames().length;
     for (int i = 0; i < numberOfCols; ++i) {
       sqlStrBuilder.append(", ?");
@@ -531,7 +533,7 @@ public abstract class SQLStorage extends LoadFunc
 
   protected PreparedStatement prepare(Statement stmt, String sql) throws IOException {
     try {
-      if(LOG.isDebugEnabled()){
+      if (LOG.isDebugEnabled()) {
         LOG.debug("Preparing statment with SQL: " + sql);
       }
       if (stmt != null) {
@@ -553,7 +555,8 @@ public abstract class SQLStorage extends LoadFunc
       }
       loadSchema();
       conn = DriverManager.getConnection(url, props);
-      // Must be false because we use batch: http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
+      // Must be false because we use batch:
+// http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
       conn.setAutoCommit(false);
       PreparedStatement result = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
 // result.setPrepareThreshold done on connection level using params
