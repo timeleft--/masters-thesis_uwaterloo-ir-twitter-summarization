@@ -92,7 +92,7 @@ public abstract class SQLStorage extends LoadFunc
       splitWhereClause[0] = in.readUTF();
       avgLen = in.readLong();
     }
-    
+
     public WhereClauseSplit() {
     }
 
@@ -172,12 +172,12 @@ public abstract class SQLStorage extends LoadFunc
     try {
       String sqlStr = "SELECT DISTINCT date FROM " + location + ";";
       LOG.info("Executing SQL: " + sqlStr);
-      
-      if(conn ==null){
+
+      if (conn == null) {
         conn = DriverManager.getConnection(url, props);
       }
       Statement localStmt = conn.createStatement();
-      
+
       ResultSet rs = localStmt.executeQuery(sqlStr);
 
       List<String> result = Lists.newLinkedList();
@@ -254,7 +254,7 @@ public abstract class SQLStorage extends LoadFunc
               writeStmt = null;
               conn = null;
             } catch (SQLException e) {
-              LOG.error("stmt.close:" +  e.getMessage(), e);
+              LOG.error("stmt.close:" + e.getMessage(), e);
 // throw new IOException("stmt.close JDBC Error", e);
             }
           }
@@ -453,11 +453,12 @@ public abstract class SQLStorage extends LoadFunc
 // resultSet.close();
 // }
     prepare(readStmt);
-    //FIXME: Abstraction, so that other readers can be added later for other tables
-    if(reader instanceof NGramsCountRecordReader){
-    this.reader = (NGramsCountRecordReader) reader;
+    // FIXME: Abstraction, so that other readers can be added later for other tables
+    if (reader instanceof NGramsCountRecordReader) {
+      this.reader = (NGramsCountRecordReader) reader;
     } else {
-      throw new IOException("Expected a reader of type " + NGramsCountRecordReader.class + " got one of type " + reader.getClass());
+      throw new IOException("Expected a reader of type " + NGramsCountRecordReader.class
+          + " got one of type " + reader.getClass());
     }
   }
 
@@ -525,19 +526,21 @@ public abstract class SQLStorage extends LoadFunc
             + tableName
             + (partitionWhereClause.isEmpty() ? "; " : " WHERE " + partitionWhereClause + " ;");
         LOG.info("Executing SQL: " + sqlStr);
-        if(conn == null){
+        if (conn == null) {
           conn = DriverManager.getConnection(url, props);
         }
-         localStmt = conn.createStatement();
+        localStmt = conn.createStatement();
         results = localStmt
             .executeQuery(sqlStr);
         results.next();
 
         long countRecs = results.getLong(1);
         long countDates = results.getLong(2);
-
-        long avgLen = countRecs / countDates;
-
+        long avgLen = 0;
+        if (countDates > 0) {
+          avgLen = countRecs / countDates;
+        }
+        
 // use this if you exchange date by pkey
 // long chunks = context.getConfiguration().getInt("mapred.map.tasks", 1);
 // long chunkSize = (count / chunks);
@@ -597,17 +600,17 @@ public abstract class SQLStorage extends LoadFunc
           if (results != null) {
             results.close();
           }
-        
+
           if (localStmt != null) {
             localStmt.close();
           }
         } catch (SQLException e1) {
-          LOG.error(e1.getMessage(),e1);
+          LOG.error(e1.getMessage(), e1);
         }
       }
     }
   }
-  
+
   @Override
   public String relativeToAbsolutePath(String location, Path curDir) throws IOException {
     return location;
