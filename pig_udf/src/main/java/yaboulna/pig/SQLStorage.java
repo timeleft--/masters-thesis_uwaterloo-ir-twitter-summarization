@@ -5,6 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -35,6 +36,8 @@ import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.ResourceStatistics;
 import org.apache.pig.StoreFuncInterface;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
+import org.apache.pig.data.DataByteArray;
+import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.UDFContext;
@@ -114,10 +117,10 @@ public abstract class SQLStorage extends LoadFunc
   protected static final String DEFAULT_CONNECTION_URL = "jdbc:postgresql://hops.cs.uwaterloo.ca:5433/";
   protected static final String DEFAULT_USER = "yaboulna";
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
-  protected static final int DEFAULT_BATCH_SIZE = 1000000;
+  protected static final int DEFAULT_BATCH_SIZE = 10000; // I don't what datastructure is used --> 00;
   private static final long DEFAULT_NUMRECS_PER_CHUNK = 10000;
   private static final String DEFAULT_NS = "DEFAULTNS"; // Read NameSpace
-
+  protected static final int NAMESPACE_OFFSET = 2;
 // protected static Logger LOG = LoggerFactory.getLogger(PostgreSQLStorage.class);
 
   // Not inforced since we are partitioning by date to guarantee that no tweet will be split between two partitions
@@ -125,8 +128,7 @@ public abstract class SQLStorage extends LoadFunc
 
   protected String tableName;
   protected Connection conn = null;
-  private Statement readStmt = null;
-  private Statement writeStmt = null;
+  private PreparedStatement writeStmt = null;
   protected String projection = "*";
   protected String partitionWhereClause = "";
   protected String bitmapNamespace = DEFAULT_NS;
@@ -149,7 +151,7 @@ public abstract class SQLStorage extends LoadFunc
     props.setProperty("user", DEFAULT_USER);// "uspritzer");
     props.setProperty("password", DEFAULT_PASSWORD); // "Spritz3rU");
 // props.setProperty("ssl", "false");
-
+    props.setProperty("prepareThreshold", "1");
   }
 
   @Override
@@ -353,7 +355,7 @@ public abstract class SQLStorage extends LoadFunc
     }
     for (int i = 0; i < otherFields.length; ++i) {
       if (!otherFields[i].getName().equals(ourFields[i].getName())) {
-       logWarn("Non matching names - pig schema: " + otherFields[i].getName() + " , DB schema: "
+        logWarn("Non matching names - pig schema: " + otherFields[i].getName() + " , DB schema: "
             + ourFields[i].getName(), Warnings.SCHEMA_NAMES_NOT_MATCHING);
       }
       if (otherFields[i].getType() != ourFields[i].getType()) {
@@ -367,27 +369,74 @@ public abstract class SQLStorage extends LoadFunc
   @Override
   public void putNext(Tuple t) throws IOException {
 
-    sqlStrBuilder.setLength(0);
-    sqlStrBuilder.append(" INSERT INTO " + tableName + " VALUES ("
-        + toQuotedStr(bitmapNamespace));
-    for (int i = 0; i < t.size(); ++i) {
-      sqlStrBuilder.append(", ").append(toQuotedStr(t.get(i)));
-    }
-    sqlStrBuilder.append(");");
-
     try {
-      String sqlStr = sqlStrBuilder.toString();
-      LOG.debug("Adding SQL to batch: " + sqlStrBuilder.toString());
-      if(writeStmt == null){
+      if (writeStmt == null) {
         prepareToWrite(null);
       }
-      writeStmt.addBatch(sqlStr);
+
+      int tupleSize = t.size(); // - NAMESPACE_OFFSET;
+
+      for (int i = 0; i < tupleSize; ++i) {
+        int j = i + 1; // NAMESPACE_OFFSET; namespace doesn't have a corresponding IN param
+        switch (parsedSchema.getFields()[i].getType()) {
+
+// case DataType.NULL:
+// result.set(i,resultSet.getNull(j, java.sql.Types.VARCHAR);
+// break;
+
+          case DataType.BOOLEAN :
+            writeStmt.setBoolean(j, (Boolean) t.get(i));
+            break;
+
+          case DataType.INTEGER :
+            writeStmt.setInt(j, (Integer) t.get(i));
+            break;
+
+          case DataType.LONG :
+            writeStmt.setLong(j, (Long) t.get(i));
+            break;
+
+          case DataType.FLOAT :
+            writeStmt.setFloat(j, (Float) t.get(i));
+            break;
+
+          case DataType.DOUBLE :
+            writeStmt.setDouble(j, (Double) t.get(i));
+            break;
+
+          case DataType.BYTEARRAY :
+            byte[] b = ((DataByteArray) t.get(i)).get();
+            writeStmt.setBytes(j, b);
+            break;
+
+          case DataType.CHARARRAY :
+            writeStmt.setString(j, (String) t.get(i));
+            break;
+
+          case DataType.BYTE :
+            writeStmt.setByte(j, (Byte) t.get(i));
+            break;
+
+          case DataType.MAP :
+          case DataType.TUPLE :
+          case DataType.BAG :
+            throw new RuntimeException("Cannot store a non-flat tuple "
+                + "using DbStorage");
+
+          default :
+            throw new RuntimeException("Unknown datatype");
+
+        }
+      }
+
+      writeStmt.addBatch();
+
       if (++pendingBatchCount == batchSizeForCommit) {
         pendingBatchCount = 0;
         int[] retCodes = writeStmt.executeBatch();
         for (int rc : retCodes) {
           if (rc != 1) {
-           logWarn("SQL INSERT return not 1, but: " + rc, Warnings.SQL_RETCODE);
+            logWarn("SQL INSERT return not 1, but: " + rc, Warnings.SQL_RETCODE);
           }
         }
         writeStmt.clearBatch();
@@ -451,11 +500,10 @@ public abstract class SQLStorage extends LoadFunc
   @Override
   public void prepareToRead(RecordReader reader, PigSplit split) throws IOException {
 // if (resultSet != null) {
-//logWarn("Result set not null and prepare to read is called. Closing.",
+// logWarn("Result set not null and prepare to read is called. Closing.",
 // Warnings.RESULTSET_NOT_NULL_REINIT);
 // resultSet.close();
 // }
-    readStmt = prepare(readStmt);
     // FIXME: Abstraction, so that other readers can be added later for other tables
     if (reader instanceof NGramsCountRecordReader) {
       this.reader = (NGramsCountRecordReader) reader;
@@ -468,14 +516,27 @@ public abstract class SQLStorage extends LoadFunc
   @SuppressWarnings("rawtypes")
   @Override
   public void prepareToWrite(RecordWriter writer) throws IOException {
-    writeStmt = prepare(writeStmt);
+    sqlStrBuilder.setLength(0);
+    sqlStrBuilder.append(" INSERT INTO " + tableName + " VALUES ("
+        + toQuotedStr(bitmapNamespace));
+    int numberOfCols = parsedSchema.fieldNames().length;
+    for (int i = 0; i < numberOfCols; ++i) {
+      sqlStrBuilder.append(", ?");
+    }
+    sqlStrBuilder.append(");");
+
+    String sqlStr = sqlStrBuilder.toString();
+    writeStmt = prepare(writeStmt, sqlStr);
   }
 
-  protected Statement prepare(Statement stmt) throws IOException {
+  protected PreparedStatement prepare(Statement stmt, String sql) throws IOException {
     try {
+      if(LOG.isDebugEnabled()){
+        LOG.debug("Preparing statment with SQL: " + sql);
+      }
       if (stmt != null) {
         int[] pendingBatchResults = stmt.executeBatch();
-       logWarn("prepare called while stmt is not null. Executed pending batches ("
+        logWarn("prepare called while stmt is not null. Executed pending batches ("
             + pendingBatchResults.length + ")", Warnings.STMT_NOT_NULL_REINIT);
 // LOG.warn( );
         if (conn != null && !conn.getAutoCommit())
@@ -485,14 +546,18 @@ public abstract class SQLStorage extends LoadFunc
       if (conn != null) {
         if (!conn.getAutoCommit())
           conn.commit();
-       logWarn("prepare called while conn is not null. Commited",
+        logWarn("prepare called while conn is not null. Commited",
             Warnings.CONN_NOT_NULL_REINIT);
 // LOG.warn();
         conn = null;
       }
       loadSchema();
       conn = DriverManager.getConnection(url, props);
-      return conn.createStatement();
+      // Must be false because we use batch: http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
+      conn.setAutoCommit(false);
+      PreparedStatement result = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
+// result.setPrepareThreshold done on connection level using params
+      return result;
     } catch (SQLException e) {
       throw new IOException(e);
     }
@@ -543,7 +608,7 @@ public abstract class SQLStorage extends LoadFunc
         if (countDates > 0) {
           avgLen = countRecs / countDates;
         }
-        
+
 // use this if you exchange date by pkey
 // long chunks = context.getConfiguration().getInt("mapred.map.tasks", 1);
 // long chunkSize = (count / chunks);
@@ -585,7 +650,7 @@ public abstract class SQLStorage extends LoadFunc
         int daysDiff = Days.daysBetween(minDate, maxDate).getDays(); // .toDateMidnight()
 
         if (countDates != daysDiff + 1) {
-         logWarn("Some dates are missing in the partition " + partitionWhereClause
+          logWarn("Some dates are missing in the partition " + partitionWhereClause
               + " and thus some jobs will have empty input", Warnings.NON_CONTIGOUS_PARTITION);
         }
 
@@ -618,8 +683,8 @@ public abstract class SQLStorage extends LoadFunc
   public String relativeToAbsolutePath(String location, Path curDir) throws IOException {
     return location;
   }
-  
-  void logWarn(String message, Warnings warn){
+
+  void logWarn(String message, Warnings warn) {
     LOG.warn(message);
     warn(message, warn);
   }

@@ -35,8 +35,7 @@ public class NGramsCountStorage extends SQLStorage {
   }
 
   public class NGramsCountRecordReader extends RecordReader<Long, Tuple> {
-
-    private static final int NAMESPACE_OFFSET = 2;
+    
     ResultSet resultSet;
     ResultSetMetaData resultMetadata;
     long expectedLen;
