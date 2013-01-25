@@ -572,4 +572,9 @@ public abstract class SQLStorage extends LoadFunc
       }
     }
   }
+  
+  @Override
+  public String relativeToAbsolutePath(String location, Path curDir) throws IOException {
+    return location;
+  }
 }
