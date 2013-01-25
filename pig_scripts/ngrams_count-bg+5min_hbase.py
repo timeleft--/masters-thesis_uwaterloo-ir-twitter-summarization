@@ -31,11 +31,11 @@ for interval in ['300000L', '12L', '24L', '7L', '30L']:
     intervalAcc *= long(interval)
     
     script += """
-    ngrams%(l)sPrj%(name)sA = FOREACH %(prevCnts)s GENERATE epochStartMillis/%(epoch)s as epochStartMillisA, (ngram, date) as ngramDate; -- FOR PARTITIONING
+    ngrams%(l)sPrj%(name)sA = FOREACH %(prevCnts)s GENERATE epochStartMillis/%(epoch)sL as epochStartMillisA, (ngram, date) as ngramDate; -- FOR PARTITIONING
     
     ngrams%(l)sGrps%(name)sA = GROUP ngrams%(l)sPrj%(name)sA BY (epochStartMillisA, ngramDate);
     
-    ngrams%(l)sCnt%(name)s = FOREACH ngrams%(l)sGrps%(name)sA GENERATE FLATTEN(group.ngramDate) as (ngram, date), (group.epochStartMillisA * %(epoch)s) as epochStartMillis, COUNT($1) as cnt;
+    ngrams%(l)sCnt%(name)s = FOREACH ngrams%(l)sGrps%(name)sA GENERATE FLATTEN(group.ngramDate) as (ngram, date), (group.epochStartMillisA * %(epoch)sL) as epochStartMillis, COUNT($1) as cnt;
     
     --It's already ordered
     --orderCnts = ORDER ngrams%(l)sCnt%(name)s BY epochStartMillis;
