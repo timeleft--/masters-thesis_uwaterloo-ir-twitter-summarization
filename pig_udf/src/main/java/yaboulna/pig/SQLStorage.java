@@ -443,7 +443,7 @@ public abstract class SQLStorage extends LoadFunc
         warn("PrepareToWrite called while stmt is not null. Executed pending batches ("
             + pendingBatchResults.length + ")", Warnings.STMT_NOT_NULL_REINIT);
 // LOG.warn( );
-        if (!conn.getAutoCommit())
+        if (conn != null && !conn.getAutoCommit())
           stmt.close();
         stmt = null;
       }
@@ -493,6 +493,9 @@ public abstract class SQLStorage extends LoadFunc
             + tableName
             + (partitionWhereClause.isEmpty() ? "; " : " WHERE " + partitionWhereClause + " ;");
         LOG.info("Executing SQL: " + sqlStr);
+        if(stmt == null){
+          prepare();
+        }
         results = stmt
             .executeQuery(sqlStr);
         results.next();
@@ -555,19 +558,18 @@ public abstract class SQLStorage extends LoadFunc
 
         return splits;
       } catch (SQLException e) {
-        throw new IOException("Got SQLException", e);
+        throw new IOException(e);
       } finally {
         try {
           if (results != null) {
             results.close();
           }
-        } catch (SQLException e1) {
-        }
-        try {
+        
           if (stmt != null) {
             stmt.close();
           }
         } catch (SQLException e1) {
+          LOG.error(e1.getMessage(),e1);
         }
       }
     }
