@@ -182,8 +182,9 @@ public class NGramsCountStorage extends SQLStorage {
     @Override
     public NGramsCountRecordReader createRecordReader(InputSplit split, TaskAttemptContext context)
         throws IOException, InterruptedException {
-
-      return new NGramsCountRecordReader();
+      NGramsCountRecordReader result = new NGramsCountRecordReader();
+      result.initialize(split, context);
+      return result;
     }
 
   }

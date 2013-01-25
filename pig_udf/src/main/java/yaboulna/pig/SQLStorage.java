@@ -26,7 +26,6 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 import org.apache.pig.Expression;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.LoadMetadata;
@@ -48,6 +47,8 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import yaboulna.pig.NGramsCountStorage.NGramsCountRecordReader;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -135,7 +136,7 @@ public abstract class SQLStorage extends LoadFunc
   protected int pendingBatchCount = 0;
   protected int batchSizeForCommit = DEFAULT_BATCH_SIZE;
   protected String udfcSignature;
-  protected RecordReader<Long, DBWritable> reader;
+  protected NGramsCountRecordReader reader;
 
   protected StringBuilder sqlStrBuilder = new StringBuilder();
 
@@ -439,7 +440,7 @@ public abstract class SQLStorage extends LoadFunc
     }
   }
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
+  @SuppressWarnings("rawtypes")
   @Override
   public void prepareToRead(RecordReader reader, PigSplit split) throws IOException {
 // if (resultSet != null) {
@@ -448,8 +449,12 @@ public abstract class SQLStorage extends LoadFunc
 // resultSet.close();
 // }
     prepare();
-    this.reader = reader;
-
+    //FIXME: Abstraction, so that other readers can be added later for other tables
+    if(reader instanceof NGramsCountRecordReader){
+    this.reader = (NGramsCountRecordReader) reader;
+    } else {
+      throw new IOException("Expected a reader of type " + NGramsCountRecordReader.class + " got one of type " + reader.getClass());
+    }
   }
 
   @SuppressWarnings("rawtypes")
