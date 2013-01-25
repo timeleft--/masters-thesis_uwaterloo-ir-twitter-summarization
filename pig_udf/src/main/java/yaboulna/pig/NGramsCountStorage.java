@@ -1,9 +1,11 @@
 package yaboulna.pig;
 
 import java.io.IOException;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -37,11 +39,17 @@ public class NGramsCountStorage extends SQLStorage {
     ResultSet resultSet;
     ResultSetMetaData resultMetadata;
     long expectedLen;
+    Statement rrStmt;
 
     @Override
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
         InterruptedException {
       try {
+        if (conn == null) {
+          conn = DriverManager.getConnection(url, props);
+        }
+        rrStmt = conn.createStatement();
+
         expectedLen = split.getLength();
 
         sqlStrBuilder.setLength(0);
@@ -60,10 +68,7 @@ public class NGramsCountStorage extends SQLStorage {
 
         String sqlStr = sqlStrBuilder.toString();
         LOG.info("Executing SQL: " + sqlStr);
-        if(stmt == null){
-          prepare();
-        }
-        resultSet = stmt.executeQuery(sqlStr);
+        resultSet = rrStmt.executeQuery(sqlStr);
         resultMetadata = resultSet.getMetaData();
       } catch (SQLException e) {
         throw new IOException(e);
@@ -162,13 +167,16 @@ public class NGramsCountStorage extends SQLStorage {
     @Override
     public void close() throws IOException {
       try {
+        if (LOG.isDebugEnabled())
+          LOG.debug("Closing resultset and statement of recordreader");
+
         if (resultSet != null) {
           resultSet.close();
         }
-        if (stmt != null) {
+        if (rrStmt != null) {
           if (!conn.getAutoCommit())
-            stmt.close();
-          stmt = null;
+            rrStmt.close();
+          rrStmt = null;
         }
       } catch (SQLException e) {
         throw new IOException(e);
@@ -182,9 +190,8 @@ public class NGramsCountStorage extends SQLStorage {
     @Override
     public NGramsCountRecordReader createRecordReader(InputSplit split, TaskAttemptContext context)
         throws IOException, InterruptedException {
-      NGramsCountRecordReader result = new NGramsCountRecordReader();
-      result.initialize(split, context);
-      return result;
+
+      return new NGramsCountRecordReader();
     }
 
   }
@@ -196,8 +203,9 @@ public class NGramsCountStorage extends SQLStorage {
       return new NGramsCountsInputFormat();
     } else {
       throw new UnsupportedOperationException(
-          "Only the NGRamsCount Table is supported at the moment, schemaSelector: " + schemaSelector + " - tableName: "
-          + tableName + " - namespace: " + bitmapNamespace);
+          "Only the NGRamsCount Table is supported at the moment, schemaSelector: "
+              + schemaSelector + " - tableName: "
+              + tableName + " - namespace: " + bitmapNamespace);
     }
   }
 

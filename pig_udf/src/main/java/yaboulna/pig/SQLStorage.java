@@ -125,7 +125,8 @@ public abstract class SQLStorage extends LoadFunc
 
   protected String tableName;
   protected Connection conn = null;
-  protected Statement stmt = null;
+  private Statement readStmt = null;
+  private Statement writeStmt = null;
   protected String projection = "*";
   protected String partitionWhereClause = "";
   protected String bitmapNamespace = DEFAULT_NS;
@@ -171,18 +172,21 @@ public abstract class SQLStorage extends LoadFunc
     try {
       String sqlStr = "SELECT DISTINCT date FROM " + location + ";";
       LOG.info("Executing SQL: " + sqlStr);
-      if(stmt == null){
-        prepare();
+      
+      if(conn ==null){
+        conn = DriverManager.getConnection(url, props);
       }
-      ResultSet rs = stmt.executeQuery(sqlStr);
+      Statement localStmt = conn.createStatement();
+      
+      ResultSet rs = localStmt.executeQuery(sqlStr);
 
       List<String> result = Lists.newLinkedList();
       while (rs.next()) {
         result.add(rs.getString(1));
       }
       rs.close();
-      stmt.close();
-      stmt = null;
+      localStmt.close();
+      localStmt = null;
       return result.toArray(new String[0]);
     } catch (SQLException e) {
       throw new IOException(e);
@@ -239,15 +243,15 @@ public abstract class SQLStorage extends LoadFunc
 // if(resultSet != null){
 // resultSet.close();
 // }
-          if (stmt != null) {
+          if (writeStmt != null) {
             try {
-              stmt.executeBatch();
+              writeStmt.executeBatch();
               if (!conn.getAutoCommit()) {
                 conn.commit();
-                stmt.close();
+                writeStmt.close();
               }
               conn.close();
-              stmt = null;
+              writeStmt = null;
               conn = null;
             } catch (SQLException e) {
               LOG.error("stmt.close:" +  e.getMessage(), e);
@@ -374,16 +378,16 @@ public abstract class SQLStorage extends LoadFunc
     try {
       String sqlStr = sqlStrBuilder.toString();
       LOG.debug("Adding SQL to batch: " + sqlStrBuilder.toString());
-      stmt.addBatch(sqlStr);
+      writeStmt.addBatch(sqlStr);
       if (++pendingBatchCount == batchSizeForCommit) {
         pendingBatchCount = 0;
-        int[] retCodes = stmt.executeBatch();
+        int[] retCodes = writeStmt.executeBatch();
         for (int rc : retCodes) {
           if (rc != 0) {
             warn("Non-Zero return code: " + rc, Warnings.NONZERO_SQL_RETCODE);
           }
         }
-        stmt.clearBatch();
+        writeStmt.clearBatch();
       }
     } catch (SQLException e) {
       throw new IOException(e);
@@ -424,10 +428,10 @@ public abstract class SQLStorage extends LoadFunc
 // if(resultSet != null){
 // resultSet.close();
 // }
-      if (stmt != null) {
+      if (writeStmt != null) {
         if (!conn.getAutoCommit())
-          stmt.close();
-        stmt = null;
+          writeStmt.close();
+        writeStmt = null;
       }
       if (conn != null) {
         if (!conn.getAutoCommit())
@@ -448,7 +452,7 @@ public abstract class SQLStorage extends LoadFunc
 // Warnings.RESULTSET_NOT_NULL_REINIT);
 // resultSet.close();
 // }
-    prepare();
+    prepare(readStmt);
     //FIXME: Abstraction, so that other readers can be added later for other tables
     if(reader instanceof NGramsCountRecordReader){
     this.reader = (NGramsCountRecordReader) reader;
@@ -460,14 +464,14 @@ public abstract class SQLStorage extends LoadFunc
   @SuppressWarnings("rawtypes")
   @Override
   public void prepareToWrite(RecordWriter writer) throws IOException {
-    prepare();
+    prepare(writeStmt);
   }
 
-  protected void prepare() throws IOException {
+  protected void prepare(Statement stmt) throws IOException {
     try {
       if (stmt != null) {
         int[] pendingBatchResults = stmt.executeBatch();
-        warn("PrepareToWrite called while stmt is not null. Executed pending batches ("
+        warn("prepare called while stmt is not null. Executed pending batches ("
             + pendingBatchResults.length + ")", Warnings.STMT_NOT_NULL_REINIT);
 // LOG.warn( );
         if (conn != null && !conn.getAutoCommit())
@@ -477,7 +481,7 @@ public abstract class SQLStorage extends LoadFunc
       if (conn != null) {
         if (!conn.getAutoCommit())
           conn.commit();
-        warn("PrepareToWrote called while conn is not null. Commited",
+        warn("prepare called while conn is not null. Commited",
             Warnings.CONN_NOT_NULL_REINIT);
 // LOG.warn();
         conn = null;
@@ -515,15 +519,17 @@ public abstract class SQLStorage extends LoadFunc
     public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
 
       ResultSet results = null;
+      Statement localStmt = null;
       try {
         String sqlStr = " SELECT COUNT(*), COUNT(DISTINCT date), MIN(date), MAX(date) FROM "
             + tableName
             + (partitionWhereClause.isEmpty() ? "; " : " WHERE " + partitionWhereClause + " ;");
         LOG.info("Executing SQL: " + sqlStr);
-        if(stmt == null){
-          prepare();
+        if(conn == null){
+          conn = DriverManager.getConnection(url, props);
         }
-        results = stmt
+         localStmt = conn.createStatement();
+        results = localStmt
             .executeQuery(sqlStr);
         results.next();
 
@@ -549,8 +555,8 @@ public abstract class SQLStorage extends LoadFunc
         long max = results.getLong(4);
 
         results.close();
-        stmt.close();
-        stmt = null;
+        localStmt.close();
+        localStmt = null;
 
         List<InputSplit> splits = new ArrayList<InputSplit>();
 
@@ -592,8 +598,8 @@ public abstract class SQLStorage extends LoadFunc
             results.close();
           }
         
-          if (stmt != null) {
-            stmt.close();
+          if (localStmt != null) {
+            localStmt.close();
           }
         } catch (SQLException e1) {
           LOG.error(e1.getMessage(),e1);
