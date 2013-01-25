@@ -35,7 +35,7 @@ for interval in ['300000L', '12L', '24L', '7L', '30L']:
     
     ngrams%(l)sGrps%(name)sA = GROUP ngrams%(l)sPrj%(name)sA BY (epochStartMillisA, ngramDate);
     
-    ngrams%(l)sCnt%(name)s = FOREACH ngrams%(l)sGrps%(name)sA GENERATE FLATTEN(group.ngramDate) as (ngram, date), (group.epochStartMillisA * %(epoch)sL) as epochStartMillis, COUNT($1) as cnt;
+    ngrams%(l)sCnt%(name)s = FOREACH ngrams%(l)sGrps%(name)sA GENERATE FLATTEN(group.ngramDate) as (ngram, date), (group.epochStartMillisA * %(epoch)sL) as epochStartMillis, (int)COUNT($1) as cnt;
     
     --It's already ordered
     --orderCnts = ORDER ngrams%(l)sCnt%(name)s BY epochStartMillis;
@@ -50,7 +50,7 @@ for interval in ['300000L', '12L', '24L', '7L', '30L']:
 """
 -- TODO: Store totals (when DB stuff proves to be working) 
 all%(l)sCnt%(name)sGrp = GROUP ngrams%(l)sCnt%(name)s ALL;
-all%(l)sCnt%(name)s = FOREACH all%(l)sCnt%(name)sGrp GENERATE 'ngrams%(l)s' as tokenType, COUNT($1) as total;
+all%(l)sCnt%(name)s = FOREACH all%(l)sCnt%(name)sGrp GENERATE 'ngrams%(l)s' as tokenType, (int)COUNT($1) as total;
 
 --STORE all%(l)sCnt%(name)s INTO  '%(root)stotal%(name)s/ngrams%(l)s' USING PigStorage('\\t');
 STORE all%(l)sCnt%(name)s INTO  'ngrams%(l)stotal%(name)s' USING yaboulna.pig.NGramsTotalStorage();
