@@ -36,6 +36,7 @@ public class NGramsCountStorage extends SQLStorage {
 
   public class NGramsCountRecordReader extends RecordReader<Long, Tuple> {
 
+    private static final int NAMESPACE_OFFSET = 1;
     ResultSet resultSet;
     ResultSetMetaData resultMetadata;
     long expectedLen;
@@ -100,7 +101,7 @@ public class NGramsCountStorage extends SQLStorage {
         int tupleSize = resultMetadata.getColumnCount() - 1;
         Tuple result = TupleFactory.getInstance().newTuple(tupleSize);
 
-        for (int i = 1; i <= tupleSize; ++i) {
+        for (int i = 1+NAMESPACE_OFFSET; i <= tupleSize+NAMESPACE_OFFSET; ++i) {
           switch (parsedSchema.getFields()[i].getType()) {
 // case DataType.NULL:
 // result.set(i,resultSet.getNull(i, java.sql.Types.VARCHAR);
