@@ -24,7 +24,7 @@ ngrams%(l)s = LOAD '%(root)sngrams/len%(l)s'  USING PigStorage('\\t') AS (id: lo
 ngrams%(l)sCntMillis = FOREACH ngrams%(l)s GENERATE ngram as ngram, date as date, timeMillis as epochStartMillis, 1 as cnt; 
 """ % {"l":args.len, "root": args.root, "udf": args.udf}
 
-prevCntsName = "ngrams%(l)s" % {"l": args.len}
+prevCntsName = "ngrams%(l)sCntMillis" % {"l": args.len}
 intervalName = {'300000L':'5min', '12L':'1hr', '24L':'1day', '7L':'1week', '30L':'1month'}
 intervalAcc = 1
 for interval in ['300000L', '12L', '24L', '7L', '30L']:
