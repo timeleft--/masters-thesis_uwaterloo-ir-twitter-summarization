@@ -227,8 +227,8 @@ public abstract class SQLStorage extends LoadFunc
               stmt = null;
               conn = null;
             } catch (SQLException e) {
-// LOG.error("stmt.close", e);
-              throw new IOException("stmt.close JDBC Error", e);
+              LOG.error("stmt.close:" +  e.getMessage(), e);
+// throw new IOException("stmt.close JDBC Error", e);
             }
           }
         }
@@ -407,7 +407,8 @@ public abstract class SQLStorage extends LoadFunc
         stmt = null;
       }
       if (conn != null) {
-        conn.rollback();
+        if (!conn.getAutoCommit())
+          conn.rollback();
         conn.close();
         conn = null;
       }
@@ -442,10 +443,13 @@ public abstract class SQLStorage extends LoadFunc
         warn("PrepareToWrite called while stmt is not null. Executed pending batches ("
             + pendingBatchResults.length + ")", Warnings.STMT_NOT_NULL_REINIT);
 // LOG.warn( );
+        if (!conn.getAutoCommit())
+          stmt.close();
         stmt = null;
       }
       if (conn != null) {
-        conn.commit();
+        if (!conn.getAutoCommit())
+          conn.commit();
         warn("PrepareToWrote called while conn is not null. Commited",
             Warnings.CONN_NOT_NULL_REINIT);
 // LOG.warn();

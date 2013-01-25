@@ -17,14 +17,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * CREATE UNLOGGED TABLE cnt (namespace VARCHAR(10), ngram text, date int4, epochStartMillis int8, cnt int4, pkey serial Primary key);
+ * CREATE UNLOGGED TABLE cnt (namespace VARCHAR(10), ngram text, date int4, epochStartMillis int8, cnt int4, pkey serial
+ * Primary key);
  * CREATE INDEX cnt_date ON cnt(date);
  * CREATE INDEX cnt_namespace ON cnt USING hash (namespace);
  */
 public class NGramsCountStorage extends SQLStorage {
-  
+
   public static Logger LOG = LoggerFactory.getLogger(SQLStorage.class);
-  
+
   private static final String TABLE_NAME = "cnt";
 
   static {
@@ -57,7 +58,7 @@ public class NGramsCountStorage extends SQLStorage {
         }
         sqlStrBuilder.append(";");
 
-        String sqlStr= sqlStrBuilder.toString();
+        String sqlStr = sqlStrBuilder.toString();
         LOG.info("Executing SQL: " + sqlStr);
         resultSet = stmt.executeQuery(sqlStr);
         resultMetadata = resultSet.getMetaData();
@@ -162,8 +163,8 @@ public class NGramsCountStorage extends SQLStorage {
           resultSet.close();
         }
         if (stmt != null) {
-          if(!conn.getAutoCommit())
-          stmt.close();
+          if (!conn.getAutoCommit())
+            stmt.close();
           stmt = null;
         }
       } catch (SQLException e) {
@@ -173,11 +174,7 @@ public class NGramsCountStorage extends SQLStorage {
 
   }
 
-  
-
   public class NGramsCountsInputFormat extends SQLPartitionByDateInputFormat {
-
-    
 
     @Override
     public NGramsCountRecordReader createRecordReader(InputSplit split, TaskAttemptContext context)
@@ -187,8 +184,6 @@ public class NGramsCountStorage extends SQLStorage {
     }
 
   }
-
-  
 
   @SuppressWarnings("rawtypes")
   @Override
@@ -200,10 +195,9 @@ public class NGramsCountStorage extends SQLStorage {
           "Only the NGRamsCount Table is supported at the moment");
     }
   }
-  
+
   public NGramsCountStorage(String dbname) throws ClassNotFoundException, ParserException {
     super(dbname);
   }
-
 
 }
