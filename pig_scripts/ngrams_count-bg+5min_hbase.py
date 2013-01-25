@@ -20,7 +20,8 @@ if not printOnly:
 
 script = """
 REGISTER %(udf)syaboulna-udf-0.0.1-SNAPSHOT.jar;
-ngrams%(l)s = LOAD '%(root)sngrams/len%(l)s'  USING PigStorage('\\t') AS (id: long, epochStartMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
+ngrams%(l)s = LOAD '%(root)sngrams/len%(l)s'  USING PigStorage('\\t') AS (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
+ngrams%(l)sCntMillis = FOREACH ngrams%(l)s GENERATE ngram as ngram, date as date, timeMillis as epochStartMillis, 1 as cnt; 
 """ % {"l":args.len, "root": args.root, "udf": args.udf}
 
 prevCntsName = "ngrams%(l)s" % {"l": args.len}
@@ -30,12 +31,14 @@ for interval in ['300000L', '12L', '24L', '7L', '30L']:
     
     intervalAcc *= long(interval)
     
+    replaceMap = {"l":args.len, "root": args.root, "name": intervalName[interval], "epoch":intervalAcc, "prevCnts": prevCntsName, "storeParams": args.storeParams}
+    
     script += """
     ngrams%(l)sPrj%(name)sA = FOREACH %(prevCnts)s GENERATE epochStartMillis/%(epoch)sL as epochStartMillisA, (ngram, date) as ngramDate; -- FOR PARTITIONING
     
     ngrams%(l)sGrps%(name)sA = GROUP ngrams%(l)sPrj%(name)sA BY (epochStartMillisA, ngramDate);
     
-    ngrams%(l)sCnt%(name)s = FOREACH ngrams%(l)sGrps%(name)sA GENERATE FLATTEN(group.ngramDate) as (ngram, date), (group.epochStartMillisA * %(epoch)sL) as epochStartMillis, (int)COUNT($1) as cnt;
+    ngrams%(l)sCnt%(name)s = FOREACH ngrams%(l)sGrps%(name)sA GENERATE FLATTEN(group.ngramDate) as (ngram, date), (group.epochStartMillisA * %(epoch)sL) as epochStartMillis, (int)SUM($1.cnt) as cnt;
     
     --It's already ordered
     --orderCnts = ORDER ngrams%(l)sCnt%(name)s BY epochStartMillis;
@@ -43,18 +46,19 @@ for interval in ['300000L', '12L', '24L', '7L', '30L']:
     --STORE ngrams%(l)sCnt%(name)s INTO  '%(root)scnt%(name)s/ngrams%(l)s' USING PigStorage('\\t');
     STORE ngrams%(l)sCnt%(name)s INTO  'cnt/%(name)s%(l)s' USING yaboulna.pig.NGramsCountStorage(%(storeParams)s);
     
-    """ % {"l":args.len, "root": args.root, "name": intervalName[interval], "epoch":intervalAcc, "prevCnts": prevCntsName, "storeParams": args.storeParams}
+    """ % replaceMap;
     
     prevCntsName = "ngrams%(l)sCnt%(name)s"% {"l":args.len, "name": intervalName[interval]}
 
-"""
--- TODO: Store totals (when DB stuff proves to be working) 
-all%(l)sCnt%(name)sGrp = GROUP ngrams%(l)sCnt%(name)s ALL;
-all%(l)sCnt%(name)s = FOREACH all%(l)sCnt%(name)sGrp GENERATE 'ngrams%(l)s' as tokenType, (int)COUNT($1) as total;
+"""    
+    --TODONOT Store totals (in the same table for simplicity, hoping that namespaces will work well) 
+    all%(l)sCnt%(name)sGrp = GROUP ngrams%(l)sCnt%(name)s ALL;
+    all%(l)sCnt%(name)s = FOREACH all%(l)sCnt%(name)sGrp GENERATE 'ALL' as ngram, (int)MAX($1.date) as date, MAX($1.epochStartMillis) as epochStartMillis, (int)SUM($1.cnt) as cnt;
 
---STORE all%(l)sCnt%(name)s INTO  '%(root)stotal%(name)s/ngrams%(l)s' USING PigStorage('\\t');
-STORE all%(l)sCnt%(name)s INTO  'ngrams%(l)stotal%(name)s' USING yaboulna.pig.NGramsTotalStorage();
-"""
+    --STORE all%(l)sCnt%(name)s INTO  '%(root)scnt%(name)s/ngrams%(l)sTotal' USING PigStorage('\\t');
+    STORE  all%(l)sCnt%(name)s INTO  'cnt/%(name)s%(l)stot' USING yaboulna.pig.NGramsCountStorage(%(storeParams)s);
+    """
+#script += ABOVE % replaceMap;
 
 print(script)
 

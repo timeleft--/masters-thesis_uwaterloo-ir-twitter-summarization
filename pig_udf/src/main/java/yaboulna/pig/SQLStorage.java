@@ -98,7 +98,7 @@ public abstract class SQLStorage extends LoadFunc
 
   }
   public static enum Warnings {
-    NONZERO_SQL_RETCODE, STMT_NOT_NULL_REINIT, CONN_NOT_NULL_REINIT, SCHEMA_NAMES_NOT_MATCHING, NON_CONTIGOUS_PARTITION
+    SQL_RETCODE, STMT_NOT_NULL_REINIT, CONN_NOT_NULL_REINIT, SCHEMA_NAMES_NOT_MATCHING, NON_CONTIGOUS_PARTITION
     // RESULTSET_NOT_NULL_REINIT,
   };
 
@@ -114,7 +114,7 @@ public abstract class SQLStorage extends LoadFunc
   protected static final String DEFAULT_CONNECTION_URL = "jdbc:postgresql://hops.cs.uwaterloo.ca:5433/";
   protected static final String DEFAULT_USER = "yaboulna";
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
-  protected static final int DEFAULT_BATCH_SIZE = 1000;
+  protected static final int DEFAULT_BATCH_SIZE = 1000000;
   private static final long DEFAULT_NUMRECS_PER_CHUNK = 10000;
   private static final String DEFAULT_NS = "DEFAULTNS"; // Read NameSpace
 
@@ -386,8 +386,8 @@ public abstract class SQLStorage extends LoadFunc
         pendingBatchCount = 0;
         int[] retCodes = writeStmt.executeBatch();
         for (int rc : retCodes) {
-          if (rc != 0) {
-           logWarn("Non-Zero return code: " + rc, Warnings.NONZERO_SQL_RETCODE);
+          if (rc != 1) {
+           logWarn("SQL INSERT return not 1, but: " + rc, Warnings.SQL_RETCODE);
           }
         }
         writeStmt.clearBatch();
