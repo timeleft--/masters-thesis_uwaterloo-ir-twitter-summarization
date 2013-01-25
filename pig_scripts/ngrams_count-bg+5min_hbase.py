@@ -34,7 +34,7 @@ for interval in ['300000L', '12L', '24L', '7L', '30L']:
     replaceMap = {"l":args.len, "root": args.root, "name": intervalName[interval], "epoch":intervalAcc, "prevCnts": prevCntsName, "storeParams": args.storeParams}
     
     script += """
-    ngrams%(l)sPrj%(name)sA = FOREACH %(prevCnts)s GENERATE epochStartMillis/%(epoch)sL as epochStartMillisA, (ngram, date) as ngramDate; -- FOR PARTITIONING
+    ngrams%(l)sPrj%(name)sA = FOREACH %(prevCnts)s GENERATE epochStartMillis/%(epoch)sL as epochStartMillisA, (ngram, date) as ngramDate, cnt as cnt;
     
     ngrams%(l)sGrps%(name)sA = GROUP ngrams%(l)sPrj%(name)sA BY (epochStartMillisA, ngramDate);
     
