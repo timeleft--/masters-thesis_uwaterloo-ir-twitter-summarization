@@ -14,12 +14,12 @@ printOnly=args.dry
 
 
 if not printOnly:
-    from org.apache.pig.scripting import *
+    from org.apache.pig.scripting import Pig
     Pig.set("default_parallel", "50")
 
 
 script = """
-REGISTER %(udf)s/yaboulna-udf-0.0.1-SNAPSHOT.jar;
+REGISTER %(udf)syaboulna-udf-0.0.1-SNAPSHOT.jar;
 ngrams%(l)s = LOAD '%(root)sngrams/len%(l)s'  USING PigStorage('\\t') AS (id: long, epochStartMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
 """ % {"l":args.len, "root": args.root, "udf": args.udf}
 
