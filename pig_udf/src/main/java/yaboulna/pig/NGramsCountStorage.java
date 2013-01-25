@@ -98,7 +98,7 @@ public class NGramsCountStorage extends SQLStorage {
     @Override
     public Tuple getCurrentValue() throws IOException, InterruptedException {
       try {
-        int tupleSize = resultMetadata.getColumnCount() - 1;
+        int tupleSize = resultMetadata.getColumnCount() - NAMESPACE_OFFSET;
         Tuple result = TupleFactory.getInstance().newTuple(tupleSize);
 
         for (int i = 0; i < tupleSize; ++i) {
