@@ -36,7 +36,7 @@ public class NGramsCountStorage extends SQLStorage {
 
   public class NGramsCountRecordReader extends RecordReader<Long, Tuple> {
 
-    private static final int NAMESPACE_OFFSET = 1;
+    private static final int NAMESPACE_OFFSET = 2;
     ResultSet resultSet;
     ResultSetMetaData resultMetadata;
     long expectedLen;
@@ -101,42 +101,44 @@ public class NGramsCountStorage extends SQLStorage {
         int tupleSize = resultMetadata.getColumnCount() - 1;
         Tuple result = TupleFactory.getInstance().newTuple(tupleSize);
 
-        for (int i = 1+NAMESPACE_OFFSET; i <= tupleSize+NAMESPACE_OFFSET; ++i) {
+        for (int i = 0; i < tupleSize; ++i) {
+          int j = i+NAMESPACE_OFFSET;
           switch (parsedSchema.getFields()[i].getType()) {
+            
 // case DataType.NULL:
-// result.set(i,resultSet.getNull(i, java.sql.Types.VARCHAR);
+// result.set(i,resultSet.getNull(j, java.sql.Types.VARCHAR);
 // break;
-
+            
             case DataType.BOOLEAN :
-              result.set(i, resultSet.getBoolean(i));
+              result.set(i, resultSet.getBoolean(j));
               break;
 
             case DataType.INTEGER :
-              result.set(i, resultSet.getInt(i));
+              result.set(i, resultSet.getInt(j));
               break;
 
             case DataType.LONG :
-              result.set(i, resultSet.getLong(i));
+              result.set(i, resultSet.getLong(j));
               break;
 
             case DataType.FLOAT :
-              result.set(i, resultSet.getFloat(i));
+              result.set(i, resultSet.getFloat(j));
               break;
 
             case DataType.DOUBLE :
-              result.set(i, resultSet.getDouble(i));
+              result.set(i, resultSet.getDouble(j));
               break;
 
             case DataType.BYTEARRAY :
-              result.set(i, resultSet.getBytes(i));
+              result.set(i, resultSet.getBytes(j));
               break;
 
             case DataType.CHARARRAY :
-              result.set(i, resultSet.getString(i));
+              result.set(i, resultSet.getString(j));
               break;
 
             case DataType.BYTE :
-              result.set(i, resultSet.getByte(i));
+              result.set(i, resultSet.getByte(j));
               break;
 
             case DataType.MAP :
