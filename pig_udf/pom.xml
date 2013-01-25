@@ -20,13 +20,12 @@
 
 
 	<dependencies>
-    <!--  TODO: change the use of Java.util.Date to JodaTime -->
-		<!-- <dependency> -->
-		<!-- <groupId>joda-time</groupId> -->
-		<!-- <artifactId>joda-time</artifactId> -->
-		<!-- <version>2.1</version> -->
-		<!-- </dependency> -->
-		
+		<dependency>
+			<groupId>postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>9.2-1002.jdbc4</version>
+		</dependency>
+
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
@@ -61,41 +60,41 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Cloudera Dependencies --> 
- 		<!-- check versions at: https://ccp.cloudera.com/display/CDH4DOC/Using+the+CDH4+Maven+Repository --> 
- 		<!-- HIVE CRAZINESS --> 
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.apache.hive</groupId> -->
-<!-- 			<artifactId>hive-jdbc</artifactId> -->
-<!-- 			<version>0.9.0-cdh4.1.2</version> -->
-<!-- 		</dependency> -->
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.apache.thrift</groupId> -->
-<!-- 			<artifactId>libthrift</artifactId> -->
- 			<!--  what's wrong with that? --> 
-<!-- 			<version>0.7.0-cdh4.1.2</version> -->
-<!-- 		</dependency> -->
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.apache.hive</groupId> -->
-<!-- 			<artifactId>hive-service</artifactId> -->
-<!-- 			<version>0.9.0-cdh4.1.2</version> -->
-<!-- 		</dependency> -->
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.apache.hive</groupId> -->
-<!-- 			<artifactId>hive-metastore</artifactId> -->
-<!-- 			<version>0.9.0-cdh4.1.2</version> -->
-<!-- 		</dependency> -->
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.apache.hive</groupId> -->
-<!-- 			<artifactId>hive-exec</artifactId> -->
-<!-- 			<version>0.9.0-cdh4.1.2</version> -->
-<!-- 		</dependency> -->
- 		<!-- <dependency> <groupId>org.apache.derby</groupId> <artifactId>derby</artifactId>  -->
-<!-- 			<version>10.4.2.0</version> </dependency> <dependency> <groupId>org.apache.derby</groupId>  -->
-<!-- 			<artifactId>derbytools</artifactId> <version>10.4.2.0</version> </dependency> --> 
- 		<!-- END HIVE CRAZINESS --> 
+		<!-- Cloudera Dependencies -->
+		<!-- check versions at: https://ccp.cloudera.com/display/CDH4DOC/Using+the+CDH4+Maven+Repository -->
+		<!-- HIVE CRAZINESS -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.hive</groupId> -->
+		<!-- <artifactId>hive-jdbc</artifactId> -->
+		<!-- <version>0.9.0-cdh4.1.2</version> -->
+		<!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.thrift</groupId> -->
+		<!-- <artifactId>libthrift</artifactId> -->
+		<!-- what's wrong with that? -->
+		<!-- <version>0.7.0-cdh4.1.2</version> -->
+		<!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.hive</groupId> -->
+		<!-- <artifactId>hive-service</artifactId> -->
+		<!-- <version>0.9.0-cdh4.1.2</version> -->
+		<!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.hive</groupId> -->
+		<!-- <artifactId>hive-metastore</artifactId> -->
+		<!-- <version>0.9.0-cdh4.1.2</version> -->
+		<!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.hive</groupId> -->
+		<!-- <artifactId>hive-exec</artifactId> -->
+		<!-- <version>0.9.0-cdh4.1.2</version> -->
+		<!-- </dependency> -->
+		<!-- <dependency> <groupId>org.apache.derby</groupId> <artifactId>derby</artifactId> -->
+		<!-- <version>10.4.2.0</version> </dependency> <dependency> <groupId>org.apache.derby</groupId> -->
+		<!-- <artifactId>derbytools</artifactId> <version>10.4.2.0</version> </dependency> -->
+		<!-- END HIVE CRAZINESS -->
 
-	<dependency>	
+		<dependency>
 			<groupId>org.apache.pig</groupId>
 			<artifactId>piggybank</artifactId>
 			<version>0.10.0-cdh4.1.2</version>
@@ -129,7 +128,7 @@
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
 			<version>2.0.0-mr1-cdh4.1.2</version>
-<!-- 			<scope>provided</scope> -->
+			<!-- <scope>provided</scope> -->
 			<exclusions>
 				<exclusion>
 					<artifactId>guava</artifactId>
@@ -137,18 +136,18 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		
-<!-- 		<dependency> -->
-<!-- 		  <groupId>org.apache.hbase</groupId> -->
-<!-- 		  <artifactId>hbase</artifactId> -->
-<!-- 		  <version>0.92.1-cdh4.1.2</version> -->
-<!-- 		  <exclusions> -->
-<!-- 		  	<exclusion> -->
-<!-- 		  		<artifactId>guava</artifactId> -->
-<!-- 		  		<groupId>com.google.guava</groupId> -->
-<!-- 		  	</exclusion> -->
-<!-- 		  </exclusions> -->
-<!-- 		</dependency> -->
+
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.hbase</groupId> -->
+		<!-- <artifactId>hbase</artifactId> -->
+		<!-- <version>0.92.1-cdh4.1.2</version> -->
+		<!-- <exclusions> -->
+		<!-- <exclusion> -->
+		<!-- <artifactId>guava</artifactId> -->
+		<!-- <groupId>com.google.guava</groupId> -->
+		<!-- </exclusion> -->
+		<!-- </exclusions> -->
+		<!-- </dependency> -->
 
 		<!-- Much better and easier than the mess below -->
 		<!-- END CLOUDERA -->
@@ -255,10 +254,12 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-<!-- This doesn't work in the context of Pig where apparently the Guava version is 11.0.2 regardless of -->
-<!--       // the Guava I include with the project.. maybe I should also inclde some Mangos -->
+			<!-- This doesn't work in the context of Pig where apparently the Guava 
+				version is 11.0.2 regardless of -->
+			<!-- // the Guava I include with the project.. maybe I should also inclde 
+				some Mangos -->
 			<version>11.0.2</version>
-<!-- 			<version>13.0.1</version> -->
+			<!-- <version>13.0.1</version> -->
 		</dependency>
 		<dependency>
 			<groupId>joda-time</groupId>
@@ -284,19 +285,19 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+
 			<plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <encoding>UTF-8</encoding>
-          <source>1.6</source>
-          <target>1.6</target>
-          <optimize>true</optimize>
-        </configuration>
-      </plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<encoding>UTF-8</encoding>
+					<source>1.6</source>
+					<target>1.6</target>
+					<optimize>true</optimize>
+				</configuration>
+			</plugin>
 		</plugins>
-		
+
 
 		<pluginManagement>
 			<plugins>
