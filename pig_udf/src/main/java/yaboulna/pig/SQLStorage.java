@@ -1,5 +1,7 @@
 package yaboulna.pig;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -14,6 +16,7 @@ import java.util.Properties;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
@@ -56,7 +59,7 @@ public abstract class SQLStorage extends LoadFunc
     LoadMetadata {
   public static Logger LOG = LoggerFactory.getLogger(SQLStorage.class);
 
-  public static class WhereClauseSplit extends InputSplit {
+  public static class WhereClauseSplit extends InputSplit implements Writable {
 
     String[] splitWhereClause;
     long avgLen;
@@ -74,6 +77,19 @@ public abstract class SQLStorage extends LoadFunc
     @Override
     public String[] getLocations() throws IOException, InterruptedException {
       return splitWhereClause;
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+      out.writeUTF(splitWhereClause[0]);
+      out.writeLong(avgLen);
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+      splitWhereClause = new String[1];
+      splitWhereClause[0] = in.readUTF();
+      avgLen = in.readLong();
     }
 
   }
