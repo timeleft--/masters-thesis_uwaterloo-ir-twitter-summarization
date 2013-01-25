@@ -82,7 +82,7 @@ public abstract class SQLStorage extends LoadFunc
     // RESULTSET_NOT_NULL_REINIT,
   };
 
-  protected static final String DEFAULT_SCHEMA_SELECTOR = "ngramsCnt";
+  protected static final String DEFAULT_SCHEMA_SELECTOR = "cnt";
   protected static final Map<String, String> SCHEMA_MAP = Maps.newHashMap();
 // static {
 // SCHEMA_MAP
@@ -280,15 +280,23 @@ public abstract class SQLStorage extends LoadFunc
 
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
+    if(LOG.isDebugEnabled()) 
+      LOG.debug("setStoreLocation " + location); 
     setLocation(location, job);
   }
 
   @Override
   public void setLocation(String location, Job job) throws IOException {
+    if(LOG.isDebugEnabled()) 
+      LOG.debug("setLocation "+location);
      String[] slashSplits = location.split("\\/");
      tableName = slashSplits[0];
+     if(LOG.isDebugEnabled()) 
+       LOG.debug("tableName set to: " + tableName);
      if(slashSplits.length == 2){
       bitmapNamespace = slashSplits[1];
+      if(LOG.isDebugEnabled()) 
+        LOG.debug("bitmapNamespace set to: " + bitmapNamespace);
     } else if(slashSplits.length > 2) {
       throw new UnsupportedOperationException("Maybe later");
     }
@@ -368,6 +376,8 @@ public abstract class SQLStorage extends LoadFunc
 
   @Override
   public void setStoreFuncUDFContextSignature(String signature) {
+    if(LOG.isDebugEnabled()) 
+      LOG.debug("udfcSignature " + signature);
     udfcSignature = signature;
   }
 
