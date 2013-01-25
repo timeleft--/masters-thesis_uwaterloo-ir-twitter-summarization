@@ -91,9 +91,12 @@ public abstract class SQLStorage extends LoadFunc
       splitWhereClause[0] = in.readUTF();
       avgLen = in.readLong();
     }
+    
+    public WhereClauseSplit() {
+    }
 
   }
-  public enum Warnings {
+  public static enum Warnings {
     NONZERO_SQL_RETCODE, STMT_NOT_NULL_REINIT, CONN_NOT_NULL_REINIT, SCHEMA_NAMES_NOT_MATCHING, NON_CONTIGOUS_PARTITION
     // RESULTSET_NOT_NULL_REINIT,
   };
