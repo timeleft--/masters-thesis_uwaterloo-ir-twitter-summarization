@@ -378,6 +378,9 @@ public abstract class SQLStorage extends LoadFunc
     try {
       String sqlStr = sqlStrBuilder.toString();
       LOG.debug("Adding SQL to batch: " + sqlStrBuilder.toString());
+      if(writeStmt == null){
+        prepare(writeStmt);
+      }
       writeStmt.addBatch(sqlStr);
       if (++pendingBatchCount == batchSizeForCommit) {
         pendingBatchCount = 0;
