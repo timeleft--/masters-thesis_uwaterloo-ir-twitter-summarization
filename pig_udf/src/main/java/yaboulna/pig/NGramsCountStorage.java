@@ -13,8 +13,18 @@ import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 import org.apache.pig.parser.ParserException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * CREATE UNLOGGED TABLE cnt (namespace VARCHAR(10), ngram text, date int4, epochStartMillis int8, cnt int4, pkey serial Primary key);
+ * CREATE INDEX cnt_date ON cnt(date);
+ * CREATE INDEX cnt_namespace ON cnt USING hash (namespace);
+ */
 public class NGramsCountStorage extends SQLStorage {
+  
+  public static Logger LOG = LoggerFactory.getLogger(SQLStorage.class);
+  
   private static final String TABLE_NAME = "ngramsCnt";
 
   static {
@@ -39,14 +49,17 @@ public class NGramsCountStorage extends SQLStorage {
           sqlStrBuilder.append(", pkey ");
         }
         sqlStrBuilder.append(" FROM ").append(tableName)
-            .append(" WHERE ").append(split.getLocations()[0]);
+            .append(" WHERE namespace =").append(bitmapNamespace)
+            .append(split.getLocations()[0]);
         // at the moment this is redundant, but it wouldn't hurt to have it in case partitioning changes
         if (!partitionWhereClause.isEmpty()) {
           sqlStrBuilder.append(" AND ").append(partitionWhereClause);
         }
         sqlStrBuilder.append(";");
 
-        resultSet = stmt.executeQuery(sqlStrBuilder.toString());
+        String sqlStr= sqlStrBuilder.toString();
+        LOG.info("Executing SQL: " + sqlStr);
+        resultSet = stmt.executeQuery(sqlStr);
         resultMetadata = resultSet.getMetaData();
       } catch (SQLException e) {
         throw new IOException(e);
@@ -174,9 +187,7 @@ public class NGramsCountStorage extends SQLStorage {
 
   }
 
-  public NGramsCountStorage() throws ClassNotFoundException, ParserException {
-    super();
-  }
+  
 
   @SuppressWarnings("rawtypes")
   @Override
@@ -188,5 +199,10 @@ public class NGramsCountStorage extends SQLStorage {
           "Only the NGRamsCount Table is supported at the moment");
     }
   }
+  
+  public NGramsCountStorage(String dbname) throws ClassNotFoundException, ParserException {
+    super(dbname);
+  }
+
 
 }

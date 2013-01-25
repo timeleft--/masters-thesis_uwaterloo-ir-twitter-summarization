@@ -43,6 +43,8 @@ import org.joda.time.Days;
 import org.joda.time.MutableDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -52,7 +54,8 @@ public abstract class SQLStorage extends LoadFunc
     StoreFuncInterface,
     LoadPushDown,
     LoadMetadata {
-
+  public static Logger LOG = LoggerFactory.getLogger(SQLStorage.class);
+  
   public static class WhereClauseSplit extends InputSplit {
 
     String[] splitWhereClause;
@@ -88,11 +91,12 @@ public abstract class SQLStorage extends LoadFunc
 // "id: long, timeMillis: long, date: int, ngram: map[chararray], ngramLen: int, tweetLen: int,  pos: int");
 // }
   protected static final String DEFAULT_DRIVER = "org.postgresql.Driver";
-  protected static final String DEFAULT_CONNECTION_URL = "jdbc:postgresql://hops.cs.uwaterloo.ca:5433/spritzer";
+  protected static final String DEFAULT_CONNECTION_URL = "jdbc:postgresql://hops.cs.uwaterloo.ca:5433/";
   protected static final String DEFAULT_USER = "yaboulna";
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
   protected static final int DEFAULT_BATCH_SIZE = 1000;
   private static final long DEFAULT_NUMRECS_PER_CHUNK = 10000;
+  private static final String DEFAULT_NS = "DEFAULTNS"; //Read NameSpace
 
 // protected static Logger LOG = LoggerFactory.getLogger(PostgreSQLStorage.class);
 
@@ -104,7 +108,7 @@ public abstract class SQLStorage extends LoadFunc
   protected Statement stmt = null;
   protected String projection = "*";
   protected String partitionWhereClause = "";
-
+  protected String bitmapNamespace = DEFAULT_NS;
   protected String schemaSelector = null;
   protected ResourceSchema parsedSchema = null;
   protected String url;
@@ -115,11 +119,12 @@ public abstract class SQLStorage extends LoadFunc
   protected RecordReader<Long, DBWritable> reader;
 
   protected StringBuilder sqlStrBuilder = new StringBuilder();
+  
 
-  public SQLStorage() throws ClassNotFoundException, ParserException {
+  public SQLStorage(String dbname) throws ClassNotFoundException, ParserException {
     Class.forName(DEFAULT_DRIVER);
 
-    url = DEFAULT_CONNECTION_URL;
+    url = DEFAULT_CONNECTION_URL + dbname;
     props = new Properties();
     props.setProperty("user", DEFAULT_USER);// "uspritzer");
     props.setProperty("password", DEFAULT_PASSWORD); // "Spritz3rU");
@@ -145,8 +150,10 @@ public abstract class SQLStorage extends LoadFunc
   @Override
   public String[] getPartitionKeys(String location, Job job) throws IOException {
     try {
-
-      ResultSet rs = stmt.executeQuery("SELECT DISTINCT date FROM " + location + ";");
+      String sqlStr = "SELECT DISTINCT date FROM " + location + ";";
+      LOG.info("Executing SQL: " + sqlStr);
+      ResultSet rs = stmt.executeQuery(sqlStr);
+      
       List<String> result = Lists.newLinkedList();
       while (rs.next()) {
         result.add(rs.getString(1));
@@ -273,15 +280,19 @@ public abstract class SQLStorage extends LoadFunc
 
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
-    tableName = location;
-    setSchemaSelector(location);
+    setLocation(location, job);
   }
 
   @Override
   public void setLocation(String location, Job job) throws IOException {
-
-    tableName = location;
-    setSchemaSelector(location);
+     String[] slashSplits = location.split("\\/");
+     tableName = slashSplits[0];
+     if(slashSplits.length == 2){
+      bitmapNamespace = slashSplits[1];
+    } else if(slashSplits.length > 2) {
+      throw new UnsupportedOperationException("Maybe later");
+    }
+    setSchemaSelector(tableName);
   }
 
   protected void setSchemaSelector(String location) {
@@ -322,14 +333,16 @@ public abstract class SQLStorage extends LoadFunc
 
     sqlStrBuilder.setLength(0);
     sqlStrBuilder.append(" INSERT INTO " + tableName + " VALUES ("
-        + toQuotedStr(t.get(0)));
-    for (int i = 1; i < t.size(); ++i) {
+        + toQuotedStr(bitmapNamespace));
+    for (int i = 0; i < t.size(); ++i) {
       sqlStrBuilder.append(", ").append(toQuotedStr(t.get(i)));
     }
     sqlStrBuilder.append(");");
 
     try {
-      stmt.addBatch(sqlStrBuilder.toString());
+      String sqlStr = sqlStrBuilder.toString();
+      LOG.info("Adding SQL to batch: " + sqlStrBuilder.toString());
+      stmt.addBatch(sqlStr);
       if (++pendingBatchCount == batchSizeForCommit) {
         pendingBatchCount = 0;
         int[] retCodes = stmt.executeBatch();
@@ -460,10 +473,12 @@ public abstract class SQLStorage extends LoadFunc
 
       ResultSet results = null;
       try {
+        String sqlStr = " SELECT COUNT(*), COUNT(DISTINCT date), MIN(date), MAX(date) FROM "
+            + tableName
+            + (partitionWhereClause.isEmpty() ? "; " : " WHERE " + partitionWhereClause + " ;");
+        LOG.info("Executing SQL: " + sqlStr);
         results = stmt
-            .executeQuery(" SELECT COUNT(*), COUNT(DISTINCT date), MIN(date), MAX(date) FROM "
-                + tableName
-                + (partitionWhereClause.isEmpty() ? "; " : " WHERE " + partitionWhereClause + " ;"));
+            .executeQuery(sqlStr);
         results.next();
 
         long countRecs = results.getLong(1);
