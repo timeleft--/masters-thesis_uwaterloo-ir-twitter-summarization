@@ -18,6 +18,7 @@ if not printOnly:
 
 
 script = """
+REGISTER %(udf)s/yaboulna-udf-0.0.1-SNAPSHOT.jar;
 ngrams%(l)s = LOAD '%(root)sngrams/len%(l)s'  USING PigStorage('\\t') AS (id: long, epochStartMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
 """ % {"l":args.len, "root": args.root}
 
