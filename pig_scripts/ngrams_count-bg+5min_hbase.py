@@ -61,8 +61,8 @@ print(script)
 if printOnly:
     sys.exit(0)
 
-stat = Pig.compile(script).bind().run()
-
+stat = Pig.compile(script).bind().runSingle()
+        
 if stat.isSuccessful():
     print("Completed with success, outputs written:\n")
     for location in stat.getOutputLocations():

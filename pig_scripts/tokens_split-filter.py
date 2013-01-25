@@ -44,7 +44,7 @@ if printOnly:
 	
 script = Pig.compile(scriptStr)
 bound = script.bind()
-stat = bound.run()
+stat = bound.runSingle()
 
 print("Script returned in " + stat.getDuration())
 

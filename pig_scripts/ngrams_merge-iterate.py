@@ -85,7 +85,7 @@ for i in range(maxLength-1):
     
     bound = script.bind(params)
     
-    stats = bound.run()
+    stats = bound.runSingle()
     
     print("Script returned in " + stat.getDuration())
 
