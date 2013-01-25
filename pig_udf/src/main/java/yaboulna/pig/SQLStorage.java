@@ -353,7 +353,7 @@ public abstract class SQLStorage extends LoadFunc
     }
     for (int i = 0; i < otherFields.length; ++i) {
       if (!otherFields[i].getName().equals(ourFields[i].getName())) {
-        warn("Non matching names - pig schema: " + otherFields[i].getName() + " , DB schema: "
+       logWarn("Non matching names - pig schema: " + otherFields[i].getName() + " , DB schema: "
             + ourFields[i].getName(), Warnings.SCHEMA_NAMES_NOT_MATCHING);
       }
       if (otherFields[i].getType() != ourFields[i].getType()) {
@@ -379,7 +379,7 @@ public abstract class SQLStorage extends LoadFunc
       String sqlStr = sqlStrBuilder.toString();
       LOG.debug("Adding SQL to batch: " + sqlStrBuilder.toString());
       if(writeStmt == null){
-        prepare(writeStmt);
+        prepareToWrite(null);
       }
       writeStmt.addBatch(sqlStr);
       if (++pendingBatchCount == batchSizeForCommit) {
@@ -387,7 +387,7 @@ public abstract class SQLStorage extends LoadFunc
         int[] retCodes = writeStmt.executeBatch();
         for (int rc : retCodes) {
           if (rc != 0) {
-            warn("Non-Zero return code: " + rc, Warnings.NONZERO_SQL_RETCODE);
+           logWarn("Non-Zero return code: " + rc, Warnings.NONZERO_SQL_RETCODE);
           }
         }
         writeStmt.clearBatch();
@@ -451,11 +451,11 @@ public abstract class SQLStorage extends LoadFunc
   @Override
   public void prepareToRead(RecordReader reader, PigSplit split) throws IOException {
 // if (resultSet != null) {
-// warn("Result set not null and prepare to read is called. Closing.",
+//logWarn("Result set not null and prepare to read is called. Closing.",
 // Warnings.RESULTSET_NOT_NULL_REINIT);
 // resultSet.close();
 // }
-    prepare(readStmt);
+    readStmt = prepare(readStmt);
     // FIXME: Abstraction, so that other readers can be added later for other tables
     if (reader instanceof NGramsCountRecordReader) {
       this.reader = (NGramsCountRecordReader) reader;
@@ -468,14 +468,14 @@ public abstract class SQLStorage extends LoadFunc
   @SuppressWarnings("rawtypes")
   @Override
   public void prepareToWrite(RecordWriter writer) throws IOException {
-    prepare(writeStmt);
+    writeStmt = prepare(writeStmt);
   }
 
-  protected void prepare(Statement stmt) throws IOException {
+  protected Statement prepare(Statement stmt) throws IOException {
     try {
       if (stmt != null) {
         int[] pendingBatchResults = stmt.executeBatch();
-        warn("prepare called while stmt is not null. Executed pending batches ("
+       logWarn("prepare called while stmt is not null. Executed pending batches ("
             + pendingBatchResults.length + ")", Warnings.STMT_NOT_NULL_REINIT);
 // LOG.warn( );
         if (conn != null && !conn.getAutoCommit())
@@ -485,14 +485,14 @@ public abstract class SQLStorage extends LoadFunc
       if (conn != null) {
         if (!conn.getAutoCommit())
           conn.commit();
-        warn("prepare called while conn is not null. Commited",
+       logWarn("prepare called while conn is not null. Commited",
             Warnings.CONN_NOT_NULL_REINIT);
 // LOG.warn();
         conn = null;
       }
       loadSchema();
       conn = DriverManager.getConnection(url, props);
-      stmt = conn.createStatement();
+      return conn.createStatement();
     } catch (SQLException e) {
       throw new IOException(e);
     }
@@ -585,7 +585,7 @@ public abstract class SQLStorage extends LoadFunc
         int daysDiff = Days.daysBetween(minDate, maxDate).getDays(); // .toDateMidnight()
 
         if (countDates != daysDiff + 1) {
-          warn("Some dates are missing in the partition " + partitionWhereClause
+         logWarn("Some dates are missing in the partition " + partitionWhereClause
               + " and thus some jobs will have empty input", Warnings.NON_CONTIGOUS_PARTITION);
         }
 
@@ -617,5 +617,10 @@ public abstract class SQLStorage extends LoadFunc
   @Override
   public String relativeToAbsolutePath(String location, Path curDir) throws IOException {
     return location;
+  }
+  
+  void logWarn(String message, Warnings warn){
+    LOG.warn(message);
+    warn(message, warn);
   }
 }
