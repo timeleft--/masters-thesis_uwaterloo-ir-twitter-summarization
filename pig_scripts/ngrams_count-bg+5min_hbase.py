@@ -17,22 +17,13 @@ if not printOnly:
 
 
 script = """
-ngrams%(l)s = LOAD '%(root)sngrams/len%(l)s'  USING PigStorage('\\t') AS (id: long, timeMillis:long, date:chararray, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
-ngrams%(l)sPrj = FOREACH ngrams%(l)s GENERATE ngram, timeMillis, date; -- FOR PARTITIONING
--- ngrams%(l)sAll = GROUP ngrams%(l)sPrj ALL;
--- ngrams%(l)sAllCnt = FOREACH ngrams%(l)sAll GENERATE 'ALL' as ngram, COUNT($1) AS cnt;
-ngrams%(l)sGrps = GROUP ngrams%(l)sPrj BY ngram;
-ngrams%(l)sCnt = FOREACH ngrams%(l)sGrps GENERATE group AS ngram, COUNT($1) AS cnt;
---STORE (UNION ngrams%(l)sAllCnt,ngrams%(l)sCnt)
+ngrams%(l)s = LOAD '%(root)sngrams/len%(l)s'  USING PigStorage('\\t') AS (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
+ngrams%(l)sPrj = FOREACH ngrams%(l)s GENERATE timeMillis, (ngram, date); -- FOR PARTITIONING
 
-ngrams%(l)sPrj5minA = GROUP ngrams%(l)sPrj BY timeMillis/300000;
--- ngrams%(l)sAllCnt5min = FOREACH ngrams%(l)sPrj5minA GENERATE 'ALL' as ngram, FLATTEN($1.date) as date, (group*300000) as epochStartMillis , COUNT($1) as cnt;
----- Doesn't work, because of java.lang.ClassCastException: org.apache.pig.backend.hadoop.executionengine.physicalLayer.relationalOperators.POLimit cannot be cast to org.apache.pig.backend.hadoop.executionengine.physicalLayer.relationalOperators.POStore
----- ngrams%(l)sAllCnt5min = LIMIT ngrams%(l)sAllCnt5min 1;
---ngrams%(l)sAllCnt5min = DISTINCT ngrams%(l)sAllCnt5min;
+ngrams%(l)sPrj5minA = GROUP ngrams%(l)sPrj BY timeMillis/300000L;
 
-ngrams%(l)sCnt5min = FOREACH ngrams%(l)sPrj5minA GENERATE $1.ngram as ngram, $1.date as date, (group*300000) as epochStartMillis , COUNT($1) as cnt; 
-
+ngrams%(l)sCnt5minB = FOREACH ngrams%(l)sPrj5minA GENERATE FLATTEN($1.$1) as (ngram_date:(ngram:chararray, date:int)), (group*300000L) as epochStartMillis , COUNT($1) as cnt; 
+ngrams%(l)sCnt5min = FOREACH ngrams%(l)sCnt5minB GENERATE FLATTEN($0) as (ngram:chararray, date:int), epochStartMillis, cnt;
 -- STORE (UNION ngrams%(l)sCnt5min, ngrams%(l)sAllCnt5min) 
 """ % {"l":args.len, "root": args.root}
 
