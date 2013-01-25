@@ -3,6 +3,7 @@ import sys
 
 from optparse import OptionParser
 parser = OptionParser()
+parser.add_option("--udf", help="The path to where UDF jars are stored", default="")
 parser.add_option("--root", help="The root of where the data is stored", default="")
 parser.add_option("--storeParams", help="Parameters to pass to the DB store function", default="")
 parser.add_option("--len", help="The length of ngrams to count", default="_")
@@ -20,7 +21,7 @@ if not printOnly:
 script = """
 REGISTER %(udf)s/yaboulna-udf-0.0.1-SNAPSHOT.jar;
 ngrams%(l)s = LOAD '%(root)sngrams/len%(l)s'  USING PigStorage('\\t') AS (id: long, epochStartMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
-""" % {"l":args.len, "root": args.root}
+""" % {"l":args.len, "root": args.root, "udf": args.udf}
 
 prevCntsName = "ngrams%(l)s" % {"l": args.len}
 intervalName = {'300000L':'5min', '12L':'1hr', '24L':'1day', '7L':'1week', '30L':'1month'}
