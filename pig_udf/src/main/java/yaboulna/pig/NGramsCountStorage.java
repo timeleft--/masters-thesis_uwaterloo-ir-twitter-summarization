@@ -100,7 +100,7 @@ public class NGramsCountStorage extends SQLStorage {
         int tupleSize = resultMetadata.getColumnCount() - 1;
         Tuple result = TupleFactory.getInstance().newTuple(tupleSize);
 
-        for (int i = 0; i < tupleSize; ++i) {
+        for (int i = 1; i <= tupleSize; ++i) {
           switch (parsedSchema.getFields()[i].getType()) {
 // case DataType.NULL:
 // result.set(i,resultSet.getNull(i, java.sql.Types.VARCHAR);
