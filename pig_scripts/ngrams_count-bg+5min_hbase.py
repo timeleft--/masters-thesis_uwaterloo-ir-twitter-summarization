@@ -18,12 +18,12 @@ if not printOnly:
 
 script = """
 ngrams%(l)s = LOAD '%(root)sngrams/len%(l)s'  USING PigStorage('\\t') AS (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
-ngrams%(l)sPrj = FOREACH ngrams%(l)s GENERATE timeMillis, (ngram, date); -- FOR PARTITIONING
+ngrams%(l)sPrj5minA = FOREACH ngrams%(l)s GENERATE timeMillis/300000L as epochStartMillisA, (ngram, date) as ngramDate; -- FOR PARTITIONING
 
-ngrams%(l)sPrj5minA = GROUP ngrams%(l)sPrj BY timeMillis/300000L;
+ngrams%(l)sGrps5minA = GROUP ngrams%(l)sPrj5minA BY (epochStartMillisA, ngramDate);
 
-ngrams%(l)sCnt5minB = FOREACH ngrams%(l)sPrj5minA GENERATE FLATTEN($1.$1) as (ngram_date:(ngram:chararray, date:int)), (group*300000L) as epochStartMillis , COUNT($1) as cnt; 
-ngrams%(l)sCnt5min = FOREACH ngrams%(l)sCnt5minB GENERATE FLATTEN($0) as (ngram:chararray, date:int), epochStartMillis, cnt;
+ngrams%(l)sCnt5min = FOREACH ngrams%(l)sGrps5minA GENERATE FLATTEN(group.ngramDate) as (ngram, date), (group.epochStartMillisA * 300000L) as epochStartMillis, COUNT($1) as cnt;
+
 -- STORE (UNION ngrams%(l)sCnt5min, ngrams%(l)sAllCnt5min) 
 """ % {"l":args.len, "root": args.root}
 
