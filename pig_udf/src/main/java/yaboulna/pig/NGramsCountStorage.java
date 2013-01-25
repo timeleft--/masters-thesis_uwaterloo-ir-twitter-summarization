@@ -192,7 +192,8 @@ public class NGramsCountStorage extends SQLStorage {
       return new NGramsCountsInputFormat();
     } else {
       throw new UnsupportedOperationException(
-          "Only the NGRamsCount Table is supported at the moment");
+          "Only the NGRamsCount Table is supported at the moment, schemaSelector: " + schemaSelector + " - tableName: "
+          + tableName + " - namespace: " + bitmapNamespace);
     }
   }
 
