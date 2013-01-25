@@ -25,7 +25,7 @@ public class NGramsCountStorage extends SQLStorage {
   
   public static Logger LOG = LoggerFactory.getLogger(SQLStorage.class);
   
-  private static final String TABLE_NAME = "ngramsCnt";
+  private static final String TABLE_NAME = "cnt";
 
   static {
     SCHEMA_MAP.put(TABLE_NAME, "ngram: chararray, date: int, epochStartMillis: long, cnt: int");
@@ -192,7 +192,7 @@ public class NGramsCountStorage extends SQLStorage {
   @SuppressWarnings("rawtypes")
   @Override
   public InputFormat getInputFormat() throws IOException {
-    if (TABLE_NAME.equals(schemaSelector)) {
+    if (schemaSelector.startsWith(TABLE_NAME)) {
       return new NGramsCountsInputFormat();
     } else {
       throw new UnsupportedOperationException(
