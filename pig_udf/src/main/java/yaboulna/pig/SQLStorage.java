@@ -376,9 +376,9 @@ public abstract class SQLStorage extends LoadFunc
       }
 
       int tupleSize = t.size(); // - NAMESPACE_OFFSET;
-      
+
       writeStmt.setString(1, bitmapNamespace);
-      
+
       for (int i = 0; i < tupleSize; ++i) {
         int j = i + NAMESPACE_OFFSET;
         switch (parsedSchema.getFields()[i].getType()) {
@@ -502,11 +502,8 @@ public abstract class SQLStorage extends LoadFunc
   @SuppressWarnings("rawtypes")
   @Override
   public void prepareToRead(RecordReader reader, PigSplit split) throws IOException {
-// if (resultSet != null) {
-// logWarn("Result set not null and prepare to read is called. Closing.",
-// Warnings.RESULTSET_NOT_NULL_REINIT);
-// resultSet.close();
-// }
+    loadSchema();
+
     // FIXME: Abstraction, so that other readers can be added later for other tables
     if (reader instanceof NGramsCountRecordReader) {
       this.reader = (NGramsCountRecordReader) reader;
@@ -519,6 +516,7 @@ public abstract class SQLStorage extends LoadFunc
   @SuppressWarnings("rawtypes")
   @Override
   public void prepareToWrite(RecordWriter writer) throws IOException {
+    loadSchema();
     sqlStrBuilder.setLength(0);
     sqlStrBuilder.append(" INSERT INTO " + tableName + " VALUES (?"); // bitmapNamespace
     int numberOfCols = parsedSchema.fieldNames().length;
@@ -553,7 +551,6 @@ public abstract class SQLStorage extends LoadFunc
 // LOG.warn();
         conn = null;
       }
-      loadSchema();
       conn = DriverManager.getConnection(url, props);
       // Must be false because we use batch:
 // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com

@@ -50,6 +50,7 @@ public class NGramsCountStorage extends SQLStorage {
         }
         rrStmt = conn.createStatement();
         rrStmt.setFetchSize(DEFAULT_FETCH_SIZE);
+        //Connection.setReadOnly(true) but the connection is shared with writer.. so nah
 
         expectedLen = split.getLength();
 
