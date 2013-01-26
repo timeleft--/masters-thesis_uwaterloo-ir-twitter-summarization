@@ -53,7 +53,6 @@ import org.slf4j.LoggerFactory;
 
 import yaboulna.pig.NGramsCountStorage.NGramsCountRecordReader;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 public abstract class SQLStorage extends LoadFunc
@@ -122,7 +121,8 @@ public abstract class SQLStorage extends LoadFunc
   protected static final int DEFAULT_FETCH_SIZE = 1000000; // 1M.. I was thinking of 10M, but nah (no network anyway!)
   protected static final int DEFAULT_NS = 0; // Read NameSpace
   protected static final int NAMESPACE_OFFSET = 2;
-  private static final String DEFAULT_NS_COLNAME = "namespace";
+  protected static final String DEFAULT_NS_COLNAME = "namespace";
+  protected static final String DEFAULT_DATE_COLNAME = "date"; //TODO generalize this
 // protected static Logger LOG = LoggerFactory.getLogger(PostgreSQLStorage.class);
 
   // Not inforced since we are partitioning by date to guarantee that no tweet will be split between two partitions
@@ -145,6 +145,7 @@ public abstract class SQLStorage extends LoadFunc
   protected NGramsCountRecordReader reader;
 
   protected StringBuilder sqlStrBuilder = new StringBuilder();
+  protected String[] datePartitionKey = new String[] {DEFAULT_DATE_COLNAME};
 
   public SQLStorage(String dbname) throws ClassNotFoundException, ParserException {
     Class.forName(DEFAULT_DRIVER);
@@ -174,39 +175,40 @@ public abstract class SQLStorage extends LoadFunc
 
   @Override
   public String[] getPartitionKeys(String location, Job job) throws IOException {
+    return datePartitionKey;
     // TODO: This is called so many times.. would caching the keys be useful.. and how to cache?
-    try {
-      setLocation(location, job);
-      
-      //synchronized sqlStrBuilder??? Will this affect performance if there is no multithreading
-      // yeah.. Pig is actually not multitrheaded.. mappers will have different instances of UDF
-      sqlStrBuilder.setLength(0);
-      sqlStrBuilder.append("SELECT DISTINCT date FROM " + tableName );
-      startWhereClause(sqlStrBuilder);
-      sqlStrBuilder.append(";");
-      String sqlStr = sqlStrBuilder.toString();
-      
-      LOG.info("Executing SQL: " + sqlStr);
-
-      if (conn == null) {
-        conn = DriverManager.getConnection(url, props);
-      }
-      Statement localStmt = conn.createStatement();
-      localStmt.setFetchSize(DEFAULT_FETCH_SIZE);
-      
-      ResultSet rs = localStmt.executeQuery(sqlStr);
-
-      List<String> result = Lists.newLinkedList();
-      while (rs.next()) {
-        result.add("" + rs.getInt(1));
-      }
-      rs.close();
-      localStmt.close();
-      localStmt = null;
-      return result.toArray(new String[0]);
-    } catch (SQLException e) {
-      throw new IOException(e);
-    }
+//    try {
+//      setLocation(location, job);
+//
+//      // synchronized sqlStrBuilder??? Will this affect performance if there is no multithreading
+//      // yeah.. Pig is actually not multitrheaded.. mappers will have different instances of UDF
+//      sqlStrBuilder.setLength(0);
+//      sqlStrBuilder.append("SELECT DISTINCT date FROM " + tableName);
+//      startWhereClause(sqlStrBuilder);
+//      sqlStrBuilder.append(";");
+//      String sqlStr = sqlStrBuilder.toString();
+//
+//      LOG.info("Executing SQL: " + sqlStr);
+//
+//      if (conn == null) {
+//        conn = DriverManager.getConnection(url, props);
+//      }
+//      Statement localStmt = conn.createStatement();
+//      localStmt.setFetchSize(DEFAULT_FETCH_SIZE);
+//
+//      ResultSet rs = localStmt.executeQuery(sqlStr);
+//
+//      List<String> result = Lists.newLinkedList();
+//      while (rs.next()) {
+//        result.add("" + rs.getInt(1));
+//      }
+//      rs.close();
+//      localStmt.close();
+//      localStmt = null;
+//      return result.toArray(new String[0]);
+//    } catch (SQLException e) {
+//      throw new IOException(e);
+//    }
   }
 
   @Override
@@ -259,20 +261,28 @@ public abstract class SQLStorage extends LoadFunc
 // if(resultSet != null){
 // resultSet.close();
 // }
-          if (writeStmt != null) {
-            try {
-              writeStmt.executeBatch();
+          try {
+            if (conn != null) {
+              if (writeStmt != null) {
+
+                writeStmt.executeBatch();
+
+                if (!conn.getAutoCommit()) {
+                  writeStmt.close();
+                }
+              }
+
               if (!conn.getAutoCommit()) {
                 conn.commit();
-                writeStmt.close();
               }
               conn.close();
+              
               writeStmt = null;
               conn = null;
-            } catch (SQLException e) {
-              LOG.error("stmt.close:" + e.getMessage(), e);
-// throw new IOException("stmt.close JDBC Error", e);
             }
+          } catch (SQLException e) {
+            LOG.error("stmt.close:" + e.getMessage(), e);
+// throw new IOException("stmt.close JDBC Error", e);
           }
         }
 
@@ -344,7 +354,7 @@ public abstract class SQLStorage extends LoadFunc
     } else if (slashSplits.length > 2) {
       LOG.warn("Ignoring anything after second slash in: " + location);
     }
-    setSchemaSelector(tableName.substring(0,tableName.indexOf('_')));
+    setSchemaSelector(tableName.substring(0, tableName.indexOf('_')));
   }
 
   protected void setSchemaSelector(String ssel) {
@@ -497,14 +507,16 @@ public abstract class SQLStorage extends LoadFunc
 // if(resultSet != null){
 // resultSet.close();
 // }
-      if (writeStmt != null) {
-        if (!conn.getAutoCommit())
-          writeStmt.close();
-        writeStmt = null;
-      }
+
       if (conn != null) {
-        if (!conn.getAutoCommit())
+        if (!conn.getAutoCommit()) {
           conn.rollback();
+        }
+        if (writeStmt != null) {
+// if (!conn.getAutoCommit())
+          writeStmt.close();
+          writeStmt = null;
+        }
         conn.close();
         conn = null;
       }
@@ -567,8 +579,8 @@ public abstract class SQLStorage extends LoadFunc
       }
       conn = DriverManager.getConnection(url, props);
       // But the UNLOGGED table doesn't store data consistently without autocommit
-//      // Must be false because we use batch:
-//// http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
+// // Must be false because we use batch:
+// // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
 // conn.setAutoCommit(false);
       PreparedStatement result = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
 // result.setPrepareThreshold done on connection level using params
@@ -606,10 +618,11 @@ public abstract class SQLStorage extends LoadFunc
       Statement localStmt = null;
       try {
         sqlStrBuilder.setLength(0);
-        sqlStrBuilder.append(" SELECT COUNT(*), COUNT(DISTINCT date), MIN(date), MAX(date) FROM " + tableName);
+        sqlStrBuilder.append(" SELECT COUNT(*), COUNT(DISTINCT date), MIN(date), MAX(date) FROM "
+            + tableName);
         startWhereClause(sqlStrBuilder);
         sqlStrBuilder.append(";");
-        String sqlStr =  sqlStrBuilder.toString();
+        String sqlStr = sqlStrBuilder.toString();
         LOG.info("Executing SQL: " + sqlStr);
         if (conn == null) {
           conn = DriverManager.getConnection(url, props);
@@ -706,8 +719,8 @@ public abstract class SQLStorage extends LoadFunc
     LOG.warn(message);
     warn(message, warn);
   }
-  
-  protected void startWhereClause(StringBuilder sb){
+
+  protected void startWhereClause(StringBuilder sb) {
     sb.append(" WHERE ").append(namespaceColName).append("=").append(btreeNamespace);
     // at the moment this is redundant, but it wouldn't hurt to have it in case partitioning changes
     if (!partitionWhereClause.isEmpty()) {
