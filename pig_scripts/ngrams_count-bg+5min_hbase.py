@@ -43,7 +43,7 @@ for interval in ['300000L', '12L', '24L']: # More than a day the date has to be 
     --It's already ordered
     --orderCnts = ORDER ngrams%(l)sCnt%(name)s BY epochStartMillis;
     
-    --STORE ngrams%(l)sCnt%(name)s INTO  '%(root)scnt_%(name)s/ngrams%(l)s' USING PigStorage('\\t');
+    STORE ngrams%(l)sCnt%(name)s INTO  '%(root)scnt_%(name)s/ngrams%(l)s' USING PigStorage('\\t');
     STORE ngrams%(l)sCnt%(name)s INTO  'cnt_%(name)s/%(l)s' USING yaboulna.pig.NGramsCountStorage(%(storeParams)s);
     
     """ % replaceMap;
@@ -55,7 +55,7 @@ for interval in ['300000L', '12L', '24L']: # More than a day the date has to be 
     all%(l)sCnt%(name)sGrp = GROUP ngrams%(l)sCnt%(name)s ALL;
     all%(l)sCnt%(name)s = FOREACH all%(l)sCnt%(name)sGrp GENERATE 'ALL' as ngram, (int)MAX($1.date) as date, MAX($1.epochStartMillis) as epochStartMillis, (int)SUM($1.cnt) as cnt;
 
-    --STORE all%(l)sCnt%(name)s INTO  '%(root)scnt_%(name)s/ngrams%(l)sTotal' USING PigStorage('\\t');
+    STORE all%(l)sCnt%(name)s INTO  '%(root)scnt_%(name)s/ngrams%(l)sTotal' USING PigStorage('\\t');
     STORE  all%(l)sCnt%(name)s INTO  'cnt_%(name)s/-%(l)s' USING yaboulna.pig.NGramsCountStorage(%(storeParams)s);
     """
 #script += ABOVE % replaceMap;
