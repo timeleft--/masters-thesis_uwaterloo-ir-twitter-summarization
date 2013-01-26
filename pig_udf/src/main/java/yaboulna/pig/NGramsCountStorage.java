@@ -62,18 +62,15 @@ public class NGramsCountStorage extends SQLStorage {
         expectedLen = split.getLength();
 
         sqlStrBuilder.setLength(0);
-        sqlStrBuilder.append(" SELECT ").append(projection);
+        sqlStrBuilder.append(" SELECT "); 
         if (!"*".equals(projection)) {
-          sqlStrBuilder.append(", pkey ");
+          sqlStrBuilder.append(namespaceColName + ", ").append(projection).append(", pkey ");
+        } else {
+          sqlStrBuilder.append(projection);
         }
-        sqlStrBuilder.append(" FROM ").append(tableName)
-            .append(" WHERE ").append(namespaceColName).append("=").append(btreeNamespace).append(" AND ")
-            .append(split.getLocations()[0]);
-        // at the moment this is redundant, but it wouldn't hurt to have it in case partitioning changes
-        if (!partitionWhereClause.isEmpty()) {
-          sqlStrBuilder.append(" AND ").append(partitionWhereClause);
-        }
-        sqlStrBuilder.append(";");
+        sqlStrBuilder.append(" FROM ").append(tableName);
+        startWhereClause(sqlStrBuilder);
+        sqlStrBuilder.append(" AND ").append(split.getLocations()[0]).append(";");
 
         String sqlStr = sqlStrBuilder.toString();
         LOG.info("Executing SQL: " + sqlStr);

@@ -174,10 +174,18 @@ public abstract class SQLStorage extends LoadFunc
 
   @Override
   public String[] getPartitionKeys(String location, Job job) throws IOException {
+    // TODO: This is called so many times.. would caching the keys be useful.. and how to cache?
     try {
       setLocation(location, job);
-      String sqlStr = "SELECT DISTINCT date FROM " + tableName + 
-         " WHERE " + namespaceColName + " = " + btreeNamespace + ";";
+      
+      //synchronized sqlStrBuilder??? Will this affect performance if there is no multithreading
+      // yeah.. Pig is actually not multitrheaded.. mappers will have different instances of UDF
+      sqlStrBuilder.setLength(0);
+      sqlStrBuilder.append("SELECT DISTINCT date FROM " + tableName );
+      startWhereClause(sqlStrBuilder);
+      sqlStrBuilder.append(";");
+      String sqlStr = sqlStrBuilder.toString();
+      
       LOG.info("Executing SQL: " + sqlStr);
 
       if (conn == null) {
@@ -190,7 +198,7 @@ public abstract class SQLStorage extends LoadFunc
 
       List<String> result = Lists.newLinkedList();
       while (rs.next()) {
-        result.add(rs.getString(1));
+        result.add("" + rs.getInt(1));
       }
       rs.close();
       localStmt.close();
@@ -597,10 +605,11 @@ public abstract class SQLStorage extends LoadFunc
       ResultSet results = null;
       Statement localStmt = null;
       try {
-        String sqlStr = " SELECT COUNT(*), COUNT(DISTINCT date), MIN(date), MAX(date) FROM "
-            + tableName +
-            " WHERE " + namespaceColName + " = " + btreeNamespace 
-            + (partitionWhereClause.isEmpty() ? "; " : " AND " + partitionWhereClause + " ;");
+        sqlStrBuilder.setLength(0);
+        sqlStrBuilder.append(" SELECT COUNT(*), COUNT(DISTINCT date), MIN(date), MAX(date) FROM " + tableName);
+        startWhereClause(sqlStrBuilder);
+        sqlStrBuilder.append(";");
+        String sqlStr =  sqlStrBuilder.toString();
         LOG.info("Executing SQL: " + sqlStr);
         if (conn == null) {
           conn = DriverManager.getConnection(url, props);
@@ -696,5 +705,13 @@ public abstract class SQLStorage extends LoadFunc
   void logWarn(String message, Warnings warn) {
     LOG.warn(message);
     warn(message, warn);
+  }
+  
+  protected void startWhereClause(StringBuilder sb){
+    sb.append(" WHERE ").append(namespaceColName).append("=").append(btreeNamespace);
+    // at the moment this is redundant, but it wouldn't hurt to have it in case partitioning changes
+    if (!partitionWhereClause.isEmpty()) {
+      sb.append(" AND ").append(partitionWhereClause);
+    }
   }
 }
