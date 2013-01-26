@@ -19,19 +19,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * CREATE UNLOGGED TABLE cnt (namespace VARCHAR(10), ngram text, date int4, epochStartMillis int8, cnt int4, pkey serial
+ * for epoch in (5min, 1hr, 1day, 1week, 1month)
+ * do
+ * CREATE UNLOGGED TABLE cnt${epoch} (ngramLen int2, ngram text, date int4, epochStartMillis int8, cnt int4, pkey serial
  * Primary key);
- * CREATE INDEX cnt_date ON cnt(date);
- * CREATE INDEX cnt_namespace ON cnt USING hash (namespace);
+ * CREATE INDEX cnt${epoch}_date ON cnt${epoch}(date);
+ * CREATE INDEX cnt${epoch}_ngramLen ON cnt${epoch}(ngramLen);
+ * done
+ * # HASH IS EXTREMELY SLOW: CREATE INDEX cnt_namespace ON cnt USING hash (namespace);
  */
 public class NGramsCountStorage extends SQLStorage {
 
   public static Logger LOG = LoggerFactory.getLogger(SQLStorage.class);
 
-  private static final String TABLE_NAME = "cnt";
+  private static final String TABLE_NAME_PREFIX = "cnt";
+
+  private static final String NAMESPACE_COLNAME = "ngramLen";
 
   static {
-    SCHEMA_MAP.put(TABLE_NAME, "ngram: chararray, date: int, epochStartMillis: long, cnt: int");
+    SCHEMA_MAP.put(TABLE_NAME_PREFIX, "ngram: chararray, date: int, epochStartMillis: long, cnt: int");
   }
 
   public class NGramsCountRecordReader extends RecordReader<Long, Tuple> {
@@ -60,7 +66,7 @@ public class NGramsCountStorage extends SQLStorage {
           sqlStrBuilder.append(", pkey ");
         }
         sqlStrBuilder.append(" FROM ").append(tableName)
-            .append(" WHERE namespace =").append(toQuotedStr(bitmapNamespace)).append(" AND ")
+            .append(" WHERE ").append(namespaceColName).append("=").append(btreeNamespace).append(" AND ")
             .append(split.getLocations()[0]);
         // at the moment this is redundant, but it wouldn't hurt to have it in case partitioning changes
         if (!partitionWhereClause.isEmpty()) {
@@ -203,13 +209,14 @@ public class NGramsCountStorage extends SQLStorage {
   @SuppressWarnings("rawtypes")
   @Override
   public InputFormat getInputFormat() throws IOException {
-    if (schemaSelector.startsWith(TABLE_NAME)) {
+    if (schemaSelector.startsWith(TABLE_NAME_PREFIX)) {
+      namespaceColName = NAMESPACE_COLNAME;
       return new NGramsCountsInputFormat();
     } else {
       throw new UnsupportedOperationException(
           "Only the NGRamsCount Table is supported at the moment, schemaSelector: "
               + schemaSelector + " - tableName: "
-              + tableName + " - namespace: " + bitmapNamespace);
+              + tableName + " - namespace: " + btreeNamespace);
     }
   }
 

@@ -120,8 +120,9 @@ public abstract class SQLStorage extends LoadFunc
   protected static final int DEFAULT_BATCH_SIZE = 10000; // I don't what datastructure is used --> 00;
   protected static final long DEFAULT_NUMRECS_PER_CHUNK = 10000;
   protected static final int DEFAULT_FETCH_SIZE = 1000000; // 1M.. I was thinking of 10M, but nah (no network anyway!)
-  protected static final String DEFAULT_NS = "DEFAULTNS"; // Read NameSpace
+  protected static final int DEFAULT_NS = 0; // Read NameSpace
   protected static final int NAMESPACE_OFFSET = 2;
+  private static final String DEFAULT_NS_COLNAME = "namespace";
 // protected static Logger LOG = LoggerFactory.getLogger(PostgreSQLStorage.class);
 
   // Not inforced since we are partitioning by date to guarantee that no tweet will be split between two partitions
@@ -132,7 +133,8 @@ public abstract class SQLStorage extends LoadFunc
   private PreparedStatement writeStmt = null;
   protected String projection = "*";
   protected String partitionWhereClause = "";
-  protected String bitmapNamespace = DEFAULT_NS;
+  protected int btreeNamespace = DEFAULT_NS;
+  protected String namespaceColName = DEFAULT_NS_COLNAME;
   protected String schemaSelector = null;
   protected ResourceSchema parsedSchema = null;
   protected String url;
@@ -325,9 +327,9 @@ public abstract class SQLStorage extends LoadFunc
     if (LOG.isDebugEnabled())
       LOG.debug("tableName set to: " + tableName);
     if (slashSplits.length > 1) {
-      bitmapNamespace = slashSplits[1];
+      btreeNamespace = Integer.parseInt(slashSplits[1]);
       if (LOG.isDebugEnabled())
-        LOG.debug("bitmapNamespace set to: " + bitmapNamespace);
+        LOG.debug("namespace set to: " + btreeNamespace);
     } else if (slashSplits.length > 2) {
       LOG.warn("Ignoring anything after second slash in: " + location);
     }
@@ -377,7 +379,8 @@ public abstract class SQLStorage extends LoadFunc
 
       int tupleSize = t.size(); // - NAMESPACE_OFFSET;
 
-      writeStmt.setString(1, bitmapNamespace);
+// writeStmt.setString(1, bitmapNamespace);
+      writeStmt.setInt(1, btreeNamespace);
 
       for (int i = 0; i < tupleSize; ++i) {
         int j = i + NAMESPACE_OFFSET;

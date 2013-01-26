@@ -44,7 +44,7 @@ for interval in ['300000L', '12L', '24L', '7L', '30L']:
     --orderCnts = ORDER ngrams%(l)sCnt%(name)s BY epochStartMillis;
     
     --STORE ngrams%(l)sCnt%(name)s INTO  '%(root)scnt%(name)s/ngrams%(l)s' USING PigStorage('\\t');
-    STORE ngrams%(l)sCnt%(name)s INTO  'cnt/%(name)s%(l)s' USING yaboulna.pig.NGramsCountStorage(%(storeParams)s);
+    STORE ngrams%(l)sCnt%(name)s INTO  'cnt%(name)s/%(l)s' USING yaboulna.pig.NGramsCountStorage(%(storeParams)s);
     
     """ % replaceMap;
     
@@ -56,7 +56,7 @@ for interval in ['300000L', '12L', '24L', '7L', '30L']:
     all%(l)sCnt%(name)s = FOREACH all%(l)sCnt%(name)sGrp GENERATE 'ALL' as ngram, (int)MAX($1.date) as date, MAX($1.epochStartMillis) as epochStartMillis, (int)SUM($1.cnt) as cnt;
 
     --STORE all%(l)sCnt%(name)s INTO  '%(root)scnt%(name)s/ngrams%(l)sTotal' USING PigStorage('\\t');
-    STORE  all%(l)sCnt%(name)s INTO  'cnt/%(name)s%(l)stot' USING yaboulna.pig.NGramsCountStorage(%(storeParams)s);
+    STORE  all%(l)sCnt%(name)s INTO  'cnt%(name)s/-%(l)s' USING yaboulna.pig.NGramsCountStorage(%(storeParams)s);
     """
 #script += ABOVE % replaceMap;
 
