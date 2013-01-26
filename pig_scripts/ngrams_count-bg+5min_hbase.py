@@ -27,7 +27,7 @@ ngrams%(l)sCntMillis = FOREACH ngrams%(l)s GENERATE ngram as ngram, date as date
 prevCntsName = "ngrams%(l)sCntMillis" % {"l": args.len}
 intervalName = {'300000L':'5min', '12L':'1hr', '24L':'1day', '7L':'1week', '30L':'1month'}
 intervalAcc = 1
-for interval in ['300000L', '12L', '24L', '7L', '30L']:
+for interval in ['300000L', '12L', '24L']: # More than a day the date has to be handeled differntly, '7L', '30L']:
     
     intervalAcc *= long(interval)
     

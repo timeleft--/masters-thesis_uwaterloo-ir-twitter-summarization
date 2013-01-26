@@ -555,9 +555,10 @@ public abstract class SQLStorage extends LoadFunc
         conn = null;
       }
       conn = DriverManager.getConnection(url, props);
-      // Must be false because we use batch:
-// http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
-      conn.setAutoCommit(false);
+      // But the UNLOGGED table doesn't store data consistently without autocommit
+//      // Must be false because we use batch:
+//// http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
+// conn.setAutoCommit(false);
       PreparedStatement result = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
 // result.setPrepareThreshold done on connection level using params
       return result;
