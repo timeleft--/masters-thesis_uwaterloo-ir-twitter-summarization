@@ -9,6 +9,7 @@ import java.sql.Statement;
 
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.pig.data.DataType;
@@ -205,12 +206,19 @@ public class NGramsCountStorage extends SQLStorage {
     }
 
   }
+  
+  @Override
+  public void setLocation(String location, Job job) throws IOException {
+    super.setLocation(location, job);
+    if(tableName.startsWith(TABLE_NAME_PREFIX)){
+      namespaceColName = NAMESPACE_COLNAME;
+    }
+  }
 
   @SuppressWarnings("rawtypes")
   @Override
   public InputFormat getInputFormat() throws IOException {
     if (schemaSelector.startsWith(TABLE_NAME_PREFIX)) {
-      namespaceColName = NAMESPACE_COLNAME;
       return new NGramsCountsInputFormat();
     } else {
       throw new UnsupportedOperationException(
