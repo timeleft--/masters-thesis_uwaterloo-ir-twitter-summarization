@@ -21,10 +21,10 @@ import org.slf4j.LoggerFactory;
 /**
  * for epoch in (5min, 1hr, 1day, 1week, 1month)
  * do
- * CREATE UNLOGGED TABLE cnt${epoch} (ngramLen int2, ngram text, date int4, epochStartMillis int8, cnt int4, pkey serial
+ * CREATE UNLOGGED TABLE cnt_${epoch} (ngramLen int2, ngram text, date int4, epochStartMillis int8, cnt int4, pkey serial
  * Primary key);
- * CREATE INDEX cnt${epoch}_date ON cnt${epoch}(date);
- * CREATE INDEX cnt${epoch}_ngramLen ON cnt${epoch}(ngramLen);
+ * CREATE INDEX cnt_${epoch}_date ON cnt_${epoch}(date);
+ * CREATE INDEX cnt_${epoch}_ngramLen ON cnt_${epoch}(ngramLen);
  * done
  * # HASH IS EXTREMELY SLOW: CREATE INDEX cnt_namespace ON cnt USING hash (namespace);
  */

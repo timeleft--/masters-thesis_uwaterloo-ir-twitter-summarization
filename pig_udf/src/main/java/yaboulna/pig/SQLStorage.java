@@ -333,15 +333,15 @@ public abstract class SQLStorage extends LoadFunc
     } else if (slashSplits.length > 2) {
       LOG.warn("Ignoring anything after second slash in: " + location);
     }
-    setSchemaSelector(tableName);
+    setSchemaSelector(tableName.substring(0,tableName.indexOf('_')));
   }
 
-  protected void setSchemaSelector(String location) {
-    schemaSelector = location;
+  protected void setSchemaSelector(String ssel) {
+    schemaSelector = ssel;
     UDFContext udfc = UDFContext.getUDFContext();
     Properties p =
         udfc.getUDFProperties(this.getClass(), new String[]{udfcSignature});
-    p.setProperty("schemaSelector", location);
+    p.setProperty("schemaSelector", ssel);
   }
 
   @Override
