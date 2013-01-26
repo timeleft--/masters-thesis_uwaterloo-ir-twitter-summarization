@@ -175,14 +175,17 @@ public abstract class SQLStorage extends LoadFunc
   @Override
   public String[] getPartitionKeys(String location, Job job) throws IOException {
     try {
-      String sqlStr = "SELECT DISTINCT date FROM " + location + ";";
+      setLocation(location, job);
+      String sqlStr = "SELECT DISTINCT date FROM " + tableName + 
+         " WHERE " + namespaceColName + " = " + btreeNamespace + ";";
       LOG.info("Executing SQL: " + sqlStr);
 
       if (conn == null) {
         conn = DriverManager.getConnection(url, props);
       }
       Statement localStmt = conn.createStatement();
-
+      localStmt.setFetchSize(DEFAULT_FETCH_SIZE);
+      
       ResultSet rs = localStmt.executeQuery(sqlStr);
 
       List<String> result = Lists.newLinkedList();
@@ -595,13 +598,15 @@ public abstract class SQLStorage extends LoadFunc
       Statement localStmt = null;
       try {
         String sqlStr = " SELECT COUNT(*), COUNT(DISTINCT date), MIN(date), MAX(date) FROM "
-            + tableName
-            + (partitionWhereClause.isEmpty() ? "; " : " WHERE " + partitionWhereClause + " ;");
+            + tableName +
+            " WHERE " + namespaceColName + " = " + btreeNamespace 
+            + (partitionWhereClause.isEmpty() ? "; " : " AND " + partitionWhereClause + " ;");
         LOG.info("Executing SQL: " + sqlStr);
         if (conn == null) {
           conn = DriverManager.getConnection(url, props);
         }
         localStmt = conn.createStatement();
+        localStmt.setFetchSize(DEFAULT_FETCH_SIZE);
         results = localStmt
             .executeQuery(sqlStr);
         results.next();
