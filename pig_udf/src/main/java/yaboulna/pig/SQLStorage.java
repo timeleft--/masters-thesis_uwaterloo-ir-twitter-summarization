@@ -739,8 +739,9 @@ public abstract class SQLStorage extends LoadFunc
 
         date.setDate(minDate);
         for (int i = 0; i <= daysDiff; ++i) {
-          splits.add(new WhereClauseSplit(" date = " + dateFmt.print(date), avgLen));
           date.addDays(1);
+          splits.add(new WhereClauseSplit(" date = " + dateFmt.print(date), avgLen));
+          //date.addDays(1); for whatever reason this doesn't work
         }
 
         return splits;
