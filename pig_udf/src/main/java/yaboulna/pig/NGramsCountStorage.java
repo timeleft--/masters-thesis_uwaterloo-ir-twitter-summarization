@@ -84,6 +84,7 @@ public class NGramsCountStorage extends SQLStorage {
         resultSet = rrStmt.executeQuery(sqlStr);
         resultMetadata = resultSet.getMetaData();
 
+        loadSchema();
         fieldTypes = Maps.newHashMap();
         for (int i = 0; i < parsedSchema.getFields().length; ++i) {
           fieldTypes.put(parsedSchema.getFields()[i].getName(),

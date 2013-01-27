@@ -240,9 +240,9 @@ public abstract class SQLStorage extends LoadFunc
   // can retrieve it later.
   storeInUDFContext( UDFCKEY_PROJECTION, projection);
   
-  for(int i=0; i<100; ++i){
-    LOG.info("HEY.. this is repition " + i + " out of 100: Stored the projection " + projection);
-  }
+//  for(int i=0; i<100; ++i){
+//    LOG.info("HEY.. this is repition " + i + " out of 100: Stored the projection " + projection);
+//  }
     return result;
   }
 
