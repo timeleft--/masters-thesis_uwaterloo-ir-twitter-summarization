@@ -123,6 +123,10 @@ public abstract class SQLStorage extends LoadFunc
   protected static final int NAMESPACE_OFFSET = 2;
   protected static final String DEFAULT_NS_COLNAME = "namespace";
   protected static final String DEFAULT_DATE_COLNAME = "date"; //TODO generalize this
+  
+  private static final String UDFCKEY_SCHEMA_SELECTOR = "schemaSelector";
+  private static final String UDFCKEY_PROJECTION = "projection";
+  
 // protected static Logger LOG = LoggerFactory.getLogger(PostgreSQLStorage.class);
 
   // Not inforced since we are partitioning by date to guarantee that no tweet will be split between two partitions
@@ -218,18 +222,22 @@ public abstract class SQLStorage extends LoadFunc
 
   @Override
   public List<OperatorSet> getFeatures() {
-    return Arrays.asList(OperatorSet.PROJECTION);
+    return Arrays.asList(LoadPushDown.OperatorSet.PROJECTION);
   }
 
   @Override
   public RequiredFieldResponse pushProjection(RequiredFieldList requiredFieldList)
       throws FrontendException {
+    
     RequiredFieldResponse result = new RequiredFieldResponse(true);
     StringBuilder proj = new StringBuilder();
     for (RequiredField f : requiredFieldList.getFields()) {
       proj.append(", ").append(f.getAlias());
     }
     projection = proj.substring(1);
+  // Store the required fields information in the UDFContext so that we
+  // can retrieve it later.
+  storeInUDFContext( UDFCKEY_PROJECTION, projection);
     return result;
   }
 
@@ -354,15 +362,34 @@ public abstract class SQLStorage extends LoadFunc
     } else if (slashSplits.length > 2) {
       LOG.warn("Ignoring anything after second slash in: " + location);
     }
-    setSchemaSelector(tableName.substring(0, tableName.indexOf('_')));
+    schemaSelector = tableName.substring(0, tableName.indexOf('_'));
+    storeInUDFContext(UDFCKEY_SCHEMA_SELECTOR, schemaSelector);
+   
+    
+    //I'd say I should get the projection fields in loadSchema, but in HCatLoader they have it in setLocation
+    // Here's their comment: 
+ // Need to also push projections by calling setOutputSchema on
+    // HCatInputFormat - we have to get the RequiredFields information
+    // from the UdfContext, translate it to an Schema and then pass it
+    // The reason we do this here is because setLocation() is called by
+    // Pig runtime at InputFormat.getSplits() and
+    // InputFormat.createRecordReader() time - we are not sure when
+    // HCatInputFormat needs to know about pruned projections - so doing it
+    // here will ensure we communicate to HCatInputFormat about pruned
+    // projections at getSplits() and createRecordReader() time
+    
+    projection = loadFromUDFContext(UDFCKEY_PROJECTION);
+    if(projection == null || projection.isEmpty()){
+      projection = "*"; //all fields in the table
+    }
+
   }
 
-  protected void setSchemaSelector(String ssel) {
-    schemaSelector = ssel;
+  protected void storeInUDFContext(String key, String value) {
     UDFContext udfc = UDFContext.getUDFContext();
     Properties p =
         udfc.getUDFProperties(this.getClass(), new String[]{udfcSignature});
-    p.setProperty("schemaSelector", ssel);
+    p.setProperty(key, value);
   }
 
   @Override
@@ -491,14 +518,20 @@ public abstract class SQLStorage extends LoadFunc
   protected void loadSchema() throws ParserException {
     // Get the schema string from the UDFContext object.
     if (schemaSelector == null) {
-      UDFContext udfc = UDFContext.getUDFContext();
-      Properties p =
-          udfc.getUDFProperties(this.getClass(), new String[]{udfcSignature});
-      schemaSelector = p
-          .getProperty("schemaSelector", DEFAULT_SCHEMA_SELECTOR);
-      // TODO when generalizing: if schemaSelectpr == null throw exception
+      schemaSelector = loadFromUDFContext(UDFCKEY_SCHEMA_SELECTOR);
+      if(schemaSelector == null){
+        throw new NullPointerException("There will be no schema in the map below if we proceed");
+      }
     }
     parsedSchema = new ResourceSchema(Utils.getSchemaFromString(SCHEMA_MAP.get(schemaSelector)));
+  }
+
+  protected String loadFromUDFContext(String key) {
+    UDFContext udfc = UDFContext.getUDFContext();
+    Properties p =
+        udfc.getUDFProperties(this.getClass(), new String[]{udfcSignature});
+    return p
+        .getProperty(key); //, DEFAULT_SCHEMA_SELECTOR);
   }
 
   @Override
