@@ -762,7 +762,7 @@ public abstract class SQLStorage extends LoadFunc
   protected void startWhereClause(StringBuilder sb) {
     sb.append(" WHERE ").append(namespaceColName).append("=").append(btreeNamespace);
     // at the moment this is redundant, but it wouldn't hurt to have it in case partitioning changes
-    if (!partitionWhereClause.isEmpty()) {
+    if (partitionWhereClause != null && !partitionWhereClause.isEmpty()) {
       sb.append(" AND ").append(partitionWhereClause);
     }
   }
