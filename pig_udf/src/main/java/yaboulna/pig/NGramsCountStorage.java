@@ -124,8 +124,8 @@ public class NGramsCountStorage extends SQLStorage {
           int j = i + NAMESPACE_OFFSET;
           String colName = resultMetadata.getColumnName(j);
 //          if (LOG.isDebugEnabled()) {
-            LOG.debug("Column at position " + j + " is called " + colName);
-            LOG.debug("fieldTypes: " + fieldTypes);
+            LOG.info("Column at position " + j + " is called " + colName);
+            LOG.info("fieldTypes: " + fieldTypes);
 //          }
           switch (fieldTypes.get(colName)) {
 
