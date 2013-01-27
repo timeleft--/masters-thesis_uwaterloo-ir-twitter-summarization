@@ -385,8 +385,7 @@ public abstract class SQLStorage extends LoadFunc
     
     projection = loadFromUDFContext(UDFCKEY_PROJECTION);
     if(projection == null || projection.isEmpty()){
-      throw new NullPointerException("I'm passing a projection.. why isn't it there?");
-//      projection = "*"; //all fields in the table
+      projection = "*"; //all fields in the table
     }
 
   }

@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Map;
 
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -19,10 +20,13 @@ import org.apache.pig.parser.ParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Maps;
+
 /**
  * for epoch in (5min, 1hr, 1day, 1week, 1month)
  * do
- * CREATE UNLOGGED TABLE cnt_${epoch} (ngramLen int2, ngram text, date int4, epochStartMillis int8, cnt int4, pkey serial
+ * CREATE UNLOGGED TABLE cnt_${epoch} (ngramLen int2, ngram text, date int4, epochStartMillis int8, cnt int4, pkey
+ * serial
  * Primary key);
  * CREATE INDEX cnt_${epoch}_date ON cnt_${epoch}(date);
  * CREATE INDEX cnt_${epoch}_ngramLen ON cnt_${epoch}(ngramLen);
@@ -36,13 +40,16 @@ public class NGramsCountStorage extends SQLStorage {
   private static final String TABLE_NAME_PREFIX = "cnt";
 
   private static final String NAMESPACE_COLNAME = "ngramLen";
+  
+  protected Map<String, Byte> fieldTypes;
 
   static {
-    SCHEMA_MAP.put(TABLE_NAME_PREFIX, "ngram: chararray, date: int, epochStartMillis: long, cnt: int");
+    SCHEMA_MAP.put(TABLE_NAME_PREFIX,
+        "ngram: chararray, date: int, epochStartMillis: long, cnt: int");
   }
 
   public class NGramsCountRecordReader extends RecordReader<Long, Tuple> {
-    
+
     ResultSet resultSet;
     ResultSetMetaData resultMetadata;
     long expectedLen;
@@ -57,12 +64,12 @@ public class NGramsCountStorage extends SQLStorage {
         }
         rrStmt = conn.createStatement();
         rrStmt.setFetchSize(DEFAULT_FETCH_SIZE);
-        //Connection.setReadOnly(true) but the connection is shared with writer.. so nah
+        // Connection.setReadOnly(true) but the connection is shared with writer.. so nah
 
         expectedLen = split.getLength();
 
         sqlStrBuilder.setLength(0);
-        sqlStrBuilder.append(" SELECT "); 
+        sqlStrBuilder.append(" SELECT ");
         if (!"*".equals(projection)) {
           sqlStrBuilder.append(namespaceColName + ", ").append(projection).append(", pkey ");
         } else {
@@ -76,6 +83,13 @@ public class NGramsCountStorage extends SQLStorage {
         LOG.info("Executing SQL: " + sqlStr);
         resultSet = rrStmt.executeQuery(sqlStr);
         resultMetadata = resultSet.getMetaData();
+
+        fieldTypes = Maps.newHashMap();
+        for (int i = 0; i < parsedSchema.getFields().length; ++i) {
+          fieldTypes.put(parsedSchema.getFields()[i].getName(),
+              parsedSchema.getFields()[i].getType());
+        }
+
       } catch (SQLException e) {
         throw new IOException(e);
       }
@@ -105,10 +119,10 @@ public class NGramsCountStorage extends SQLStorage {
       try {
         int tupleSize = resultMetadata.getColumnCount() - NAMESPACE_OFFSET;
         Tuple result = TupleFactory.getInstance().newTuple(tupleSize);
-
+        
         for (int i = 0; i < tupleSize; ++i) {
           int j = i+NAMESPACE_OFFSET;
-          switch (parsedSchema.getFields()[i].getType()) {
+          switch (fieldTypes.get(resultMetadata.getColumnName(j))) {
             
 // case DataType.NULL:
 // result.set(i,resultSet.getNull(j, java.sql.Types.VARCHAR);
@@ -162,7 +176,6 @@ public class NGramsCountStorage extends SQLStorage {
         throw new IOException(e);
       }
     }
-
     @Override
     public float getProgress() throws IOException, InterruptedException {
       try {
@@ -203,11 +216,11 @@ public class NGramsCountStorage extends SQLStorage {
     }
 
   }
-  
+
   @Override
   public void setLocation(String location, Job job) throws IOException {
     super.setLocation(location, job);
-    if(tableName.startsWith(TABLE_NAME_PREFIX)){
+    if (tableName.startsWith(TABLE_NAME_PREFIX)) {
       namespaceColName = NAMESPACE_COLNAME;
     }
   }
