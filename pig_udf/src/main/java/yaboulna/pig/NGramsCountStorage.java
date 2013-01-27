@@ -123,10 +123,10 @@ public class NGramsCountStorage extends SQLStorage {
         for (int i = 0; i < tupleSize; ++i) {
           int j = i + NAMESPACE_OFFSET;
           String colName = resultMetadata.getColumnName(j);
-          if (LOG.isDebugEnabled()) {
+//          if (LOG.isDebugEnabled()) {
             LOG.debug("Column at position " + j + " is called " + colName);
             LOG.debug("fieldTypes: " + fieldTypes);
-          }
+//          }
           switch (fieldTypes.get(colName)) {
 
 // case DataType.NULL:
