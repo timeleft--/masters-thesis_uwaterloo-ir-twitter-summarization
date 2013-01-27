@@ -43,7 +43,7 @@ import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.UDFContext;
 import org.apache.pig.impl.util.Utils;
 import org.apache.pig.parser.ParserException;
-import org.joda.time.DateTime;
+import org.joda.time.DateMidnight;
 import org.joda.time.Days;
 import org.joda.time.MutableDateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -676,11 +676,16 @@ public abstract class SQLStorage extends LoadFunc
         results.next();
 
         long countRecs = results.getLong(1);
+        LOG.info("Record count in range: " + countRecs);
+        
         long countDates = results.getLong(2);
+        LOG.info("Date count in range: " + countDates);
+        
         long avgLen = 0;
         if (countDates > 0) {
           avgLen = countRecs / countDates;
         }
+        
 
 // use this if you exchange date by pkey
 // long chunks = context.getConfiguration().getInt("mapred.map.tasks", 1);
@@ -696,7 +701,10 @@ public abstract class SQLStorage extends LoadFunc
 // }
 
         long min = results.getLong(3);
+        LOG.info("Minimum date in range: " + min);
+        
         long max = results.getLong(4);
+        LOG.info("Maximum date in range: " + max);
 
         results.close();
         localStmt.close();
@@ -718,10 +726,12 @@ public abstract class SQLStorage extends LoadFunc
 //
 // splits.add(split);
 // }
-        DateTime minDate = dateFmt.parseDateTime("" + min);
-        DateTime maxDate = dateFmt.parseDateTime("" + max);
-        int daysDiff = Days.daysBetween(minDate, maxDate).getDays(); // .toDateMidnight()
-
+        DateMidnight minDate = dateFmt.parseDateTime("" + min).toDateMidnight();
+        DateMidnight maxDate = dateFmt.parseDateTime("" + max).toDateMidnight();
+        
+        int daysDiff = Days.daysBetween(minDate, maxDate).getDays();
+        LOG.info("Days between min and max dates: " + daysDiff);
+        
         if (countDates != daysDiff + 1) {
           logWarn("Some dates are missing in the partition " + partitionWhereClause
               + " and thus some jobs will have empty input", Warnings.NON_CONTIGOUS_PARTITION);
