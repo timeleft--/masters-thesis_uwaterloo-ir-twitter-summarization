@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import yaboulna.pig.NGramsCountStorage.NGramsCountRecordReader;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 public abstract class SQLStorage extends LoadFunc
@@ -179,40 +180,40 @@ public abstract class SQLStorage extends LoadFunc
 
   @Override
   public String[] getPartitionKeys(String location, Job job) throws IOException {
-    return datePartitionKey;
+//    return datePartitionKey;
     // TODO: This is called so many times.. would caching the keys be useful.. and how to cache?
-//    try {
-//      setLocation(location, job);
-//
-//      // synchronized sqlStrBuilder??? Will this affect performance if there is no multithreading
-//      // yeah.. Pig is actually not multitrheaded.. mappers will have different instances of UDF
-//      sqlStrBuilder.setLength(0);
-//      sqlStrBuilder.append("SELECT DISTINCT date FROM " + tableName);
-//      startWhereClause(sqlStrBuilder);
-//      sqlStrBuilder.append(";");
-//      String sqlStr = sqlStrBuilder.toString();
-//
-//      LOG.info("Executing SQL: " + sqlStr);
-//
-//      if (conn == null) {
-//        conn = DriverManager.getConnection(url, props);
-//      }
-//      Statement localStmt = conn.createStatement();
-//      localStmt.setFetchSize(DEFAULT_FETCH_SIZE);
-//
-//      ResultSet rs = localStmt.executeQuery(sqlStr);
-//
-//      List<String> result = Lists.newLinkedList();
-//      while (rs.next()) {
-//        result.add("" + rs.getInt(1));
-//      }
-//      rs.close();
-//      localStmt.close();
-//      localStmt = null;
-//      return result.toArray(new String[0]);
-//    } catch (SQLException e) {
-//      throw new IOException(e);
-//    }
+    try {
+      setLocation(location, job);
+
+      // synchronized sqlStrBuilder??? Will this affect performance if there is no multithreading
+      // yeah.. Pig is actually not multitrheaded.. mappers will have different instances of UDF
+      sqlStrBuilder.setLength(0);
+      sqlStrBuilder.append("SELECT DISTINCT date FROM " + tableName);
+      startWhereClause(sqlStrBuilder);
+      sqlStrBuilder.append(";");
+      String sqlStr = sqlStrBuilder.toString();
+
+      LOG.info("Executing SQL: " + sqlStr);
+
+      if (conn == null) {
+        conn = DriverManager.getConnection(url, props);
+      }
+      Statement localStmt = conn.createStatement();
+      localStmt.setFetchSize(DEFAULT_FETCH_SIZE);
+
+      ResultSet rs = localStmt.executeQuery(sqlStr);
+
+      List<String> result = Lists.newLinkedList();
+      while (rs.next()) {
+        result.add("" + rs.getInt(1));
+      }
+      rs.close();
+      localStmt.close();
+      localStmt = null;
+      return result.toArray(new String[0]);
+    } catch (SQLException e) {
+      throw new IOException(e);
+    }
   }
 
   @Override
@@ -238,6 +239,10 @@ public abstract class SQLStorage extends LoadFunc
   // Store the required fields information in the UDFContext so that we
   // can retrieve it later.
   storeInUDFContext( UDFCKEY_PROJECTION, projection);
+  
+  for(int i=0; i<100; ++i){
+    LOG.info("HEY.. this is repition " + i + " out of 100: Stored the projection " + projection);
+  }
     return result;
   }
 
@@ -380,7 +385,8 @@ public abstract class SQLStorage extends LoadFunc
     
     projection = loadFromUDFContext(UDFCKEY_PROJECTION);
     if(projection == null || projection.isEmpty()){
-      projection = "*"; //all fields in the table
+      throw new NullPointerException("I'm passing a projection.. why isn't it there?");
+//      projection = "*"; //all fields in the table
     }
 
   }
@@ -388,7 +394,7 @@ public abstract class SQLStorage extends LoadFunc
   protected void storeInUDFContext(String key, String value) {
     UDFContext udfc = UDFContext.getUDFContext();
     Properties p =
-        udfc.getUDFProperties(this.getClass(), new String[]{udfcSignature});
+        udfc.getUDFProperties(SQLStorage.class, new String[]{udfcSignature});
     p.setProperty(key, value);
   }
 
@@ -531,9 +537,8 @@ public abstract class SQLStorage extends LoadFunc
   protected String loadFromUDFContext(String key) {
     UDFContext udfc = UDFContext.getUDFContext();
     Properties p =
-        udfc.getUDFProperties(this.getClass(), new String[]{udfcSignature});
-    return p
-        .getProperty(key); 
+        udfc.getUDFProperties(SQLStorage.class, new String[]{udfcSignature});
+    return p.getProperty(key); 
   }
 
   @Override
