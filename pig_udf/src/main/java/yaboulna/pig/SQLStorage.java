@@ -220,7 +220,7 @@ public abstract class SQLStorage extends LoadFunc
   public void setPartitionFilter(Expression partitionFilter) throws IOException {
 
     partitionWhereClause = partitionFilter.toString(); // or +=
-    partitionWhereClause.replace("==", "=");
+    partitionWhereClause = partitionWhereClause.replace("==", "=");
     LOG.info("Setting partition key to: " + partitionWhereClause);
 
     storeInUDFContext(UDFCKEY_PARTITION_FILTER, partitionWhereClause);
