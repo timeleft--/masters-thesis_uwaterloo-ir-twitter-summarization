@@ -40,7 +40,7 @@ public class NGramsCountStorage extends SQLStorage {
   private static final String TABLE_NAME_PREFIX = "cnt";
 
   private static final String NAMESPACE_COLNAME = "ngramLen";
-  
+
   protected Map<String, Byte> fieldTypes;
 
   static {
@@ -55,7 +55,6 @@ public class NGramsCountStorage extends SQLStorage {
     long expectedLen;
     Statement rrStmt;
 
-    
     @Override
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
         InterruptedException {
@@ -120,15 +119,20 @@ public class NGramsCountStorage extends SQLStorage {
       try {
         int tupleSize = resultMetadata.getColumnCount() - NAMESPACE_OFFSET;
         Tuple result = TupleFactory.getInstance().newTuple(tupleSize);
-        
+
         for (int i = 0; i < tupleSize; ++i) {
-          int j = i+NAMESPACE_OFFSET;
-          switch (fieldTypes.get(resultMetadata.getColumnName(j))) {
-            
+          int j = i + NAMESPACE_OFFSET;
+          String colName = resultMetadata.getColumnName(j);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Column at position " + j + " is called " + colName);
+            LOG.debug("fieldTypes: " + fieldTypes);
+          }
+          switch (fieldTypes.get(colName)) {
+
 // case DataType.NULL:
 // result.set(i,resultSet.getNull(j, java.sql.Types.VARCHAR);
 // break;
-            
+
             case DataType.BOOLEAN :
               result.set(i, resultSet.getBoolean(j));
               break;
