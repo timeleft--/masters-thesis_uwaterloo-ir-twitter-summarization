@@ -41,6 +41,7 @@ public class NGramsCountStorage extends SQLStorage {
 
   private static final String NAMESPACE_COLNAME = "ngramLen";
 
+  // All keys must be in loser case because that's how SQL say its column names
   protected Map<String, Byte> fieldTypes;
 
   static {
@@ -86,7 +87,7 @@ public class NGramsCountStorage extends SQLStorage {
 
         loadSchema();
         for (int i = 0; i < parsedSchema.getFields().length; ++i) {
-          fieldTypes.put(parsedSchema.getFields()[i].getName(),
+          fieldTypes.put(parsedSchema.getFields()[i].getName().toLowerCase(),
               parsedSchema.getFields()[i].getType());
         }
 
@@ -123,10 +124,6 @@ public class NGramsCountStorage extends SQLStorage {
         for (int i = 0; i < tupleSize; ++i) {
           int j = i + NAMESPACE_OFFSET;
           String colName = resultMetadata.getColumnName(j);
-//          if (LOG.isDebugEnabled()) {
-            LOG.info("Column at position " + j + " is called " + colName);
-            LOG.info("fieldTypes: " + fieldTypes);
-//          }
           switch (fieldTypes.get(colName)) {
 
 // case DataType.NULL:
@@ -228,8 +225,8 @@ public class NGramsCountStorage extends SQLStorage {
     if (tableName.startsWith(TABLE_NAME_PREFIX)) {
       namespaceColName = NAMESPACE_COLNAME;
       fieldTypes = Maps.newHashMap();
-      fieldTypes.put(namespaceColName, DataType.INTEGER);
-      fieldTypes.put("pkey", DataType.LONG);
+      fieldTypes.put(namespaceColName.toLowerCase(), DataType.INTEGER);
+      fieldTypes.put("pkey".toLowerCase(), DataType.LONG);
     }
   }
 
