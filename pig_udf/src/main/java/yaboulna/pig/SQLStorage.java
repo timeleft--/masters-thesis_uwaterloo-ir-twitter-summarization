@@ -520,7 +520,9 @@ public abstract class SQLStorage extends LoadFunc
     if (schemaSelector == null) {
       schemaSelector = loadFromUDFContext(UDFCKEY_SCHEMA_SELECTOR);
       if(schemaSelector == null){
-        throw new NullPointerException("There will be no schema in the map below if we proceed");
+        // TODO: if we need to generalize we'll have to find out when is the right time to call loadSchema
+        schemaSelector = DEFAULT_SCHEMA_SELECTOR;
+        //throw new NullPointerException("There will be no schema in the map below if we proceed");
       }
     }
     parsedSchema = new ResourceSchema(Utils.getSchemaFromString(SCHEMA_MAP.get(schemaSelector)));
@@ -531,7 +533,7 @@ public abstract class SQLStorage extends LoadFunc
     Properties p =
         udfc.getUDFProperties(this.getClass(), new String[]{udfcSignature});
     return p
-        .getProperty(key); //, DEFAULT_SCHEMA_SELECTOR);
+        .getProperty(key); 
   }
 
   @Override
