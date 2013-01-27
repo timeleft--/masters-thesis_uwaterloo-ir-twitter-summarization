@@ -123,11 +123,12 @@ public abstract class SQLStorage extends LoadFunc
   protected static final int DEFAULT_NS = 0; // Read NameSpace
   protected static final int NAMESPACE_OFFSET = 2;
   protected static final String DEFAULT_NS_COLNAME = "namespace";
-  protected static final String DEFAULT_DATE_COLNAME = "date"; //TODO generalize this
-  
+  protected static final String DEFAULT_DATE_COLNAME = "date"; // TODO generalize this
+
   private static final String UDFCKEY_SCHEMA_SELECTOR = "schemaSelector";
   private static final String UDFCKEY_PROJECTION = "projection";
-  
+  private static final String UDFCKEY_PARTITION_FILTER = "partitionFilter";
+
 // protected static Logger LOG = LoggerFactory.getLogger(PostgreSQLStorage.class);
 
   // Not inforced since we are partitioning by date to guarantee that no tweet will be split between two partitions
@@ -150,7 +151,7 @@ public abstract class SQLStorage extends LoadFunc
   protected NGramsCountRecordReader reader;
 
   protected StringBuilder sqlStrBuilder = new StringBuilder();
-  protected String[] datePartitionKey = new String[] {DEFAULT_DATE_COLNAME};
+  protected String[] datePartitionKey = new String[]{DEFAULT_DATE_COLNAME};
 
   public SQLStorage(String dbname) throws ClassNotFoundException, ParserException {
     Class.forName(DEFAULT_DRIVER);
@@ -180,7 +181,7 @@ public abstract class SQLStorage extends LoadFunc
 
   @Override
   public String[] getPartitionKeys(String location, Job job) throws IOException {
-//    return datePartitionKey;
+// return datePartitionKey;
     // TODO: This is called so many times.. would caching the keys be useful.. and how to cache?
     try {
       setLocation(location, job);
@@ -219,6 +220,7 @@ public abstract class SQLStorage extends LoadFunc
   @Override
   public void setPartitionFilter(Expression partitionFilter) throws IOException {
     partitionWhereClause = partitionFilter.toString(); // or +=
+    storeInUDFContext(UDFCKEY_PARTITION_FILTER, partitionWhereClause);
   }
 
   @Override
@@ -229,20 +231,17 @@ public abstract class SQLStorage extends LoadFunc
   @Override
   public RequiredFieldResponse pushProjection(RequiredFieldList requiredFieldList)
       throws FrontendException {
-    
+
     RequiredFieldResponse result = new RequiredFieldResponse(true);
     StringBuilder proj = new StringBuilder();
     for (RequiredField f : requiredFieldList.getFields()) {
       proj.append(", ").append(f.getAlias());
     }
     projection = proj.substring(1);
-  // Store the required fields information in the UDFContext so that we
-  // can retrieve it later.
-  storeInUDFContext( UDFCKEY_PROJECTION, projection);
-  
-//  for(int i=0; i<100; ++i){
-//    LOG.info("HEY.. this is repition " + i + " out of 100: Stored the projection " + projection);
-//  }
+    // Store the required fields information in the UDFContext so that we
+    // can retrieve it later.
+    storeInUDFContext(UDFCKEY_PROJECTION, projection);
+
     return result;
   }
 
@@ -289,7 +288,7 @@ public abstract class SQLStorage extends LoadFunc
                 conn.commit();
               }
               conn.close();
-              
+
               writeStmt = null;
               conn = null;
             }
@@ -369,11 +368,10 @@ public abstract class SQLStorage extends LoadFunc
     }
     schemaSelector = tableName.substring(0, tableName.indexOf('_'));
     storeInUDFContext(UDFCKEY_SCHEMA_SELECTOR, schemaSelector);
-   
-    
-    //I'd say I should get the projection fields in loadSchema, but in HCatLoader they have it in setLocation
-    // Here's their comment: 
- // Need to also push projections by calling setOutputSchema on
+
+    // I'd say I should get the projection fields in loadSchema, but in HCatLoader they have it in setLocation
+    // Here's their comment:
+    // Need to also push projections by calling setOutputSchema on
     // HCatInputFormat - we have to get the RequiredFields information
     // from the UdfContext, translate it to an Schema and then pass it
     // The reason we do this here is because setLocation() is called by
@@ -382,12 +380,14 @@ public abstract class SQLStorage extends LoadFunc
     // HCatInputFormat needs to know about pruned projections - so doing it
     // here will ensure we communicate to HCatInputFormat about pruned
     // projections at getSplits() and createRecordReader() time
-    
+
     projection = loadFromUDFContext(UDFCKEY_PROJECTION);
-    if(projection == null || projection.isEmpty()){
-      projection = "*"; //all fields in the table
+    if (projection == null || projection.isEmpty()) {
+      projection = "*"; // all fields in the table
     }
 
+    // I doubg that partitionFilter also needs to be communicated to the backend like projection
+    partitionWhereClause = loadFromUDFContext(UDFCKEY_PARTITION_FILTER);
   }
 
   protected void storeInUDFContext(String key, String value) {
@@ -524,10 +524,10 @@ public abstract class SQLStorage extends LoadFunc
     // Get the schema string from the UDFContext object.
     if (schemaSelector == null) {
       schemaSelector = loadFromUDFContext(UDFCKEY_SCHEMA_SELECTOR);
-      if(schemaSelector == null){
+      if (schemaSelector == null) {
         // TODO: if we need to generalize we'll have to find out when is the right time to call loadSchema
         schemaSelector = DEFAULT_SCHEMA_SELECTOR;
-        //throw new NullPointerException("There will be no schema in the map below if we proceed");
+        // throw new NullPointerException("There will be no schema in the map below if we proceed");
       }
     }
     parsedSchema = new ResourceSchema(Utils.getSchemaFromString(SCHEMA_MAP.get(schemaSelector)));
@@ -537,7 +537,7 @@ public abstract class SQLStorage extends LoadFunc
     UDFContext udfc = UDFContext.getUDFContext();
     Properties p =
         udfc.getUDFProperties(SQLStorage.class, new String[]{udfcSignature});
-    return p.getProperty(key); 
+    return p.getProperty(key);
   }
 
   @Override
