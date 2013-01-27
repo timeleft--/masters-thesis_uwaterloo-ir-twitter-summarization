@@ -55,6 +55,7 @@ public class NGramsCountStorage extends SQLStorage {
     long expectedLen;
     Statement rrStmt;
 
+    
     @Override
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
         InterruptedException {
@@ -85,7 +86,6 @@ public class NGramsCountStorage extends SQLStorage {
         resultMetadata = resultSet.getMetaData();
 
         loadSchema();
-        fieldTypes = Maps.newHashMap();
         for (int i = 0; i < parsedSchema.getFields().length; ++i) {
           fieldTypes.put(parsedSchema.getFields()[i].getName(),
               parsedSchema.getFields()[i].getType());
@@ -223,6 +223,9 @@ public class NGramsCountStorage extends SQLStorage {
     super.setLocation(location, job);
     if (tableName.startsWith(TABLE_NAME_PREFIX)) {
       namespaceColName = NAMESPACE_COLNAME;
+      fieldTypes = Maps.newHashMap();
+      fieldTypes.put(namespaceColName, DataType.INTEGER);
+      fieldTypes.put("pkey", DataType.LONG);
     }
   }
 
