@@ -50,9 +50,13 @@ ngrams2Flattened1hr = FOREACH ngrams2Cnt1hr GENERATE ngram, FLATTEN(yaboulna.pig
 
 ngrams1Cnts1hr = LOAD '$root/cnt_1hr/ngrams1' USING PigStorage('\t') AS (ngram: chararray, date: int, epochStartMillis: long, cnt: int);
 --ngrams1Flattened1hr = FOREACH --- OR Make the UDF return unigrams in brackets
-cnt1_2Join = JOIN ngrams1Cnts1hr by (ngram, epochStartMillis), ngrams2Flattened1hr by (comp, epochStartMillis), epochs2Cnt1hrSum by (epochStartMillis);
+cnt1_2Join = JOIN ngrams1Cnts1hr by (ngram, epochStartMillis), ngrams2Flattened1hr by (comp, epochStartMillis);
 
-prob2g1Unsorted = FOREACH cnt1_2Join GENERATE ngrams2Flattened1hr::ngram as ngram2, ngrams1Cnts1hr::ngram as ngram1, ngrams2Flattened1hr::date as date, ngrams2Flattened1hr::epochStartMillis as epochStartMillis,  (1.0 * ngrams2Flattened1hr::cnt / ngrams1Cnts1hr::cnt) as condProb, (1.0 * ngrams1Cnts1hr::cnt / epochs2Cnt1hrSum::cnt) as unigramProb,  epochs2Cnt1hrSum::cnt as volume;
+
+prob2g1NoVol = FOREACH cnt1_2Join GENERATE ngrams2Flattened1hr::ngram as ngram2, ngrams1Cnts1hr::ngram as ngram1, ngrams2Flattened1hr::date as date, ngrams2Flattened1hr::epochStartMillis as epochStartMillis,  (1.0 * ngrams2Flattened1hr::cnt / ngrams1Cnts1hr::cnt) as condProb;
+prob2g1Vol = JOIN prob2g1NoVol by epochStartMillis, epochs2Cnt1hrSum by epochStartMillis;
+prob2g1Unsorted = FOREACH prob2g1Vol GENERATE prob2g1Vol::ngram2 as ngram2, prob2g1Vol::ngram1 as ngram1, prob2g1Vol::date as date, prob2g1Vol::epochStartMillis as epochStartMillis, prob2g1Vol::condProb as condProb,  (1.0 * ngrams1Cnts1hr::cnt / epochs2Cnt1hrSum::cnt) as unigramProb, epochs2Cnt1hrSum::cnt as volume;
+
 prob2g1 = ORDER prob2g1Unsorted BY epochStartMillis ASC, unigramProb DESC; 
 
 STORE prob2g1 INTO '$root/prob/ngram2g1' USING PigStorage('\t');
