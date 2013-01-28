@@ -100,8 +100,7 @@ public abstract class SQLStorage extends LoadFunc
 
   }
   public static enum Warnings {
-    SQL_RETCODE, STMT_NOT_NULL_REINIT, CONN_NOT_NULL_REINIT, SCHEMA_NAMES_NOT_MATCHING, NON_CONTIGOUS_PARTITION
-    // RESULTSET_NOT_NULL_REINIT,
+    SQL_RETCODE, STMT_NOT_NULL_REINIT, CONN_NOT_NULL_REINIT, SCHEMA_NAMES_NOT_MATCHING, NON_CONTIGOUS_PARTITION, ROLLBACK
   };
 
   protected static final String DEFAULT_SCHEMA_SELECTOR = "cnt";
@@ -469,6 +468,7 @@ public abstract class SQLStorage extends LoadFunc
           }
         }
         writeStmt.clearBatch();
+        writeStmt.clearParameters();
       }
     } catch (SQLException e) {
       throw new IOException(e);
@@ -518,14 +518,22 @@ public abstract class SQLStorage extends LoadFunc
 // }
 
       if (conn != null) {
-        if (!conn.getAutoCommit()) {
-          conn.rollback();
-        }
         if (writeStmt != null) {
-// if (!conn.getAutoCommit())
+          // if (!conn.getAutoCommit())
+          // Execute batch so that what actually happened can be traced
+          writeStmt.executeBatch();
+          writeStmt.clearBatch();
+          writeStmt.clearParameters();
           writeStmt.close();
           writeStmt = null;
         }
+
+        if (!conn.getAutoCommit()) {
+          warn("Cleaning up on failure (or task abortion).. rolling back DB transactions.",
+              Warnings.ROLLBACK);
+          conn.rollback();
+        }
+
         conn.close();
         conn = null;
       }
@@ -588,9 +596,9 @@ public abstract class SQLStorage extends LoadFunc
       }
       conn = DriverManager.getConnection(url, props);
       // But the UNLOGGED table doesn't store data consistently without autocommit
-// // Must be false because we use batch:
-// // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
-// conn.setAutoCommit(false);
+      // Must be false because we use batch:
+      // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
+      conn.setAutoCommit(false);
       PreparedStatement result = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
 // result.setPrepareThreshold done on connection level using params
       return result;
@@ -644,15 +652,14 @@ public abstract class SQLStorage extends LoadFunc
 
         long countRecs = results.getLong(1);
         LOG.info("Record count in range: " + countRecs);
-        
+
         long countDates = results.getLong(2);
         LOG.info("Date count in range: " + countDates);
-        
+
         long avgLen = 0;
         if (countDates > 0) {
           avgLen = countRecs / countDates;
         }
-        
 
 // use this if you exchange date by pkey
 // long chunks = context.getConfiguration().getInt("mapred.map.tasks", 1);
@@ -669,7 +676,7 @@ public abstract class SQLStorage extends LoadFunc
 
         long min = results.getLong(3);
         LOG.info("Minimum date in range: " + min);
-        
+
         long max = results.getLong(4);
         LOG.info("Maximum date in range: " + max);
 
@@ -695,10 +702,10 @@ public abstract class SQLStorage extends LoadFunc
 // }
         DateMidnight minDate = dateFmt.parseDateTime("" + min).toDateMidnight();
         DateMidnight maxDate = dateFmt.parseDateTime("" + max).toDateMidnight();
-        
+
         int daysDiff = Days.daysBetween(minDate, maxDate).getDays();
         LOG.info("Days between min and max dates: " + daysDiff);
-        
+
         if (countDates != daysDiff + 1) {
           logWarn("Some dates are missing in the partition " + partitionWhereClause
               + " and thus some jobs will have empty input", Warnings.NON_CONTIGOUS_PARTITION);
@@ -708,7 +715,7 @@ public abstract class SQLStorage extends LoadFunc
         for (int i = 0; i <= daysDiff; ++i) {
           date.addDays(1);
           splits.add(new WhereClauseSplit(" date = " + dateFmt.print(date), avgLen));
-          //date.addDays(1); for whatever reason this doesn't work
+          // date.addDays(1); for whatever reason this doesn't work
         }
 
         return splits;
