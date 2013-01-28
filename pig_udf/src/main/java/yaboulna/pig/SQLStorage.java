@@ -219,8 +219,14 @@ public abstract class SQLStorage extends LoadFunc
     return location;
   }
 
-  public class DBStorageOutputFormat extends OutputFormat<NullWritable, NullWritable> {
+  public static class DBStorageOutputFormat extends OutputFormat<NullWritable, NullWritable> {
 
+    private final SQLStorage storeFunc;
+    
+    public DBStorageOutputFormat(SQLStorage storeFunc) {
+      this.storeFunc = storeFunc;
+    }
+    
     @Override
     public void checkOutputSpecs(JobContext context) throws IOException,
         InterruptedException {
@@ -234,7 +240,7 @@ public abstract class SQLStorage extends LoadFunc
 
         @Override
         public void abortTask(TaskAttemptContext context) throws IOException {
-          cleanupOnFailure("", null);
+          storeFunc.cleanupOnFailure("", null);
         }
 
         @Override
@@ -244,27 +250,27 @@ public abstract class SQLStorage extends LoadFunc
 // }
           LOG.info("Commit task called.. DB SHOULD commit");
           try {
-            if (conn != null) {
-              if (writeStmt != null) {
+            if (storeFunc.conn != null) {
+              if (storeFunc.writeStmt != null) {
                 LOG.info("Commit task: executing the remaining of the batch");
-                writeStmt.executeBatch();
+                storeFunc.writeStmt.executeBatch();
               } else {
                 LOG.info("Write statement is null and there could be batch itesm pending");
               }
 
-              if (!conn.getAutoCommit()) {
+              if (!storeFunc.conn.getAutoCommit()) {
                 LOG.info("Committing DB Connection");
-                conn.commit();
+                storeFunc.conn.commit();
               }
 
-              if (writeStmt != null && !conn.getAutoCommit()) {
-                writeStmt.close();
+              if (storeFunc.writeStmt != null && !storeFunc.conn.getAutoCommit()) {
+                storeFunc.writeStmt.close();
               }
 
-              conn.close();
+              storeFunc.conn.close();
 
-              writeStmt = null;
-              conn = null;
+              storeFunc.writeStmt = null;
+              storeFunc.conn = null;
             } else {
               LOG.info("conn is null and there could be batch items pending in statement");
             }
@@ -319,7 +325,7 @@ public abstract class SQLStorage extends LoadFunc
   @SuppressWarnings("rawtypes")
   @Override
   public OutputFormat getOutputFormat() throws IOException {
-    return new DBStorageOutputFormat();
+    return new DBStorageOutputFormat(this);
   }
 
   @Override
