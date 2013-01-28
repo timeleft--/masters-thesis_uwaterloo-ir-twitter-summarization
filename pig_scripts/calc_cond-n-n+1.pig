@@ -1,5 +1,5 @@
-REGISTER $udfyaboulna*.jar;
-ngrams2 = LOAD '$rootngrams/len2Tokenizer'  USING PigStorage('\t') AS (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
+REGISTER $udf/yaboulna*.jar;
+ngrams2 = LOAD '$root/ngrams/len2Tokenizer'  USING PigStorage('\t') AS (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
 ngrams2CntMillis = FOREACH ngrams2 GENERATE ngram as ngram, date as date, timeMillis as epochStartMillis, 1 as cnt; 
 
     ngrams2Prj5minA = FOREACH ngrams2CntMillis GENERATE epochStartMillis/300000L as epochStartMillisA, (ngram, date) as ngramDate, cnt as cnt;
@@ -43,22 +43,22 @@ ngrams2CntMillis = FOREACH ngrams2 GENERATE ngram as ngram, date as date, timeMi
 ---------- finished counting now the calculations ----
 ngrams2Flattened1hr = FOREACH ngrams2Cnt1hr GENERATE ngram, FLATTEN(yaboulna.pig.TupleStrToBag(ngram)) as comp, date, epochStartMillis, cnt;
 
-ngrams1Cnts1hr = LOAD '$rootcnt_1hr/ngrams1' USING PigStorage('\t') AS (ngram: chararray, date: int, epochStartMillis: long, cnt: int);
+ngrams1Cnts1hr = LOAD '$root/cnt_1hr/ngrams1' USING PigStorage('\t') AS (ngram: chararray, date: int, epochStartMillis: long, cnt: int);
 --ngrams1Flattened1hr = FOREACH --- OR Make the UDF return unigrams in brackets
 cnt1_2Join = JOIN ngrams1Cnts1hr by (ngram, epochStartMillis), ngrams2Flattened1hr by (comp, epochStartMillis);
 prob2g1 = FOREACH cnt1_2Join GENERATE ngrams2Flattened1hr.ngram as ngram2, ngrams1Cnts1hr.ngram as ngram1, ngrams2Flattened1hr.date as date, ngrams2Flattened1hr.epochStartMillis as epochStartMillis,  (1.0 * ngrams2Flattened1hr.cnt / ngrams1Cnts1hr.cnt) as condProb;
 
-STORE prob2g1 INTO '$rootprob/ngram2g1' USING PigStorage('\t');
+STORE prob2g1 INTO '$root/prob/ngram2g1' USING PigStorage('\t');
 
 prob2g1Grps = GROUP prob2g1 BY (ngram2, ngram1);
 prob2g1Avg = FOREACH prob2g1Grps GENERATE group as (ngram2, ngram1), AVG($1.condProb) as avgCondProb; 
 
-STORE prob2g1Avg INTO '$rootprob/ngram2g1Avg' USING PigStorage('\t');
+STORE prob2g1Avg INTO '$root/prob/ngram2g1Avg' USING PigStorage('\t');
 
 prob2g1Days = GROUP prob2g1 BY (ngram2, ngram1, date);
 prob2g1Daily = FOREACH prob2g1Grps GENERATE group as (ngram2, ngram1, date), AVG($1.condProb) as dailyAvgCondProb;
 
-STORE prob2g1Daily INTO '$rootprob/ngram2g1Daily' USING PigStorage('\t');
+STORE prob2g1Daily INTO '$root/prob/ngram2g1Daily' USING PigStorage('\t');
 
 -- either proceed by calculating the rest of the contingency table 
 
