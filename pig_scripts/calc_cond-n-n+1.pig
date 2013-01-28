@@ -43,8 +43,8 @@ ngrams2CntMillis = FOREACH ngrams2 GENERATE ngram as ngram, date as date, timeMi
     
 ---------- finished counting now the calculations ----
 --desc2Cnt1day = ORDER ngrams2Cnt1day BY cnt DESC;
-epochs2Cnt1hrGrp = GROUP ngrams2Cnt1day by epochStartMillis;
-epochs2Cnt1hrSum = FOREACH  epochs2Cnt1hrGrp GENERATE group as epochStartMillis, $1.date as date, SUM($1.cnt) as cnt;
+epochs2Cnt1hrGrp = GROUP ngrams2Cnt1day by (epochStartMillis, date);
+epochs2Cnt1hrSum = FOREACH  epochs2Cnt1hrGrp GENERATE FLATTEN(group) as (epochStartMillis,  date), SUM($1.cnt) as cnt;
 
 ngrams2Flattened1hr = FOREACH ngrams2Cnt1hr GENERATE ngram, FLATTEN(yaboulna.pig.TupleStrToBag(ngram)) as comp, date, epochStartMillis, cnt;
 
@@ -53,9 +53,9 @@ ngrams1Cnts1hr = LOAD '$root/cnt_1hr/ngrams1' USING PigStorage('\t') AS (ngram: 
 cnt1_2Join = JOIN ngrams1Cnts1hr by (ngram, epochStartMillis), ngrams2Flattened1hr by (comp, epochStartMillis);
 
 
-prob2g1NoVol = FOREACH cnt1_2Join GENERATE ngrams2Flattened1hr::ngram as ngram2, ngrams1Cnts1hr::ngram as ngram1, ngrams2Flattened1hr::date as date, ngrams2Flattened1hr::epochStartMillis as epochStartMillis,  (1.0 * ngrams2Flattened1hr::cnt / ngrams1Cnts1hr::cnt) as condProb;
+prob2g1NoVol = FOREACH cnt1_2Join GENERATE ngrams2Flattened1hr::ngram as ngram2, ngrams1Cnts1hr::ngram as ngram1, ngrams2Flattened1hr::date as date, ngrams2Flattened1hr::epochStartMillis as epochStartMillis,  (1.0 * ngrams2Flattened1hr::cnt / ngrams1Cnts1hr::cnt) as condProb, ngrams1Cnts1hr::cnt as unigramCnt;
 prob2g1Vol = JOIN prob2g1NoVol by epochStartMillis, epochs2Cnt1hrSum by epochStartMillis;
-prob2g1Unsorted = FOREACH prob2g1Vol GENERATE prob2g1NoVol::ngram2 as ngram2, prob2g1NoVol::ngram1 as ngram1, prob2g1NoVol::date as date, prob2g1NoVol::epochStartMillis as epochStartMillis, prob2g1NoVol::condProb as condProb,  (1.0 * ngrams1Cnts1hr::cnt / epochs2Cnt1hrSum::cnt) as unigramProb, epochs2Cnt1hrSum::cnt as volume;
+prob2g1Unsorted = FOREACH prob2g1Vol GENERATE prob2g1NoVol::ngram2 as ngram2, prob2g1NoVol::ngram1 as ngram1, prob2g1NoVol::date as date, prob2g1NoVol::epochStartMillis as epochStartMillis, prob2g1NoVol::condProb as condProb,  (1.0 * prob2g1NoVol::unigramCnt / epochs2Cnt1hrSum::cnt) as unigramProb, epochs2Cnt1hrSum::cnt as volume;
 
 prob2g1 = ORDER prob2g1Unsorted BY epochStartMillis ASC, unigramProb DESC; 
 
