@@ -51,12 +51,12 @@ prob2g1 = FOREACH cnt1_2Join GENERATE ngrams2Flattened1hr.ngram as ngram2, ngram
 STORE prob2g1 INTO '$root/prob/ngram2g1' USING PigStorage('\t');
 
 prob2g1Grps = GROUP prob2g1 BY (ngram2, ngram1);
-prob2g1Avg = FOREACH prob2g1Grps GENERATE group as (ngram2, ngram1), AVG($1.condProb) as avgCondProb; 
+prob2g1Avg = FOREACH prob2g1Grps GENERATE FLATTEN(group) as (ngram2, ngram1), AVG($1.condProb) as avgCondProb; 
 
 STORE prob2g1Avg INTO '$root/prob/ngram2g1Avg' USING PigStorage('\t');
 
 prob2g1Days = GROUP prob2g1 BY (ngram2, ngram1, date);
-prob2g1Daily = FOREACH prob2g1Grps GENERATE group as (ngram2, ngram1, date), AVG($1.condProb) as dailyAvgCondProb;
+prob2g1Daily = FOREACH prob2g1Grps GENERATE FLATTEN(group) as (ngram2, ngram1, date), AVG($1.condProb) as dailyAvgCondProb;
 
 STORE prob2g1Daily INTO '$root/prob/ngram2g1Daily' USING PigStorage('\t');
 
