@@ -181,39 +181,6 @@ public abstract class SQLStorage extends LoadFunc
   @Override
   public String[] getPartitionKeys(String location, Job job) throws IOException {
     return datePartitionKey;
-// // TODO: This is called so many times.. would caching the keys be useful.. and how to cache?
-// try {
-// setLocation(location, job);
-//
-// // synchronized sqlStrBuilder??? Will this affect performance if there is no multithreading
-// // yeah.. Pig is actually not multitrheaded.. mappers will have different instances of UDF
-// sqlStrBuilder.setLength(0);
-// sqlStrBuilder.append("SELECT DISTINCT date FROM " + tableName);
-// startWhereClause(sqlStrBuilder);
-// sqlStrBuilder.append(";");
-// String sqlStr = sqlStrBuilder.toString();
-//
-// LOG.info("Executing SQL: " + sqlStr);
-//
-// if (conn == null) {
-// conn = DriverManager.getConnection(url, props);
-// }
-// Statement localStmt = conn.createStatement();
-// localStmt.setFetchSize(DEFAULT_FETCH_SIZE);
-//
-// ResultSet rs = localStmt.executeQuery(sqlStr);
-//
-// List<String> result = Lists.newLinkedList();
-// while (rs.next()) {
-// result.add("" + rs.getInt(1));
-// }
-// rs.close();
-// localStmt.close();
-// localStmt = null;
-// return result.toArray(new String[0]);
-// } catch (SQLException e) {
-// throw new IOException(e);
-// }
   }
 
   @Override
