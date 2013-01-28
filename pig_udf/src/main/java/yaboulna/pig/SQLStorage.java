@@ -115,7 +115,10 @@ public abstract class SQLStorage extends LoadFunc
   protected static final String DEFAULT_CONNECTION_URL = "jdbc:postgresql://hops.cs.uwaterloo.ca:5433/";
   protected static final String DEFAULT_USER = "yaboulna";
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
-  protected static final int DEFAULT_BATCH_SIZE = 10000; // I don't what datastructure is used --> 00;
+
+  // FIXME: The last batch cannot be executed because the conn is null when getOutoutCommiter is called
+  protected static final int DEFAULT_BATCH_SIZE = 1;
+
   protected static final long DEFAULT_NUMRECS_PER_CHUNK = 10000;
   protected static final int DEFAULT_FETCH_SIZE = 1000000; // 1M.. I was thinking of 10M, but nah (no network anyway!)
   protected static final int DEFAULT_NS = 0; // Read NameSpace
@@ -222,11 +225,11 @@ public abstract class SQLStorage extends LoadFunc
   public static class DBStorageOutputFormat extends OutputFormat<NullWritable, NullWritable> {
 
     private final SQLStorage storeFunc;
-    
+
     public DBStorageOutputFormat(SQLStorage storeFunc) {
       this.storeFunc = storeFunc;
     }
-    
+
     @Override
     public void checkOutputSpecs(JobContext context) throws IOException,
         InterruptedException {
