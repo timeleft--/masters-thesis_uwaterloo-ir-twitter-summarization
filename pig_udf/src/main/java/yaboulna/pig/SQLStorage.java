@@ -242,28 +242,32 @@ public abstract class SQLStorage extends LoadFunc
 // if(resultSet != null){
 // resultSet.close();
 // }
+          LOG.info("Commit task called.. DB SHOULD commit");
           try {
             if (conn != null) {
               if (writeStmt != null) {
-
+                LOG.info("Commit task: executing the remaining of the batch");
                 writeStmt.executeBatch();
 
-                if (!conn.getAutoCommit()) {
-                  writeStmt.close();
-                }
               }
 
               if (!conn.getAutoCommit()) {
+                LOG.info("Committing DB Connection");
                 conn.commit();
               }
+
+              if (writeStmt != null && !conn.getAutoCommit()) {
+                writeStmt.close();
+              }
+
               conn.close();
 
               writeStmt = null;
               conn = null;
             }
           } catch (SQLException e) {
-            LOG.error("stmt.close:" + e.getMessage(), e);
-// throw new IOException("stmt.close JDBC Error", e);
+// LOG.error("stmt.close:" + e.getMessage(), e);
+            throw new IOException("Cleanup task", e);
           }
         }
 
@@ -275,7 +279,7 @@ public abstract class SQLStorage extends LoadFunc
 
         @Override
         public void cleanupJob(JobContext context) throws IOException {
-          // IGNORE
+          commitTask(null); // the commit task wasn't called, was it?? Why isn't my DB committing?
         }
 
         @Override
@@ -522,16 +526,22 @@ public abstract class SQLStorage extends LoadFunc
           // if (!conn.getAutoCommit())
           // Execute batch so that what actually happened can be traced
           writeStmt.executeBatch();
-          writeStmt.clearBatch();
-          writeStmt.clearParameters();
-          writeStmt.close();
-          writeStmt = null;
+// writeStmt.clearBatch();
+// writeStmt.clearParameters();
+
         }
 
         if (!conn.getAutoCommit()) {
           warn("Cleaning up on failure (or task abortion).. rolling back DB transactions.",
               Warnings.ROLLBACK);
           conn.rollback();
+        }
+
+        if (writeStmt != null) {
+          if (!conn.getAutoCommit()) {
+            writeStmt.close();
+          }
+          writeStmt = null;
         }
 
         conn.close();
@@ -597,9 +607,9 @@ public abstract class SQLStorage extends LoadFunc
       conn = DriverManager.getConnection(url, props);
       // I can't call commit at the right time, actually it is never properly called and thus even
       // with autocommit on the last batch gets lost.. the sequence of calls of UDF is a mystery!
-//      // Must be false because we use batch:
-//      // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
-//      conn.setAutoCommit(false);
+// // Must be false because we use batch:
+// // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
+// conn.setAutoCommit(false);
       PreparedStatement result = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
 // result.setPrepareThreshold done on connection level using params
       return result;
