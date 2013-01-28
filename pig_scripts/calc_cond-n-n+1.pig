@@ -1,3 +1,4 @@
+REGISTER $udfyaboulna*.jar;
 ngrams2 = LOAD '$rootngrams/len2Tokenizer'  USING PigStorage('\t') AS (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int);
 ngrams2CntMillis = FOREACH ngrams2 GENERATE ngram as ngram, date as date, timeMillis as epochStartMillis, 1 as cnt; 
 
