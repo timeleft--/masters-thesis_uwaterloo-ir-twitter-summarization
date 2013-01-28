@@ -624,9 +624,9 @@ public abstract class SQLStorage extends LoadFunc
 
       // I can't call commit at the right time, actually it is never properly called and thus even
       // with autocommit on the last batch gets lost.. the sequence of calls of UDF is a mystery!
-      // Must be false because we use batch:
-      // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
-      conn.setAutoCommit(false);
+//      // Must be false because we use batch:
+//      // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
+//      conn.setAutoCommit(false);
       PreparedStatement result = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
 // result.setPrepareThreshold done on connection level using params
       return result;
