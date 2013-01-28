@@ -279,6 +279,7 @@ public abstract class SQLStorage extends LoadFunc
 
         @Override
         public void cleanupJob(JobContext context) throws IOException {
+          LOG.info("Cleanup JOB called.. calling the one for tasks");
           commitTask(null); // the commit task wasn't called, was it?? Why isn't my DB committing?
         }
 
