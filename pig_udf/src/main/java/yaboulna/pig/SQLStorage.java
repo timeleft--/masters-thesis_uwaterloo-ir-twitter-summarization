@@ -248,7 +248,8 @@ public abstract class SQLStorage extends LoadFunc
               if (writeStmt != null) {
                 LOG.info("Commit task: executing the remaining of the batch");
                 writeStmt.executeBatch();
-
+              } else {
+                LOG.info("Write statement is null and there could be batch itesm pending");
               }
 
               if (!conn.getAutoCommit()) {
@@ -264,6 +265,8 @@ public abstract class SQLStorage extends LoadFunc
 
               writeStmt = null;
               conn = null;
+            } else {
+              LOG.info("conn is null and there could be batch items pending in statement");
             }
           } catch (SQLException e) {
 // LOG.error("stmt.close:" + e.getMessage(), e);
@@ -279,8 +282,9 @@ public abstract class SQLStorage extends LoadFunc
 
         @Override
         public void cleanupJob(JobContext context) throws IOException {
-          LOG.info("Cleanup JOB called.. calling the one for tasks");
-          commitTask(null); // the commit task wasn't called, was it?? Why isn't my DB committing?
+          // It gets called, but with conn = null :(
+// LOG.info("Cleanup JOB called.. calling the one for tasks");
+// commitTask(null); // the commit task wasn't called, was it?? Why isn't my DB committing?
         }
 
         @Override
@@ -588,29 +592,32 @@ public abstract class SQLStorage extends LoadFunc
       if (LOG.isDebugEnabled()) {
         LOG.debug("Preparing statment with SQL: " + sql);
       }
-      if (stmt != null) {
-        int[] pendingBatchResults = stmt.executeBatch();
-        logWarn("prepare called while stmt is not null. Executed pending batches ("
-            + pendingBatchResults.length + ")", Warnings.STMT_NOT_NULL_REINIT);
-// LOG.warn( );
-        if (conn != null && !conn.getAutoCommit())
-          stmt.close();
-        stmt = null;
-      }
+
       if (conn != null) {
-        if (!conn.getAutoCommit())
+        if (stmt != null) {
+          int[] pendingBatchResults = stmt.executeBatch();
+          logWarn("prepare called while stmt is not null. Executed pending batches ("
+              + pendingBatchResults.length + ")", Warnings.STMT_NOT_NULL_REINIT);
+        }
+        if (!conn.getAutoCommit()) {
           conn.commit();
+        }
         logWarn("prepare called while conn is not null. Commited",
             Warnings.CONN_NOT_NULL_REINIT);
-// LOG.warn();
+        if (stmt != null && !conn.getAutoCommit()) {
+          stmt.close();
+        }
+        stmt = null;
         conn = null;
       }
+
       conn = DriverManager.getConnection(url, props);
+
       // I can't call commit at the right time, actually it is never properly called and thus even
       // with autocommit on the last batch gets lost.. the sequence of calls of UDF is a mystery!
- // Must be false because we use batch:
- // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
- conn.setAutoCommit(false);
+      // Must be false because we use batch:
+      // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
+      conn.setAutoCommit(false);
       PreparedStatement result = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
 // result.setPrepareThreshold done on connection level using params
       return result;
