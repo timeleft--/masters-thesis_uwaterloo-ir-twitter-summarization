@@ -44,10 +44,10 @@ public class NGramsCountStorage extends SQLStorage {
   // All keys must be in loser case because that's how SQL say its column names
   protected Map<String, Byte> fieldTypes;
 
-  static {
-    SCHEMA_MAP.put(TABLE_NAME_PREFIX,
-        "ngram: chararray, date: int, epochStartMillis: long, cnt: int");
-  }
+//  static {
+//    SCHEMA_MAP.put(TABLE_NAME_PREFIX,
+//        "ngram: chararray, date: int, epochStartMillis: long, cnt: int");
+//  }
 
   public class NGramsCountRecordReader extends RecordReader<Long, Tuple> {
 
@@ -233,18 +233,18 @@ public class NGramsCountStorage extends SQLStorage {
   @SuppressWarnings("rawtypes")
   @Override
   public InputFormat getInputFormat() throws IOException {
-    if (schemaSelector.startsWith(TABLE_NAME_PREFIX)) {
+//    if (schemaSelector.startsWith(TABLE_NAME_PREFIX)) {
       return new NGramsCountsInputFormat();
-    } else {
-      throw new UnsupportedOperationException(
-          "Only the NGRamsCount Table is supported at the moment, schemaSelector: "
-              + schemaSelector + " - tableName: "
-              + tableName + " - namespace: " + btreeNamespace);
-    }
+//    } else {
+//      throw new UnsupportedOperationException(
+//          "Only the NGRamsCount Table is supported at the moment, schemaSelector: "
+//              + schemaSelector + " - tableName: "
+//              + tableName + " - namespace: " + btreeNamespace);
+//    }
   }
 
-  public NGramsCountStorage(String dbname) throws ClassNotFoundException, ParserException {
-    super(dbname);
+  public NGramsCountStorage(String dbname, String schema) throws ClassNotFoundException, ParserException {
+    super(dbname, schema);
   }
 
 }

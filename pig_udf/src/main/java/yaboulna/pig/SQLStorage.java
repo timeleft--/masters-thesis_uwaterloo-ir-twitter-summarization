@@ -12,7 +12,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.fs.Path;
@@ -52,8 +51,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import yaboulna.pig.NGramsCountStorage.NGramsCountRecordReader;
-
-import com.google.common.collect.Maps;
 
 public abstract class SQLStorage extends LoadFunc
     implements
@@ -103,8 +100,8 @@ public abstract class SQLStorage extends LoadFunc
     SQL_RETCODE, STMT_NOT_NULL_REINIT, CONN_NOT_NULL_REINIT, SCHEMA_NAMES_NOT_MATCHING, NON_CONTIGOUS_PARTITION, ROLLBACK
   };
 
-  protected static final String DEFAULT_SCHEMA_SELECTOR = "cnt";
-  protected static final Map<String, String> SCHEMA_MAP = Maps.newHashMap();
+//  protected static final String DEFAULT_SCHEMA_SELECTOR = "cnt";
+//  protected static final Map<String, String> SCHEMA_MAP = Maps.newHashMap();
 // static {
 // SCHEMA_MAP
 // .put(
@@ -154,7 +151,7 @@ public abstract class SQLStorage extends LoadFunc
   protected StringBuilder sqlStrBuilder = new StringBuilder();
   protected String[] datePartitionKey = new String[]{DEFAULT_DATE_COLNAME};
 
-  public SQLStorage(String dbname) throws ClassNotFoundException, ParserException {
+  public SQLStorage(String dbname, String schema) throws ClassNotFoundException, ParserException {
     Class.forName(DEFAULT_DRIVER);
 
     url = DEFAULT_CONNECTION_URL + dbname;
@@ -163,6 +160,10 @@ public abstract class SQLStorage extends LoadFunc
     props.setProperty("password", DEFAULT_PASSWORD); // "Spritz3rU");
 // props.setProperty("ssl", "false");
     props.setProperty("prepareThreshold", "1");
+    
+    
+    schemaSelector = schema;
+    loadSchema();
   }
 
   @Override
@@ -353,8 +354,10 @@ public abstract class SQLStorage extends LoadFunc
     } else if (slashSplits.length > 2) {
       LOG.warn("Ignoring anything after second slash in: " + location);
     }
-    schemaSelector = tableName.substring(0, tableName.indexOf('_'));
-    storeInUDFContext(UDFCKEY_SCHEMA_SELECTOR, schemaSelector);
+    
+    //Schema will be passed as a constructor arg
+//    schemaSelector = tableName.substring(0, tableName.indexOf('_'));
+//    storeInUDFContext(UDFCKEY_SCHEMA_SELECTOR, schemaSelector);
 
     // I'd say I should get the projection fields in loadSchema, but in HCatLoader they have it in setLocation
     // Here's their comment:
@@ -506,6 +509,9 @@ public abstract class SQLStorage extends LoadFunc
     if (LOG.isDebugEnabled())
       LOG.debug("udfcSignature " + signature);
     udfcSignature = signature;
+    
+    //Part of passing the schema as constructor arg is that we eagerly wait to store in UDFCtxt
+    storeInUDFContext(UDFCKEY_SCHEMA_SELECTOR, schemaSelector);
   }
 
   protected void loadSchema() throws ParserException {
@@ -513,12 +519,13 @@ public abstract class SQLStorage extends LoadFunc
     if (schemaSelector == null) {
       schemaSelector = loadFromUDFContext(UDFCKEY_SCHEMA_SELECTOR);
       if (schemaSelector == null) {
-        // TODO: if we need to generalize we'll have to find out when is the right time to call loadSchema
-        schemaSelector = DEFAULT_SCHEMA_SELECTOR;
-        // throw new NullPointerException("There will be no schema in the map below if we proceed");
+//        // TODO: if we need to generalize we'll have to find out when is the right time to call loadSchema
+//        schemaSelector = DEFAULT_SCHEMA_SELECTOR;
+         throw new NullPointerException("There will be no schema in the map below if we proceed");
       }
     }
-    parsedSchema = new ResourceSchema(Utils.getSchemaFromString(SCHEMA_MAP.get(schemaSelector)));
+//    parsedSchema = new ResourceSchema(Utils.getSchemaFromString(SCHEMA_MAP.get(schemaSelector)));
+    parsedSchema = new ResourceSchema(Utils.getSchemaFromString(schemaSelector));
   }
 
   protected String loadFromUDFContext(String key) {
