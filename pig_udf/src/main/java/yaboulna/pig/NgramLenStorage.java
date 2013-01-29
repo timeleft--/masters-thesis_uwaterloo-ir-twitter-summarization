@@ -33,11 +33,11 @@ import com.google.common.collect.Maps;
  * done
  * # HASH IS EXTREMELY SLOW: CREATE INDEX cnt_namespace ON cnt USING hash (namespace);
  */
-public class NGramsCountStorage extends SQLStorage {
+public class NgramLenStorage extends SQLStorage {
 
   public static Logger LOG = LoggerFactory.getLogger(SQLStorage.class);
 
-  private static final String TABLE_NAME_PREFIX = "cnt";
+//  private static final String TABLE_NAME_PREFIX = "cnt";
 
   private static final String NAMESPACE_COLNAME = "ngramLen";
 
@@ -49,7 +49,7 @@ public class NGramsCountStorage extends SQLStorage {
 //        "ngram: chararray, date: int, epochStartMillis: long, cnt: int");
 //  }
 
-  public class NGramsCountRecordReader extends RecordReader<Long, Tuple> {
+  public class NgramLenReader extends RecordReader<Long, Tuple> {
 
     ResultSet resultSet;
     ResultSetMetaData resultMetadata;
@@ -211,10 +211,10 @@ public class NGramsCountStorage extends SQLStorage {
   public class NGramsCountsInputFormat extends SQLPartitionByDateInputFormat {
 
     @Override
-    public NGramsCountRecordReader createRecordReader(InputSplit split, TaskAttemptContext context)
+    public NgramLenReader createRecordReader(InputSplit split, TaskAttemptContext context)
         throws IOException, InterruptedException {
 
-      return new NGramsCountRecordReader();
+      return new NgramLenReader();
     }
 
   }
@@ -222,12 +222,12 @@ public class NGramsCountStorage extends SQLStorage {
   @Override
   public void setLocation(String location, Job job) throws IOException {
     super.setLocation(location, job);
-    if (tableName.startsWith(TABLE_NAME_PREFIX)) {
-      namespaceColName = NAMESPACE_COLNAME;
-      fieldTypes = Maps.newHashMap();
-      fieldTypes.put(namespaceColName.toLowerCase(), DataType.INTEGER);
-      fieldTypes.put("pkey".toLowerCase(), DataType.LONG);
-    }
+//    if (tableName.startsWith(TABLE_NAME_PREFIX)) {
+//      namespaceColName = NAMESPACE_COLNAME;
+//      fieldTypes = Maps.newHashMap();
+//      fieldTypes.put(namespaceColName.toLowerCase(), DataType.INTEGER);
+//      fieldTypes.put("pkey".toLowerCase(), DataType.LONG);
+//    }
   }
 
   @SuppressWarnings("rawtypes")
@@ -243,8 +243,12 @@ public class NGramsCountStorage extends SQLStorage {
 //    }
   }
 
-  public NGramsCountStorage(String dbname, String schema) throws ClassNotFoundException, ParserException {
+  public NgramLenStorage(String dbname, String schema) throws ClassNotFoundException, ParserException {
     super(dbname, schema);
+    namespaceColName = NAMESPACE_COLNAME;
+    fieldTypes = Maps.newHashMap();
+    fieldTypes.put(namespaceColName.toLowerCase(), DataType.INTEGER);
+    fieldTypes.put("pkey".toLowerCase(), DataType.LONG);
   }
 
 }

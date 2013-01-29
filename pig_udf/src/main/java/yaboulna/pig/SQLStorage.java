@@ -50,7 +50,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import yaboulna.pig.NGramsCountStorage.NGramsCountRecordReader;
+import yaboulna.pig.NgramLenStorage.NgramLenReader;
 
 public abstract class SQLStorage extends LoadFunc
     implements
@@ -139,14 +139,14 @@ public abstract class SQLStorage extends LoadFunc
   protected String partitionWhereClause = "";
   protected int btreeNamespace = DEFAULT_NS;
   protected String namespaceColName = DEFAULT_NS_COLNAME;
-  protected String schemaSelector = null;
+  protected String schemaStr = null;
   protected ResourceSchema parsedSchema = null;
   protected String url;
   protected Properties props;
   protected int pendingBatchCount = 0;
   protected int batchSizeForCommit = DEFAULT_BATCH_SIZE;
   protected String udfcSignature;
-  protected NGramsCountRecordReader reader;
+  protected NgramLenReader reader;
 
   protected StringBuilder sqlStrBuilder = new StringBuilder();
   protected String[] datePartitionKey = new String[]{DEFAULT_DATE_COLNAME};
@@ -162,7 +162,7 @@ public abstract class SQLStorage extends LoadFunc
     props.setProperty("prepareThreshold", "1");
     
     
-    schemaSelector = schema;
+    schemaStr = schema;
     loadSchema();
   }
 
@@ -511,21 +511,21 @@ public abstract class SQLStorage extends LoadFunc
     udfcSignature = signature;
     
     //Part of passing the schema as constructor arg is that we eagerly wait to store in UDFCtxt
-    storeInUDFContext(UDFCKEY_SCHEMA_SELECTOR, schemaSelector);
+    storeInUDFContext(UDFCKEY_SCHEMA_SELECTOR, schemaStr);
   }
 
   protected void loadSchema() throws ParserException {
     // Get the schema string from the UDFContext object.
-    if (schemaSelector == null) {
-      schemaSelector = loadFromUDFContext(UDFCKEY_SCHEMA_SELECTOR);
-      if (schemaSelector == null) {
+    if (schemaStr == null) {
+      schemaStr = loadFromUDFContext(UDFCKEY_SCHEMA_SELECTOR);
+      if (schemaStr == null) {
 //        // TODO: if we need to generalize we'll have to find out when is the right time to call loadSchema
 //        schemaSelector = DEFAULT_SCHEMA_SELECTOR;
          throw new NullPointerException("There will be no schema in the map below if we proceed");
       }
     }
 //    parsedSchema = new ResourceSchema(Utils.getSchemaFromString(SCHEMA_MAP.get(schemaSelector)));
-    parsedSchema = new ResourceSchema(Utils.getSchemaFromString(schemaSelector));
+    parsedSchema = new ResourceSchema(Utils.getSchemaFromString(schemaStr));
   }
 
   protected String loadFromUDFContext(String key) {
@@ -579,10 +579,10 @@ public abstract class SQLStorage extends LoadFunc
     loadSchema();
 
     // FIXME: Abstraction, so that other readers can be added later for other tables
-    if (reader instanceof NGramsCountRecordReader) {
-      this.reader = (NGramsCountRecordReader) reader;
+    if (reader instanceof NgramLenReader) {
+      this.reader = (NgramLenReader) reader;
     } else {
-      throw new IOException("Expected a reader of type " + NGramsCountRecordReader.class
+      throw new IOException("Expected a reader of type " + NgramLenReader.class
           + " got one of type " + reader.getClass());
     }
   }
