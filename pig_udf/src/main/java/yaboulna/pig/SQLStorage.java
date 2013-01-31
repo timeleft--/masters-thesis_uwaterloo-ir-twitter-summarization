@@ -3,6 +3,7 @@ package yaboulna.pig;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -100,8 +101,8 @@ public abstract class SQLStorage extends LoadFunc
     SQL_RETCODE, STMT_NOT_NULL_REINIT, CONN_NOT_NULL_REINIT, SCHEMA_NAMES_NOT_MATCHING, NON_CONTIGOUS_PARTITION, ROLLBACK
   };
 
-//  protected static final String DEFAULT_SCHEMA_SELECTOR = "cnt";
-//  protected static final Map<String, String> SCHEMA_MAP = Maps.newHashMap();
+// protected static final String DEFAULT_SCHEMA_SELECTOR = "cnt";
+// protected static final Map<String, String> SCHEMA_MAP = Maps.newHashMap();
 // static {
 // SCHEMA_MAP
 // .put(
@@ -160,8 +161,7 @@ public abstract class SQLStorage extends LoadFunc
     props.setProperty("password", DEFAULT_PASSWORD); // "Spritz3rU");
 // props.setProperty("ssl", "false");
     props.setProperty("prepareThreshold", "1");
-    
-    
+
     schemaStr = schema;
     loadSchema();
   }
@@ -278,6 +278,8 @@ public abstract class SQLStorage extends LoadFunc
             } else {
               LOG.info("conn is null and there could be batch items pending in statement");
             }
+          } catch(BatchUpdateException e){
+            throw new IOException(e.getNextException());
           } catch (SQLException e) {
 // LOG.error("stmt.close:" + e.getMessage(), e);
             throw new IOException("Cleanup task", e);
@@ -354,10 +356,10 @@ public abstract class SQLStorage extends LoadFunc
     } else if (slashSplits.length > 2) {
       LOG.warn("Ignoring anything after second slash in: " + location);
     }
-    
-    //Schema will be passed as a constructor arg
-//    schemaSelector = tableName.substring(0, tableName.indexOf('_'));
-//    storeInUDFContext(UDFCKEY_SCHEMA_SELECTOR, schemaSelector);
+
+    // Schema will be passed as a constructor arg
+// schemaSelector = tableName.substring(0, tableName.indexOf('_'));
+// storeInUDFContext(UDFCKEY_SCHEMA_SELECTOR, schemaSelector);
 
     // I'd say I should get the projection fields in loadSchema, but in HCatLoader they have it in setLocation
     // Here's their comment:
@@ -491,6 +493,8 @@ public abstract class SQLStorage extends LoadFunc
         writeStmt.clearBatch();
         writeStmt.clearParameters();
       }
+    } catch (BatchUpdateException e) {
+      throw new IOException(e.getNextException());
     } catch (SQLException e) {
       throw new IOException(e);
     }
@@ -509,8 +513,8 @@ public abstract class SQLStorage extends LoadFunc
     if (LOG.isDebugEnabled())
       LOG.debug("udfcSignature " + signature);
     udfcSignature = signature;
-    
-    //Part of passing the schema as constructor arg is that we eagerly wait to store in UDFCtxt
+
+    // Part of passing the schema as constructor arg is that we eagerly wait to store in UDFCtxt
     storeInUDFContext(UDFCKEY_SCHEMA_SELECTOR, schemaStr);
   }
 
@@ -519,12 +523,12 @@ public abstract class SQLStorage extends LoadFunc
     if (schemaStr == null) {
       schemaStr = loadFromUDFContext(UDFCKEY_SCHEMA_SELECTOR);
       if (schemaStr == null) {
-//        // TODO: if we need to generalize we'll have to find out when is the right time to call loadSchema
-//        schemaSelector = DEFAULT_SCHEMA_SELECTOR;
-         throw new NullPointerException("There will be no schema in the map below if we proceed");
+// // TODO: if we need to generalize we'll have to find out when is the right time to call loadSchema
+// schemaSelector = DEFAULT_SCHEMA_SELECTOR;
+        throw new NullPointerException("There will be no schema in the map below if we proceed");
       }
     }
-//    parsedSchema = new ResourceSchema(Utils.getSchemaFromString(SCHEMA_MAP.get(schemaSelector)));
+// parsedSchema = new ResourceSchema(Utils.getSchemaFromString(SCHEMA_MAP.get(schemaSelector)));
     parsedSchema = new ResourceSchema(Utils.getSchemaFromString(schemaStr));
   }
 
@@ -568,6 +572,8 @@ public abstract class SQLStorage extends LoadFunc
         conn.close();
         conn = null;
       }
+    } catch(BatchUpdateException e){
+      throw new IOException(e.getNextException());
     } catch (SQLException sqe) {
       throw new IOException(sqe);
     }
@@ -631,12 +637,14 @@ public abstract class SQLStorage extends LoadFunc
 
       // I can't call commit at the right time, actually it is never properly called and thus even
       // with autocommit on the last batch gets lost.. the sequence of calls of UDF is a mystery!
-//      // Must be false because we use batch:
-//      // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
-//      conn.setAutoCommit(false);
+// // Must be false because we use batch:
+// // http://www.postgresql.org/message-id/9BD8DE65-3EE5-491C-9814-B6E682C713CB@cha.com
+// conn.setAutoCommit(false);
       PreparedStatement result = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
 // result.setPrepareThreshold done on connection level using params
       return result;
+    } catch(BatchUpdateException e){
+      throw new IOException(e.getNextException());
     } catch (SQLException e) {
       throw new IOException(e);
     }

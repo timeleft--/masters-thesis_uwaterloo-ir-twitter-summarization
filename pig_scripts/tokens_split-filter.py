@@ -22,10 +22,18 @@ SPLIT ngramTokenizer INTO
 	ngrams2 IF  (pos < tweetLen) AND ngramLen == 2,
 	hashtags IF (pos == tweetLen),
 	unknown OTHERWISE;
-STORE ngrams1 INTO '%(root)sngrams/len1' %(storeFunc)s;
-STORE ngrams2 INTO '%(root)sngrams/len2Tokenizer' %(storeFunc)s;
-STORE hashtags INTO '%(root)shashtags/powersets' %(storeFunc)s;
-SPLIT ngrams1 INTO unigramsPos0 IF pos == 0""" % {"storeFunc": " USING PigStorage('\\t') ", "root": args.root}
+	
+ng1db = FOREACH ngrams1 GENERATE ngramLen, id, timeMillis, date, ngram, tweetLen, pos; 
+ng2db = FOREACH ngrams2 GENERATE ngramLen, id, timeMillis, date, ngram, tweetLen, pos;
+htagdb = FOREACH hashtags GENERATE ngramLen, id, timeMillis, date, ngram, tweetLen, pos;
+
+STORE ng1db INTO '%(root)sdb/ngrams1' %(storeFunc)s;
+STORE ng2db INTO '%(root)sdb/ngrams2' %(storeFunc)s;
+STORE htagdb INTO '%(root)sdb/htags_powersets' %(storeFunc)s;
+
+STORE unknown INTO '%(root)sdebug/split/unknown';
+
+SPLIT ng1db INTO unigramsPos0 IF pos == 0""" % {"storeFunc": " USING PigStorage('\\t') ", "root": args.root}
 store = "STORE unigramsPos0 INTO '%(root)sunigrams/pos0' %(storeFunc)s;" % {"storeFunc": " USING PigStorage('\\t') ", "root": args.root}
 
 for i in range(70):
