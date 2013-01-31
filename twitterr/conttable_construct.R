@@ -30,11 +30,14 @@ In case of bigrams it was enough to append 'and NOT a.ngramArr[1] = ALL (b.ngram
 ngramGrps <- ddply(idata.frame(df), c("epochstartux","ngram"), function(bg){
       bgRow <- bg[1,1:6]
       for(i in 1:nrow(bg)) {
-#        if(!identical(bgRow[,1:6], bg[i,1:6])){
-        if(!all(bgRow[,1:6] == bg[i,1:6])){
-          stop(paste("This is a debug message because the SQL and grouping produced ngram groups that differ at i =",
-                  i, str(bgRow[,1:6]), str(bg[i,1:6])))
-        }
+##        if(!identical(bgRow[,1:6], bg[i,1:6])){
+##        if(any(as.list(bgRow[1,1:6]) != as.list(bg[i,1:6]))){
+##        if(any(bgRow[1,1:6] != bg[i,1:6]))
+#        #It alwas fails the first time complaining that comparison of these types is not implemented
+#        # or that comparison si for atimoc and list types
+#          stop(paste("This is a debug message because the SQL and grouping produced ngram groups that differ at i =",
+#                  i, str(bgRow[,1:6]), str(bg[i,1:6])))
+#        }
         bgRow[paste("unigram", i, sep=".")] = bg[i,"unigram"]
         bgRow[paste("alonecnt", i, sep=".")] = bg[i,"alonecnt"]
         bgRow[paste("unigramcnt", i, sep=".")] = bg[i,"unigramcnt"]
