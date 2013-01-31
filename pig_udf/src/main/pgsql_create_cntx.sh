@@ -13,7 +13,6 @@ do
     for len in 1 2  #{1..71} 
     do
 	# echo "hdfs dfs -cat ${root}/cnt_${epoch}/ngrams1/part* | ${psql} 'COPY cnt_${epoch} (ngram, date, epochstartmillis, cnt) FROM STDIN;'"
-#	echo "${psql} 'CREATE UNLOGGED TABLE cnt_${epoch}${len} (CHECK (ngramLen = ${len})) INHERITS(cnt_${epoch});'" 
 	echo "${psql} 'CREATE UNLOGGED TABLE cnt_${epoch}${len}_staging (ngramLen int2, ngram text, date int4, epochStartMillis int8, cnt int4);'"
 	echo "${psql} \"COPY cnt_${epoch}${len}_staging (ngramLen, ngram, date, epochstartmillis, cnt) FROM '${root}cnt_${epoch}_onefile/ngrams${len}';\""
 	echo "${psql} \"CREATE UNLOGGED TABLE cnt_${epoch}${len} as select ngramlen, regexp_split_to_array(trim(trailing ')' from trim(leading '(' from ngram)), ',') as ngramArr, date, epochstartmillis, cnt from cnt_${epoch}${len}_staging;\"" # where date = 121221 and cnt > 3;'
@@ -22,5 +21,6 @@ do
 	echo "${psql} 'DROP TABLE cnt_${epoch}${len}_staging;'"
 	echo "${psql} 'CREATE INDEX cnt_${epoch}${len}_date ON cnt_${epoch}${len}(date);'"
 	echo "${psql} 'CREATE INDEX cnt_${epoch}${len}_ngramLen ON cnt_${epoch}${len}(ngramLen);'"
+	echo "${psql} 'CREATE UNLOGGED TABLE volume_${epoch}${len} as select epochstartmillis, sum(cnt) as totalcnt from cnt_${epoch}${len} group by epochstartmillis;'"
     done
 done
