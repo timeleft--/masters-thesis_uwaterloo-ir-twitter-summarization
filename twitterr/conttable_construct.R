@@ -40,7 +40,7 @@ ngramGrps <- ddply(df, c("epochstartux","ngram"), function(bg){
         bgRow[paste("unigramcnt", i, sep=".")] = bg[i,"unigramcnt"]
       }
       bgRow["POSIXtime"] <- as.POSIXct(bgRow[1,"epochstartux"]/MILLIS_PUT_1000,origin="1970-01-01",
-          tz="GMT")
+          tz="GMT-5")
       return(bgRow)
     }) #,.parallel = TRUE)  will use doMC to parallelize on a higher level then no need here 
 
