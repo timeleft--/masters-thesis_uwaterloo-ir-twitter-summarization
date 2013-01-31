@@ -28,6 +28,10 @@ rs <- dbSendQuery(con,
 
 df <- fetch(rs, n=-1);
 
+bigramOccs <- duplicated(df$epochstartux, df$bigram)
+comp1 <- df[!bigramOccs,]
+comp2 <- df[bigramOccs]
+
 #bigrams = factor;
 #tapply(create congengency table with time)
 
