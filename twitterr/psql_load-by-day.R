@@ -7,7 +7,7 @@ require(RPostgreSQL)
 drv <- dbDriver("PostgreSQL")
 con <- dbConnect(drv, dbname="sample-0.01", user="yaboulna", password="5#afraPG",
     host="hops.cs.uwaterloo.ca", port="5433")
-rs <- dbSendQuery(con, "select * from cnt_1hr where (ngramLen=1 or ngramLen=2) and date=121221")
+rs <- dbSendQuery(con, "select * from cnt_1hr where (ngramLen=2) and date=121221")
 
 df <- fetch(rs, n=-1);
 
