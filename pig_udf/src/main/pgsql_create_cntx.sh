@@ -21,6 +21,6 @@ do
 	echo "${psql} 'DROP TABLE cnt_${epoch}${len}_staging;'"
 	echo "${psql} 'CREATE INDEX cnt_${epoch}${len}_date ON cnt_${epoch}${len}(date);'"
 	echo "${psql} 'CREATE INDEX cnt_${epoch}${len}_ngramLen ON cnt_${epoch}${len}(ngramLen);'"
-	echo "${psql} 'CREATE UNLOGGED TABLE volume_${epoch}${len} as select epochstartmillis, sum(cnt) as totalcnt from cnt_${epoch}${len} group by epochstartmillis;'"
+	echo "${psql} 'CREATE UNLOGGED TABLE volume_${epoch}${len} as select  min(ngramLen) as ngramLen, epochstartmillis, sum(cnt) as totalcnt from cnt_${epoch}${len} group by epochstartmillis;'"
     done
 done
