@@ -19,7 +19,7 @@ date<-121221
 epoch1<-'5min'
 ngramlen2<-2
 ngramlen1<-1
-support<-3
+support<-1
 epoch2<-NULL
 }
 
@@ -63,15 +63,17 @@ ngramGrps <- ddply(df, c("epochstartux","ngram"), function(bg){
       return(bgRow)
     }) #,.parallel = TRUE)  will use doMC to parallelize on a higher level then no need here 
 
-epochGrps <- ddply(ngramGrps, c("epochstartux"), function(eg) {
+ 
+    createCooccurNooccur <- function(eg) {
+    
       egRow <- eg[1,1:3]
       #if unique unigrams are c(blah, blah) exit
 #        uniqueUgrams <-  reshape(eg[, c(1,7 + (0:(ngramlen2-1)) * 3)], varying=paste("unigram.",c(1:ngramlen2)), 
 #            direction="long" )
-      uniqueUgrams <- unique(eg[,"unigram.1"])
-      for(l in 2:ngramlen2){
-        uniqueUgrams <- union(uniqueUgrams, unique(eg[,c(paste("unigram", l, sep="."))]))
-      }
+      uniqueUgrams <- unique(eg[,"unigram"])
+#      for(l in 2:ngramlen2){
+#        uniqueUgrams <- union(uniqueUgrams, unique(eg[,c(paste("unigram", l, sep="."))]))
+#      }
       
       nUnique <- length(uniqueUgrams)
       dnames <- c(uniqueUgrams, TOTAL)
@@ -81,6 +83,7 @@ epochGrps <- ddply(ngramGrps, c("epochstartux"), function(eg) {
 #        str(dnames)  
 #      }
       cooccurs <- array(rep(0,(nUnique+1)^2), dim=c(nUnique+1,nUnique+1))
+      notoccurs <- array(rep(0,(nUnique)^2), dim=c(nUnique,nUnique))
       #dimnames starts behaving wierdly after 5 iterations by using the string c(...) as the dimns!
 #      , dimnames=list(dnames,dnames))
 #      cooccurs <- matrix(rep(0,(nUnique+1)^2), nrow=nUnique+1, dimnames=list(dnames,dnames))
@@ -101,12 +104,18 @@ epochGrps <- ddply(ngramGrps, c("epochstartux"), function(eg) {
 #      if(DEBUG){
 #        str(cooccurs)
 #      }
-      for(l in 1:(ngramlen2)){
+#      for(l in 1:nUnique){
         
-        unigGrp <- ddply(eg, c(paste("unigram", l, sep=".")), function(ug) {
-              
-              ugram <- ug[1,paste("unigram", l, sep=".")]
-              ixugram <- ixLookup[ugram, 'ix']
+#        unigGrp <- ddply(eg, c(paste("unigram", l, sep=".")), function(ug) {
+#  ugram <- ug[1,paste("unigram", l, sep=".")]
+
+
+countCooccurNooccurUnigram <- function(ug) {             
+  ugram <- ug[1,"unigram"]
+  ixugram <- ixLookup[ugram, 'ix']
+#              if(ixugram < 1){
+#                next;
+#              }
 #              if(DEBUG){
 #                str(ugram)
 #                if((!ugram %in% colnames(cooccurs))){
@@ -121,48 +130,89 @@ epochGrps <- ddply(ngramGrps, c("epochstartux"), function(eg) {
 #          str(ug)
 #          str(ug[1,paste("unigramcnt", l, sep=".")])
 #              }
-              
-              cooccurs[ixugram,ixugram] <- ug[1,paste("unigramcnt", l, sep=".")]
-                  # This is good in case of bigrams only.. but really alone need reducing all 
-              # occurrences with anything else from the unigramcnt (appearing ALONE... how!)
-                  #ug[1,paste("alonecnt", l, sep=".")]
-              cooccurs[ixugram,ixTOTAL] <- ug[1,paste("unigramcnt", l, sep=".")]
-              cooccurs[ixTOTAL, ixugram] <- cooccurs[ixugram,ixTOTAL] 
-              
-              
+  
+  # The total num of occurrences for the unigram in this epoch, goes into 3 locations
+  # the totals, and also the diagonal (to be reduced to become the "alone" cnt)      
+  cooccurs[ixugram,ixugram] <- ug[1,"unigramcnt"]
+  cooccurs[ixugram,ixTOTAL] <-  cooccurs[ixugram,ixugram]
+  cooccurs[ixTOTAL, ixugram] <-  cooccurs[ixugram,ixugram]
+  
+  # To calculate how many times a unigram appears without another, we start by how many times
+  # the unigram appears altogether then we reduce every time it appears with another
+  notoccurs[ixugram,(1:nUnique)] <- ug[1,"unigramcnt"]
+  
+  if(DEBUG){
+    if(cooccurs[ixugram,ixugram] <= 0){
+      print(paste("WARNING: unigramcnt not positive:",cooccurs, ixugram,cooccurs[ixugram,ixugram],ugram,ug[1,"epochstartux"]))
+    }
+    if(notoccurs[ixugram,ixugram] <= 0){
+      print(paste("WARNING: unigramcnt not positive:",notoccurs, ixugram,notoccurs[ixugram,ixugram],ugram,ug[1,"epochstartux"]))
+    }
+  }
+  
+#              cooccurs[ixugram,ixugram] <- ug[1,paste("unigramcnt", l, sep=".")]
+#                  # This is good in case of bigrams only.. but really alone need reducing all 
+#                  #ug[1,paste("alonecnt", l, sep=".")]
+#              cooccurs[ixugram,ixTOTAL] <- ug[1,paste("unigramcnt", l, sep=".")]
+#              cooccurs[ixTOTAL, ixugram] <- cooccurs[ixugram,ixTOTAL] 
+  
+  
 #              if(DEBUG){
 #                str(cooccurs)
 #              }
-                
-              for(r in 1:nrow(ug)){
+  
+  for(r in 1:nrow(ug)){
 #                if(DEBUG){
 #                  print(paste("ug[r,]",str(ug[r,])))
 #                }
-                
+    
 #                if(DEBUG){
 #                 print(paste("cnt: ", str(ug[r,"togethercnt"])))
 #                }
-                
-                cnt <- ug[r,"togethercnt"]
-                aloneCnt <- ug[1,paste("alonecnt", l, sep=".")]
-                
-                #diagonal is the occurrence of the unigram without any of the others
-                cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - cnt
+    
+    cnt <- ug[r,"togethercnt"]
+    
+#                # occurrences with any other unigrams (appearing ALONE... how!)
+#  aloneCnt <- ug[1,"alonecnt"]
+    ##                aloneCnt <- ug[1,paste("alonecnt", l, sep=".")]
+    
+    #diagonal is the occurrence of the unigram without any of the others
+    cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - cnt
+    
+    if(DEBUG){
+      if(cooccurs[ixugram,ixugram] < 0){
+        print(paste("WARNING: cooccurs negative after reducing cnt = ",cnt,cooccurs, ixugram,cooccurs[ixugram,ixugram],ugram,ug[1,"epochstartux"]))
+        print(paste("------------------------------------------------------------------"))
+      }
+    }
 #                if(DEBUG){
-#                  str(cooccurs)
+#                  str(cooccurs)  
+    
 #                } 
-                
-                if(l == ngramlen2){
-                  next # continue
-                }
-                for(u in (l+1):ngramlen2){
+    
+    othersInNgram <- unlist(strsplit(ug[r,"ngram"],","))
+    
+    othersInNgram[1] <- substring(othersInNgram[1],2)
+    othersInNgram[length(othersInNgram)] <- substring(othersInNgram[length(othersInNgram)],1,
+        nchar(othersInNgram[length(othersInNgram)])-1)
+    
+    othersInNgram <- setdiff(othersInNgram, substring(ugram, 2, nchar(ugram)-1))
+    
+    
+    for(o in 1:length(othersInNgram)){
+      ugram2 <- paste("{",othersInNgram[o],"}", sep="")
+#                if(l == ngramlen2){
+#                  next # continue
+#                }
+#                for(u in (l+1):ngramlen2){
 #                  if(DEBUG){
 #                     paste("ugram2 to be", ug[r,paste("unigram", u, sep=".")])
 #                  }
-    
-                  ugram2 <- ug[r,paste("unigram", u, sep=".")]
-                  ixugram2 <- ixLookup[ugram2, 'ix']
-                  
+      
+#                  ugram2 <- ug[r,paste("unigram", u, sep=".")]
+      
+      ixugram2 <- ixLookup[ugram2, 'ix']
+      
 #                  if(is.null(ugram2) || is.na(ugram2)){
 #                    stop("ugram2 is null", str(ugram2))
 #                  }
@@ -175,23 +225,36 @@ epochGrps <- ddply(ngramGrps, c("epochstartux"), function(eg) {
 #                      print(paste("Rownames: " , rownames(cooccurs)))
 #                    }
 #                  }
-                  # upper triangle is the co-occurrence counts
-                  cooccurs[ixugram,ixugram2] <- cooccurs[ixugram,ixugram2] + cnt
+      #increase the co-occurrence counts
+      cooccurs[ixugram,ixugram2] <- cooccurs[ixugram,ixugram2] + cnt
 #                  if(DEBUG){
 #                    str(cooccurs)
 #                  }
-                  # lower triangle is the occurrences of this bigram but not the other
-                  cooccurs[ixugram2,ixugram] <-  cooccurs[ixugram2,ixugram] + aloneCnt 
-#                  if(DEBUG){
-#                    str(cooccurs)
-#                  }
-                }
-              }
-              
-# Adds to it directly             return(cooccurs)
-              cooccurs <<- cooccurs
-            })
+      
+      # decrease the occurrences of this bigram but not the other
+      notoccurs[ixugram,ixugram2] <-  notoccurs[ixugram,ixugram2] - cnt
+      if(DEBUG){
+        if(notoccurs[ixugram,ixugram] < 0){
+          print(paste("WARNING: notoccurs negative after reducing cnt=",cnt,notoccurs, ixugram,notoccurs[ixugram,ixugram],ugram, ugram2,ug[1,"epochstartux"]))
+          print(paste("------------------------------------------------------------------"))
+        }
       }
+      
+      
+#                  if(DEBUG){
+#                    str(cooccurs)
+#                  }
+    }
+  }
+  
+# Adds to it directly             return(cooccurs)
+  cooccurs <<- cooccurs
+  notoccurs <<- notoccurs
+}
+
+#debug(countCooccurNooccurUnigram)
+  unigGrp <- ddply(eg, c("unigram"), countCooccurNooccurUnigram)
+#      }
 #      if(DEBUG){
 #        print(paste("Will place ", str(cooccurs)))
 #      }
@@ -207,13 +270,20 @@ epochGrps <- ddply(ngramGrps, c("epochstartux"), function(eg) {
 #      }
 #  str(list(uniqueUgrams))
 #  str(list(cooccurs))
-  res <- data.frame(egRow, uniqueUnigams=I(list(uniqueUgrams)), unigramCooccurs=I(list(cooccurs)))
+  res <- data.frame(egRow, uniqueUnigams=I(list(uniqueUgrams)), 
+      unigramCooccurs=I(list(cooccurs)), unigramsNotoccurs=I(list(notoccurs)))
   if(DEBUG){
     str(res)
     print("=====================================================")
   }
   return(res)    
-})
+}
+
+#debug(createCooccurNooccur)
+#setBreakpoint("concattable_construct.R#69")
+
+epochGrps <- ddply(df, c("epochstartux"), createCooccurNooccur)
+
 
 #cleanup
 rm(df)
@@ -224,6 +294,6 @@ try(dbDisconnect(con))
 # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
 try(dbUnloadDriver(drv))
 
-return(c(ngramGrps=ngramGrps, epochGrps))
+return(c(ngramGrps=ngramGrps, epochGrps=epochGrps))
 }
 
