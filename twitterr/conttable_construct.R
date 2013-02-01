@@ -4,19 +4,18 @@
 # Author: yaboulna
 ###############################################################################
 
-# TODO: Make sure all epochs are the same length
-SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
-
 MILLIS_PUT_1000 <- 1
 
 TOTAL <- "TOTAL"
+
+kTS <- "epochstartux"
 
 DEBUG <- FALSE
 #options(error=utils::recover) 
 #For debug
 if(DEBUG){
 date<-121212
-epoch1<-'1hr'
+epoch1<-'5min'
 ngramlen2<-2
 ngramlen1<-1
 support<-3
@@ -24,6 +23,31 @@ epoch2<-NULL
 db<-"sample-0.01"
 retEpochGrps<-TRUE
 retNgramGrps<-FALSE
+}
+
+# Makes sure all epochs are the same length
+# TODO: Right now only epochs that are missing in the middle are solved, we should consider
+# passing an expected epoch start and end times and pre/ap-pend NAs accordingly
+SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
+align_epochs <- function(dframe, epoch) {
+  ############### Fill the gaps in the data with filling to make sure epochs are fixed ###############
+  kEpochLenTemp <- SEC_IN_EPOCH[[paste("X",epoch,sep="")]]
+  for(i in rev(which(diff(dframe[[kTS]]) !=  kEpochLenTemp))){
+    numMissingEpochs <- (floor( (dframe[[kTS]][i+1] - dframe[[kTS]][i]) / kEpochLenTemp) - 1)
+    missingEpochs <- data.frame(c(dframe[[kTS]][i] + ( seq( 1: numMissingEpochs) * kEpochLenTemp)))
+    names(missingEpochs) <- c(kTS)
+    
+    require(plyr)
+    dframe <- rbind.fill(dframe[1:i, ], 
+        missingEpochs,
+        dframe[(i+1):nrow(dframe), ])
+  }
+  return(dframe);
+}
+#debug(align_epochs)
+
+toPosixTime <- function(timestamp){
+  as.POSIXct(timestamp/MILLIS_PUT_1000,origin="1970-01-01", tz="GMT")
 }
 
 conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=1, support=3,
@@ -63,14 +87,19 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
           bgRow[paste("alonecnt", i, sep=".")] <- bg[i,"alonecnt"]
           bgRow[paste("unigramcnt", i, sep=".")] <- bg[i,"unigramcnt"]
         }
-        bgRow["utctime"] <- as.POSIXct(bgRow[1,"epochstartux"]/MILLIS_PUT_1000,origin="1970-01-01", tz="GMT")
+        bgRow["utctime"] <- toPosixTime(bgRow[1,"epochstartux"])
         return(bgRow)
       }) #,.parallel = TRUE)  will use doMC to parallelize on a higher level then no need here 
+  
+    ngramGrps <- align_epochs(ngramGrps, epoch1)
+    
   }
   if(retEpochGrps){
     createCooccurNooccur <- function(eg) {
     
       egRow <- eg[1,1:3]
+      egRow["utctime"] <- toPosixTime(egRow[1,"epochstartux"])
+      
       uniqueUgrams <- unique(eg[,"unigram"])
       
       nUnique <- length(uniqueUgrams)
@@ -180,6 +209,7 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
 #setBreakpoint("concattable_construct.R#69")
 
     epochGrps <- ddply(df, c("epochstartux"), createCooccurNooccur)
+    epochGrps <- align_epochs(epochGrps,epoch1)
   }
 
   #cleanup
