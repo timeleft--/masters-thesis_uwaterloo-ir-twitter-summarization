@@ -11,7 +11,7 @@ MILLIS_PUT_1000 <- 1
 
 TOTAL <- "TOTAL"
 
-DEBUG <- TRUE
+DEBUG <- FALSE
 #options(error=utils::recover) 
 #For debug
 if(DEBUG){
@@ -115,8 +115,10 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
           
           cnt <- ug[r,"togethercnt"]
           
-          #diagonal is the occurrence of the unigram without any of the others
-          cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - cnt
+          #Diagonal is the occurrence of the unigram without any of the others.
+          # The division accounts for the repeated deduction of the cnt with each element of ngram
+          #NO: The -1 accouts for the iteration that will be skipped which is that of ugram itself
+          cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - (cnt/ngramlen2)
           
       #    if(DEBUG){
             if(cooccurs[ixugram,ixugram] < 0){
