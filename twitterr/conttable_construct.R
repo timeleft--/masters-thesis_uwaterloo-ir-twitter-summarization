@@ -66,17 +66,20 @@ ngramGrps <- ddply(df, c("epochstartux","ngram"), function(bg){
 epochGrps <- ddply(ngramGrps, c("epochstartux"), function(eg) {
       egRow <- eg[1,1:3]
       #if unique unigrams are c(blah, blah) exit
-      uniqueUgrams <- unique(eg["unigram.1"])
+#        uniqueUgrams <-  reshape(eg[, c(1,7 + (0:(ngramlen2-1)) * 3)], varying=paste("unigram.",c(1:ngramlen2)), 
+#            direction="long" )
+      uniqueUgrams <- unique(eg[,"unigram.1"])
       for(l in 2:ngramlen2){
-        uniqueUgrams <- union(uniqueUgrams, unique(eg[c(paste("unigram", l, sep="."))]))
+        uniqueUgrams <- union(uniqueUgrams, unique(eg[,c(paste("unigram", l, sep="."))]))
       }
+      
       nUnique <- length(uniqueUgrams)
       dnames <- c(uniqueUgrams, TOTAL)
       ixLookup <- data.frame(ix=1:(nUnique+1), row.names=dnames, check.names=TRUE)
-      if(DEBUG){
-        str(uniqueUgrams)
-        str(dnames)  
-      }
+#      if(DEBUG){
+#        str(uniqueUgrams)
+#        str(dnames)  
+#      }
       cooccurs <- array(rep(0,(nUnique+1)^2), dim=c(nUnique+1,nUnique+1))
       #dimnames starts behaving wierdly after 5 iterations by using the string c(...) as the dimns!
 #      , dimnames=list(dnames,dnames))
@@ -86,12 +89,12 @@ epochGrps <- ddply(ngramGrps, c("epochstartux"), function(eg) {
 #      colnames(cooccurs)<-dnames
 #      rownames(cooccurs)<-dnames
       
-      if(DEBUG){
-        str(cooccurs)
+#      if(DEBUG){
+#        str(cooccurs)
 ##        str(ixLookup[TOTAL,'ix'])
 #        str( eg[1,"epochvol"])
 ##        str(cooccurs[ixLookup[TOTAL,'ix'],ixLookup[TOTAL,'ix']])
-      }
+#      }
 #      cooccurs[ixLookup[TOTAL,'ix'],ixLookup[TOTAL,'ix']] <- eg[1,"epochvol"]
       ixTOTAL <- ixLookup[TOTAL, 'ix']
       cooccurs[ixTOTAL,ixTOTAL] <- eg[1,"epochvol"]
@@ -104,20 +107,20 @@ epochGrps <- ddply(ngramGrps, c("epochstartux"), function(eg) {
               
               ugram <- ug[1,paste("unigram", l, sep=".")]
               ixugram <- ixLookup[ugram, 'ix']
-              if(DEBUG){
-                str(ugram)
+#              if(DEBUG){
+#                str(ugram)
 #                if((!ugram %in% colnames(cooccurs))){
 #                  print(paste("Colnames: " , colnames(cooccurs)))
 #                }else if((!ugram %in% rownames(cooccurs))){
 #                  print(paste("Rownames: " , rownames(cooccurs)))
 #                }
-          str(cooccurs)
-                str(cooccurs[ixugram,ixugram])
-                str(cooccurs[ixugram,ixTOTAL])
-                str(cooccurs[ixTOTAL, ixugram])
-          str(ug)
-          str(ug[1,paste("unigramcnt", l, sep=".")])
-              }
+#          str(cooccurs)
+#                str(cooccurs[ixugram,ixugram])
+#                str(cooccurs[ixugram,ixTOTAL])
+#                str(cooccurs[ixTOTAL, ixugram])
+#          str(ug)
+#          str(ug[1,paste("unigramcnt", l, sep=".")])
+#              }
               
               cooccurs[ixugram,ixugram] <- ug[1,paste("unigramcnt", l, sep=".")]
                   # This is good in case of bigrams only.. but really alone need reducing all 
@@ -205,9 +208,10 @@ epochGrps <- ddply(ngramGrps, c("epochstartux"), function(eg) {
 #  str(list(uniqueUgrams))
 #  str(list(cooccurs))
   res <- data.frame(egRow, uniqueUnigams=I(list(uniqueUgrams)), unigramCooccurs=I(list(cooccurs)))
-#  if(DEBUG){
-#    str(res)
-#  }
+  if(DEBUG){
+    str(res)
+    print("=====================================================")
+  }
   return(res)    
 })
 
