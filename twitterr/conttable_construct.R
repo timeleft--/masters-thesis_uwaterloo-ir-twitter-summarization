@@ -218,7 +218,7 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
       #Grand Total
       cooccurs[ixTOTAL,ixTOTAL] <- sum(cooccurs[ixTOTAL,])
       
-      res <- data.frame(egRow, uniqueUnigams=I(list(uniqueUgrams)), uniqueNgrams=I(list(eg[,"ngram"])), #unique from ngram table population
+      res <- data.frame(egRow, uniqueUnigams=I(list(uniqueUgrams)), notuniqueNgrams=I(list(eg[,"ngram"])), #unique( not necessary 
           unigramCooccurs=I(list(cooccurs)), unigramsNotoccurs=I(list(notoccurs)))
       if(DEBUG){
         str(res)

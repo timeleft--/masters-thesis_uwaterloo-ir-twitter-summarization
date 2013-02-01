@@ -53,7 +53,10 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
     cooccurs <- eg$unigramCooccurs[[1]]
     notoccurs <- eg$unigramsNotoccurs[[1]]
     ixLkp <- data.frame(ix=1:(nUnique+1), row.names=c(uniqueUgrams,TOTAL), check.names=TRUE)
-    uniqueNgrams <- eg$uniqueNgrams[[1]]
+    
+    # take the last occurrence of every ngram (they will be repeated by the SQL join)
+    uniqueNgrams <- eg$notuniqueNgrams[[1]][((1:(length(eg$notuniqueNgrams[[1]])/ngramlen)) * ngramlen)]
+    
     
     calcNgramAssoc <- function(ng){
       
@@ -98,14 +101,3 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
 
   ngrams2AssocT <- adply(epochGrps, 1, calcEpochAssoc, .expand=F) #,.parallel = TRUE)  will use doMC to parallelize on a higher level then no need here 
 
-
-require(RPostgreSQL)  
-drv <- dbDriver("PostgreSQL")
-con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
-    host="hops.cs.uwaterloo.ca", port="5433")
-rs <- dbSendQuery(con,
-    sprintf("select epochstartmillis/1000 as epochstartux, date as date, ngramlen as ngramlen, ngramarr as ngram 
-            from cnt_%s%d 
-            where date = %d and cnt > %d and epochstartmillis=%d;", epoch, ngramlen, date, support, epochstartux*1000))
-
-df <- fetch(rs, n=-1)
