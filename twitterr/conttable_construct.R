@@ -11,7 +11,7 @@ MILLIS_PUT_1000 <- 1
 
 TOTAL <- "TOTAL"
 
-DEBUG <- FALSE
+DEBUG <- TRUE
 #options(error=utils::recover) 
 #For debug
 if(DEBUG){
@@ -19,13 +19,15 @@ date<-121212
 epoch1<-'1hr'
 ngramlen2<-2
 ngramlen1<-1
-support<-1
+support<-3
 epoch2<-NULL
 db<-"sample-0.01"
+retEpochGrps<-TRUE
+retNgramGrps<-FALSE
 }
 
 conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=1, support=3,
-  db="sample-0.01") {
+  db="sample-0.01", retEpochGrps=FALSE, retNgramGrps=TRUE) {
   
   if(is.null(epoch2)){
     epoch2<-epoch1
@@ -53,7 +55,8 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
   In case of bigrams it was enough to append 'and NOT a.ngramArr[1] = ALL (b.ngramarr)' to the SQL")
   }
   #idata.frame( object environment is not subsettable
-  ngramGrps <- ddply(df, c("epochstartux","ngram"), function(bg){
+  if(retNgramGrps){
+    ngramGrps <- ddply(df, c("epochstartux","ngram"), function(bg){
         bgRow <- bg[1,1:6]
         for(i in 1:nrow(bg)) {
           bgRow[paste("unigram", i, sep=".")] <- bg[i,"unigram"]
@@ -63,9 +66,9 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
         bgRow["utctime"] <- as.POSIXct(bgRow[1,"epochstartux"]/MILLIS_PUT_1000,origin="1970-01-01", tz="GMT")
         return(bgRow)
       }) #,.parallel = TRUE)  will use doMC to parallelize on a higher level then no need here 
-
- 
-  createCooccurNooccur <- function(eg) {
+  }
+  if(retEpochGrps){
+    createCooccurNooccur <- function(eg) {
     
       egRow <- eg[1,1:3]
       uniqueUgrams <- unique(eg[,"unigram"])
@@ -96,11 +99,13 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
         
       #  if(DEBUG){
           if(cooccurs[ixugram,ixugram] <= 0){
-            print(paste("WARNING: unigramcnt not positive:",cooccurs, ixugram,cooccurs[ixugram,ixugram],ugram,ug[1,"epochstartux"]))
+            print(paste("WARNING: unigramcnt not positive:",ixugram,cooccurs[ixugram,ixugram],ugram,ug[1,"epochstartux"]))
+            print("***********************************")
             cooccurs[ixugram,ixugram] <- 0
           }
           if(notoccurs[ixugram,ixugram] <= 0){
-            print(paste("WARNING: unigramcnt not positive:",notoccurs, ixugram,notoccurs[ixugram,ixugram],ugram,ug[1,"epochstartux"]))
+            print(paste("WARNING: unigramcnt not positive:",ixugram,notoccurs[ixugram,ixugram],ugram,ug[1,"epochstartux"]))
+            print("***********************************")
             notoccurs[ixugram,ixugram] <- 0
           }
       #  }
@@ -115,7 +120,8 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
           
       #    if(DEBUG){
             if(cooccurs[ixugram,ixugram] < 0){
-              print(paste("WARNING: cooccurs negative after reducing cnt = ",cnt,cooccurs, ixugram,cooccurs[ixugram,ixugram],ugram,ug[1,"epochstartux"]))
+             # lapply(c(cnt, ixugram,cooccurs[ixugram,ixugram],ugram,ug[1,"epochstartux"]),str)
+              print(paste("WARNING: cooccurs negative after reducing cnt = ",cnt, ixugram,cooccurs[ixugram,ixugram],ugram,ug[1,"epochstartux"]))
               cooccurs[ixugram,ixugram] <- 0
               print(paste("------------------------------------------------------------------"))
             }
@@ -140,13 +146,14 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
             
             # decrease the occurrences of this bigram but not the other
             notoccurs[ixugram,ixugram2] <-  notoccurs[ixugram,ixugram2] - cnt
-            if(DEBUG){
+#            if(DEBUG){
               if(notoccurs[ixugram,ixugram] < 0){
-                print(paste("WARNING: notoccurs negative after reducing cnt=",cnt,notoccurs, ixugram,notoccurs[ixugram,ixugram],ugram, ugram2,ug[1,"epochstartux"]))
+                #lapply(c(cnt, ixugram,notoccurs[ixugram,ixugram],ugram, ugram2,ug[1,"epochstartux"]), str)
+                print(paste("WARNING: notoccurs negative after reducing cnt=",cnt, ixugram,notoccurs[ixugram,ixugram],ugram, ugram2,ug[1,"epochstartux"]))
                 print(paste("------------------------------------------------------------------"))
                 notoccurs[ixugram,ixugram] <- 0
               }
-            }
+#            }
           }
         }
         
@@ -165,13 +172,13 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
         print("=====================================================")
       }
       return(res)    
-  }
+    }
 
 #debug(createCooccurNooccur)
 #setBreakpoint("concattable_construct.R#69")
 
-  epochGrps <- ddply(df, c("epochstartux"), createCooccurNooccur)
-
+    epochGrps <- ddply(df, c("epochstartux"), createCooccurNooccur)
+  }
 
   #cleanup
   rm(df)
