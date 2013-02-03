@@ -204,10 +204,11 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
             #increase the co-occurrence counts
             cooccurs[ixugram,ixugram2] <- cooccurs[ixugram,ixugram2] + cnt
             
-            # decrease the occurrences of this bigram but not the other
-            # The division accounts for the repeated deduction of the cnt with each element of ngram
-            # using length accouts for the iterations that will be skipped (either ugram itself or preceeding ugrams)
-            notoccurs[ixugram,ixugram2] <-  notoccurs[ixugram,ixugram2] - (cnt/length(othersInNgram))
+            # decrease the occurrences of "ugram1 but not the others in the ngram"
+            # NO, this doesn't make any sense.. -->The division accounts for the repeated deduction of the cnt with each element of ngram
+            # using length accouts for the iterations that will be skipped (either ugram itself or preceeding ugrams) <-- No division
+#            notoccurs[ixugram,ixugram2] <-  notoccurs[ixugram,ixugram2] - (cnt/length(othersInNgram))
+            notoccurs[ixugram,ixugram2] <-  notoccurs[ixugram,ixugram2] - cnt
 #            if(DEBUG){
               if(notoccurs[ixugram,ixugram2] < 0){
                 #lapply(c(cnt, ixugram,notoccurs[ixugram,ixugram],ugram, ugram2,ug[1,"epochstartux"]), str)
