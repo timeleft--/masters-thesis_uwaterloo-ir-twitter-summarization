@@ -206,8 +206,8 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
             
             # decrease the occurrences of this bigram but not the other
             # The division accounts for the repeated deduction of the cnt with each element of ngram
-            # The -1 accouts for the iteration that will be skipped which is that of ugram itself
-            notoccurs[ixugram,ixugram2] <-  notoccurs[ixugram,ixugram2] - (cnt/(ngramlen2-1))
+            # using length accouts for the iterations that will be skipped (either ugram itself or preceeding ugrams)
+            notoccurs[ixugram,ixugram2] <-  notoccurs[ixugram,ixugram2] - (cnt/length(othersInNgram))
 #            if(DEBUG){
               if(notoccurs[ixugram,ixugram2] < 0){
                 #lapply(c(cnt, ixugram,notoccurs[ixugram,ixugram],ugram, ugram2,ug[1,"epochstartux"]), str)
