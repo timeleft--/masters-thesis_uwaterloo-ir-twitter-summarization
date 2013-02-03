@@ -10,6 +10,8 @@ TOTAL <- "TOTAL"
 
 kTS <- "epochstartux"
 
+EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 <- TRUE
+
 DEBUG <- FALSE
 #options(error=utils::recover) 
 #For debug
@@ -182,8 +184,18 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
           
           othersInNgram <- unlist(strsplit(ug[r,"ngram"],","))
           
-          othersInNgram <- setdiff(othersInNgram, ugram)
-          
+          ugramPos <- which(othersInNgram == ugram)
+          if(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
+            if(ugramPos < length(othersInNgram)){
+              othersInNgram <- othersInNgram[(ugramPos+1):length(othersInNgram)]
+            } else {
+              othersInNgram <- c()
+            }
+          } else {
+            othersInNgram <- othersInNgram[-ugramPos]
+          }
+           
+      
           for(o in 1:length(othersInNgram)){
             ugram2 <-othersInNgram[o]
             
