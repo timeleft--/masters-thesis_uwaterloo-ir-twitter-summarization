@@ -7,7 +7,7 @@
 date<-121221
 epoch<-'1hr'
 ngramlen<-2
-db<-"sample-0.01" #"full"
+db<-"full" #"sample-0.01" #"full"
 
 source("conttable_construct.R")
 
@@ -83,6 +83,8 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
     ngAssoc <- adply(uniqueNgrams,1,calcNgramAssoc,.expand=F)
     
     ngAssoc <- arrange(ngAssoc, -yuleq)
+    
+    epochChisq <- chi
   
     return(data.frame(epochstartux=eg$epochstartux,date=eg$date,epochvol=eg$epochvol,ngramAssoc=I(list(ngAssoc))))
     

@@ -6,8 +6,6 @@
 
 MILLIS_PUT_1000 <- 1
 
-TOTAL <- "TOTAL"
-
 kTS <- "epochstartux"
 
 EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 <- TRUE
@@ -74,6 +72,8 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
   drv <- dbDriver("PostgreSQL")
   con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
       host="hops.cs.uwaterloo.ca", port="5433")
+  
+  #NOTICE the "and NOT a.ngramArr[1] = ALL (b.ngramarr))".. ngrams made of distinct ugrams only 
   rs <- dbSendQuery(con,
       sprintf("select a.epochstartmillis/1000 as epochstartux, %d as date, b.ngramlen as ngramlen, v.totalcnt as epochvol, 
   				b.ngramarr as ngram, b.cnt as togethercnt,
@@ -127,24 +127,34 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
       uniqueUgrams <- unique(eg[, "unigram"])
       
       nUnique <- length(uniqueUgrams)
-      dnames <- c(uniqueUgrams, TOTAL)
-      ixLookup <- data.frame(ix=1:(nUnique+1), row.names=dnames, check.names=TRUE)
-      cooccurs <- array(rep(0,(nUnique+1)^2), dim=c(nUnique+1,nUnique+1))
+      
+      # Removing the extra column of TOTALs, which is annoying afterwards
+      dnames <- uniqueUgrams
+      ixLookup <- data.frame(ix=1:nUnique, row.names=dnames, check.names=TRUE)
+      cooccurs <- array(rep(0,(nUnique)^2), dim=c(nUnique,nUnique))
+#      dnames <- c(uniqueUgrams, TOTAL)
+#      ixLookup <- data.frame(ix=1:(nUnique+1), row.names=dnames, check.names=TRUE)
+#      cooccurs <- array(rep(0,(nUnique+1)^2), dim=c(nUnique+1,nUnique+1))
+      
+      
+      # The diagonal will contain the total number of occurrences of the row's unigrams
       notoccurs <- array(rep(0,(nUnique)^2), dim=c(nUnique,nUnique))
       #dimnames starts behaving wierdly after 5 iterations by using the string c(...) as the dimns!
       
-      ixTOTAL <- ixLookup[TOTAL, 'ix']
+#      ixTOTAL <- ixLookup[TOTAL, 'ix']
 #      cooccurs[ixTOTAL,ixTOTAL] <- eg[1,"epochvol"]
         
       countCooccurNooccurUnigram <- function(ug) {             
         ugram <- ug[1,"unigram"]
         ixugram <- ixLookup[ugram, 'ix']
         
-        # The total num of occurrences for the unigram in this epoch, goes into 3 locations
-        # the totals, and also the diagonal (to be reduced to become the "alone" cnt)      
+        # The total num of occurrences for the unigram in this epoch, goes into  the diagonal BUT 
+        # it will be reduced to become the "alone" cnt.. that is cnt not with any of the col grams      
         cooccurs[ixugram,ixugram] <- ug[1,"unigramcnt"]
-        cooccurs[ixugram,ixTOTAL] <-  cooccurs[ixugram,ixugram]
-        cooccurs[ixTOTAL, ixugram] <-  cooccurs[ixugram,ixugram]
+        
+#        # and also the totals
+#        cooccurs[ixugram,ixTOTAL] <-  cooccurs[ixugram,ixugram]
+#        cooccurs[ixTOTAL, ixugram] <-  cooccurs[ixugram,ixugram]
         
         # To calculate how many times a unigram appears without another, we start by how many times
         # the unigram appears altogether then we reduce every time it appears with another
@@ -194,8 +204,9 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
           } else {
             othersInNgram <- othersInNgram[-ugramPos]
           }
-           
-      
+          
+          # Prevent the loop to execute if the length is 0, since 1:0 generates 1, 0
+          if(length(othersInNgram) > 0)      
           for(o in 1:length(othersInNgram)){
             ugram2 <-othersInNgram[o]
             
@@ -227,9 +238,10 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
 
 #debug(countCooccurNooccurUnigram)
       unigGrp <- ddply(eg, c("unigram"), countCooccurNooccurUnigram)
-    
-      #Grand Total
-      cooccurs[ixTOTAL,ixTOTAL] <- sum(cooccurs[ixTOTAL,])
+
+# No totals, so no grand totals      
+#      #Grand Total
+#      cooccurs[ixTOTAL,ixTOTAL] <- sum(cooccurs[ixTOTAL,])
       
       res <- data.frame(egRow, uniqueUnigams=I(list(uniqueUgrams)), notuniqueNgrams=I(list(eg[,"ngram"])), #unique( not necessary 
           unigramCooccurs=I(list(cooccurs)), unigramsNotoccurs=I(list(notoccurs)))
