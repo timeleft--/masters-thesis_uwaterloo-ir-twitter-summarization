@@ -247,7 +247,8 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
       countCooccurNooccurNgram <- function(ng) {
         ugramsInNgram <- unlist(strsplit(ng[1,"ngram"],","))
         if(any(duplicated(ugramsInNgram))){
-          pureNgrams[ng[1,"ngram"]] <<- FALSE
+          pureNgrams[ng[1,"ngram"]] <- FALSE
+          pureNgrams <<- pureNgrams
           return(NULL) # Will this be rbind()ed to the other results? I hope not
         }
         for(u in 1:length(ugramsInNgram)){
@@ -345,6 +346,11 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
         cooccurs <<- cooccurs
         notoccurs <<- notoccurs
       }
+      
+      # Notoccurs with the diagonal should mean the number of times that the row's unigram appears
+      # with anything in the columns.. that is its appearance count - the number in the diagonal of
+      # cooccur (appearances with other that the ones in the column)
+      diag(notoccurs) <- diag(notoccurs) - diag(cooccurs)[1:nUnique]
 ##debug(countCooccurNooccurUnigram)
 #      unigGrp <- ddply(eg, c("unigram"), countCooccurNooccurUnigram)
   
