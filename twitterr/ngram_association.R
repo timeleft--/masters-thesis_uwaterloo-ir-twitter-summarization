@@ -8,10 +8,11 @@ date<-121221
 epoch<-'1hr'
 ngramlen<-2
 db<-"full" #"sample-0.01" #"full"
+supp<-5
 
 source("conttable_construct.R")
 
-dayGrpsVec <- conttable_construct(date, epoch, ngramlen, retEpochGrps=T, retNgramGrps=F, db=db)
+dayGrpsVec <- conttable_construct(date, epoch, ngramlen, retEpochGrps=T, retNgramGrps=F, db=db, support=supp)
 epochGrps <- dayGrpsVec$epochGrps[[1]]
 
 
@@ -84,7 +85,22 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
     
     ngAssoc <- arrange(ngAssoc, -yuleq)
     
-    epochChisq <- chi
+    require(stats)
+    
+# Preliminary test showed that this returns some negative corrs but no new positive correlations;
+# they were all correlations between pairs that appear in highly supported bigrams (1+2,..etc)
+    epochChisq <- chisq.test(cooccurs)
+    positiveCorr <- which(epochChisq$stdres >= 2, arr.ind=TRUE)
+    negativeCorr <- which(epochChisq$stdres <= -2, arr.ind=TRUE)
+    
+# Preliminary test showed that this returns no negative corrs but same positive ones as when using the 
+# daigonal that represents the number of times the row unigram appears with/before "other" unigarms
+# Actually they were all correlations between pairs that appear in highly supported bigrams (1+2,..etc)
+#    cooccursZeroDiag <- cooccurs
+#    diag(cooccursZeroDiag) <- 0
+#    epochChisqZeroDiag <- chisq.test(cooccursZeroDiag) 
+#    positiveCorrZeroDiag <- which(epochChisqZeroDiag$stdres >= 2, arr.ind=TRUE)
+#    negativeCorrZeroDiag <- which(epochChisqZeroDiag$stdres <= -2, arr.ind=TRUE)
   
     return(data.frame(epochstartux=eg$epochstartux,date=eg$date,epochvol=eg$epochvol,ngramAssoc=I(list(ngAssoc))))
     
@@ -103,3 +119,4 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
 
   ngrams2AssocT <- adply(epochGrps, 1, calcEpochAssoc, .expand=F) #,.parallel = TRUE)  will use doMC to parallelize on a higher level then no need here 
 
+  
