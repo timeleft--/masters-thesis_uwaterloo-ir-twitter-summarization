@@ -86,34 +86,10 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
     
     require(stats)
     
-# Preliminary test showed that this returns some negative corrs but no new positive correlations;
-# they were all correlations between pairs that appear in highly supported bigrams (1+2,..etc)
-    epochChisq <- chisq.test(cooccurs)
-    positiveCorr <- which(epochChisq$stdres >= 2, arr.ind=TRUE)
-    negativeCorr <- which(epochChisq$stdres <= -2, arr.ind=TRUE)
-    
-# Preliminary test showed that this returns no negative corrs but same positive ones as when using the 
-# daigonal that represents the number of times the row unigram appears with/before "other" unigarms
-# Actually they were all correlations between pairs that appear in highly supported bigrams (1+2,..etc)
-#    cooccursZeroDiag <- cooccurs
-#    diag(cooccursZeroDiag) <- 0
-#    epochChisqZeroDiag <- chisq.test(cooccursZeroDiag) 
-#    positiveCorrZeroDiag <- which(epochChisqZeroDiag$stdres >= 2, arr.ind=TRUE)
-#    negativeCorrZeroDiag <- which(epochChisqZeroDiag$stdres <= -2, arr.ind=TRUE)
-  
     return(data.frame(epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=I(list(ngAssoc))))
-    
-#  ngramLen <- row[1,"ngramlen"]
-#  for(i in 1:nrow(ngramLen)) {
-#    aloneCnt <- row[paste("alonecnt", i, sep=".")]
-#    unigCnt <- bgRow[paste("unigramcnt", i, sep=".")]
-#    
-#    res["yuleq"] <- 
-#  }
-#  return(res)
   }
   
-#  debug(calcEpochAssoc)
+  debug(calcEpochAssoc)
 
 
   ngrams2AssocT <- adply(epochGrps, 1, calcEpochAssoc, .expand=F) #,.parallel = TRUE)  will use doMC to parallelize on a higher level then no need here 
