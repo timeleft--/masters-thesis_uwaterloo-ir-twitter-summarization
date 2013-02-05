@@ -248,10 +248,10 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
         
           cnt <- ng[1,"togethercnt"]
           
-          #Diagonal is the occurrence of the unigram without any of the others.
-          #The division accounts for the repeated deduction of the cnt with each element of ngram
+          #Diagonal is the occurrence of the unigram without any of the other ngrams in the columns
+          #NOT AFTER THE NEW SQL: The division accounts for the repeated deduction of the cnt with each element of ngram
           #NO: The -1 accouts for the iteration that will be skipped which is that of ugram itself
-          cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - (cnt/ngramlen2)
+          cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - cnt #(cnt/ngramlen2)
           
         #  if(DEBUG){
           if(cooccurs[ixugram,ixugram] < 0){
