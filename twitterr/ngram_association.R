@@ -7,7 +7,7 @@
 date<-121221
 epoch<-'1hr'
 ngramlen<-2
-db<-"full" #"sample-0.01" #"full"
+db<-"sample-0.01" #"sample-0.01" #"full"
 supp<-5
 
 source("conttable_construct.R")
@@ -20,11 +20,10 @@ epochGrps <- dayGrpsVec$epochGrps[[1]]
 require(plyr)
 lookupIxs <- function(comps, lkp){
 #  comps <- strsplit(ngram,",")
-  return(laply(comps, function(cmp) lkp[cmp,'ix']))
+  return(laply(comps, function(cmp) lkp[cmp]))
 }
 
 # Unit tests
-#testLkp <- data.frame(ix=1:3, row.names=c("ug1","ug2","ug3"))
 #testIxs <- lookupIxs(unlist(strsplit("ug1,ug3",",")),testLkp)
 #str(testIxs)
 ## testIxs[["ug1"]]
@@ -49,25 +48,24 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
   require(plyr)
   calcEpochAssoc <- function(eg){
   
-    uniqueUgrams <- eg$uniqueUnigams[[1]]
+    uniqueUgrams <- eg$uniqueUnigrams[[1]]
     nUnique <- length(uniqueUgrams)
-    cooccurs <- eg$unigramCooccurs[[1]]
+    cooccurs <- eg$unigramsCooccurs[[1]]
     notoccurs <- eg$unigramsNotoccurs[[1]]
-    ixLkp <- data.frame(ix=1:(nUnique+1), row.names=c(uniqueUgrams,TOTAL), check.names=TRUE)
     
-    # take the last occurrence of every ngram (they will be repeated by the SQL join)
-    uniqueNgrams <- eg$notuniqueNgrams[[1]][((1:(length(eg$notuniqueNgrams[[1]])/ngramlen)) * ngramlen)]
+    ixLkp <- array(1:(nUnique+1))
+    rownames(ixLkp) <- c(uniqueUgrams,TOTAL)
     
+    uniqueNgrams <- eg$uniqueNgrams[[1]]
     
     calcNgramAssoc <- function(ng){
-      
-      require(psych)
       
       ngram <- ng # there will be only one (unique)
       
       comps <- strsplit(ngram,",")
       
-      ngRes <- data.frame(ngram=ngram,comps = I(comps), stringsAsFactors=F)
+      ngRes <- data.frame(ngram=ngram,#comps = I(comps), 
+          stringsAsFactors=F)
       
       comps <- unlist(comps)
       
@@ -75,6 +73,7 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
       
       agreet <- agreementTable(comps, cooccurs, notoccurs,compsIx)
       
+      require(psych)
       ngRes[1,"yuleq"] <-  Yule(agreet,Y=F)
        
       return(ngRes)
@@ -102,7 +101,7 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
 #    positiveCorrZeroDiag <- which(epochChisqZeroDiag$stdres >= 2, arr.ind=TRUE)
 #    negativeCorrZeroDiag <- which(epochChisqZeroDiag$stdres <= -2, arr.ind=TRUE)
   
-    return(data.frame(epochstartux=eg$epochstartux,date=eg$date,epochvol=eg$epochvol,ngramAssoc=I(list(ngAssoc))))
+    return(data.frame(epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=I(list(ngAssoc))))
     
 #  ngramLen <- row[1,"ngramlen"]
 #  for(i in 1:nrow(ngramLen)) {
