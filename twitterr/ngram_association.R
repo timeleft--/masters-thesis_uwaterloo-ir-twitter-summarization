@@ -26,10 +26,10 @@ lookupIxs <- function(comps, lkp){
 
 agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
   
-  #TODO iterate over indeces and place the right cooc or notoc
+  #TODONOT iterate over indeces and place the right cooc or notoc
   
   agreement <- matrix(c(cooccurs[compsIx[1],compsIx[2]],notoccurs[compsIx[1],compsIx[2]],
-          notoccurs[compsIx[2], compsIx[1]],cooccurs[compsIx[2],compsIx[1]]),
+          cooccurs[compsIx[2],compsIx[1]],notoccurs[compsIx[2], compsIx[1]]),
       ncol=2,byrow=TRUE)
   
   return(agreement)
@@ -39,7 +39,7 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
   while(!require(plyr)){
     install.packages("plyr")
   }
-  calcEpochAssoc <- function(eg){
+  calcEpochAssoc <- function(eg,ngramlen,date){
   
     uniqueUgrams <- eg$uniqueUnigrams[[1]]
     nUnique <- length(uniqueUgrams)
@@ -78,7 +78,7 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
       # the unigrams are independent, that is p(first|second) = p(first|~second)= p(first)
       # The first row of agreement table can give the distribution of "first" given presence
       # of second: P(f|s) = P(f,s) / p(s) = (cnt(f,s)/epochvol) / (cnt(s)/epochvol) = agreet[1,1]/cnt(s)
-      # The second row gives: P(f|~s) = P(f,~s) / p(~s) = agreet[2,1]/(epochvol - cnt(s))
+      # The second row gives: P(f|~s) = P(f,~s) / p(~s) = agreet[1,2]/(epochvol - cnt(s))
       # Notice that p(~f|s) = 1 - p(f|s) = (cnt(s) - agreet[1,1])/cnt(s) => not in table
       # Also: (epochvol - cnt(s)) != cnt(first), as could be thought from looking at agreement table
       # Using the formula in the paper for the likelihood ratio, we put
@@ -86,7 +86,7 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
       n1 <- cooccurs[compsIx[2],totalIx]
       n2 <- (epochvolume - n1) #is this too large? should we use grand total of strong ngrams?
       k1 <- agreet[1,1]
-      k2 <- agreet[2,1]
+      k2 <- agreet[1,2]
       p1 <- k1 / n1 # k1/n1
       p2 <- k2 / n2 # k2/n2
       pNumer <- cooccurs[compsIx[1],totalIx] / epochvolume #(k1+k2)/(n1+n2) = cnt(first)/(n1+n2)
@@ -101,15 +101,20 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
       
       ngRes[1,"dunningLambda"] <- -2 * log(lhr)
       
+      ngRes[1,"a1b1"] <- agreet[1,1]
+      ngRes[1,"a1b0"] <- agreet[1,2]
+      ngRes[1,"a0b1"] <- agreet[2,1]
+      ngRes[1,"a0b0"] <- agreet[2,2]
+      
       return(ngRes)
     }
 #    debug(calcNgramAssoc)
   
     ngAssoc <- adply(uniqueNgrams,1,calcNgramAssoc,.expand=F)
     
-    ngAssoc <- arrange(ngAssoc, -dunningLambda) #-yuleQ)
-    
-    return(data.frame(epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=I(list(ngAssoc))))
+#    ngAssoc <- arrange(ngAssoc, -dunningLambda) #-yuleQ)
+    ngAssoc["X1"] <- NULL
+    return(data.frame(ngramlen=ngramlen,date=date,epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=ngAssoc)) 
   }
   
  # debug(calcEpochAssoc)
@@ -117,11 +122,10 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
 
 ####################################################    
 #driver
-DEBUG<-FALSE
+DEBUG<-TRUE
 if(DEBUG){
 #  date<-121106
 #  epoch<-'1hr'
-#  ngramlen<-2
   db<-"sample-0.01" #"full"
 #  supp<-5
 #  parallel<-FALSE
@@ -131,6 +135,8 @@ if(DEBUG){
   db<-"full"
   nCores <- 31
 }
+  ngramlen2<-2
+
   source("conttable_construct.R")
   
   while(!require(plyr)){
@@ -150,10 +156,22 @@ if(DEBUG){
         dayGrpsVec <- conttable_construct(date, retEpochGrps=T, retNgramGrps=F, db=db)
           #, support=supp, parallel=parallel, parOpts=parOpts,ngramlen=2,epoch1=epoch)
         epochGrps <- dayGrpsVec$epochGrps[[1]]
-        #ngrams2AssocT <- 
-          adply(epochGrps, 1, calcEpochAssoc, .expand=F, .progress="text")
+        ngrams2AssocT <- 
+          adply(epochGrps, 1, calcEpochAssoc, ngramlen=ngramlen2,date=date, .expand=F, .progress="text")
             # This doesn't work .parallel = parallel,.paropts=parOpts)
-        #ngrams2AssocT #return
+        ngrams2AssocT['X1'] <- NULL
+        
+        tableName <- paste('assoc',ngramlen2,'_',date,sep="") 
+        
+        drv <- dbDriver("PostgreSQL")
+        con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
+            host="hops.cs.uwaterloo.ca", port="5433")
+        if(dbExistsTable(con,tableName)){
+          dbRemoveTable(con,tableName)
+        }
+        dbWriteTable(con,tableName,ngrams2AssocT)
+        try(dbDisconnect(con))
+        try(dbUnloadDriver(drv))
       }
   
   
