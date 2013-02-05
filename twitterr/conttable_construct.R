@@ -29,6 +29,7 @@ appendPosixTime<-FALSE
 withTotal<-TRUE
 parallel<-FALSE
 parOpts <- "cores=2"
+progress<-"none" #text isn't good with parallel
 }
 
 # Makes sure all epochs are the same length
@@ -70,7 +71,7 @@ stripEndChars <- function(ngram) {
 ############################################
 conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngramlen1=1, support=5,
   db="sample-0.01", retEpochGrps=TRUE, retNgramGrps=FALSE, alignEpochs=FALSE, appendPosixTime=FALSE,
-  withTotal=TRUE, parallel=FALSE, parOpts="cores=24") {
+  withTotal=TRUE, parallel=FALSE, parOpts="cores=24", progress="none") {
   
   if(is.null(epoch2)){
     epoch2<-epoch1
@@ -335,7 +336,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
 #setBreakpoint("concattable_construct.R#69")
     
     epochGrps <- ddply(ngramDf, c("epochstartux"), createCooccurNooccur,
-       .progress = "text", .paropts=parOpts) #.parallel = parallel, It doesn't work  
+       .progress = progress, .paropts=parOpts) #.parallel = parallel, It doesn't work  
     
     if(alignEpochs)
       epochGrps <- align_epochs(epochGrps,epoch1)
