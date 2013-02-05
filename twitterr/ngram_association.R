@@ -4,20 +4,24 @@
 ###############################################################################
 
 
-date<-121221
+date<-121106
 epoch<-'1hr'
 ngramlen<-2
 db<-"full" #"sample-0.01" #"full"
 supp<-5
-
+parallel<-FALSE
+parOpts<-"cores=24" #2 for debug
 source("conttable_construct.R")
 
-dayGrpsVec <- conttable_construct(date, epoch, ngramlen, retEpochGrps=T, retNgramGrps=F, db=db, support=supp)
+dayGrpsVec <- conttable_construct(date, epoch, ngramlen, retEpochGrps=T, retNgramGrps=F, db=db, support=supp,
+     parallel=parallel,parOpts=parOpts)
 epochGrps <- dayGrpsVec$epochGrps[[1]]
 
 
 ############################
-require(plyr)
+while(!require(plyr)){
+  install.packages("plyr")
+}
 lookupIxs <- function(comps, lkp){
 #  comps <- strsplit(ngram,",")
   return(laply(comps, function(cmp) lkp[cmp]))
@@ -45,7 +49,9 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
 }
 
 ############################
-  require(plyr)
+  while(!require(plyr)){
+    install.packages("plyr")
+  }
   calcEpochAssoc <- function(eg){
   
     uniqueUgrams <- eg$uniqueUnigrams[[1]]
@@ -76,7 +82,9 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
       
       agreet <- agreementTable(comps, cooccurs, notoccurs,compsIx)
       
-      require(psych)
+      while(!require(psych)){
+        install.packages("psych")
+      }
       ngRes[1,"yuleQ"] <-  Yule(agreet,Y=F)
       
       # As per Dunning (1993): Using likelihood ration test for testing the hypothesis that 
@@ -114,14 +122,13 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx) {
     
     ngAssoc <- arrange(ngAssoc, -dunningLambda) #-yuleQ)
     
-    require(stats)
-    
     return(data.frame(epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=I(list(ngAssoc))))
   }
   
  # debug(calcEpochAssoc)
 
 
-  ngrams2AssocT <- adply(epochGrps, 1, calcEpochAssoc, .expand=F) #,.parallel = TRUE)  will use doMC to parallelize on a higher level then no need here 
+  ngrams2AssocT <- adply(epochGrps, 1, calcEpochAssoc, .expand=F, .progress="text",
+      .parallel = parallel,.paropts=parOpts)  
 
   

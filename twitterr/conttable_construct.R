@@ -15,7 +15,7 @@ DEBUG <- FALSE
 #options(error=utils::recover) 
 #For debug
 if(DEBUG){
-date<-121212
+date<-121110
 epoch1<-'1hr'
 ngramlen2<-2
 ngramlen1<-1
@@ -27,6 +27,8 @@ retNgramGrps<-FALSE
 alignEpochs<-FALSE
 appendPosixTime<-FALSE
 withTotal<-TRUE
+parallel<-FALSE
+parOpts <- "cores=2"
 }
 
 # Makes sure all epochs are the same length
@@ -41,7 +43,9 @@ align_epochs <- function(dframe, epoch) {
     missingEpochs <- data.frame(c(dframe[[kTS]][i] + ( seq( 1: numMissingEpochs) * kEpochLenTemp)))
     names(missingEpochs) <- c(kTS)
     
-    require(plyr)
+    while(!require(plyr)){
+      install.packages("plyer")
+    }
     dframe <- rbind.fill(dframe[1:i, ], 
         missingEpochs,
         dframe[(i+1):nrow(dframe), ])
@@ -64,9 +68,9 @@ stripEndChars <- function(ngram) {
 }
 
 ############################################
-conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=1, support=5,
+conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngramlen1=1, support=5,
   db="sample-0.01", retEpochGrps=TRUE, retNgramGrps=FALSE, alignEpochs=FALSE, appendPosixTime=FALSE,
-  withTotal=TRUE) {
+  withTotal=TRUE, parallel=TRUE, parOpts="cores=24") {
   
   if(is.null(epoch2)){
     epoch2<-epoch1
@@ -76,7 +80,9 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
 				epochs will result in more than one record per unigram, which is not the expected")
     #TODO: subtract 10 hours from epochstartmillis to align both timezones.. but is this right?
   }
-  require(RPostgreSQL)  
+  while(!require(RPostgreSQL)){
+    install.packages("RPostgreSQL")
+  }  
   drv <- dbDriver("PostgreSQL")
   con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
       host="hops.cs.uwaterloo.ca", port="5433")
@@ -115,8 +121,18 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
   try(dbUnloadDriver(drv))
 
   
-  require(plyr)
-  
+  while(!require(plyr)){
+    install.packages("plyr")
+  }
+  if(parallel){
+    while(!require(foreach)){
+      install.packages("foreach")
+    }
+    if(!require(doMC)){
+      install.packages("doMC")
+    }
+    registerDoMC()
+  }
   #idata.frame( object environment is not subsettable
   if(retNgramGrps){
     stop("Unsupported operation with the new SQL.. it requires the joined SQL (which was too slow)")
@@ -131,7 +147,7 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
         if(appendPosixTime)
           bgRow["utctime"] <- toPosixTime(bgRow[1,"epochstartux"])
         return(bgRow)
-      }) #,.parallel = TRUE)  will use doMC to parallelize on a higher level then no need here 
+      }) #,.parallel = TRUE) TODOIf this was supported again 
   
     if(alignEpochs)
       ngramGrps <- align_epochs(ngramGrps, epoch1)
@@ -286,16 +302,17 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
         cooccurs <<- cooccurs
         notoccurs <<- notoccurs
       }
+   
+#      debug(countCooccurNooccurNgram)
+#      setBreakpoint("conttable_construct.R#249")
+      ngramGrp <- ddply(eg, c("ngram"), countCooccurNooccurNgram)
+
       
       # Notoccurs with the diagonal should mean the number of times that the row's unigram appears
       # with anything in the columns.. that is its appearance count (already in diag) - the number 
       #  in the diagonal of cooccur (appearances with ngrams other that the ones in the columns)
       diag(notoccurs) <- diag(notoccurs) - diag(cooccurs)[1:nUnique]
-  
-#      debug(countCooccurNooccurNgram)
-#      setBreakpoint("conttable_construct.R#249")
-      ngramGrp <- ddply(eg, c("ngram"), countCooccurNooccurNgram)
-
+      
 # This is an overhead that will probably not be needed when full DB is used      
 #      if(any(pureNgrams)){
         res <- data.frame(egRow, uniqueUnigrams=I(list(ugramDf[epochUgramMas,"unigram"])),  
@@ -303,7 +320,7 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
             unigramsCooccurs=I(list(cooccurs)), unigramsNotoccurs=I(list(notoccurs)))
         if(DEBUG){
           str(res)
-          print("=====================================================")
+          print(".........................................")
         }
         return(res)    
 #      } else {
@@ -316,8 +333,9 @@ conttable_construct <- function(date, epoch1, ngramlen2, epoch2=NULL, ngramlen1=
     }
 #    debug(createCooccurNooccur)
 #setBreakpoint("concattable_construct.R#69")
-
-    epochGrps <- ddply(ngramDf, c("epochstartux"), createCooccurNooccur)
+    
+    epochGrps <- ddply(ngramDf, c("epochstartux"), createCooccurNooccur,
+      .parallel = parallel, .progress = "text", .paropts=parOpts)  
     
     if(alignEpochs)
       epochGrps <- align_epochs(epochGrps,epoch1)
