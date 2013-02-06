@@ -26,8 +26,8 @@ lookupIxs <- function(comps, lkp){
 # This focuses on the meaning that the event is appearance of first preceeding second, against appearance of first
 # preceeding anything else.. or appearnce of second preceeded by anything else
 agreementTable <- function(comps,cooccurs, 
-		totalIx, #notoccurs,
-		compsIx, volume) {
+    totalIx, #notoccurs,
+    compsIx, volume) {
   
   #TODONOT iterate over indeces and place the right cooc or notoc
   
@@ -56,7 +56,7 @@ agreementTable <- function(comps,cooccurs,
     uniqueUgrams <- eg$uniqueUnigrams[[1]]
     nUnique <- length(uniqueUgrams)
     cooccurs <- eg$unigramsCooccurs[[1]]
-	#No notoccurrs
+  #No notoccurrs
 #    notoccurs <- eg$unigramsNotoccurs[[1]]
     
     epochvolume <- eg$epochvol
@@ -81,8 +81,8 @@ agreementTable <- function(comps,cooccurs,
       compsIx <- lookupIxs(comps, ixLkp)
       
       agreet <- agreementTable(comps, cooccurs, 
-			  totalIx, #notoccurs,
-			  compsIx,epochvolume)
+        totalIx, #notoccurs,
+        compsIx,epochvolume)
       
       while(!require(psych)){
         install.packages("psych")
