@@ -23,20 +23,25 @@ lookupIxs <- function(comps, lkp){
 
 ############################
 
-
-agreementTable <- function(comps,cooccurs, notoccurs, compsIx, volume) {
+# This focuses on the meaning that the event is appearance of first preceeding second, against appearance of first
+# preceeding anything else.. or appearnce of second preceeded by anything else
+agreementTable <- function(comps,cooccurs, 
+		totalIx, #notoccurs,
+		compsIx, volume) {
   
   #TODONOT iterate over indeces and place the right cooc or notoc
   
   ## result matrix will be:
 #  sec\fst| fst1 | fst0 |
-#  sec1   |      |      |
+#  sec2   |      |      |
 #  sec0   |      |      |
      
+  secAfterNotFirst <- cooccurs[compsIx[2],totalIx] - cooccurs[compsIx[1],compsIx[2]] # THIS WAS WRONG notoccurs[compsIx[2],compsIx[1]],
+  firstBeforeNotSec <- cooccurs[compsIx[1],totalIx] - cooccurs[compsIx[1],compsIx[2]] # notoccurs[compsIx[1], compsIx[2]]
   
-  agreement <- matrix(c(cooccurs[compsIx[1],compsIx[2]],notoccurs[compsIx[2],compsIx[1]],
-          notoccurs[compsIx[1], compsIx[2]],
-          (volume-notoccurs[compsIx[2],compsIx[1]]-notoccurs[compsIx[1], compsIx[2]]-cooccurs[compsIx[1],compsIx[2]])),
+  agreement <- matrix(c(cooccurs[compsIx[1],compsIx[2]],secAfterNotFirst,
+          firstBeforeNotSec,
+          (volume-cooccurs[compsIx[1],compsIx[2]]-firstBeforeNotSec-secAfterNotFirst)),
       ncol=2,byrow=TRUE)
   
   return(agreement)
@@ -51,7 +56,8 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx, volume) {
     uniqueUgrams <- eg$uniqueUnigrams[[1]]
     nUnique <- length(uniqueUgrams)
     cooccurs <- eg$unigramsCooccurs[[1]]
-    notoccurs <- eg$unigramsNotoccurs[[1]]
+	#No notoccurrs
+#    notoccurs <- eg$unigramsNotoccurs[[1]]
     
     epochvolume <- eg$epochvol
     
@@ -74,7 +80,9 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx, volume) {
       
       compsIx <- lookupIxs(comps, ixLkp)
       
-      agreet <- agreementTable(comps, cooccurs, notoccurs,compsIx,epochvolume)
+      agreet <- agreementTable(comps, cooccurs, 
+			  totalIx, #notoccurs,
+			  compsIx,epochvolume)
       
       while(!require(psych)){
         install.packages("psych")
@@ -129,22 +137,24 @@ agreementTable <- function(comps,cooccurs, notoccurs, compsIx, volume) {
 
 ####################################################    
 #driver
-DEBUG<-FALSE
+DEBUG_NGA<-FALSE
 parallel<-FALSE
 parOpts<-"cores=24" #2 for debug 
 progress<-"none"
-if(DEBUG){
-#  date<-121106
-#  epoch<-'1hr'
-  db<-"sample-0.01" #"full"
-#  supp<-5
+if(DEBUG_NGA){
 
+  db<-"sample-0.01" #"full"
   nCores <- 2
 } else {
   db<-"full"
   nCores <- 31
 }
-  ngramlen2<-2
+
+#  date<-121110
+
+  supp<-5
+  epoch<-'1hr'
+  ngramlen<-2
 
   source("conttable_construct.R")
   
@@ -167,7 +177,7 @@ if(DEBUG){
   allMonthes <- foreach(date=c(121110, 130103, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219),
           .inorder=FALSE, .combine='nullCombine') %dopar%
       {
-        tableName <- paste('assoc',ngramlen2,'_',date,sep="") 
+        tableName <- paste('assoc',epoch,ngramlen2,'_',date,sep="") 
         
         drv <- dbDriver("PostgreSQL")
         con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
@@ -179,11 +189,11 @@ if(DEBUG){
           try(dbUnloadDriver(drv))
         }
         
-        dayGrpsVec <- conttable_construct(date, retEpochGrps=T, retNgramGrps=F, db=db)
-          #, support=supp, parallel=parallel, parOpts=parOpts,ngramlen=2,epoch1=epoch)
+        dayGrpsVec <- conttable_construct(date, retEpochGrps=T, retNgramGrps=F, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
+          #, parallel=parallel, parOpts=parOpts)
         epochGrps <- dayGrpsVec$epochGrps[[1]]
         ngrams2AssocT <- 
-          adply(epochGrps, 1, calcEpochAssoc, ngramlen=ngramlen2,date=date, .expand=F, .progress=progress,
+          adply(epochGrps, 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F, .progress=progress,
               .parallel = parallel,.paropts=parOpts)
         ngrams2AssocT['X1'] <- NULL
         

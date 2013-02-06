@@ -11,10 +11,10 @@ TOTAL <- "TOTAL"
 
 EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 <- TRUE
 
-DEBUG <- FALSE
+DEBUG_CTC <- FALSE
 #options(error=utils::recover) 
 #For debug
-if(DEBUG){
+if(DEBUG_CTC){
 date<-121110
 epoch1<-'1hr'
 ngramlen2<-2
@@ -134,6 +134,11 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
     }
     registerDoMC()
   }
+  
+  while(!require(Matrix)){
+	  install.packages("Matrix")
+  }
+  
   #idata.frame( object environment is not subsettable
   if(retNgramGrps){
     stop("Unsupported operation with the new SQL.. it requires the joined SQL (which was too slow)")
@@ -158,13 +163,17 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   
   if(retEpochGrps){
  
+    ## THE MOST IMPORTANT CODE START HERE
+    
     createCooccurNooccur <- function(eg) {
     
       egRow <- eg[1,1:2] #epochstartux and epochvol
       
-      pureNgrams <- as.array(rep.int(TRUE, length(eg$ngram)))
-      rownames(pureNgrams) <- as.list(eg$ngram)
-      
+	  if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
+      	pureNgrams <- as.array(rep.int(TRUE, length(eg$ngram)))
+      	rownames(pureNgrams) <- as.list(eg$ngram)
+ 	  }
+	  
       currEpoch <- egRow[1,"epochstartux"]
       epochUgramMas <- which(ugramDf$epochstartux==currEpoch)
       nUnique <- length(epochUgramMas)
@@ -176,16 +185,27 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
       dnames <- ugramDf[epochUgramMas,"unigram"]
       if(withTotal){
         dnames <- c(dnames, TOTAL)
-        ixLookup <- array(1:(nUnique+1))
-        cooccurs <- array(rep(0,(nUnique+1)^2), dim=c(nUnique+1,nUnique+1))
+        maxIx <- (nUnique+1) #+1 for totals
+				#array(rep(0,(nUnique+1)^2), dim=c(nUnique+1,nUnique+1))
       } else {
-        # Removing the extra column of TOTALs, which is annoying afterwards
-        ixLookup <- array(1:(nUnique+1))  
-        cooccurs <- array(rep(0,(nUnique)^2), dim=c(nUnique,nUnique))
-      }      
-      rownames(ixLookup) <- dnames
+		 maxIx <- nUnique
+      }
+	  
+	  ixLookup <- array(1:maxIx)
+	  rownames(ixLookup) <- dnames
+	  
+	  cooccurs <- Matrix(0, #intially zeros
+			  nrow=nUnique, #no total because ther grand total isn't really useful
+			  ncol=maxIx,  # Will either contain +1 for total or not
+			  byrow=FALSE, # I don't care. But since they prefer to store by column, I add the Totals
+			  # as a column because there will always be numbers in the total and this
+			  # will disrupt the sparsity.. if it can span more than one columne
+			  sparse=TRUE)
+	  
       
-      notoccurs <- array(rep(0,(nUnique)^2), dim=c(nUnique,nUnique))
+      # Since memory use is much more than I though this one will have to be calculated on the fly 
+	# which is possible, except for the diagonal in the case of EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 = FALSE
+#      notoccurs <- array(rep(0,(nUnique)^2), dim=c(nUnique,nUnique))
       
       if(withTotal){
         ixTOTAL <- ixLookup[TOTAL]
@@ -194,41 +214,50 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
 #        # coocurrences preceeding "other unigrams" that don't appear in any column
 #        cooccurs[ixTOTAL,ixTOTAL] <- eg[1,"epochvol"]
       }
-      
-      initDiagonals <- function(ug){
-        ugramCnt <- ug[1,"unigramcnt"]
-        ixugram <- ixLookup[ug[1,"unigram"]]
-        #  if(DEBUG){
-        if(ugramCnt <= 0){
-          print(paste("WARNING: unigramcnt not positive:",ixugram,ugramCnt,ugram,eg[1,"epochstartux"]))
-          print("***********************************")
-          ugramCnt <- 0
-        }
-        #  }
-      
-        # The total num of occurrences for the unigram in this epoch, goes into  the diagonal BUT 
-        # it will be reduced to become the "alone" cnt.. that is cnt not with any of the col grams
-        cooccurs[ixugram,ixugram] <- ugramCnt
-      
-        if(withTotal){
-          # and also the totals
-          cooccurs[ixugram,ixTOTAL] <-  ugramCnt
-          cooccurs[ixTOTAL, ixugram] <-  ugramCnt
-        }
-      
-        # To calculate how many times a unigram appears without another, we start by how many times
-        # the unigram appears altogether then we reduce every time it appears with another
-        notoccurs[ixugram,(1:nUnique)] <- ugramCnt
+	  
+      if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
+        initDiagonals <- function(ug){
+          ugramCnt <- ug[1,"unigramcnt"]
+          ixugram <- ixLookup[ug[1,"unigram"]]
+          #  if(DEBUG_CTC){
+          if(ugramCnt <= 0){
+            print(paste("WARNING: unigramcnt not positive:",ixugram,ugramCnt,ugram,eg[1,"epochstartux"]))
+            print("***********************************")
+            ugramCnt <- 0
+          }
+          #  }
         
-        cooccurs <<- cooccurs
-        notoccurs <<- notoccurs
-      }
-      #debug(initDiagonals)
-      a_ply(ugramDf[epochUgramMas,],1,.expand=FALSE,initDiagonals)
+          if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
+  			    # The total num of occurrences for the unigram in this epoch, goes into  the diagonal BUT 
+  	        # it will be reduced to become the "alone" cnt.. that is cnt not with any of the col grams
+  	        cooccurs[ixugram,ixugram] <- ugramCnt
+  		     }
+  		
+  #        if(withTotal){
+  #          # and also the totals
+  #          cooccurs[ixugram,ixTOTAL] <-  ugramCnt
+  ## only the column is necessary:   cooccurs[ixTOTAL, ixugram] <-  ugramCnt
+  #        }
+  
+  # for sace of memory
+  #        # To calculate how many times a unigram appears without another, we start by how many times
+  #        # the unigram appears altogether then we reduce every time it appears with another
+  #        notoccurs[ixugram,(1:nUnique)] <- ugramCnt
+          
+          cooccurs <<- cooccurs
+  #        notoccurs <<- notoccurs
+        }
+        #debug(initDiagonals)
+        a_ply(ugramDf[epochUgramMas,],1,.expand=FALSE,initDiagonals)
+  	  }
+	  
       
       if(withTotal){
-        #Grand Total (do not set as epochvol)
-        cooccurs[ixTOTAL,ixTOTAL] <- sum(cooccurs[ixTOTAL,])
+        cooccurs[,ixTOTAL] <- ugramDf[epochUgramMas,"unigramcnt"]
+        #No row for totals any more
+#        cooccurs[ixTOTAL,] <- ugramDf[epochUgramMas,"unigramcnt"]
+#        #Grand Total (do not set as epochvol)
+#        cooccurs[ixTOTAL,ixTOTAL] <- sum(cooccurs[ixTOTAL,])
       }
       
       # apply to each ngram in the epoch   
@@ -236,8 +265,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
         
         ugramsInNgram <- unlist(strsplit(ng[1,"ngram"],","))
         
-        if(any(duplicated(ugramsInNgram))){
-          
+        if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 && any(duplicated(ugramsInNgram))){
           pureNgrams[ng[1,"ngram"]] <- FALSE
           pureNgrams <<- pureNgrams
           return(NULL) 
@@ -249,18 +277,19 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
         
           cnt <- ng[1,"togethercnt"]
           
-          #Diagonal is the occurrence of the unigram without any of the other ngrams in the columns
-          #NOT AFTER THE NEW SQL: The division accounts for the repeated deduction of the cnt with each element of ngram
-          #NO: The -1 accouts for the iteration that will be skipped which is that of ugram itself
-          cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - cnt #(cnt/ngramlen2)
-          
-        #  if(DEBUG){
-          if(cooccurs[ixugram,ixugram] < 0){
-            print(paste("WARNING: cooccurs negative after reducing cnt = ",cnt, ixugram,cooccurs[ixugram,ixugram],ugram,eg[1,"epochstartux"]))
-            cooccurs[ixugram,ixugram] <- 0
-            print(paste("------------------------------------------------------------------"))
-          }
-        #  }
+		  if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
+	          #Diagonal is the occurrence of the unigram without any of the other ngrams in the columns
+	          #NOT AFTER THE NEW SQL: The division accounts for the repeated deduction of the cnt with each element of ngram
+	          #NO: The -1 accouts for the iteration that will be skipped which is that of ugram itself
+	          cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - cnt #(cnt/ngramlen2)
+	        #  if(DEBUG_CTC){
+	          if(cooccurs[ixugram,ixugram] < 0){
+	            print(paste("WARNING: cooccurs negative after reducing cnt = ",cnt, ixugram,cooccurs[ixugram,ixugram],ugram,eg[1,"epochstartux"]))
+	            cooccurs[ixugram,ixugram] <- 0
+	            print(paste("------------------------------------------------------------------"))
+	          }
+	        #  }
+		  }
           
           ugramPos <- which(ugramsInNgram == ugram)
           if(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
@@ -270,6 +299,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
               othersInNgram <- c()
             }
           } else {
+			 # The diagonal is meaningless since order is not maintained, thus we use it for something else
             othersInNgram <- ugramsInNgram[-ugramPos]
           }
           
@@ -282,61 +312,64 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
             
               #increase the co-occurrence counts
               cooccurs[ixugram,ixugram2] <- cooccurs[ixugram,ixugram2] + cnt
-            
-              # decrease the occurrences of "ugram1 but not the others in the ngram"
-              # NO, this doesn't make any sense.. -->The division accounts for the repeated deduction of the cnt with each element of ngram
-              # using length accouts for the iterations that will be skipped (either ugram itself or preceeding ugrams) <-- No division
-  #            notoccurs[ixugram,ixugram2] <-  notoccurs[ixugram,ixugram2] - (cnt/length(othersInNgram))
-              notoccurs[ixugram,ixugram2] <-  notoccurs[ixugram,ixugram2] - cnt
-              
-  #            if(DEBUG){
-              if(notoccurs[ixugram,ixugram2] < 0){
-                print(paste("WARNING: notoccurs negative after reducing cnt=",cnt, ixugram,notoccurs[ixugram,ixugram2],ugram, ugram2,eg[1,"epochstartux"], str(othersInNgram)))
-                print(paste("------------------------------------------------------------------"))
-                notoccurs[ixugram,ixugram2] <- 0
-              }
-  #           }
+
+			  # bye bye notoccurs            
+#			  if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
+#	              # decrease the occurrences of "ugram1 but not the others in the ngram"
+#	              # NO, this doesn't make any sense.. -->The division accounts for the repeated deduction of the cnt with each element of ngram
+#	              # using length accouts for the iterations that will be skipped (either ugram itself or preceeding ugrams) <-- No division
+#	  #            notoccurs[ixugram,ixugram2] <-  notoccurs[ixugram,ixugram2] - (cnt/length(othersInNgram))
+#	              notoccurs[ixugram,ixugram2] <-  notoccurs[ixugram,ixugram2] - cnt
+#	              
+#	  #            if(DEBUG_CTC){
+#	              if(notoccurs[ixugram,ixugram2] < 0){
+#	                print(paste("WARNING: notoccurs negative after reducing cnt=",cnt, ixugram,notoccurs[ixugram,ixugram2],ugram, ugram2,eg[1,"epochstartux"], str(othersInNgram)))
+#	                print(paste("------------------------------------------------------------------"))
+#	                notoccurs[ixugram,ixugram2] <- 0
+#	              }
+#	  #           }
+#			  }
             }
           }
         }
         # Adds to it directly             return(cooccurs)
         cooccurs <<- cooccurs
-        notoccurs <<- notoccurs
+#        notoccurs <<- notoccurs
       }
    
-#      debug(countCooccurNooccurNgram)
+      #debug(countCooccurNooccurNgram)
 #      setBreakpoint("conttable_construct.R#249")
-      ngramGrp <- ddply(eg, c("ngram"), countCooccurNooccurNgram)
+      ngramGrp <- d_ply(eg, c("ngram"), countCooccurNooccurNgram)
 
-      
-      # Notoccurs with the diagonal should mean the number of times that the row's unigram appears
-      # with anything in the columns.. that is its appearance count (already in diag) - the number 
-      #  in the diagonal of cooccur (appearances with ngrams other that the ones in the columns)
-      diag(notoccurs) <- diag(notoccurs) - diag(cooccurs)[1:nUnique]
+# notoccurs left us      
+#      # Notoccurs with the diagonal should mean the number of times that the row's unigram appears
+#      # with anything in the columns.. that is its appearance count (already in diag) - the number 
+#      #  in the diagonal of cooccur (appearances with ngrams other that the ones in the columns)
+#      diag(notoccurs) <- diag(notoccurs) - diag(cooccurs)[1:nUnique]
       
 # This is an overhead that will probably not be needed when full DB is used      
 #      if(any(pureNgrams)){
         res <- data.frame(egRow, uniqueUnigrams=I(list(ugramDf[epochUgramMas,"unigram"])),  
-            uniqueNgrams=I(list(eg[pureNgrams,"ngram"])),  
-            unigramsCooccurs=I(list(cooccurs)), unigramsNotoccurs=I(list(notoccurs)))
-        if(DEBUG){
+            uniqueNgrams=I(list(ifelse(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1,eg[,"ngram"],eg[pureNgrams,"ngram"]))),  
+            unigramsCooccurs=I(list(cooccurs))) # notoccurs had to go: , unigramsNotoccurs=I(list(notoccurs)))
+        if(DEBUG_CTC){
           str(res)
           print(".........................................")
         }
         return(res)    
 #      } else {
-#        if(DEBUG){
+#        if(DEBUG_CTC){
 #          print("No 'pure' ngrams (not including duplicates of the same unigram) this epoch")
 #          print("=====================================================")
 #        }
 #        return(NULL)
 #      }
     }
-#    debug(createCooccurNooccur)
+    #debug(createCooccurNooccur)
 #setBreakpoint("concattable_construct.R#69")
     
     epochGrps <- ddply(ngramDf, c("epochstartux"), createCooccurNooccur,
-       .progress = progress, .paropts=parOpts) #.parallel = parallel, It doesn't work  
+       .progress = progress) #, .paropts=parOpts,.parallel = parallel, It doesn't work  
     
     if(alignEpochs)
       epochGrps <- align_epochs(epochGrps,epoch1)
@@ -347,7 +380,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   rm(ugramDf)
   
   res <- data.frame(ngramGrps=I(list(ngramGrps)), epochGrps=I(list(epochGrps)))
-  if(DEBUG){
+  if(DEBUG_CTC){
     str(res)
     print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
   }

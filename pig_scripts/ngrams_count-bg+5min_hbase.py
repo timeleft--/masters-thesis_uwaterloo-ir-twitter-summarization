@@ -50,7 +50,7 @@ for interval in ['300000L', '12L', '24L']: # More than a day the date has to be 
     
     prevCntsName = "ngrams%(l)sCnt%(name)s"% {"l":args.len, "name": intervalName[interval]}
 
-"""    
+"""  THIS IS A COMMENT FOR NOW:   
     --TODONOT Store totals (in the same table for simplicity, hoping that namespaces will work well) 
     all%(l)sCnt%(name)sGrp = GROUP ngrams%(l)sCnt%(name)s ALL;
     all%(l)sCnt%(name)s = FOREACH all%(l)sCnt%(name)sGrp GENERATE 'ALL' as ngram, (int)MAX($1.date) as date, MAX($1.epochStartMillis) as epochStartMillis, (int)SUM($1.cnt) as cnt;
