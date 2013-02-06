@@ -142,7 +142,7 @@ agreementTable <- function(comps,cooccurs,
 
 ####################################################    
 #driver
-DEBUG_NGA<-FALSE
+DEBUG_NGA<-TRUE
 parallel<-FALSE
 REMOVE_EXITING_OUTPUTS<-TRUE
 #parOpts<-"cores=24" #2 for debug 

@@ -316,13 +316,14 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
               #  }
           }
           
-          ugramPos <- which(ugramsInNgram == ugram)
+          ugramPos <- u # residues from old SQL: which(ugramsInNgram == ugram)
           if(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
-            if(length(ugramPos)>1){
-              #non-pure ngram, and there will be warnings about how the values were ignored
-              #TODO: handle in case of more than a bigram, where there could be other ugrams involved
-              ugramPos <- ugramPos[1]
-            }
+            #not needed because it is just = u
+#            if(length(ugramPos)>1){
+#              #non-pure ngram, and there will be warnings about how the values were ignored
+#              #TODO: handle in case of more than a bigram, where there could be other ugrams involved
+#              ugramPos <- ugramPos[1]
+#            }
             if(ugramPos < length(ugramsInNgram)){
               othersInNgram <- ugramsInNgram[(ugramPos+1):length(ugramsInNgram)]
             } else {
