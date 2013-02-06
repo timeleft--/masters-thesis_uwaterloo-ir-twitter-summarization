@@ -330,7 +330,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   rm(ugramDf)
   rm(nuniqueDf)
   
-#  dayEpochGrps <<- epochGrps
-   return(epochGrps)
+  dayEpochGrps <<- epochGrps
+#   return(epochGrps)
 }
 

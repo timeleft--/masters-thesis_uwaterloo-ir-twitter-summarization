@@ -53,6 +53,8 @@ agreementTable <- function(comps,cooccurs,
   }
   calcEpochAssoc <- function(eg,ngramlen,date){
   
+    try(stop(paste("ngram_assoc() for date:", date, " - Starting to calc epoch",paste(eg[1,],collapse="|"))))
+    
     uniqueUgrams <- eg$uniqueUnigrams[[1]]
     nUnique <- length(uniqueUgrams)
     cooccurs <- eg$unigramsCooccurs[[1]]
@@ -129,6 +131,9 @@ agreementTable <- function(comps,cooccurs,
     
 #    ngAssoc <- arrange(ngAssoc, -dunningLambda) #-yuleQ)
     ngAssoc["X1"] <- NULL
+    
+    try(stop(paste("ngram_assoc() for date:", date, " - Finished to calc epoch",paste(eg[1,],collapse="|"))))
+    
     return(data.frame(ngramlen=ngramlen,date=date,epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=ngAssoc)) 
   }
   
@@ -189,16 +194,18 @@ if(DEBUG_NGA){
           try(dbUnloadDriver(drv))
         }
         
-        dayEpochGrps <- # This will cause returning without copying NULL 
+        dayEpochGrps <- NULL 
         conttable_construct(date, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
           #, parallel=parallel, parOpts=parOpts)
+        try(stop(paste("ngram_assoc() for date:", date, " - Got back the cooccurrence matrix")))
         ngrams2AssocT <- 
           adply(dayEpochGrps, 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F) #, .progress=progress)
               # This will be a disaster, because we are already in dopar: .parallel = parallel,.paropts=parOpts)
         ngrams2AssocT['X1'] <- NULL
         
-        
+        try(stop(paste("ngram_assoc() for date:", date, " - Will write ngrams2AssocT to DB")))
         dbWriteTable(con,tableName,ngrams2AssocT)
+        try(stop(paste("ngram_assoc() for date:", date, " - Finished writing to DB")))
         try(dbDisconnect(con))
         try(dbUnloadDriver(drv))
       }
