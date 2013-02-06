@@ -194,8 +194,8 @@ if(DEBUG_NGA){
           try(dbUnloadDriver(drv))
         }
         
-        dayEpochGrps <- NULL 
-        conttable_construct(date, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
+        dayEpochGrps <- # doesn't work in case of dopar.. they must be doing something with environments NULL 
+          conttable_construct(date, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
           #, parallel=parallel, parOpts=parOpts)
         try(stop(paste("ngram_assoc() for date:", date, " - Got back the cooccurrence matrix")))
         ngrams2AssocT <- 
