@@ -162,7 +162,7 @@ if(DEBUG_NGA){
 #  date<-121110
 
   supp<-5
-  epoch<-'5min'
+  epoch<-'1hr'
   ngramlen<-2
 
   source("conttable_construct.R")
@@ -215,7 +215,8 @@ if(DEBUG_NGA){
         ngrams2AssocT <- 
           adply(dayEpochGrps, 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F) #, .progress=progress)
               # This will be a disaster, because we are already in dopar: .parallel = parallelWithinDay,.paropts=parOpts)
-        ngrams2AssocT['X1'] <- NULL
+        #Leave the hour of the day.. it's good
+#            ngrams2AssocT['X1'] <- NULL
         
         try(stop(paste("ngram_assoc() for date:", date, " - Will write ngrams2AssocT to DB")))
         dbWriteTable(con,tableName,ngrams2AssocT)
