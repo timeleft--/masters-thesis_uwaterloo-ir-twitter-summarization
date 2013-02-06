@@ -158,7 +158,7 @@ if(DEBUG_NGA){
 #  date<-121110
 
   supp<-5
-  epoch<-'1hr'
+  epoch<-'5min'
   ngramlen<-2
 
   source("conttable_construct.R")
