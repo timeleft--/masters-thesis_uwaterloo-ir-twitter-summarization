@@ -19,7 +19,7 @@ date<-121110
 epoch1<-'1hr'
 ngramlen2<-2
 ngramlen1<-1
-support<-3
+support<-5
 epoch2<-NULL
 db<-"sample-0.01"
 alignEpochs<-FALSE
@@ -30,6 +30,14 @@ parOpts <- "cores=2"
 progress<-"none" #text isn't good with parallel
 }
 
+
+########################################################
+
+stripEndChars <- function(ngram) {
+  return(substring(ngram, 2, nchar(ngram)-1))
+}
+
+##########################################################
 # Makes sure all epochs are the same length
 # TODO: Right now only epochs that are missing in the middle are solved, we should consider
 # passing an expected epoch start and end times and pre/ap-pend NAs accordingly
@@ -60,12 +68,6 @@ toPosixTime <- function(timestamp){
 }
 
 
-########################################################
-
-stripEndChars <- function(ngram) {
-  return(substring(ngram, 2, nchar(ngram)-1))
-}
-
 ############################################
 conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngramlen1=1, support=5,
   db="sample-0.01", alignEpochs=FALSE, appendPosixTime=FALSE,
@@ -89,17 +91,18 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   try(stop(paste("conttable_construct() for date:", date, " - Connected to DB")))
   
   # b.date as date, b.ngramlen as ngramlen,
-  ngramRs <- dbSendQuery(con,
-      sprintf("select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, 
-          b.ngramarr as ngram, b.cnt as togethercnt 
-      from cnt_%s%d b 
-         join volume_5min1 v on v.epochstartmillis = b.epochstartmillis
-      where b.date=%d and b.cnt > %d;", epoch2, ngramlen2, date, support))
-# Test SQL: select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, b.ngramarr as ngram, b.cnt as togethercnt from cnt_1hr2 b join volume_5min1 v on v.epochstartmillis = b.epochstartmillis where b.date=121106 and b.cnt > 5;
+  sql <- sprintf("select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, 
+          b.ngramarr as ngram, b.cnt as togethercnt
+          from cnt_%s%d b 
+          join volume_%s%d v on v.epochstartmillis = b.epochstartmillis
+          where b.date=%d and b.cnt > %d;", epoch2, ngramlen2, epoch1, ngramlen1, date, support)
+  # order by b.epochstartmillis asc <- necessary for the index shifting idea
+  ngramRs <- dbSendQuery(con,sql)
+# Test SQL: select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, b.ngramarr as ngram, b.cnt as togethercnt from cnt_1hr2 b join volume_1hr1 v on v.epochstartmillis = b.epochstartmillis where b.date=121106 and b.cnt > 5;
   
   ngramDf <- fetch(ngramRs, n=-1)
   
-  try(stop(paste("conttable_construct() for date:", date, " - Fetched ngrams' cnts")))
+  try(stop(paste("conttable_construct() for date:", date, " - Fetched ngrams' cnts using sql: ", sql)))
   
   ngramDf <- within(ngramDf,{  # SQL below selects the array element: unigram=stripEndChars(unigram)
         ngram=stripEndChars(ngram)})
@@ -108,29 +111,33 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
   try(dbClearResult(ngramRs))
   
-  ugramRs <- dbSendQuery(con,
-      sprintf("select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt
-               from cnt_%s%d where date=%d and cnt > %d order by epochstartmillis asc, cnt desc;", epoch1, ngramlen1, date, support))
-#Test SQL: select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt from cnt_1hr1 where date=121106 and cnt > 5 order by epochstartmillis asc, cnt desc;
+  sql <- sprintf("select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt
+                  from cnt_%s%d where date=%d and cnt > %d order by cnt desc;", epoch1, ngramlen1, date, support)
+  ugramRs <- dbSendQuery(con,sql)
+   #epochstartmillis asc, -> I had an idea but if I can't get it right.. screw it! I wanna finish my masters!
+#Test SQL: select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt from cnt_1hr1 where date=121106 and cnt > 5 order by cnt desc;
   
   ugramDf <- fetch(ugramRs, n=-1)
   
-  try(stop(paste("conttable_construct() for date:", date, " - Fetched unigrams' cnts")))
+  try(stop(paste("conttable_construct() for date:", date, " - Fetched unigrams' cnts using sql:", sql)))
   #cleanup
   # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
   try(dbClearResult(ugramRs))
   
-  nuniqueRs <- dbSendQuery(con,
-      sprintf("select epochstartmillis/1000 as epochstartux, count(*) as nunique 
-							 from cnt_%s%d where date=%d and cnt > %d group by epochstartmillis;", epoch1, ngramlen1, date, support))
-#Test SQL: select epochstartmillis/1000 as epochstartux, count(*) as nunique from cnt_1hr1 where date=121106 and cnt>5 group by epochstartmillis;
-  
-  nuniqueDf <- fetch(nuniqueRs, n=-1)
-  
-  try(stop(paste("conttable_construct() for date:", date, " - Fetched number of unique ngrams")))
-  
-  try(dbClearResult(nuniqueRs))
-  
+#  # The idea is that number of unique unigrams will be added to the mask start index, so that we don't have
+#  # to do any checks of equality with epochstartux to find the unigrams pertaining to the current epoch
+#  sql <- sprintf("select epochstartmillis/1000 as epochstartux, count(*) as nunique 
+#                  from cnt_%s%d where date=%d and cnt > %d group by epochstartmillis 
+#                  order by epochstartmillis asc;", epoch1, ngramlen1, date, support)
+#  nuniqueRs <- dbSendQuery(con,sql)
+##Test SQL: select epochstartmillis/1000 as epochstartux, count(*) as nunique from cnt_1hr1 where date=121110 and cnt>5 group by epochstartmillis;
+#  
+#  nuniqueDf <- fetch(nuniqueRs, n=-1)
+#  
+#  try(stop(paste("conttable_construct() for date:", date, " - Fetched number of unique ngrams using sql:",sql)))
+#  
+#  try(dbClearResult(nuniqueRs))
+
   # dbDisconnect(con, ...) closes the connection. Eg.
   try(dbDisconnect(con))
   # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
@@ -153,11 +160,21 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   while(!require(Matrix)){
     install.packages("Matrix")
   }
+ 
   
+  handleErrors <- function(e) {
+    if(DEBUG_ERRORS){
+      print(e)
+    } else {
+      stop(e)
+    }
+  }
+ # DEBUG_ERRORS <- TRUE
+ # debug(handleErrors)
+  DEBUG_ERRORS <- FALSE
   
-  {
-    ## THE MOST IMPORTANT CODE START HERE
-    epochUgramsIxStart <- 1
+   ## THE MOST IMPORTANT CODE START HERE
+#    epochUgramsIxStart <- 1
     createCooccurNooccur <- function(eg) {
     
       egRow <- eg[1,1:2] #epochstartux and epochvol
@@ -168,13 +185,18 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
           rownames(pureNgrams) <- as.list(eg$ngram)
       }
     
-      currEpoch <- egRow[1,"epochstartux"]
-      nUnique <- nuniqueDf[nuniqueDf$epochstartux==currEpoch,"nunique"]
-      epochUgramMask <- c(epochUgramsIxStart:(epochUgramsIxStart+nUnique-1))
-      epochUgramsIxStart <<-epochUgramsIxStart+nUnique #oops.. +1
-      
+      currEpoch <- eg[1,"epochstartux"]
+ 
+      #The index shifting failure
+#      # do we need to check if the epoch changed by storing the prevEpoch??
+#      nUnique <- nuniqueDf[nuniqueDf$epochstartux==currEpoch,"nunique"]
+#      epochUgramMask <- c(epochUgramsIxStart:(epochUgramsIxStart+nUnique-1))
+#      epochUgramsIxStart <<-epochUgramsIxStart+nUnique #oops.. +1
+      epochUgramMask <- which(ugramDf$epochstartux==currEpoch)
+      nUnique <- length(epochUgramMask)    
+  
       if(appendPosixTime)
-        egRow["utctime"] <- toPosixTime(egRow[1,"epochstartux"])
+        egRow["utctime"] <- toPosixTime(currEpoch)
     
       dnames <- ugramDf[epochUgramMask,"unigram"]
       if(withTotal){
@@ -206,16 +228,29 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
     
       if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
         initDiagonals <- function(ug){
+          
+          ugram <- ug[1,"unigram"]
+          
           ugramCnt <- ug[1,"unigramcnt"]
-          ixugram <- ixLookup[ug[1,"unigram"]]
+          
           #  if(DEBUG_CTC){
-          if(ugramCnt <= 0){
-            print(paste("WARNING: unigramcnt not positive:",ixugram,ugramCnt,ugram,eg[1,"epochstartux"]))
-            print("***********************************")
+          if(is.na(ugramCnt) || ugramCnt <= 0){
+            try(stop(paste("conttable_construct() for date:", date, " - WARNING: unigramcnt not positive:",ixugram,ugramCnt,ugram,currEpoch)))
             ugramCnt <- 0
           }
           #  }
         
+          ixugram <- ixLookup[ugram]
+          if(is.na(ixugram) || ixugram <= 0){
+            tryCatch(
+                stop(paste("conttable_construct() for date:", date, " - ERROR: ixugram not positive:",ixugram,ugramCnt,ugram,currEpoch,nUnique,
+                            epochUgramMask[1],"-",epochUgramMask[length(epochUgramMask)],paste(ugramDf[epochUgramMask[1],],collapse="|"),paste(ugramDf[epochUgramMask[length(epochUgramMask)],],collapse="|")))
+                   ,error=handleErrors)
+            return(NULL)
+            #ixugram <- 0
+          }
+          
+          
           if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
             # The total num of occurrences for the unigram in this epoch, goes into  the diagonal BUT 
             # it will be reduced to become the "alone" cnt.. that is cnt not with any of the col grams
@@ -246,10 +281,28 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
         
         for(u in 1:length(ugramsInNgram)){
           ugram <- ugramsInNgram[u]
-          ixugram <- ixLookup[ugram]
-        
+          
           cnt <- ng[1,"togethercnt"]
           
+          #  if(DEBUG_CTC){
+          if(is.na(cnt) || cnt <= 0){
+            try(stop(paste("conttable_construct() for date:", date, " - WARNING: togthercnt not positive:",ixugram,cnt,paste(ugramsInNgram,collapse="|"),ugram,currEpoch)))
+            cnt <- 0
+          }
+          #  }
+          
+          ixugram <- ixLookup[ugram]
+          
+          if(is.na(ixugram) || ixugram <= 0){
+            tryCatch(
+                stop(paste("conttable_construct() for date:", date, " - ERROR: ixugram not positive:",ixugram,cnt,paste(ugramsInNgram,collapse="|"),ugram,currEpoch,nUnique,
+                        epochUgramMask[1],"-",epochUgramMask[length(epochUgramMask)],paste(ugramDf[epochUgramMask[1],],collapse="|"),paste(ugramDf[epochUgramMask[length(epochUgramMask)],],collapse="|")))
+            ,error=handleErrors)
+            next
+            #ixugram <- 0
+          }
+          
+    
           if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
                 #Diagonal is the occurrence of the unigram without any of the other ngrams in the columns
                 #NOT AFTER THE NEW SQL: The division accounts for the repeated deduction of the cnt with each element of ngram
@@ -257,9 +310,8 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
                 cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - cnt #(cnt/ngramlen2)
               #  if(DEBUG_CTC){
                 if(cooccurs[ixugram,ixugram] < 0){
-                  print(paste("WARNING: cooccurs negative after reducing cnt = ",cnt, ixugram,cooccurs[ixugram,ixugram],ugram,eg[1,"epochstartux"]))
+                  try(stop(paste("conttable_construct() for date:", date, " - WARNING: cooccurs negative after reducing cnt = ",cnt, ixugram,cooccurs[ixugram,ixugram],ugram,currEpoch)))
                   cooccurs[ixugram,ixugram] <- 0
-                  print(paste("------------------------------------------------------------------"))
                 }
               #  }
           }
@@ -287,6 +339,17 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
               ugram2 <-othersInNgram[o]
             
               ixugram2 <- ixLookup[ugram2]
+              
+              if(is.na(ixugram2) || ixugram2 <= 0){
+                tryCatch(
+                    stop(paste("conttable_construct() for date:", date, 
+                            " - ERROR: ixugram2 not positive:",
+                            ixugram2,cnt,paste(ugramsInNgram,collapse="|"),ugram2,currEpoch,nUnique,
+                            epochUgramMask[1],"-",epochUgramMask[length(epochUgramMask)],paste(ugramDf[epochUgramMask[1],],collapse="|"),paste(ugramDf[epochUgramMask[length(epochUgramMask)],],collapse="|")))
+                ,error=handleErrors)
+                next
+                #ixugram2 <- 0
+              }
             
               #increase the co-occurrence counts
               cooccurs[ixugram,ixugram2] <- cooccurs[ixugram,ixugram2] + cnt
@@ -296,22 +359,25 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
         cooccurs <<- cooccurs
       }
    
-      #debug(countCooccurNooccurNgram)
+#      debug(countCooccurNooccurNgram)
 #      setBreakpoint("conttable_construct.R#249")
       ngramGrp <- d_ply(eg, c("ngram"), countCooccurNooccurNgram)
 
       try(stop(paste("conttable_construct() for date:", date, " - Finished creating cooccurrence matrix for",paste(egRow[1,],collapse="|"))))
-      
+      if(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
+        resNgrams <- eg[,"ngram"]
+      } else {
+        resNgrams <- eg[pureNgrams,"ngram"]
+      }
         res <- data.frame(egRow, uniqueUnigrams=I(list(ugramDf[epochUgramMask,"unigram"])),  
-            uniqueNgrams=I(list(ifelse(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1,eg[,"ngram"],eg[pureNgrams,"ngram"]))),  
+            uniqueNgrams=I(list(resNgrams)), #ifelse(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1,eg[,"ngram"],eg[pureNgrams,"ngram"])  
             unigramsCooccurs=I(list(cooccurs))) # notoccurs had to go: , unigramsNotoccurs=I(list(notoccurs)))
         if(DEBUG_CTC){
           str(res)
-          print(".........................................")
         }
         return(res)    
     }
-    #debug(createCooccurNooccur)
+#    debug(createCooccurNooccur)
 #setBreakpoint("concattable_construct.R#69")
    
     try(stop(paste("conttable_construct() for date:", date, " - Will create epoch groups")))
@@ -323,12 +389,12 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
    
     if(alignEpochs)
       epochGrps <- align_epochs(epochGrps,epoch1)
-  }
+   ### END OF IMPORTANT CODE
   
   #cleanup
   rm(ngramDf)
   rm(ugramDf)
-  rm(nuniqueDf)
+  #rm(nuniqueDf)
   
 #  dayEpochGrps <<- epochGrps
    return(epochGrps)

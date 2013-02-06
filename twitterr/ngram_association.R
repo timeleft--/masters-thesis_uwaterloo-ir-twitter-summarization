@@ -137,7 +137,7 @@ agreementTable <- function(comps,cooccurs,
     return(data.frame(ngramlen=ngramlen,date=date,epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=ngAssoc)) 
   }
   
- # debug(calcEpochAssoc)
+#  debug(calcEpochAssoc)
 
 
 ####################################################    
@@ -158,7 +158,7 @@ if(DEBUG_NGA){
 #  date<-121110
 
   supp<-5
-  epoch<-'5min'
+  epoch<-'1hr'
   ngramlen<-2
 
   source("conttable_construct.R")
@@ -198,6 +198,7 @@ if(DEBUG_NGA){
           conttable_construct(date, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
           #, parallel=parallel, parOpts=parOpts)
         try(stop(paste("ngram_assoc() for date:", date, " - Got back the cooccurrence matrix")))
+
         ngrams2AssocT <- 
           adply(dayEpochGrps, 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F) #, .progress=progress)
               # This will be a disaster, because we are already in dopar: .parallel = parallel,.paropts=parOpts)
