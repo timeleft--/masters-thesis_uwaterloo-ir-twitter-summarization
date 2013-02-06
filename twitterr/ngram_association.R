@@ -137,10 +137,10 @@ agreementTable <- function(comps,cooccurs,
 
 ####################################################    
 #driver
-DEBUG_NGA<-FALSE
+DEBUG_NGA<-TRUE
 parallel<-FALSE
-parOpts<-"cores=24" #2 for debug 
-progress<-"none"
+#parOpts<-"cores=24" #2 for debug 
+#progress<-"none"
 if(DEBUG_NGA){
 
   db<-"sample-0.01" #"full"
@@ -174,10 +174,10 @@ if(DEBUG_NGA){
   }  
   
   nullCombine <- function(a,b) NULL
-  allMonthes <- foreach(date=c(121110, 130103, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219),
+  allMonthes <- foreach(date=c(121110, 130103), #, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219),
           .inorder=FALSE, .combine='nullCombine') %dopar%
       {
-        tableName <- paste('assoc',epoch,ngramlen2,'_',date,sep="") 
+        tableName <- paste('assoc',epoch,ngramlen,'_',date,sep="") 
         
         drv <- dbDriver("PostgreSQL")
         con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
@@ -189,11 +189,11 @@ if(DEBUG_NGA){
           try(dbUnloadDriver(drv))
         }
         
-        dayGrpsVec <- conttable_construct(date, retEpochGrps=T, retNgramGrps=F, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
+        dayEpochGrps <- # This will cause returning without copying NULL 
+        conttable_construct(date, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
           #, parallel=parallel, parOpts=parOpts)
-        epochGrps <- dayGrpsVec$epochGrps[[1]]
         ngrams2AssocT <- 
-          adply(epochGrps, 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F, .progress=progress)
+          adply(dayEpochGrps, 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F) #, .progress=progress)
               # This will be a disaster, because we are already in dopar: .parallel = parallel,.paropts=parOpts)
         ngrams2AssocT['X1'] <- NULL
         

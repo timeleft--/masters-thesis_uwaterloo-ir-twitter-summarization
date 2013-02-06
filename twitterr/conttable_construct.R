@@ -22,12 +22,10 @@ ngramlen1<-1
 support<-3
 epoch2<-NULL
 db<-"sample-0.01"
-retEpochGrps<-TRUE
-retNgramGrps<-FALSE
 alignEpochs<-FALSE
 appendPosixTime<-FALSE
 withTotal<-TRUE
-parallel<-FALSE
+#parallel<-FALSE
 parOpts <- "cores=2"
 progress<-"none" #text isn't good with parallel
 }
@@ -70,8 +68,8 @@ stripEndChars <- function(ngram) {
 
 ############################################
 conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngramlen1=1, support=5,
-  db="sample-0.01", retEpochGrps=TRUE, retNgramGrps=FALSE, alignEpochs=FALSE, appendPosixTime=FALSE,
-  withTotal=TRUE, parallel=FALSE, parOpts="cores=24", progress="none") {
+  db="sample-0.01", alignEpochs=FALSE, appendPosixTime=FALSE,
+  withTotal=TRUE) { #, parallel=FALSE, parOpts="cores=24", progress="none") {
   
   if(is.null(epoch2)){
     epoch2<-epoch1
@@ -88,6 +86,8 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
       host="hops.cs.uwaterloo.ca", port="5433")
   
+  try(stop(paste("conttable_construct() for date:", date, " - Connected to DB")))
+  
   # b.date as date, b.ngramlen as ngramlen,
   ngramRs <- dbSendQuery(con,
       sprintf("select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, 
@@ -98,6 +98,8 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
 # Test SQL: select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, b.ngramarr as ngram, b.cnt as togethercnt from cnt_1hr2 b join volume_5min1 v on v.epochstartmillis = b.epochstartmillis where b.date=121106 and b.cnt > 5;
   
   ngramDf <- fetch(ngramRs, n=-1)
+  
+  try(stop(paste("conttable_construct() for date:", date, " - Fetched ngrams' cnts")))
   
   ngramDf <- within(ngramDf,{  # SQL below selects the array element: unigram=stripEndChars(unigram)
         ngram=stripEndChars(ngram)})
@@ -112,7 +114,8 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
 #Test SQL: select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt from cnt_1hr1 where date=121106 and cnt > 5 order by epochstartmillis asc, cnt desc;
   
   ugramDf <- fetch(ugramRs, n=-1)
-
+  
+  try(stop(paste("conttable_construct() for date:", date, " - Fetched unigrams' cnts")))
   #cleanup
   # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
   try(dbClearResult(ugramRs))
@@ -123,6 +126,9 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
 #Test SQL: select epochstartmillis/1000 as epochstartux, count(*) as nunique from cnt_1hr1 where date=121106 and cnt>5 group by epochstartmillis;
   
   nuniqueDf <- fetch(nuniqueRs, n=-1)
+  
+  try(stop(paste("conttable_construct() for date:", date, " - Fetched number of unique ngrams")))
+  
   try(dbClearResult(nuniqueRs))
   
   # dbDisconnect(con, ...) closes the connection. Eg.
@@ -134,49 +140,28 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   while(!require(plyr)){
     install.packages("plyr")
   }
-  if(parallel){
-    while(!require(foreach)){
-      install.packages("foreach")
-    }
-    if(!require(doMC)){
-      install.packages("doMC")
-    }
-    registerDoMC()
-  }
+#  if(parallel){
+#    while(!require(foreach)){
+#      install.packages("foreach")
+#    }
+#    if(!require(doMC)){
+#      install.packages("doMC")
+#    }
+#    registerDoMC()
+#  }
   
   while(!require(Matrix)){
     install.packages("Matrix")
   }
   
-  #idata.frame( object environment is not subsettable
-  if(retNgramGrps){
-    stop("Unsupported operation with the new SQL.. it requires the joined SQL (which was too slow)")
-    ngramGrps <- ddply(ngramDf, c("epochstartux","ngram"), function(bg){
-        bgRow <- bg[1,1:6]
-         
-        for(i in 1:nrow(bg)) {
-          bgRow[paste("unigram", i, sep=".")] <- bg[i,"unigram"]
-          bgRow[paste("alonecnt", i, sep=".")] <- bg[i,"alonecnt"]
-          bgRow[paste("unigramcnt", i, sep=".")] <- bg[i,"unigramcnt"]
-        }
-        if(appendPosixTime)
-          bgRow["utctime"] <- toPosixTime(bgRow[1,"epochstartux"])
-        return(bgRow)
-      }) #,.parallel = TRUE) TODOIf this was supported again 
   
-    if(alignEpochs)
-      ngramGrps <- align_epochs(ngramGrps, epoch1)
-    
-  }
-  
-  
-  if(retEpochGrps){
- 
+  {
     ## THE MOST IMPORTANT CODE START HERE
     epochUgramsIxStart <- 1
     createCooccurNooccur <- function(eg) {
     
       egRow <- eg[1,1:2] #epochstartux and epochvol
+      try(stop(paste("conttable_construct() for date:", date, " - Starting to create cooccurrence matrix for row",paste(egRow[1,],collapse="|"))))
       
       if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
           pureNgrams <- as.array(rep.int(TRUE, length(eg$ngram)))
@@ -265,22 +250,27 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
         
           cnt <- ng[1,"togethercnt"]
           
-      if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
-            #Diagonal is the occurrence of the unigram without any of the other ngrams in the columns
-            #NOT AFTER THE NEW SQL: The division accounts for the repeated deduction of the cnt with each element of ngram
-            #NO: The -1 accouts for the iteration that will be skipped which is that of ugram itself
-            cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - cnt #(cnt/ngramlen2)
-          #  if(DEBUG_CTC){
-            if(cooccurs[ixugram,ixugram] < 0){
-              print(paste("WARNING: cooccurs negative after reducing cnt = ",cnt, ixugram,cooccurs[ixugram,ixugram],ugram,eg[1,"epochstartux"]))
-              cooccurs[ixugram,ixugram] <- 0
-              print(paste("------------------------------------------------------------------"))
-            }
-          #  }
-      }
+          if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
+                #Diagonal is the occurrence of the unigram without any of the other ngrams in the columns
+                #NOT AFTER THE NEW SQL: The division accounts for the repeated deduction of the cnt with each element of ngram
+                #NO: The -1 accouts for the iteration that will be skipped which is that of ugram itself
+                cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - cnt #(cnt/ngramlen2)
+              #  if(DEBUG_CTC){
+                if(cooccurs[ixugram,ixugram] < 0){
+                  print(paste("WARNING: cooccurs negative after reducing cnt = ",cnt, ixugram,cooccurs[ixugram,ixugram],ugram,eg[1,"epochstartux"]))
+                  cooccurs[ixugram,ixugram] <- 0
+                  print(paste("------------------------------------------------------------------"))
+                }
+              #  }
+          }
           
           ugramPos <- which(ugramsInNgram == ugram)
           if(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
+            if(length(ugramPos)>1){
+              #non-pure ngram, and there will be warnings about how the values were ignored
+              #TODO: handle in case of more than a bigram, where there could be other ugrams involved
+              ugramPos <- ugramPos[1]
+            }
             if(ugramPos < length(ugramsInNgram)){
               othersInNgram <- ugramsInNgram[(ugramPos+1):length(ugramsInNgram)]
             } else {
@@ -310,6 +300,8 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
 #      setBreakpoint("conttable_construct.R#249")
       ngramGrp <- d_ply(eg, c("ngram"), countCooccurNooccurNgram)
 
+      try(stop(paste("conttable_construct() for date:", date, " - Finished creating cooccurrence matrix for",paste(egRow[1,],collapse="|"))))
+      
         res <- data.frame(egRow, uniqueUnigrams=I(list(ugramDf[epochUgramMask,"unigram"])),  
             uniqueNgrams=I(list(ifelse(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1,eg[,"ngram"],eg[pureNgrams,"ngram"]))),  
             unigramsCooccurs=I(list(cooccurs))) # notoccurs had to go: , unigramsNotoccurs=I(list(notoccurs)))
@@ -321,24 +313,24 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
     }
     #debug(createCooccurNooccur)
 #setBreakpoint("concattable_construct.R#69")
+   
+    try(stop(paste("conttable_construct() for date:", date, " - Will create epoch groups")))
     
-    epochGrps <- ddply(ngramDf, c("epochstartux"), createCooccurNooccur,
-       .progress = progress) #, .paropts=parOpts,.parallel = parallel, It doesn't work  
-    
+    epochGrps <- ddply(ngramDf, c("epochstartux"), createCooccurNooccur)
+       #.progress = progress, .paropts=parOpts,.parallel = parallel, Parallel doesn't work  
+   
+    try(stop(paste("conttable_construct() for date:", date, " - Finished creating epoch groups")))
+   
     if(alignEpochs)
       epochGrps <- align_epochs(epochGrps,epoch1)
   }
-
+  
   #cleanup
   rm(ngramDf)
   rm(ugramDf)
   rm(nuniqueDf)
   
-  res <- data.frame(ngramGrps=I(list(ngramGrps)), epochGrps=I(list(epochGrps)))
-  if(DEBUG_CTC){
-    str(res)
-    print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
-  }
-  return(res)
+#  dayEpochGrps <<- epochGrps
+   return(epochGrps)
 }
 
