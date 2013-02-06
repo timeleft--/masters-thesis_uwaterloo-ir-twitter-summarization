@@ -108,14 +108,23 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   
   ugramRs <- dbSendQuery(con,
       sprintf("select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt
-               from cnt_%s%d where date=%d and cnt > %d;", epoch1, ngramlen1, date, support))
-#Test SQL: select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt from cnt_1hr1 where date=121106 and cnt > 5;
+               from cnt_%s%d where date=%d and cnt > %d order by epochstartmillis asc, cnt desc;", epoch1, ngramlen1, date, support))
+#Test SQL: select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt from cnt_1hr1 where date=121106 and cnt > 5 order by epochstartmillis asc, cnt desc;
   
   ugramDf <- fetch(ugramRs, n=-1)
 
   #cleanup
   # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
   try(dbClearResult(ugramRs))
+  
+  nuniqueRs <- dbSendQuery(con,
+      sprintf("select epochstartmillis/1000 as epochstartux, count(*) as nunique 
+							 from cnt_%s%d where date=%d and cnt > %d group by epochstartmillis;", epoch1, ngramlen1, date, support))
+#Test SQL: select epochstartmillis/1000 as epochstartux, count(*) as nunique from cnt_1hr1 where date=121106 and cnt>5 group by epochstartmillis;
+  
+  nuniqueDf <- fetch(nuniqueRs, n=-1)
+  try(dbClearResult(nuniqueRs))
+  
   # dbDisconnect(con, ...) closes the connection. Eg.
   try(dbDisconnect(con))
   # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
@@ -164,7 +173,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   if(retEpochGrps){
  
     ## THE MOST IMPORTANT CODE START HERE
-    
+    epochUgramsIxStart <- 1
     createCooccurNooccur <- function(eg) {
     
       egRow <- eg[1,1:2] #epochstartux and epochvol
@@ -175,13 +184,14 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
       }
     
       currEpoch <- egRow[1,"epochstartux"]
-      epochUgramMas <- which(ugramDf$epochstartux==currEpoch)
-      nUnique <- length(epochUgramMas)
-
+      nUnique <- nuniqueDf[nuniqueDf$epochstartux==currEpoch,"nunique"]
+      epochUgramMask <- c(epochUgramsIxStart:(epochUgramsIxStart+nUnique-1))
+      epochUgramsIxStart <<-epochUgramsIxStart+nUnique #oops.. +1
+      
       if(appendPosixTime)
         egRow["utctime"] <- toPosixTime(egRow[1,"epochstartux"])
     
-      dnames <- ugramDf[epochUgramMas,"unigram"]
+      dnames <- ugramDf[epochUgramMask,"unigram"]
       if(withTotal){
         dnames <- c(dnames, TOTAL)
         maxIx <- (nUnique+1) #+1 for totals
@@ -230,12 +240,12 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
           cooccurs <<- cooccurs
         }
         #debug(initDiagonals)
-        a_ply(ugramDf[epochUgramMas,],1,.expand=FALSE,initDiagonals)
+        a_ply(ugramDf[epochUgramMask,],1,.expand=FALSE,initDiagonals)
       }
     
       
       if(withTotal){
-        cooccurs[,ixTOTAL] <- ugramDf[epochUgramMas,"unigramcnt"]
+        cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"]
       }
       
       # apply to each ngram in the epoch   
@@ -300,7 +310,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
 #      setBreakpoint("conttable_construct.R#249")
       ngramGrp <- d_ply(eg, c("ngram"), countCooccurNooccurNgram)
 
-        res <- data.frame(egRow, uniqueUnigrams=I(list(ugramDf[epochUgramMas,"unigram"])),  
+        res <- data.frame(egRow, uniqueUnigrams=I(list(ugramDf[epochUgramMask,"unigram"])),  
             uniqueNgrams=I(list(ifelse(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1,eg[,"ngram"],eg[pureNgrams,"ngram"]))),  
             unigramsCooccurs=I(list(cooccurs))) # notoccurs had to go: , unigramsNotoccurs=I(list(notoccurs)))
         if(DEBUG_CTC){
@@ -322,6 +332,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   #cleanup
   rm(ngramDf)
   rm(ugramDf)
+  rm(nuniqueDf)
   
   res <- data.frame(ngramGrps=I(list(ngramGrps)), epochGrps=I(list(epochGrps)))
   if(DEBUG_CTC){

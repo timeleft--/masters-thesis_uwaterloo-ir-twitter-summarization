@@ -193,8 +193,8 @@ if(DEBUG_NGA){
           #, parallel=parallel, parOpts=parOpts)
         epochGrps <- dayGrpsVec$epochGrps[[1]]
         ngrams2AssocT <- 
-          adply(epochGrps, 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F, .progress=progress,
-              .parallel = parallel,.paropts=parOpts)
+          adply(epochGrps, 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F, .progress=progress)
+              # This will be a disaster, because we are already in dopar: .parallel = parallel,.paropts=parOpts)
         ngrams2AssocT['X1'] <- NULL
         
         
