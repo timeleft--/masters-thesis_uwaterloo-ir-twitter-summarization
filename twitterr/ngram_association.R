@@ -152,7 +152,7 @@ if(DEBUG_NGA){
   nCores <- 2
 } else {
   db<-"full"
-  nCores <- 31
+  nCores <- 16
 }
 
 #  date<-121110
