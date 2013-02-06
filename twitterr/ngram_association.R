@@ -142,24 +142,27 @@ agreementTable <- function(comps,cooccurs,
 
 ####################################################    
 #driver
-DEBUG_NGA<-TRUE
-parallel<-FALSE
+DEBUG_NGA<-FALSE
+
 REMOVE_EXITING_OUTPUTS<-TRUE
+
+# parallelWithinDay<-FALSE
 #parOpts<-"cores=24" #2 for debug 
 #progress<-"none"
+
 if(DEBUG_NGA){
 
   db<-"sample-0.01" #"full"
   nCores <- 2
 } else {
   db<-"full"
-  nCores <- 30
+  nCores <- 50 #30
 }
 
 #  date<-121110
 
   supp<-5
-  epoch<-'1hr'
+  epoch<-'5min'
   ngramlen<-2
 
   source("conttable_construct.R")
@@ -203,7 +206,7 @@ if(DEBUG_NGA){
         
         dayEpochGrps <- # doesn't work in case of dopar.. they must be doing something with environments NULL 
           conttable_construct(date, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
-          #, parallel=parallel, parOpts=parOpts)
+          #, parallel=parallelWithinDay, parOpts=parOpts)
         if(is.null(dayEpochGrps)){
           try(stop(paste("ngram_assoc() for date:", date, " - Didn't get  back the cooccurrence matrix")))
         } else {
@@ -211,7 +214,7 @@ if(DEBUG_NGA){
         }
         ngrams2AssocT <- 
           adply(dayEpochGrps, 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F) #, .progress=progress)
-              # This will be a disaster, because we are already in dopar: .parallel = parallel,.paropts=parOpts)
+              # This will be a disaster, because we are already in dopar: .parallel = parallelWithinDay,.paropts=parOpts)
         ngrams2AssocT['X1'] <- NULL
         
         try(stop(paste("ngram_assoc() for date:", date, " - Will write ngrams2AssocT to DB")))
