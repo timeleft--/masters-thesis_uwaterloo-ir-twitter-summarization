@@ -53,7 +53,7 @@ agreementTable <- function(comps,cooccurs,
   }
   calcEpochAssoc <- function(eg,ngramlen,date){
   
-    try(stop(paste("ngram_assoc() for date:", date, " - Starting to calc epoch",paste(eg[1,],collapse="|"))))
+    try(stop(paste("ngram_assoc() for date:", date, " - Starting to calc epoch",eg[1,1])))
     
     uniqueUgrams <- eg$uniqueUnigrams[[1]]
     nUnique <- length(uniqueUgrams)
@@ -132,7 +132,7 @@ agreementTable <- function(comps,cooccurs,
 #    ngAssoc <- arrange(ngAssoc, -dunningLambda) #-yuleQ)
     ngAssoc["X1"] <- NULL
     
-    try(stop(paste("ngram_assoc() for date:", date, " - Finished to calc epoch",paste(eg[1,],collapse="|"))))
+    try(stop(paste("ngram_assoc() for date:", date, " - Finished to calc epoch",eg[1,1])))
     
     return(data.frame(ngramlen=ngramlen,date=date,epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=ngAssoc)) 
   }
