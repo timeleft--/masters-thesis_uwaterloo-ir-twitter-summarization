@@ -142,7 +142,7 @@ agreementTable <- function(comps,cooccurs,
 
 ####################################################    
 #driver
-DEBUG_NGA<-TRUE
+DEBUG_NGA<-FALSE
 parallel<-FALSE
 REMOVE_EXITING_OUTPUTS<-TRUE
 #parOpts<-"cores=24" #2 for debug 
@@ -153,7 +153,7 @@ if(DEBUG_NGA){
   nCores <- 2
 } else {
   db<-"full"
-  nCores <- 16
+  nCores <- 30
 }
 
 #  date<-121110
