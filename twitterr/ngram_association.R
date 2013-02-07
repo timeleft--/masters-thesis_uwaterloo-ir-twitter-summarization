@@ -109,15 +109,36 @@ agreementTable <- function(comps,cooccurs,
       p2 <- k2 / n2 # k2/n2
       pNumer <- cooccurs[compsIx[1],totalIx] / epochvolume #(k1+k2)/(n1+n2) = cnt(first)/(n1+n2)
       
-      #L(p,k1,n1)L(p,k2,n2) = p^k1*(1-p)^(n1-k1)*p^k2*(1-p)^(n2-k2) = p^(k1+k2)*(1-p)^(n1+n2-(k1+k2))
-      numer <- (pNumer^cooccurs[compsIx[1],totalIx]) * ((1-pNumer)^(epochvolume-cooccurs[compsIx[1],totalIx]))
+      # for numerical stability
+      lp1 <- log(p1)
+      lp2 <- log(p2)
+      lpNumer <- log(pNumer)
       
-      #L(p1,k1,n1)L(p2,k2,n2)
-      denim <- (p1^k1)*((1-p1)^(n1-k1))*(p2^k2)*((1-p2)^(n2-k2))
+      lp1C <- log(1-p1)
+      lp2C <- log(1-p2)
+      lpNumerC <- log(1-pNumer) 
       
-      lhr <- numer / denim
+      lnumer <- (cooccurs[compsIx[1],totalIx] * lpNumer) + ((epochvolume-cooccurs[compsIx[1],totalIx]) * lpNumerC)
       
-      ngRes[1,"dunningLambda"] <- -2 * log(lhr)
+      ldenim <- (k1 * lp1) + ((n1-k1) * lp1C) + (k2 * lp2) + ((n2-k2) * lp2C) 
+      
+# It happens when one of the two unigrams appears only with the other.. that is if n1==k1 or if k2 == 0
+#      if(is.nan(lnumer) || is.nan(ldenim)){
+#        warning(paste("Dunning Lambda Not a Number (aOccs,k1,n1,k2,n2)=",cooccurs[compsIx[1],totalIx],k1,n1,k2,n2,
+#                "ngram=",ngram))
+#      }
+      
+      ngRes[1,"dunningLambda"] <- -2 * (lnumer - ldenim)
+      
+#      #L(p,k1,n1)L(p,k2,n2) = p^k1*(1-p)^(n1-k1)*p^k2*(1-p)^(n2-k2) = p^(k1+k2)*(1-p)^(n1+n2-(k1+k2))
+#      numer <- (pNumer^cooccurs[compsIx[1],totalIx]) * ((1-pNumer)^(epochvolume-cooccurs[compsIx[1],totalIx]))
+#      
+#      #L(p1,k1,n1)L(p2,k2,n2)
+#      denim <- (p1^k1)*((1-p1)^(n1-k1))*(p2^k2)*((1-p2)^(n2-k2))
+#      
+#      lhr <- numer / denim
+#      
+#      ngRes[1,"dunningLambda"] <- -2 * log(lhr)
       
       ngRes[1,"a1b1"] <- agreet[1,1]
       ngRes[1,"a1b0"] <- agreet[2,1]
