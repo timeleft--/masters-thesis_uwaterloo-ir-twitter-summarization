@@ -46,6 +46,7 @@ agreementTable <- function(comps,cooccurs,
   
   return(agreement)
 }
+# debug(agreementTable)
 
 ############################
   while(!require(plyr)){
@@ -127,6 +128,7 @@ agreementTable <- function(comps,cooccurs,
     }
 #    debug(calcNgramAssoc)
   
+    #idata.frame( causes Error in seq_len(nrow(df)) :   argument must be coercible to non-negative integer 
     ngAssoc <- adply(uniqueNgrams,1,calcNgramAssoc,.expand=F)
     
 #    ngAssoc <- arrange(ngAssoc, -dunningLambda) #-yuleQ)
@@ -210,12 +212,12 @@ if(DEBUG_NGA){
           conttable_construct(date, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
           #, parallel=parallelWithinDay, parOpts=parOpts)
         if(is.null(dayEpochGrps)){
-          try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Didn't get  back the cooccurrence matrix")))
+          stop(paste("ngram_assoc() for date:", date, " - Didn't get  back the cooccurrence matrix"))
         } else {
           try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Got back the cooccurrence matrix")))
         }
         ngrams2AssocT <- 
-          adply(dayEpochGrps, 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F) #, .progress=progress)
+          adply(idata.frame(dayEpochGrps), 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F) #, .progress=progress)
               # This will be a disaster, because we are already in dopar: .parallel = parallelWithinDay,.paropts=parOpts)
         #Leave the hour of the day.. it's good
 #            ngrams2AssocT['X1'] <- NULL

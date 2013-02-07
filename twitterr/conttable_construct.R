@@ -176,16 +176,19 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
    ## THE MOST IMPORTANT CODE START HERE
 #    epochUgramsIxStart <- 1
     createCooccurNooccur <- function(eg) {
-    
-      egRow <- eg[1,1:2] #epochstartux and epochvol
-      try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Starting to create cooccurrence matrix for row",paste(egRow[1,],collapse="|"))))
+      
+      currEpoch <- eg[1,"epochstartux"]
+      
+      #unneccessary copy operation
+     # egRow <- eg[1,1:2] #epochstartux and epochvol
+      try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Starting to create cooccurrence matrix for row",
+                  currEpoch)))
       
       if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
           pureNgrams <- as.array(rep.int(TRUE, length(eg$ngram)))
           rownames(pureNgrams) <- as.list(eg$ngram)
       }
     
-      currEpoch <- eg[1,"epochstartux"]
  
       #The index shifting failure
 #      # do we need to check if the epoch changed by storing the prevEpoch??
@@ -195,9 +198,6 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
       epochUgramMask <- which(ugramDf$epochstartux==currEpoch)
       nUnique <- length(epochUgramMask)    
   
-      if(appendPosixTime)
-        egRow["utctime"] <- toPosixTime(currEpoch)
-    
       dnames <- ugramDf[epochUgramMask,"unigram"]
       if(withTotal){
         dnames <- c(dnames, TOTAL)
@@ -260,7 +260,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
           cooccurs <<- cooccurs
         }
         #debug(initDiagonals)
-        a_ply(ugramDf[epochUgramMask,],1,.expand=FALSE,initDiagonals)
+        a_ply(idata.frame(ugramDf[epochUgramMask,]),1,.expand=FALSE,initDiagonals)
       }
     
       
@@ -362,28 +362,34 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
    
 #      debug(countCooccurNooccurNgram)
 #      setBreakpoint("conttable_construct.R#249")
-      ngramGrp <- d_ply(eg, c("ngram"), countCooccurNooccurNgram)
+      ngramGrp <- d_ply(idata.frame(eg), c("ngram"), countCooccurNooccurNgram)
 
-      try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Finished creating cooccurrence matrix for",paste(egRow[1,],collapse="|"))))
+      try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Finished creating cooccurrence matrix for",currEpoch)))
       if(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
         resNgrams <- eg[,"ngram"]
       } else {
         resNgrams <- eg[pureNgrams,"ngram"]
       }
-        res <- data.frame(egRow, uniqueUnigrams=I(list(ugramDf[epochUgramMask,"unigram"])),  
+      
+      res <- data.frame(epochstartux=eg[1,"epochstartux"],epochvol=eg[1,"epochvol"], uniqueUnigrams=I(list(ugramDf[epochUgramMask,"unigram"])),  
             uniqueNgrams=I(list(resNgrams)), #ifelse(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1,eg[,"ngram"],eg[pureNgrams,"ngram"])  
             unigramsCooccurs=I(list(cooccurs))) # notoccurs had to go: , unigramsNotoccurs=I(list(notoccurs)))
-        if(DEBUG_CTC){
-          str(res)
-        }
-        return(res)    
+      
+      if(appendPosixTime)
+        res["utctime"] <- toPosixTime(currEpoch)
+      
+      if(DEBUG_CTC){
+        str(res)
+      }
+      return(res)    
     }
 #    debug(createCooccurNooccur)
 #setBreakpoint("concattable_construct.R#69")
    
     try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Will create epoch groups")))
     
-    epochGrps <- ddply(ngramDf, c("epochstartux"), createCooccurNooccur)
+    #idata.frame( cannot access the internal dataframe afterwards.. not here!!
+    epochGrps <- ddply(idata.frame(ngramDf), c("epochstartux"), createCooccurNooccur)
        #.progress = progress, .paropts=parOpts,.parallel = parallel, Parallel doesn't work  
    
     try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Finished creating epoch groups")))
