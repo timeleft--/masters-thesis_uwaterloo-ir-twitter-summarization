@@ -153,7 +153,7 @@ REMOVE_EXITING_OUTPUTS<-FALSE
 #progress<-"none"
 
 if(DEBUG_NGA){
-
+  day<-121110
   db<-"sample-0.01" #"full"
   nCores <- 2
 } else {
@@ -161,7 +161,7 @@ if(DEBUG_NGA){
   nCores <- 50 #30
 }
 
-#  day<-121110
+
 
   supp<-5
   epoch<-'1hr'
