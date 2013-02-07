@@ -52,9 +52,9 @@ agreementTable <- function(comps,cooccurs,
   while(!require(plyr)){
     install.packages("plyr")
   }
-  calcEpochAssoc <- function(eg,ngramlen,date){
+  calcEpochAssoc <- function(eg,ngramlen,day){
   
-    try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Starting to calc epoch",eg[1,"epochstartux"])))
+    try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Starting to calc epoch",eg[1,"epochstartux"])))
     
     uniqueUgrams <- eg$uniqueUnigrams[[1]]
     nUnique <- length(uniqueUgrams)
@@ -134,9 +134,9 @@ agreementTable <- function(comps,cooccurs,
 #    ngAssoc <- arrange(ngAssoc, -dunningLambda) #-yuleQ)
     ngAssoc["X1"] <- NULL
     
-    try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Finished to calc epoch",eg[1,"epochstartux"])))
+    try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished to calc epoch",eg[1,"epochstartux"])))
     
-    return(data.frame(ngramlen=ngramlen,date=date,epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=ngAssoc)) 
+    return(data.frame(ngramlen=ngramlen,date=day,epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=ngAssoc)) 
   }
   
 #  debug(calcEpochAssoc)
@@ -161,7 +161,7 @@ if(DEBUG_NGA){
   nCores <- 50 #30
 }
 
-#  date<-121110
+#  day<-121110
 
   supp<-5
   epoch<-'1hr'
@@ -185,13 +185,13 @@ if(DEBUG_NGA){
   }  
   
   nullCombine <- function(a,b) NULL
-  allMonthes <- foreach(date=c(121110, 130103, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219),
+  allMonthes <- foreach(day=c(121110, 130103, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219),
           .inorder=FALSE, .combine='nullCombine') %dopar%
       {
-        daySuccess <- paste("Unkown result for date",date)
+        daySuccess <- paste("Unkown result for day",day)
         
         tryCatch({
-        tableName <- paste('assoc',epoch,ngramlen,'_',date,sep="") 
+        tableName <- paste('assoc',epoch,ngramlen,'_',day,sep="") 
         
         drv <- dbDriver("PostgreSQL")
         con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
@@ -209,28 +209,28 @@ if(DEBUG_NGA){
         }
         
         dayEpochGrps <- # doesn't work in case of dopar.. they must be doing something with environments NULL 
-          conttable_construct(date, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
+          conttable_construct(day, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
           #, parallel=parallelWithinDay, parOpts=parOpts)
         if(is.null(dayEpochGrps)){
-          stop(paste("ngram_assoc() for date:", date, " - Didn't get  back the cooccurrence matrix"))
+          stop(paste("ngram_assoc() for day:", day, " - Didn't get  back the cooccurrence matrix"))
         } else {
-          try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Got back the cooccurrence matrix")))
+          try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Got back the cooccurrence matrix")))
         }
         ngrams2AssocT <- 
-          adply(idata.frame(dayEpochGrps), 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F) #, .progress=progress)
+          adply(idata.frame(dayEpochGrps), 1, calcEpochAssoc, ngramlen=ngramlen,day=day, .expand=F) #, .progress=progress)
               # This will be a disaster, because we are already in dopar: .parallel = parallelWithinDay,.paropts=parOpts)
         #Leave the hour of the day.. it's good
 #            ngrams2AssocT['X1'] <- NULL
         
-        try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Will write ngrams2AssocT to DB")))
+        try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write ngrams2AssocT to DB")))
         dbWriteTable(con,tableName,ngrams2AssocT)
-        try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Finished writing to DB")))
+        try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished writing to DB")))
         try(dbDisconnect(con))
         try(dbUnloadDriver(drv))
-        daySuccess <<- paste("Success for date",date) 
+        daySuccess <<- paste("Success for day",day) 
       }
-      ,error=function(e) daySuccess <<- paste("Failure for date",date,e)
-      ,finally=try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - ", daySuccess)))
+      ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
+      ,finally=try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ", daySuccess)))
       )
       }
   
