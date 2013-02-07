@@ -47,9 +47,9 @@ while(!require(RPostgreSQL)){
 compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoch1=NULL,support=5,db=G.db){
 
   
-  inTable <- paste('assoc',epoch,ngramlen,'_',day,sep="") 
+  inTable <- paste('assoc',epoch2,ngramlen2,'_',day,sep="") 
   
-  outTable <- paste('compound',epoch,ngramlen,'_',day,sep="") 
+  outTable <- paste('compound',epoch2,ngramlen2,'_',day,sep="") 
   
   drv <- dbDriver("PostgreSQL")
   con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
