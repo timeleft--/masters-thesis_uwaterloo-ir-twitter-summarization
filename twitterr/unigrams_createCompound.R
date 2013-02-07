@@ -3,19 +3,38 @@
 # Author: yia
 ###############################################################################
 
-db <- "sample-0.01"
-logLabel <- "unigrams_compound_merge()" #Recall()???
-epoch2 <- '1hr' 
-ngramlen2 <- 2
+G.epoch2 <- '1hr' 
+G.ngramlen2 <- 2
+G.support<-5
+
+logLabel <- "unigrams_createCompound()" #Recall()???
+
+REMOVE_EXITING_OUTPUTS<-FALSE
 
 DEBUG_UGC <- TRUE
+
 if(DEBUG_UGC){
-day<-121110
-ngramlen1<-1
-epoch1<-NULL
-support<-5
+  G.days<-c(121106,121110)
+  G.nCores <- 2
+  G.db <- "sample-0.01"
+  
+  ngramlen1<-1
+  epoch1<-NULL
+  
+}else {
+  G.days<-c(121110, 130103, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219)
+  G.db<-"full"
+  G.nCores <- 50 #30
 }
 
+
+while(!require(foreach)){
+  install.packages("foreach")
+}
+while(!require(doMC)){
+  install.packages("doMC")
+}
+registerDoMC(cores=G.nCores)
 
 while(!require(plyr)){
   install.packages("plyr")
@@ -25,8 +44,27 @@ while(!require(RPostgreSQL)){
   install.packages("RPostgreSQL")
 } 
 
-compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoch1=NULL,support=5){
+compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoch1=NULL,support=5,db=G.db){
 
+  
+  inTable <- paste('assoc',epoch,ngramlen,'_',day,sep="") 
+  
+  outTable <- paste('compound',epoch,ngramlen,'_',day,sep="") 
+  
+  drv <- dbDriver("PostgreSQL")
+  con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
+      host="hops.cs.uwaterloo.ca", port="5433")
+  if(dbExistsTable(con,outTable)){
+    if(REMOVE_EXITING_OUTPUTS){
+      dbRemoveTable(con,outTable)
+      try(dbDisconnect(con))
+      try(dbUnloadDriver(drv))
+    } else {
+      try(dbDisconnect(con))
+      try(dbUnloadDriver(drv))
+      stop(paste("Output table",outTable,"already exist. Please remove it yourself."))
+    }
+  }
   
   # opposite of what happens in conttable_construct
   if(is.null(epoch1)){
@@ -44,12 +82,11 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   
   try(stop(paste(Sys.time(), logLabel, " for day:", day, " - Connected to DB",db)))
   
-  tableName <- paste('assoc',epoch2,ngramlen2,'_',day,sep="")
   #* 1000 as epochstartmillis
   # For lineage:  "row.names", "X1" as hod,
   sql <- sprintf('select "row.names", epochstartux , "ngramAssoc.ngram" as ngram, 
 							"ngramAssoc.a1b1" as cnt
-							from %s where "ngramAssoc.yuleQ" > 0 order by epochstartux asc;', tableName)
+							from %s where "ngramAssoc.yuleQ" > 0 order by epochstartux asc;', inTable)
 
   try(stop(paste(Sys.time(), logLabel, "for day:", day, " - Fetching ngrams' association using sql: ", sql)))        
       
@@ -124,33 +161,45 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
       
   combinedDf <- ddply(idata.frame(ngramDf),c("epochstartux"), epochGroupFun)
  
-  return (combinedDf)
-# Trying to avoid copying, but I found that I'll end up copying the whole DF in and out of rbind  
-# Can I use bigmemory's pointers to avoid copying??
-#  currTime <- NULL
-#  epochUnigrams <- NULL
-#  compoundGrams <- data.frame(stringsAsFactors = F) 
-#  
-#  reduceCompsCnt <- function(ng){
-#    
-#    if(!identical(ng[1,"epochstartmillis"],currTime)){
-#      currTime <<- ng[1,"epochstartmillis"]
-#      # TODO I won't try to get the idea of shifting start index to work.. I already tried, and there's something tricky 
-#      epochUnigrams <<- ugramDf[ugramDf$epochstartmillis == currTime,]
-#    }
-#    ugramsInNgram <- unlist(strsplit(ng[1,"ngram"],","))
-#    
-#    #TODO Pure?
-#  
-#    for(u in 1:length(ugramsInNgram)){
-#      ugram <- ugramsInNgram[u]
-#      
-#      ugramIx <- which(epochUnigrams$ngram == ugram)
-#      epochUnigrams[ugramIx,"cnt"] <- epochUnigrams[ugramIx, "cnt"] - ng[1,"cnt"]
-#    }
-#    
-#    compoundGrams <<- rbind(compoundGrams, )
-#  }
-#  a_ply(idata.frame(ngramDf, 1, reduceCompsCnt, .expand=F)
   
+  try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write combinedDf to DB")))
+  dbWriteTable(con,outTable,combinedDf)
+  try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished writing to DB")))
+  try(dbDisconnect(con))
+  try(dbUnloadDriver(drv))
+#  return (combinedDf) 
+
+   return(paste("Success for day",day))
 }
+
+###############################
+### Driver
+##############################
+
+nullCombine <- function(a,b) NULL
+allMonthes <- foreach(day=G.days,
+        .inorder=FALSE, .combine='nullCombine') %dopar%
+    {
+      daySuccess <- paste("Unkown result for day",day)
+      
+      tryCatch({
+            
+            daySuccess <<- compoundUnigramsFromNgrams(day, 
+                epoch2 = G.epoch2, ngramlen2 = G.ngramlen2, support = G.support, db = G.db)
+            
+             
+          }
+          ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
+          ,finally=try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ", daySuccess)))
+      )
+    }
+
+
+
+
+
+
+
+
+
+
