@@ -53,7 +53,7 @@ agreementTable <- function(comps,cooccurs,
   }
   calcEpochAssoc <- function(eg,ngramlen,date){
   
-    try(stop(paste("ngram_assoc() for date:", date, " - Starting to calc epoch",eg[1,"epochstartux"])))
+    try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Starting to calc epoch",eg[1,"epochstartux"])))
     
     uniqueUgrams <- eg$uniqueUnigrams[[1]]
     nUnique <- length(uniqueUgrams)
@@ -132,7 +132,7 @@ agreementTable <- function(comps,cooccurs,
 #    ngAssoc <- arrange(ngAssoc, -dunningLambda) #-yuleQ)
     ngAssoc["X1"] <- NULL
     
-    try(stop(paste("ngram_assoc() for date:", date, " - Finished to calc epoch",eg[1,"epochstartux"])))
+    try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Finished to calc epoch",eg[1,"epochstartux"])))
     
     return(data.frame(ngramlen=ngramlen,date=date,epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=ngAssoc)) 
   }
@@ -208,9 +208,9 @@ if(DEBUG_NGA){
           conttable_construct(date, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
           #, parallel=parallelWithinDay, parOpts=parOpts)
         if(is.null(dayEpochGrps)){
-          try(stop(paste("ngram_assoc() for date:", date, " - Didn't get  back the cooccurrence matrix")))
+          try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Didn't get  back the cooccurrence matrix")))
         } else {
-          try(stop(paste("ngram_assoc() for date:", date, " - Got back the cooccurrence matrix")))
+          try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Got back the cooccurrence matrix")))
         }
         ngrams2AssocT <- 
           adply(dayEpochGrps, 1, calcEpochAssoc, ngramlen=ngramlen,date=date, .expand=F) #, .progress=progress)
@@ -218,15 +218,15 @@ if(DEBUG_NGA){
         #Leave the hour of the day.. it's good
 #            ngrams2AssocT['X1'] <- NULL
         
-        try(stop(paste("ngram_assoc() for date:", date, " - Will write ngrams2AssocT to DB")))
+        try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Will write ngrams2AssocT to DB")))
         dbWriteTable(con,tableName,ngrams2AssocT)
-        try(stop(paste("ngram_assoc() for date:", date, " - Finished writing to DB")))
+        try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - Finished writing to DB")))
         try(dbDisconnect(con))
         try(dbUnloadDriver(drv))
         daySuccess <- paste("Succes for date",date) 
       }
-      ,error=function(e) daySuccess <- paste("Error at date",date,e)
-      ,finally=try(stop(paste("ngram_assoc() for date:", date, " - ", daySuccess)))
+      ,error=function(e) daySuccess <- paste("Failure for date",date,e)
+      ,finally=try(stop(paste(Sys.time(), "ngram_assoc() for date:", date, " - ", daySuccess)))
       )
       }
   

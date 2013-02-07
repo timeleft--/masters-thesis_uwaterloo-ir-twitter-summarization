@@ -88,7 +88,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
       host="hops.cs.uwaterloo.ca", port="5433")
   
-  try(stop(paste("conttable_construct() for date:", date, " - Connected to DB")))
+  try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Connected to DB", db)))
   
   # b.date as date, b.ngramlen as ngramlen,
   sql <- sprintf("select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, 
@@ -102,7 +102,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   
   ngramDf <- fetch(ngramRs, n=-1)
   
-  try(stop(paste("conttable_construct() for date:", date, " - Fetched ngrams' cnts using sql: ", sql)))
+  try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Fetched ngrams' cnts using sql: ", sql)))
   
   ngramDf <- within(ngramDf,{  # SQL below selects the array element: unigram=stripEndChars(unigram)
         ngram=stripEndChars(ngram)})
@@ -119,7 +119,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
   
   ugramDf <- fetch(ugramRs, n=-1)
   
-  try(stop(paste("conttable_construct() for date:", date, " - Fetched unigrams' cnts using sql:", sql)))
+  try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Fetched unigrams' cnts using sql:", sql)))
   #cleanup
   # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
   try(dbClearResult(ugramRs))
@@ -134,7 +134,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
 #  
 #  nuniqueDf <- fetch(nuniqueRs, n=-1)
 #  
-#  try(stop(paste("conttable_construct() for date:", date, " - Fetched number of unique ngrams using sql:",sql)))
+#  try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Fetched number of unique ngrams using sql:",sql)))
 #  
 #  try(dbClearResult(nuniqueRs))
 
@@ -178,7 +178,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
     createCooccurNooccur <- function(eg) {
     
       egRow <- eg[1,1:2] #epochstartux and epochvol
-      try(stop(paste("conttable_construct() for date:", date, " - Starting to create cooccurrence matrix for row",paste(egRow[1,],collapse="|"))))
+      try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Starting to create cooccurrence matrix for row",paste(egRow[1,],collapse="|"))))
       
       if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
           pureNgrams <- as.array(rep.int(TRUE, length(eg$ngram)))
@@ -235,7 +235,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
           
           #  if(DEBUG_CTC){
           if(is.na(ugramCnt) || ugramCnt <= 0){
-            try(stop(paste("conttable_construct() for date:", date, " - WARNING: unigramcnt not positive:",ixugram,ugramCnt,ugram,currEpoch)))
+            try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - WARNING: unigramcnt not positive:",ixugram,ugramCnt,ugram,currEpoch)))
             ugramCnt <- 0
           }
           #  }
@@ -286,7 +286,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
           
           #  if(DEBUG_CTC){
           if(is.na(cnt) || cnt <= 0){
-            try(stop(paste("conttable_construct() for date:", date, " - WARNING: togthercnt not positive:",ixugram,cnt,paste(ugramsInNgram,collapse="|"),ugram,currEpoch)))
+            try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - WARNING: togthercnt not positive:",ixugram,cnt,paste(ugramsInNgram,collapse="|"),ugram,currEpoch)))
             cnt <- 0
           }
           #  }
@@ -310,7 +310,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
                 cooccurs[ixugram,ixugram] <- cooccurs[ixugram,ixugram] - cnt #(cnt/ngramlen2)
               #  if(DEBUG_CTC){
                 if(cooccurs[ixugram,ixugram] < 0){
-                  try(stop(paste("conttable_construct() for date:", date, " - WARNING: cooccurs negative after reducing cnt = ",cnt, ixugram,cooccurs[ixugram,ixugram],ugram,currEpoch)))
+                  try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - WARNING: cooccurs negative after reducing cnt = ",cnt, ixugram,cooccurs[ixugram,ixugram],ugram,currEpoch)))
                   cooccurs[ixugram,ixugram] <- 0
                 }
               #  }
@@ -364,7 +364,7 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
 #      setBreakpoint("conttable_construct.R#249")
       ngramGrp <- d_ply(eg, c("ngram"), countCooccurNooccurNgram)
 
-      try(stop(paste("conttable_construct() for date:", date, " - Finished creating cooccurrence matrix for",paste(egRow[1,],collapse="|"))))
+      try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Finished creating cooccurrence matrix for",paste(egRow[1,],collapse="|"))))
       if(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
         resNgrams <- eg[,"ngram"]
       } else {
@@ -381,12 +381,12 @@ conttable_construct <- function(date, epoch1='1hr', ngramlen2=2, epoch2=NULL, ng
 #    debug(createCooccurNooccur)
 #setBreakpoint("concattable_construct.R#69")
    
-    try(stop(paste("conttable_construct() for date:", date, " - Will create epoch groups")))
+    try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Will create epoch groups")))
     
     epochGrps <- ddply(ngramDf, c("epochstartux"), createCooccurNooccur)
        #.progress = progress, .paropts=parOpts,.parallel = parallel, Parallel doesn't work  
    
-    try(stop(paste("conttable_construct() for date:", date, " - Finished creating epoch groups")))
+    try(stop(paste(Sys.time(), "conttable_construct() for date:", date, " - Finished creating epoch groups")))
    
     if(alignEpochs)
       epochGrps <- align_epochs(epochGrps,epoch1)
