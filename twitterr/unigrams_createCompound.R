@@ -46,14 +46,32 @@ while(!require(RPostgreSQL)){
 
 compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoch1=NULL,support=5,db=G.db){
 
+  # opposite of what happens in conttable_construct
+  if(is.null(epoch1)){
+    epoch1<-epoch2
+  }
+  if(epoch1 == '1day' || epoch2 == '1day'){
+    stop("Because we calculate the day base on GMT-10 and the epochstartmillis is at GMT, using day 
+            epochs will result in more than one record per unigram, which is not the expected")
+    #TODO: subtract 10 hours from epochstartmillis to align both timezones.. but is this right?
+  }
   
-  inTable <- paste('assoc',epoch2,ngramlen2,'_',day,sep="") 
-  
-  outTable <- paste('compound',epoch2,ngramlen2,'_',day,sep="") 
   
   drv <- dbDriver("PostgreSQL")
   con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
       host="hops.cs.uwaterloo.ca", port="5433")
+  
+  try(stop(paste(Sys.time(), logLabel, " for day:", day, " - Connected to DB",db)))
+  
+  
+  inTable <- paste('assoc',epoch2,ngramlen2,'_',day,sep="")
+  
+  if(!dbExistsTable(con,inTable)){
+    stop(paste("Input table",inTable,"doesn't exist.. skippinng the day"))
+  }
+  
+  outTable <- paste('compound',epoch2,ngramlen2,'_',day,sep="") 
+  
   if(dbExistsTable(con,outTable)){
     if(REMOVE_EXITING_OUTPUTS){
       dbRemoveTable(con,outTable)
@@ -66,21 +84,6 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     }
   }
   
-  # opposite of what happens in conttable_construct
-  if(is.null(epoch1)){
-    epoch1<-epoch2
-  }
-  if(epoch1 == '1day' || epoch2 == '1day'){
-    stop("Because we calculate the day base on GMT-10 and the epochstartmillis is at GMT, using day 
-            epochs will result in more than one record per unigram, which is not the expected")
-    #TODO: subtract 10 hours from epochstartmillis to align both timezones.. but is this right?
-  }
-  
-  drv <- dbDriver("PostgreSQL")
-  con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
-      host="hops.cs.uwaterloo.ca", port="5433")
-  
-  try(stop(paste(Sys.time(), logLabel, " for day:", day, " - Connected to DB",db)))
   
   #* 1000 as epochstartmillis
   # For lineage:  "row.names", "X1" as hod,
@@ -161,6 +164,11 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
       
   combinedDf <- ddply(idata.frame(ngramDf),c("epochstartux"), epochGroupFun)
  
+  drv <- dbDriver("PostgreSQL")
+  con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
+      host="hops.cs.uwaterloo.ca", port="5433")
+  
+  try(stop(paste(Sys.time(), logLabel, " for day:", day, " - Connected to DB",db)))
   
   try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write combinedDf to DB")))
   dbWriteTable(con,outTable,combinedDf)
