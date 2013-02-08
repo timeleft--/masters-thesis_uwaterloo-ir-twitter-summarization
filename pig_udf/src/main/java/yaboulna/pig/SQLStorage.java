@@ -598,7 +598,7 @@ public abstract class SQLStorage<K> extends LoadFunc
 
     // FIXME: Abstraction, so that other readers can be added later for other tables
     if (reader instanceof SQLStorage.SQLResultSetReader) {
-      this.reader = (SQLStorage<K>.SQLResultSetReader) reader;
+      this.reader = (SQLStorage.SQLResultSetReader) reader;
     } else {
       throw new IOException("Expected a reader of type " + SQLResultSetReader.class
           + " got one of type " + reader.getClass());
