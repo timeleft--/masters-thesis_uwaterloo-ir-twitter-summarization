@@ -219,8 +219,8 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     ngramOccs <- which(epochNgramOccs$ngram == paste("(",ng[1,"ngram"],")",sep=""))
     
     if(DEBUG_UGC){
-      if(length(ngramOccs) != cnt=ng[1,"cnt"]){
-        try(stop(paste("ngramOccs retrieved:",length(ngramOccs),"not equal to the recorded count",cnt=ng[1,"cnt"])))
+      if(length(ngramOccs) != ng[1,"cnt"]){
+        try(stop(paste("ngramOccs retrieved:",length(ngramOccs),"not equal to the recorded count",ng[1,"cnt"])))
       }
     }
     
