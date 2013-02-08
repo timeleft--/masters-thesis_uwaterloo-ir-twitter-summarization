@@ -41,9 +41,11 @@ for i in range(maxLength-1):
     
     for x in range(1,maxLength-i):
         unigramsLoad += """
-         unigramsPos%(o)s = LOAD '%(root)sunigrams/pos%(o)s' %(funcSchema)s;"""% {"funcSchema": funcSchema, "o":str(70-x), "root": args.root}
+         unigramsPos%(o)s = LOAD '%(root)sbypos/unigrams/pos%(o)s' %(funcSchema)s;"""% {"funcSchema": funcSchema, "o":str(70-x), "root": args.root}
         split += """,
              ngramsLen%(l)sPos%(p)s IF pos==%(p)s"""% {"p":str(x), "l": str(i+1)}
+             
+        # TODO: Make sure that this is gnerated for positions 0..
         joinConcat += """
         ngramsLen%(l)sJoinPos%(u)s = JOIN ngramsLen%(l)sPos%(u)s BY id, unigramsPos%(a)s BY id;
         ngramsLen%(k)sPos%(u)s = FOREACH ngramsLen%(l)sJoinPos%(u)s GENERATE 
