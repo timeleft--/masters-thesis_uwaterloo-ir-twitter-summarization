@@ -7,7 +7,7 @@ db=${1}
 root=${2}
 psql="psql -p 5433 -d ${db} -c "
 #echo "${psql} 'DROP TABLE IF EXISTS compgrams CASCADE;'"
-${psql} 'CREATE UNLOGGED TABLE bypos INHERITS(ngrams);'
+#${psql} 'CREATE UNLOGGED TABLE bypos() INHERITS(ngrams);'
 #(id int8, timeMillis int8, date int4, ngram text, ngramLen int2, tweetLen int2, pos int2);'"
 for p in {0..70} 
 do
