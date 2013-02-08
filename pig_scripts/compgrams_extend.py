@@ -29,7 +29,7 @@ scriptStr = """
 REGISTER %(udf)syaboulna-udf-0.0.1-SNAPSHOT.jar;
 --- extending ngrams that are positively associated according to YuleQ  
 compUgrams = LOAD '%(root)scompgrams/len%(l)s/$day.csv' USING %(funcSchema)s
-""" % {"root": args.root, "funcSchema": compgramSchema, "l": args.len}
+""" % {"root": args.root, "funcSchema": compgramSchema, "l": args.len, "udf": args.udf}
 
 # split it by position
 split = " SPLIT  compUgrams INTO compUgramsP0 IF pos == 0 "
