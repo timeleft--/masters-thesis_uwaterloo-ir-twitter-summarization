@@ -8,11 +8,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.fs.Path;
@@ -39,6 +41,7 @@ import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
+import org.apache.pig.data.TupleFactory;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.UDFContext;
 import org.apache.pig.impl.util.Utils;
@@ -51,9 +54,9 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import yaboulna.pig.NgramLenStorage.NgramLenReader;
+import com.google.common.collect.Maps;
 
-public abstract class SQLStorage extends LoadFunc
+public abstract class SQLStorage<K> extends LoadFunc
     implements
     StoreFuncInterface,
     LoadPushDown,
@@ -120,13 +123,14 @@ public abstract class SQLStorage extends LoadFunc
   protected static final long DEFAULT_NUMRECS_PER_CHUNK = 10000;
   protected static final int DEFAULT_FETCH_SIZE = 1000000; // 1M.. I was thinking of 10M, but nah (no network anyway!)
   protected static final int DEFAULT_NS = 0; // Read NameSpace
-  protected static final int NAMESPACE_OFFSET = 2;
+  protected static final int DEFAULT_NAMESPACE_OFFSET = 1;
   protected static final String DEFAULT_NS_COLNAME = "namespace";
   protected static final String DEFAULT_DATE_COLNAME = "date"; // TODO generalize this
 
   private static final String UDFCKEY_SCHEMA_SELECTOR = "schemaSelector";
   private static final String UDFCKEY_PROJECTION = "projection";
   private static final String UDFCKEY_PARTITION_FILTER = "partitionFilter";
+  private static final int DEFAULT_TAIL_HIDDEN_COLUMNS_COUNT = 0;
 
 // protected static Logger LOG = LoggerFactory.getLogger(PostgreSQLStorage.class);
 
@@ -139,7 +143,9 @@ public abstract class SQLStorage extends LoadFunc
   protected String projection = "*";
   protected String partitionWhereClause = "";
   protected int btreeNamespace = DEFAULT_NS;
-  protected String namespaceColName = DEFAULT_NS_COLNAME;
+  protected String namespaceColName; // = DEFAULT_NS_COLNAME;
+  protected int namespaceOffset; // = DEFAULT_NAMESPACE_OFFSET;
+  protected int tailHiddenColumns; // = DEFAULT_TAIL_HIDDEN_COLUMNS_COUNT;
   protected String schemaStr = null;
   protected ResourceSchema parsedSchema = null;
   protected String url;
@@ -147,7 +153,7 @@ public abstract class SQLStorage extends LoadFunc
   protected int pendingBatchCount = 0;
   protected int batchSizeForCommit = DEFAULT_BATCH_SIZE;
   protected String udfcSignature;
-  protected NgramLenReader reader;
+  protected SQLStorage<K>.SQLResultSetReader reader;
 
   protected StringBuilder sqlStrBuilder = new StringBuilder();
   protected String[] datePartitionKey = new String[]{DEFAULT_DATE_COLNAME};
@@ -165,6 +171,12 @@ public abstract class SQLStorage extends LoadFunc
     schemaStr = schema;
     loadSchema();
   }
+
+  public abstract String getNamespaceColName() ;
+
+  public abstract int getNamespaceOffset() ;
+
+  public abstract int getTailHiddenColumns();
 
   @Override
   public ResourceSchema getSchema(String location, Job job) throws IOException {
@@ -428,7 +440,7 @@ public abstract class SQLStorage extends LoadFunc
       writeStmt.setInt(1, btreeNamespace);
 
       for (int i = 0; i < tupleSize; ++i) {
-        int j = i + NAMESPACE_OFFSET;
+        int j = i + namespaceOffset;
         switch (parsedSchema.getFields()[i].getType()) {
 
 // case DataType.NULL:
@@ -579,16 +591,16 @@ public abstract class SQLStorage extends LoadFunc
     }
   }
 
-  @SuppressWarnings("rawtypes")
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Override
   public void prepareToRead(RecordReader reader, PigSplit split) throws IOException {
     loadSchema();
 
     // FIXME: Abstraction, so that other readers can be added later for other tables
-    if (reader instanceof NgramLenReader) {
-      this.reader = (NgramLenReader) reader;
+    if (reader instanceof SQLStorage.SQLResultSetReader) {
+      this.reader = (SQLStorage<K>.SQLResultSetReader) reader;
     } else {
-      throw new IOException("Expected a reader of type " + NgramLenReader.class
+      throw new IOException("Expected a reader of type " + SQLResultSetReader.class
           + " got one of type " + reader.getClass());
     }
   }
@@ -667,7 +679,7 @@ public abstract class SQLStorage extends LoadFunc
   }
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
-  public abstract class SQLPartitionByDateInputFormat extends InputFormat<Long, Tuple> {
+  public abstract class SQLPartitionByDateInputFormat extends InputFormat<K, Tuple> {
 
     protected final MutableDateTime date = new MutableDateTime();
 
@@ -797,4 +809,121 @@ public abstract class SQLStorage extends LoadFunc
       sb.append(" AND ").append(partitionWhereClause);
     }
   }
+  
+  public abstract class SQLResultSetReader extends RecordReader<K,Tuple>{
+    ResultSet resultSet;
+    ResultSetMetaData resultMetadata;
+    long expectedLen;
+    Statement rrStmt;
+    /**
+     * All keys must be in loser case because that's how SQL say its column names
+     * 
+     * @see org.apache.hadoop.mapreduce.RecordReader#nextKeyValue()
+     */
+    protected Map<String, Byte> fieldTypes = Maps.newHashMap();;
+
+
+    @Override
+    public boolean nextKeyValue() throws IOException, InterruptedException {
+      try {
+        return resultSet.next();
+      } catch (SQLException e) {
+        throw new IOException(e);
+      }
+    }
+
+  
+
+    @Override
+    public Tuple getCurrentValue() throws IOException, InterruptedException {
+      try {
+        int tupleSize = resultMetadata.getColumnCount() - namespaceOffset - tailHiddenColumns;
+        Tuple result = TupleFactory.getInstance().newTuple(tupleSize);
+
+        for (int i = 0; i < tupleSize; ++i) {
+          int j = i + namespaceOffset +1; //1 for the difference between sql and java index base
+          String colName = resultMetadata.getColumnName(j);
+          switch (fieldTypes.get(colName)) {
+
+// case DataType.NULL:
+// result.set(i,resultSet.getNull(j, java.sql.Types.VARCHAR);
+// break;
+
+            case DataType.BOOLEAN :
+              result.set(i, resultSet.getBoolean(j));
+              break;
+
+            case DataType.INTEGER :
+              result.set(i, resultSet.getInt(j));
+              break;
+
+            case DataType.LONG :
+              result.set(i, resultSet.getLong(j));
+              break;
+
+            case DataType.FLOAT :
+              result.set(i, resultSet.getFloat(j));
+              break;
+
+            case DataType.DOUBLE :
+              result.set(i, resultSet.getDouble(j));
+              break;
+
+            case DataType.BYTEARRAY :
+              result.set(i, resultSet.getBytes(j));
+              break;
+
+            case DataType.CHARARRAY :
+              result.set(i, resultSet.getString(j));
+              break;
+
+            case DataType.BYTE :
+              result.set(i, resultSet.getByte(j));
+              break;
+
+            case DataType.MAP :
+            case DataType.TUPLE :
+            case DataType.BAG :
+              throw new RuntimeException("Cannot store a non-flat tuple "
+                  + "using DbStorage");
+
+            default :
+              throw new RuntimeException("Unknown datatype");
+
+          }
+        }
+        return result;
+      } catch (SQLException e) {
+        throw new IOException(e);
+      }
+    }
+    @Override
+    public float getProgress() throws IOException, InterruptedException {
+      try {
+        return 1.0f * resultSet.getRow() / expectedLen;
+      } catch (SQLException e) {
+        throw new IOException(e);
+      }
+    }
+
+    @Override
+    public void close() throws IOException {
+      try {
+        if (LOG.isDebugEnabled())
+          LOG.debug("Closing resultset and statement of recordreader");
+
+        if (resultSet != null) {
+          resultSet.close();
+        }
+        if (rrStmt != null) {
+          if (!conn.getAutoCommit())
+            rrStmt.close();
+          rrStmt = null;
+        }
+      } catch (SQLException e) {
+        throw new IOException(e);
+      }
+    }
+  }
+  
 }
