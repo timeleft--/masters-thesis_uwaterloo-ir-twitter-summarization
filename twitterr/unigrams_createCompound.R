@@ -11,7 +11,7 @@ logLabel <- "unigrams_createCompound()" #Recall()???
 
 REMOVE_EXITING_OUTPUTS<-FALSE
 
-DEBUG_UGC <- TRUE
+DEBUG_UGC <- FALSE
 
 if(DEBUG_UGC){
   G.days<-c(121106,121110)
@@ -295,7 +295,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   
 #  return (combinedDf) 
 
-   return(paste("Success for day",day))
+   return(paste("Success for day",day)) #Somehow this doesn't make it to the value of daySuccess, so it's duplicated below
 }
 
 ###############################
@@ -306,7 +306,7 @@ nullCombine <- function(a,b) NULL
 allMonthes <- foreach(day=G.days,
         .inorder=FALSE, .combine='nullCombine') %dopar%
     {
-      daySuccess <- paste("Unkown result for day",day)
+      daySuccess <- paste("Success for day", day) #"Unkown result for day",day)
       
       tryCatch({
             
