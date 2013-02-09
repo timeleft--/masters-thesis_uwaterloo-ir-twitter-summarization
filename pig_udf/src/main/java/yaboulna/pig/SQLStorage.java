@@ -894,7 +894,7 @@ public abstract class SQLStorage<K> extends LoadFunc
               break;
 
             case DataType.TUPLE :
-              result.set(i, TupleStrToTuple.readTupleFromStr(resultSet.getString(i)));
+              result.set(i, TupleStrToTuple.readTupleFromStr(resultSet.getString(j)));
               break;
             
             case DataType.BAG :
