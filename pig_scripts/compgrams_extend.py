@@ -53,7 +53,7 @@ for n in range(1,numIters):
             bigramsJoinP%(u)s::id as id, 
             bigramsJoinP%(u)s::timeMillis as timeMillis, 
             bigramsJoinP%(u)s::date as date, 
-            (flatten(bigramsJoinP%(u)s::ngram), flatten(unigramsP%(o)s::ngram))  as ngram, 
+            TOTUPLE(flatten(bigramsJoinP%(u)s::ngram), flatten(unigramsP%(o)s::ngram))  as ngram, 
             %(k)s as ngramLen, 
             bigramsJoinP%(u)s::tweetLen as tweetLen, 
             bigramsJoinP%(u)s::pos as pos; 
