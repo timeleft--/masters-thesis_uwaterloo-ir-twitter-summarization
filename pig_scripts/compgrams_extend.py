@@ -17,12 +17,12 @@ if not printOnly:
     Pig.set("default_parallel", "50")
 
 unigramSchema  = """yaboulna.pig.ByPosStorage('%(dbname)s', 
-      'id: long, timeMillis:long, date:int, ngram:tuple(ugram:chararray), ngramLen:int, tweetLen:int,  pos:int'); 
+      'id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int'); 
 """ % {"dbname": args.db}
          
 compgramSchema = """ PigStorage('\\t') as 
-    (id: long, timeMillis:long, date:int, ngram:tuple(%(tupleSchema)s), ngramLen:int, tweetLen:int,  pos:int); 
-    """ %  {"tupleSchema": "ugram1:chararray,ugram2:chararray"} #TODO dynamic with length
+    (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int); 
+    """ # %  {"tupleSchema": "ugram1:chararray,ugram2:chararray"} #TODO dynamic with length
 
 # Load the compound ngrams of length up to len (arg)
 scriptStr = """ 
@@ -53,7 +53,7 @@ for n in range(1,numIters):
             compUgramsP%(u)s::id as id, 
             compUgramsP%(u)s::timeMillis as timeMillis, 
             compUgramsP%(u)s::date as date, 
-            TOTUPLE(flatten(compUgramsP%(u)s::ngram), flatten(unigramsP%(o)s::ngram))  as ngram, 
+            TOTUPLE(compUgramsP%(u)s::ngram, unigramsP%(o)s::ngram)  as ngram, 
             %(k)s as ngramLen, 
             compUgramsP%(u)s::tweetLen as tweetLen, 
             compUgramsP%(u)s::pos as pos; 
