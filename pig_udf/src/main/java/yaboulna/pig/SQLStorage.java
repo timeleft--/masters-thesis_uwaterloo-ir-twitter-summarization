@@ -143,9 +143,9 @@ public abstract class SQLStorage<K> extends LoadFunc
   protected String projection = "*";
   protected String partitionWhereClause = "";
   protected int btreeNamespace = DEFAULT_NS;
-  protected String namespaceColName; // = DEFAULT_NS_COLNAME;
-  protected int namespaceOffset; // = DEFAULT_NAMESPACE_OFFSET;
-  protected int tailHiddenColumns; // = DEFAULT_TAIL_HIDDEN_COLUMNS_COUNT;
+  protected final String namespaceColName; // = DEFAULT_NS_COLNAME;
+  protected final int namespaceOffset; // = DEFAULT_NAMESPACE_OFFSET;
+  protected final int tailHiddenColumns; // = DEFAULT_TAIL_HIDDEN_COLUMNS_COUNT;
   protected String schemaStr = null;
   protected ResourceSchema parsedSchema = null;
   protected String url;
@@ -168,6 +168,10 @@ public abstract class SQLStorage<K> extends LoadFunc
 // props.setProperty("ssl", "false");
     props.setProperty("prepareThreshold", "1");
 
+    namespaceColName = getNamespaceColName();
+    namespaceOffset = getNamespaceOffset();
+    tailHiddenColumns = getTailHiddenColumns();
+    
     schemaStr = schema;
     loadSchema();
   }

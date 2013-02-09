@@ -47,7 +47,7 @@ for n in range(1,numIters):
     #join of previous iteration
     joinConcat += """
         unigramsP%(o)s = LOAD 'unigramsP%(o)s' USING %(funcSchema)s
-        unigramsP%(o)s = FILTER  unigramsP%(o)s BY date=$day;
+        unigramsP%(o)s = FILTER  unigramsP%(o)s BY date==$day;
         bigramsJoinP%(u)s = JOIN compUgramsP%(u)s BY id, unigramsP%(o)s BY id;
         compBigramsP%(u)s = FOREACH bigramsJoinP%(u)s GENERATE 
             bigramsJoinP%(u)s::id as id, 
