@@ -110,8 +110,10 @@ for d in [120913,  120914,  120925,  120926,  121003,  121008,  121010,  121016,
 
     script = Pig.compile(dayScript)
     bound = script.bind()
-    stat = bound.runSingle()
-    
+    try:
+        stat = bound.runSingle()
+    except:
+        print("Exception while processing day %(day)s: $(err)s" % {"day": str(d), "err": sys.exc_info()[0]})
 
     
 """ stat methods described in the documentation are all not there.. 
