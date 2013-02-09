@@ -38,6 +38,7 @@ import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.ResourceStatistics;
 import org.apache.pig.StoreFuncInterface;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
+import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
@@ -484,11 +485,18 @@ public abstract class SQLStorage<K> extends LoadFunc
             writeStmt.setByte(j, (Byte) t.get(i));
             break;
 
-          case DataType.MAP :
           case DataType.TUPLE :
+            writeStmt.setString(j, ((Tuple)t.get(i)).toString());
+            break;
+          
           case DataType.BAG :
-            throw new RuntimeException("Cannot store a non-flat tuple "
-                + "using DbStorage");
+            writeStmt.setString(j, ((DataBag)t.get(i)).toString());
+            break;
+            
+          case DataType.MAP :
+            throw new RuntimeException("Cannot store a Map or maybe I can!!");
+//            writeStmt.setString(j, ((Map)t.get(i)).toString());
+//            break;
 
           default :
             throw new RuntimeException("Unknown datatype");
@@ -885,11 +893,18 @@ public abstract class SQLStorage<K> extends LoadFunc
               result.set(i, resultSet.getByte(j));
               break;
 
-            case DataType.MAP :
             case DataType.TUPLE :
+              result.set(i, TupleStrToTuple.readTupleFromStr(resultSet.getString(i)));
+              break;
+            
             case DataType.BAG :
-              throw new RuntimeException("Cannot store a non-flat tuple "
-                  + "using DbStorage");
+//              writeStmt.setString(j, ((DataBag)t.get(i)).toString());
+//              break;
+              
+            case DataType.MAP :
+              throw new RuntimeException("Cannot store a Bag nor a Map or maybe I can!!");
+//              writeStmt.setString(j, ((Map)t.get(i)).toString());
+//              break;
 
             default :
               throw new RuntimeException("Unknown datatype");
