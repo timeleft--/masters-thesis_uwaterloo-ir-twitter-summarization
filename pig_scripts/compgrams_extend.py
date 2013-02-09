@@ -85,13 +85,14 @@ union +=  ";"
 storeBigrams = " STORE compBigrams INTO '%(root)sngrams/comp%(k)s/$day' USING PigStorage('\\t'); "% {"k": str(args.len+1), "root": args.root}
        
 scriptStr += """ 
+set debug 'on'
      """ + split + """
-     """ + storeSplits + """
+    
      """ + joinConcat + """
      """ + union + """
      """ + storeBigrams + """
      """
-     
+""" + storeSplits + """ 
     
 
 import string
@@ -110,10 +111,10 @@ for d in [120913,  120914,  120925,  120926,  121003,  121008,  121010,  121016,
 
     script = Pig.compile(dayScript)
     bound = script.bind()
-    try:
-        stat = bound.runSingle()
-    except:
-        print("Exception while processing day %(day)s: $(err)s" % {"day": str(d), "err": sys.exc_info()[0]})
+    #try: Unitil I'm sure it runs fine, then I'll let it roll to another ady if one day has something wrong in it
+    stat = bound.runSingle()
+    #except:
+    #    print("Exception while processing day %(day)s: %(err)s" % {"day": str(d), "err": sys.exc_info()[0]})
 
     
 """ stat methods described in the documentation are all not there.. 
