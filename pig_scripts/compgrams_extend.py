@@ -50,13 +50,13 @@ for n in range(1,numIters):
         unigramsP%(o)s = FILTER  unigramsP%(o)s BY date==$day;
         bigramsJoinP%(u)s = JOIN compUgramsP%(u)s BY id, unigramsP%(o)s BY id;
         compBigramsP%(u)s = FOREACH bigramsJoinP%(u)s GENERATE 
-            bigramsJoinP%(u)s::id as id, 
-            bigramsJoinP%(u)s::timeMillis as timeMillis, 
-            bigramsJoinP%(u)s::date as date, 
-            TOTUPLE(flatten(bigramsJoinP%(u)s::ngram), flatten(unigramsP%(o)s::ngram))  as ngram, 
+            compUgramsP%(u)s::id as id, 
+            compUgramsP%(u)s::timeMillis as timeMillis, 
+            compUgramsP%(u)s::date as date, 
+            TOTUPLE(flatten(compUgramsP%(u)s::ngram), flatten(unigramsP%(o)s::ngram))  as ngram, 
             %(k)s as ngramLen, 
-            bigramsJoinP%(u)s::tweetLen as tweetLen, 
-            bigramsJoinP%(u)s::pos as pos; 
+            compUgramsP%(u)s::tweetLen as tweetLen, 
+            compUgramsP%(u)s::pos as pos; 
         """% {"funcSchema": unigramSchema, "o":str((n-1)+args.len), "root": args.root, 
                "u": str(n-1), "k": str(args.len+1)}
         
