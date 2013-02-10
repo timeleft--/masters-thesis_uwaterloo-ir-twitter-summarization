@@ -85,13 +85,16 @@ union +=  ";"
 storeBigrams = " STORE compBigrams INTO '%(root)sngrams/comp%(k)s/$day' USING PigStorage('\\t'); "% {"k": str(args.len+1), "root": args.root}
        
 scriptStr += """ set debug 'on'
+    set mapreduce.jobtracker.staging.root.dir '/home/yaboulna/tmp/mapred_staging'
+   # Done in config file: set mapred.child.java.opts '-Djava.io.tmpdir=/home/yaboulna/tmp'   
      """ + split + """
-     """ + storeSplits + """
+    
      """ + joinConcat + """
      """ + union + """
      """ + storeBigrams + """
      """
-     
+     #The splits will be small files, which will be problematic later on
+     """ + storeSplits + """ 
     
 
 import string
