@@ -34,22 +34,53 @@ compUgrams = LOAD '%(root)scompgrams/len%(l)s/$day.csv' USING %(funcSchema)s
 # split it by position
 split = " SPLIT  compUgrams INTO compUgramsP0 IF pos == 0 "
 
-storeSplits = """ STORE compUgramsP0 INTO '%(root)sbypos/compgrams%(l)s/pos0/$day' USING PigStorage('\\t');
-""" % {"root": args.root, "l": args.len}
+storeSplits = ""
 
 joinConcat = "-- join ngrams with unigrams then concat to generate longer ngrams"
-union = " compBigrams = UNION compBigramsP0 "
+union = " compBigrams = UNION afterBigramsP0 "
 
 maxPos = 70
-numIters = maxPos-args.len+1+1 # +1 beause range stops 1 before the last number, +1 because join is for prev iter
-for n in range(1,numIters):
+numIters = maxPos+1 # +1 beause range stops 1 before the last number
+for n in range(0,numIters):
     
-    #join of previous iteration
-    joinConcat += """
+        #join with the unigram coming before (extend to the left)
+    if(n>0 and n<=(numIters - args.len)):
+        #only unigrams at positions less that args.len needs to be loaded
+        if(n<=args.len):
+            joinConcat += """
+            
+            unigramsP%(m)s = LOAD 'unigramsP%(m)s' USING %(funcSchema)s
+            unigramsP%(m)s = FILTER  unigramsP%(m)s BY date==$day;""" % {"funcSchema": unigramSchema, 
+                                                                         #"root": args.root,
+                                                                         "m":str((n)-1)} 
+            
+        joinConcat += """
+        
+        beforeJoinP%(m)s = JOIN compUgramsP%(u)s BY id, unigramsP%(m)s BY id;
+        beforeBigramsP%(m)s = FOREACH beforeJoinP%(m)s GENERATE 
+            compUgramsP%(u)s::id as id, 
+            compUgramsP%(u)s::timeMillis as timeMillis, 
+            compUgramsP%(u)s::date as date, 
+            TOTUPLE(unigramsP%(m)s::ngram, compUgramsP%(u)s::ngram)  as ngram, 
+            %(k)s as ngramLen, 
+            compUgramsP%(u)s::tweetLen as tweetLen, 
+            compUgramsP%(u)s::pos as pos; 
+        """% { "m":str((n)-1), # "root": args.root, 
+               "u": str(n), "k": str(args.len+1)}    
+         
+        union += """,
+        beforeBigramsP%(u)s"""% {"u":str(n-1)}
+ 
+    
+    # join with the unigram coming after (extend to the right)
+    if(n<=maxPos-args.len):
+        joinConcat += """
+        
         unigramsP%(o)s = LOAD 'unigramsP%(o)s' USING %(funcSchema)s
         unigramsP%(o)s = FILTER  unigramsP%(o)s BY date==$day;
-        bigramsJoinP%(u)s = JOIN compUgramsP%(u)s BY id, unigramsP%(o)s BY id;
-        compBigramsP%(u)s = FOREACH bigramsJoinP%(u)s GENERATE 
+        
+        afterJoinP%(u)s = JOIN compUgramsP%(u)s BY id, unigramsP%(o)s BY id;
+        afterBigramsP%(u)s = FOREACH afterJoinP%(u)s GENERATE 
             compUgramsP%(u)s::id as id, 
             compUgramsP%(u)s::timeMillis as timeMillis, 
             compUgramsP%(u)s::date as date, 
@@ -57,26 +88,31 @@ for n in range(1,numIters):
             %(k)s as ngramLen, 
             compUgramsP%(u)s::tweetLen as tweetLen, 
             compUgramsP%(u)s::pos as pos; 
-        """% {"funcSchema": unigramSchema, "o":str((n-1)+args.len), "root": args.root, 
-               "u": str(n-1), "k": str(args.len+1)}
+        """% {"funcSchema": unigramSchema, "o":str((n)+args.len), # "root": args.root, 
+               "u": str((n)), "k": str(args.len+1)}
         
-    if(n<numIters-1):
-        split += """,
-        compUgramsP%(p)s IF pos==%(p)s"""% {"p":str(n)}
+        if(n>0):
+            union += """,
+        afterBigramsP%(u)s"""% {"u":str(n)}
     
-        storeSplits += """ STORE compUgramsP%(p)s INTO '%(root)sbypos/compgrams%(l)s/pos%(p)s/$day' USING PigStorage('\\t');
+    if(n<=numIters-args.len):
+        if(n>0):
+            split += """,
+            compUgramsP%(p)s IF pos==%(p)s"""% {"p":str(n)}
+    
+        storeSplits += """ 
+        STORE compUgramsP%(p)s INTO '%(root)sbypos/compgrams%(l)s/pos%(p)s/$day' USING PigStorage('\\t');
         """ % {"root": args.root, "p": str(n), "l": args.len}
         
-        union += """,
-        compBigramsP%(p)s"""% {"p":str(n)}
+       
+        
+    
         
         
-# The need to account for maxPos-args.len+1 even though pos starts at 0 because
-# the loop above created splits which can be extended by 1         
-split += ", compUgramsP%(p)s IF pos==%(p)s;" % {"p":str(maxPos-args.len+1)}
+#
+split += ";"
 
-storeSplits += """ STORE compUgramsP%(p)s INTO '%(root)sbypos/compgrams%(l)s/pos%(p)s/$day' USING PigStorage('\\t');
-    """ % {"root": args.root, "p": str(maxPos-args.len+1), "l": args.len}
+storeSplits += ";"
     
 # joincconcat already well terminated
 
@@ -93,8 +129,8 @@ scriptStr += """ set debug 'on'
      """ + union + """
      """ + storeBigrams + """
      """
-     #The splits will be small files, which will be problematic later on
-     """ + storeSplits + """ 
+#The splits will be small files, which will be problematic later on
+""" + storeSplits + """ 
     
 
 import string
