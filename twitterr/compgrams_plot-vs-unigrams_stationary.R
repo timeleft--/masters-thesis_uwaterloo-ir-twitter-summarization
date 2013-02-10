@@ -67,7 +67,7 @@ plotDensitiesForDay <- function (day, epoch1='1hr', ngramlen1=1, epoch2=CPU.epoc
   
   ################
   
-  sql <- sprintf("SELECT 2  as qnum, epochstartmillis/1000 as epochstartux,cnt FROM  cnt_%s%d where date=%d  and cnt > %d UNION ALL SELECT 1 as qnum, epochstartux,cnt FROM %s;", epoch1, ngramlen1, day, support, inTable)
+  sql <- sprintf("SELECT 1  as qnum, epochstartmillis/1000 as epochstartux,cnt FROM  cnt_%s%d where date=%d  and cnt > %d UNION ALL SELECT 2 as qnum, epochstartux,cnt FROM %s;", epoch1, ngramlen1, day, support, inTable)
   
   try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Fetching compgrams using sql: \n", sql)))
   
