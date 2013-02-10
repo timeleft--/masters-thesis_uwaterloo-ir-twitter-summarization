@@ -95,17 +95,19 @@ plotDensitiesForDay <- function (day, epoch2=CPU.epoch2, ngramlen2=CPU.ngramlen2
     
     try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Will plot epoch", eg$epochstartux[1])))
   
-    epochOut <- paste(outRoot, "/density_", epoch2,ngramlen2,'_',day,"-",eg$epochstartux[1],".pdf",sep="")
+    epochOut <- paste(outRoot, "/density_", epoch2,ngramlen2,'_',day,"-",eg$epochstartux[1],sep="")
     
-    pdf(epochOut)
+    pdf(paste(epochOut,".pdf",sep=""))
    
-    sm.density.compare(eg$cnt, eg$ngramlen, xlab=paste("Number of occurrences per",epoch2)) #model="equal"
-    title(main=paste("Densities of unigrams and compgrams of length",ngramlen2,"in the",epoch2,"starting",eg$epochstartux[1]))
+    equality <- sm.density.compare(eg$cnt, eg$ngramlen, xlab=paste("Number of occurrences per",epoch2), model="equal")
+    title(main=paste("Densities of unigrams and compgrams of length",ngramlen2,"\nin the",epoch2,"starting",eg$epochstartux[1]))
     
-    # do we need a legend?
+    # Add a legend (the color numbers start from 2 and go up)
+    legend("topright", levels(data$cond), fill=2+(0:nlevels(data$cond)))
    
     dev.off()
     
+    save(equality,ascii=TRUE, file=paste(epochOut,".equality",sep=""))
     try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Finished plotting epoch", eg$epochstartux[1])))
   }
   
