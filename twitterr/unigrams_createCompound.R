@@ -7,7 +7,7 @@ G.epoch2 <- '1hr'
 G.ngramlen2 <- 2
 G.support<-5
 
-logLabel <- "unigrams_createCompound()" #Recall()???
+logLabelUGC <- "unigrams_createCompound()" #Recall()???
 
 REMOVE_EXITING_COMPGRAM_TABLES<-FALSE
 SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-TRUE
@@ -68,14 +68,14 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
       host="hops.cs.uwaterloo.ca", port="5433")
   
-  try(stop(paste(Sys.time(), logLabel, " for day:", day, " - Connected to DB",db)))
+  try(stop(paste(Sys.time(), logLabelUGC, " for day:", day, " - Connected to DB",db)))
   
   
   
   inTable <- paste('assoc',epoch2,ngramlen2,'_',day,sep="")
   
   if(!dbExistsTable(con,inTable)){
-    stop(paste("Input table",inTable,"doesn't exist.. cannot process the day")) #skipping the day 
+    stop(paste("Input table",inTable,"doesn't exist.. cannot process the day")) #skippinng the day 
   }
   
   outTable <- paste('compound',epoch2,ngramlen2,'_',day,sep="") 
@@ -126,13 +126,13 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
 							from %s where 
 							"ngramAssoc.yuleQ" > 0 order by epochstartux asc;', inTable) ########## THIS LINE IS CRUCIAL FOR WHAT THIS FUNCTION DOES
 
-  try(stop(paste(Sys.time(), logLabel, "for day:", day, " - Fetching ngrams' association using sql: ", sql)))        
+  try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetching ngrams' association using sql: ", sql)))        
       
   ngramRs <- dbSendQuery(con,sql)
   
   ngramDf <- fetch(ngramRs, n=-1)
   
-  try(stop(paste(Sys.time(), logLabel, "for day:", day, " - Fetched ngrams' association length: ", nrow(ngramDf))))
+  try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngrams' association length: ", nrow(ngramDf))))
   #cleanup
   # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
   try(dbClearResult(ngramRs))
@@ -144,13 +144,13 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   sql <- sprintf("select *
           from cnt_%s%d where date=%d  and cnt > %d ;", epoch1, ngramlen1, day, support)
   
-  try(stop(paste(Sys.time(), logLabel, "for day:", day, " - Fetching unigrams' cnts using sql:", sql)))
+  try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetching unigrams' cnts using sql:", sql)))
   
   ugramRs <- dbSendQuery(con,sql)
 
   ugramDf <- fetch(ugramRs, n=-1)
   
-  try(stop(paste(Sys.time(), logLabel, "for day:", day, " - Fetched unigrams' num rows:", nrow(ugramDf))))
+  try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched unigrams' num rows:", nrow(ugramDf))))
   #cleanup
   # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
   try(dbClearResult(ugramRs))
@@ -168,13 +168,13 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
           from volume_%s%d where epochstartmillis >= %.0f and epochstartmillis < %.0f;", epoch2, ngramlen2,
       (sec0CurrDay-(120*60)) * 1000, (sec0NextDay+(120*60)) * 1000) # add 2 hours to either side to avoid timezone shit
   
-  try(stop(paste(Sys.time(),logLabel, "for day:",day, " - Fetching ngram volumes using sql:\n ", sql)))
+  try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetching ngram volumes using sql:\n ", sql)))
   
   ngramVolRs <- dbSendQuery(con, sql)
   
   ngramVolDf <- fetch(ngramVolRs, n=-1)
   
-  try(stop(paste(Sys.time(),logLabel, "for day:",day, " - Fetched ngram volumes. Num Rows: ", nrow(ngramVolDf))))
+  try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetched ngram volumes. Num Rows: ", nrow(ngramVolDf))))
   
   try(dbClearResult(ngramVolRs))
   
@@ -184,13 +184,13 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   # cannot neglect any part of the data bceause we use vollume to skip ahead: and cnt > %d support
   sql <- sprintf("select * from ngrams%d where date=%d order by timemillis;",ngramlen2,day)
   
-  try(stop(paste(Sys.time(),logLabel, "for day:",day, " - Fetching ngram occurrences using sql:\n ", sql)))
+  try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetching ngram occurrences using sql:\n ", sql)))
   
   ngramOccRs <- dbSendQuery(con,sql)
   
 #  ngramOccDf <- fetch(ngramOccRs, n=-1) # if ordered we can fetch them in chuncks
 #  
-#  try(stop(paste(Sys.time(), logLabel, "for day:", day, " - Fetched ngram occurrences. Num Rows: ", length(ngramOccDf))))
+#  try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngram occurrences. Num Rows: ", length(ngramOccDf))))
 #  
 #  try(dbClearResult(ngramOccRs))
   
@@ -205,7 +205,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     
     epochNgramOccs <- fetch(ngramOccRs, n=epochNgramVol) # if ordered we can fetch them in chuncks
     
-    try(stop(paste(Sys.time(), logLabel, "for day:", day, " - Fetched ngram occurrences for epoch",currEpochMillis,". Num Rows: ", nrow(epochNgramOccs))))
+    try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngram occurrences for epoch",currEpochMillis,". Num Rows: ", nrow(epochNgramOccs))))
     
     if(DEBUG_UGC){
       earlierEpochCheck <- which(epochNgramOccs$timemillis < currEpochMillis)
@@ -289,7 +289,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
 
   ######## STORE IT #######
   
-  try(stop(paste(Sys.time(), logLabel, " for day:", day, " - Connected to DB",db)))
+  try(stop(paste(Sys.time(), logLabelUGC, " for day:", day, " - Connected to DB",db)))
   
   try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write combinedDf to DB")))
   dbWriteTable(con,outTable,combinedDf)
