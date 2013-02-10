@@ -171,7 +171,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
   }
  # DEBUG_ERRORS <- TRUE
  # debug(handleErrors)
-  DEBUG_ERRORS <- FALSE
+  DEBUG_ERRORS <- TRUE
   
    ## THE MOST IMPORTANT CODE START HERE
 #    epochUgramsIxStart <- 1
@@ -286,7 +286,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
           
           #  if(DEBUG_CTC){
           if(is.na(cnt) || cnt <= 0){
-            try(stop(paste(Sys.time(), "conttable_construct() for day:", day, " - WARNING: togthercnt not positive:",ixugram,cnt,paste(ugramsInNgram,collapse="|"),ugram,currEpoch)))
+            try(stop(paste(Sys.time(), "conttable_construct#countCooccurNooccurNgram() for day:", day, " - WARNING: togthercnt not positive:",ixugram,cnt,paste(ugramsInNgram,collapse="|"),ugram,currEpoch)))
             cnt <- 0
           }
           #  }
@@ -295,7 +295,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
           
           if(is.na(ixugram) || ixugram <= 0){
             tryCatch(
-                stop(paste("conttable_construct() for day:", day, " - ERROR: ixugram not positive:",ixugram,cnt,paste(ugramsInNgram,collapse="|"),ugram,currEpoch,nUnique,
+                stop(paste("conttable_construct#countCooccurNooccurNgram() for day:", day, " - ERROR: ixugram not positive:",ixugram,cnt,paste(ugramsInNgram,collapse="|"),ugram,currEpoch,nUnique,
                         epochUgramMask[1],"-",epochUgramMask[length(epochUgramMask)],paste(ugramDf[epochUgramMask[1],],collapse="|"),paste(ugramDf[epochUgramMask[length(epochUgramMask)],],collapse="|")))
             ,error=handleErrors)
             next
