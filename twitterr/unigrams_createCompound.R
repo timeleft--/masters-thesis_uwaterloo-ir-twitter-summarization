@@ -159,8 +159,10 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   ########################
   sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
               "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
-  sec0NextDay <-  as.numeric(as.POSIXct(strptime(paste(day+1,"0000",sep=""),
-              "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
+  #a7'er elshahr ya me3allem
+#  sec0NextDay <-  as.numeric(as.POSIXct(strptime(paste(day+1,"0000",sep=""),
+#              "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
+  sec0NextDay <- sec0CurrDay + (60*60*24)
   
   sql <- sprintf("select epochstartmillis, totalcnt
           from volume_%s%d where epochstartmillis >= %.0f and epochstartmillis < %.0f;", epoch2, ngramlen2,
