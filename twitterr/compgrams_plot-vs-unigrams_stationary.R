@@ -68,7 +68,8 @@ plotDensitiesForDay <- function (day, epoch1='1hr', ngramlen1=1, epoch2=CPU.epoc
   ################
   
   sql <- sprintf("SELECT 1  as qnum, epochstartmillis/1000 as epochstartux,cnt FROM  cnt_%s%d where date=%d  and cnt > %d UNION ALL SELECT 2 as qnum, epochstartux,cnt FROM %s;", epoch1, ngramlen1, day, support, inTable)
-  
+  # Test SQL:
+  #SELECT 1  as qnum, epochstartmillis/1000 as epochstartux,ngramlen,'{'||ngramarr[1]||'}',cnt FROM  cnt_1hr1 where date=121106 and  epochstartmillis = 1352228400000  and cnt > 5 UNION ALL SELECT 2 as qnum, epochstartux,ngramlen,ngramarr,cnt FROM compound1hr2_121106 WHERE  epochstartux = 1352228400;
   try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Fetching compgrams using sql: \n", sql)))
   
   compgramsRs <- dbSendQuery(con, sql)
