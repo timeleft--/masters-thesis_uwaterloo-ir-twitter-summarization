@@ -41,8 +41,12 @@ while(!require(sm)){
   install.packages("sm")
 }
 
-plotDensitiesForDay <- function (day, epoch1='1hr', ngramlen1=1, epoch2=CPU.epoch2, ngramlen2=CPU.ngramlen2, db = G.dbCPU, support=CPU.supp) {
+plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch2, ngramlen2=CPU.ngramlen2, db = G.dbCPU, support=CPU.supp) {
  
+  if(is.null(epoch1)){
+    epoch1 <- epoch2
+  }
+  
   drv <- dbDriver("PostgreSQL")
   con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
       host="hops.cs.uwaterloo.ca", port="5433")
@@ -55,7 +59,7 @@ plotDensitiesForDay <- function (day, epoch1='1hr', ngramlen1=1, epoch2=CPU.epoc
   }
   
   
-  outRoot <- paste(G.plotsRoot,"/unigramVsCompound_",day, sep="")
+  outRoot <- paste(G.plotsRoot,sprintf("/ngram%s%d-vs-compound%s%d_",epoch1,ngramlen1,epoch2,ngramlen2),day, sep="")
   if(file.exists(outRoot)){
     bakname <- paste(outRoot,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
     warning(paste("Renaming existing output dir",outRoot,bakname))
@@ -76,7 +80,7 @@ plotDensitiesForDay <- function (day, epoch1='1hr', ngramlen1=1, epoch2=CPU.epoc
   
   compgramsDf <- fetch(compgramsRs,n=-1)
   
-  try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Fetched compgrams num rowsl: ", nrow(compgramsDf))))
+  try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Fetched compgrams num rows: ", nrow(compgramsDf))))
   
   try(dbClearResult(compgramsRs))
   # dbDisconnect(con, ...) closes the connection. Eg.
@@ -91,7 +95,7 @@ plotDensitiesForDay <- function (day, epoch1='1hr', ngramlen1=1, epoch2=CPU.epoc
    
     try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Will plot epoch", eg$epochstartux[1])))
   
-    epochOut <- paste(outRoot, "/density_", epoch2,ngramlen2,'_',day,"-",eg$epochstartux[1],sep="")
+    epochOut <- paste(outRoot, "/density_",day,"-",eg$epochstartux[1],sep="")
     
     pdf(paste(epochOut,".pdf",sep=""))
    
@@ -100,7 +104,7 @@ plotDensitiesForDay <- function (day, epoch1='1hr', ngramlen1=1, epoch2=CPU.epoc
         xlab=paste("Number of occurrences per",epoch2),# I give up.. it stays cyan! col.band="gray", 
         model="equal")
 
-    title(main=paste("Densities of unigrams and compgrams of length",ngramlen2,"\n in the",epoch2,"starting",eg$epochstartux[1]))
+    title(main=paste("Densities of ngrams",epoch1,ngramlen1," and compgrams",epoch2,ngramlen2,"\n in the epoch starting",eg$epochstartux[1]))
     
     # Add a legend (the color numbers start from 2 and go up)
     legend("topright", legend=c(1,ngramlen2), fill=c(2,3))
@@ -129,7 +133,7 @@ allMonthes <- foreach(day=CPU.days,
       
       tryCatch({
             
-            daySuccess <<- plotDensitiesForDay(day) 
+            daySuccess <<- plotDensitiesForDay(day, ngramlen1=2) 
 #                epoch2 = CPU.epoch2, ngramlen2 = CPU.ngramlen2,  db = G.dbCPU)
             
           }
