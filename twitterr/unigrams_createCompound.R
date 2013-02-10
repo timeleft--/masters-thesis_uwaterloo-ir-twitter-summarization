@@ -9,8 +9,8 @@ G.support<-5
 
 logLabel <- "unigrams_createCompound()" #Recall()???
 
-REMOVE_EXITING_OUTPUTS<-FALSE
-SKIP_DAY_IF_EXISTS<-TRUE
+REMOVE_EXITING_COMPGRAM_TABLES<-FALSE
+SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-TRUE
 DEBUG_UGC <- FALSE
 
 if(DEBUG_UGC){
@@ -86,7 +86,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   dayNgramOccPath <- paste(G.outputPath,day,".csv",sep="");
   if(file.exists(dayNgramOccPath)){
     
-    if(SKIP_DAY_IF_EXISTS){
+    if(SKIP_DAY_IF_COMPGRAM_FILE_EXISTS){
       if(dbExistsTable(con,outTable)){
         return(paste("Skipping day for which output exists:",day))
       }
@@ -107,7 +107,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   
   
   if(dbExistsTable(con,outTable)){
-    if(REMOVE_EXITING_OUTPUTS){
+    if(REMOVE_EXITING_COMPGRAM_TABLES){
       stop(paste("Output table",outTable,"already exist. Removing it."))
       dbRemoveTable(con,outTable)
     } else {
