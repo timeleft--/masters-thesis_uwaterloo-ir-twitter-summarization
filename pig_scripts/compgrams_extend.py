@@ -122,7 +122,7 @@ storeBigrams = " STORE compBigrams INTO '%(root)sngrams/comp%(k)s/$day' USING Pi
        
 scriptStr += """ set debug 'on'
     set mapreduce.jobtracker.staging.root.dir '/home/yaboulna/tmp/mapred_staging'
-   # Done in config file: set mapred.child.java.opts '-Djava.io.tmpdir=/home/yaboulna/tmp'   
+      
      """ + split + """
     
      """ + joinConcat + """
@@ -131,7 +131,7 @@ scriptStr += """ set debug 'on'
      """
 #The splits will be small files, which will be problematic later on
 """ + storeSplits + """ 
-    
+# Done in config file: set mapred.child.java.opts '-Djava.io.tmpdir=/home/yaboulna/tmp'    
 
 import string
 scriptTemplate = string.Template(scriptStr)
