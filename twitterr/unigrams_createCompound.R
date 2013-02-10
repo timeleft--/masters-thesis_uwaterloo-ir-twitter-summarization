@@ -9,8 +9,8 @@ G.support<-5
 
 logLabel <- "unigrams_createCompound()" #Recall()???
 
-REMOVE_EXITING_OUTPUTS<-FALSE
-
+REMOVE_EXITING_COMPGRAM_TABLES<-FALSE
+SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-TRUE
 DEBUG_UGC <- FALSE
 
 if(DEBUG_UGC){
@@ -64,8 +64,34 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     #TODO: subtract 10 hours from epochstartmillis to align both timezones.. but is this right?
   }
   
+  drv <- dbDriver("PostgreSQL")
+  con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
+      host="hops.cs.uwaterloo.ca", port="5433")
+  
+  try(stop(paste(Sys.time(), logLabel, " for day:", day, " - Connected to DB",db)))
+  
+  
+  
+  inTable <- paste('assoc',epoch2,ngramlen2,'_',day,sep="")
+  
+  if(!dbExistsTable(con,inTable)){
+    stop(paste("Input table",inTable,"doesn't exist.. cannot process the day")) #skipping the day 
+  }
+  
+  outTable <- paste('compound',epoch2,ngramlen2,'_',day,sep="") 
+  
+  
+  
+  
   dayNgramOccPath <- paste(G.outputPath,day,".csv",sep="");
   if(file.exists(dayNgramOccPath)){
+    
+    if(SKIP_DAY_IF_COMPGRAM_FILE_EXISTS){
+      if(dbExistsTable(con,outTable)){
+        return(paste("Skipping day for which output exists:",day))
+      }
+    }
+    
     bakname <- paste(dayNgramOccPath,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
     warning(paste("Renaming existing output file",dayNgramOccPath,bakname))
     file.rename(dayNgramOccPath, #from
@@ -79,23 +105,9 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   # create file to make sure this will be possible
   file.create(dayNgramOccPath)
   
-  drv <- dbDriver("PostgreSQL")
-  con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
-      host="hops.cs.uwaterloo.ca", port="5433")
-  
-  try(stop(paste(Sys.time(), logLabel, " for day:", day, " - Connected to DB",db)))
-  
-  
-  inTable <- paste('assoc',epoch2,ngramlen2,'_',day,sep="")
-  
-  if(!dbExistsTable(con,inTable)){
-    stop(paste("Input table",inTable,"doesn't exist.. skippinng the day"))
-  }
-  
-  outTable <- paste('compound',epoch2,ngramlen2,'_',day,sep="") 
   
   if(dbExistsTable(con,outTable)){
-    if(REMOVE_EXITING_OUTPUTS){
+    if(REMOVE_EXITING_COMPGRAM_TABLES){
       stop(paste("Output table",outTable,"already exist. Removing it."))
       dbRemoveTable(con,outTable)
     } else {

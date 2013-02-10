@@ -84,15 +84,14 @@ union +=  ";"
 
 storeBigrams = " STORE compBigrams INTO '%(root)sngrams/comp%(k)s/$day' USING PigStorage('\\t'); "% {"k": str(args.len+1), "root": args.root}
        
-scriptStr += """ 
-set debug 'on'
+scriptStr += """ set debug 'on'
      """ + split + """
-    
+     """ + storeSplits + """
      """ + joinConcat + """
      """ + union + """
      """ + storeBigrams + """
      """
-""" + storeSplits + """ 
+     
     
 
 import string
