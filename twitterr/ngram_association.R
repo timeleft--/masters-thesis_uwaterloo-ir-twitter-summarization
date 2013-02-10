@@ -48,6 +48,19 @@ agreementTable <- function(comps,cooccurs,
 }
 # debug(agreementTable)
 
+#####################
+
+NGA.handleErrors <- function(e) {
+  if(NGA.DEBUG_ERRORS){
+    print(e)
+  } else {
+    stop(e)
+  }
+}
+# DEBUG_ERRORS <- TRUE
+# debug(handleErrors)
+NGA.DEBUG_ERRORS <- TRUE
+
 ############################
   while(!require(plyr)){
     install.packages("plyr")
@@ -82,6 +95,13 @@ agreementTable <- function(comps,cooccurs,
       comps <- unlist(comps)
       
       compsIx <- lookupIxs(comps, ixLkp)
+      
+      if(any(is.na(compsIx))){
+        tryCatch(
+            stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ERROR: compsIx not positive:",paste(compsIx,collapse="|"),eg$epochstartux,paste(ng,collapse="|")))
+            ,error=NGA.handleErrors)
+        return(NULL)
+      }
       
       agreet <- agreementTable(comps, cooccurs, 
         totalIx, #notoccurs,
