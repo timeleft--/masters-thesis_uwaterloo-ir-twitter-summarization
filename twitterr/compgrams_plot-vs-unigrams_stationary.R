@@ -73,7 +73,7 @@ plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch
   
   sql <- sprintf("SELECT 1  as qnum, epochstartmillis/1000 as epochstartux,cnt FROM  cnt_%s%d where date=%d  and cnt > %d UNION ALL SELECT 2 as qnum, epochstartux,cnt FROM %s;", epoch1, ngramlen1, day, support, inTable)
   # Test SQL:
-  #SELECT 1  as qnum, epochstartmillis/1000 as epochstartux,ngramlen,'{'||ngramarr[1]||'}',cnt FROM  cnt_1hr1 where date=121106 and  epochstartmillis = 1352228400000  and cnt > 5 UNION ALL SELECT 2 as qnum, epochstartux,ngramlen,ngramarr,cnt FROM compound1hr2_121106 WHERE  epochstartux = 1352228400;
+  # SELECT 1  as qnum, epochstartmillis/1000 as epochstartux,ngramlen,'{'||ngramarr[1]||','||ngramarr[2]||'}',date,cnt FROM  cnt_1hr2 where date=121106 and  epochstartmillis = 1352203200000  and cnt > 5 UNION ALL SELECT 2 as qnum, epochstartux,ngramlen,ngramarr,date,cnt FROM compound1hr2_121106 WHERE date=121106 and epochstartux = 1352203200;
   try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Fetching compgrams using sql: \n", sql)))
   
   compgramsRs <- dbSendQuery(con, sql)
@@ -101,8 +101,8 @@ plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch
    
     par(lwd=3)
     equality <- sm.density.compare(eg$cnt, eg$qnum, 
-        xlab=paste("Number of occurrences per",epoch2),# I give up.. it stays cyan! col.band="gray", 
-        model="equal")
+        xlab=paste("Number of occurrences per",epoch2))# I give up.. it stays cyan! col.band="gray", 
+# the cyan area which I dont understand (yet)        model="equal")
 
     title(main=paste("Densities of ngrams",epoch1,ngramlen1," and compgrams",epoch2,ngramlen2,"\n in the epoch starting",eg$epochstartux[1]))
     
@@ -111,13 +111,14 @@ plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch
    
     dev.off()
     
-    cat(paste("p:",equality$p,"\nupper:",paste(equality$upper,collapse=","),"\nlower:",paste(equality$lower,collapse=","),"\nh:",equality$h)
-    ,file=paste(epochOut,"_equality.txt",sep=""))
+#    cat(paste("p:",equality$p,"\nupper:",paste(equality$upper,collapse=","),"\nlower:",paste(equality$lower,collapse=","),"\nh:",equality$h)
+#    ,file=paste(epochOut,"_equality.txt",sep=""))
+
     try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Finished plotting epoch", eg$epochstartux[1])))
   }
 #  debug(divideByQNumAndPlot)
-  
-  d_ply(idata.frame(compgramsDf), c("epochstartux"), divideByQNumAndPlot)
+  # idata.frame(: I doubt that sm.denisty.compare can't work with the idate.frame.. is this possible?? we pass columns!
+  d_ply(compgramsDf, c("epochstartux"), divideByQNumAndPlot)
   
   return(paste("Success for day", day))
 }
