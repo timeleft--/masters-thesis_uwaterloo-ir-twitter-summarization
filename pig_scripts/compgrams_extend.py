@@ -100,7 +100,8 @@ compUgrams = LOAD '%(root)scompgrams/len%(l)s/$day.csv' USING %(funcSchema)s
                 union += """,
         afterBigramsP%(u)s"""% {"u":str(n)}
     
-        if(n<=maxIter-args.len):
+        if(n<=maxIter+1-args.len 
+           and n<=maxPos+1-args.len): # to handle the last special iteration
             if(n>startPos):
                 split += """,
             compUgramsP%(p)s IF pos==%(p)s"""% {"p":str(n)}
