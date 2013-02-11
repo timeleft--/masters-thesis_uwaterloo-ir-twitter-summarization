@@ -7,7 +7,7 @@ SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
 CGX.DEBUG <- TRUE
 
-CGX.eopch2 <- '1hr'
+CGX.epoch2 <- '1hr'
 CGX.ngramlen2 <- 2
 CGX.support <- 5
 
@@ -184,7 +184,7 @@ debug(extendCompgramOfDay)
 ##############################
 
 nullCombine <- function(a,b) NULL
-foreach(day=G.days,
+foreach(day=CGX.days,
         .inorder=FALSE, .combine='nullCombine') %dopar%
     {
       daySuccess <- paste("Success for day", day) #"Unkown result for day",day)
