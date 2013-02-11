@@ -18,7 +18,7 @@ if not printOnly:
 
 posPerIter = 8
 for startPos in range(0,64+1,posPerIter):
-    unigramSchema  = """yaboulna.pig.ByPosStorage('%(dbname)s', 
+    dbstorage  = """yaboulna.pig.ByPosStorage('%(dbname)s', 
       'id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int'); 
 """ % {"dbname": args.db}
          
@@ -55,7 +55,7 @@ compUgrams = LOAD '%(root)scompgrams/len%(l)s/$day.csv' USING %(funcSchema)s
                 joinConcat += """
             
             unigramsP%(n)s = LOAD 'unigramsP%(n)s' USING %(funcSchema)s
-            unigramsP%(n)s = FILTER  unigramsP%(n)s BY date==$day;""" % {"funcSchema": unigramSchema, 
+            unigramsP%(n)s = FILTER  unigramsP%(n)s BY date==$day;""" % {"funcSchema": dbstorage, 
                                                                          #"root": args.root,
                                                                          "n":str(n)} 
             
@@ -93,7 +93,7 @@ compUgrams = LOAD '%(root)scompgrams/len%(l)s/$day.csv' USING %(funcSchema)s
             %(k)s as ngramLen, 
             compUgramsP%(n)s::tweetLen as tweetLen, 
             compUgramsP%(n)s::pos as pos; 
-        """% {"funcSchema": unigramSchema, "o":str((n)+args.len), # "root": args.root, 
+        """% {"funcSchema": dbstorage, "o":str((n)+args.len), # "root": args.root, 
                "n": str(n), "k": str(args.len+1)}
         
             if(n>startPos):
@@ -125,7 +125,9 @@ compUgrams = LOAD '%(root)scompgrams/len%(l)s/$day.csv' USING %(funcSchema)s
 
     union +=  ";"
 
-    storeBigrams = " STORE compBigrams INTO '%(root)sngrams/comp%(k)s/$day' USING PigStorage('\\t'); "% {"k": str(args.len+1), "root": args.root}
+    #storeBigrams = " STORE compBigrams INTO '%(root)sngrams/comp%(k)s/$day' USING PigStorage('\\t'); "% {"k": str(args.len+1), "root": args.root}
+    storeBigrams = " STORE compBigrams INTO 'compgrams%(k)s_$day' USING %(funcSchema)s "% {"k": str(args.len+1),
+                                                                                           "funcSchema": dbstorage}
        
     scriptStr += """ set debug 'on'
     set mapreduce.jobtracker.staging.root.dir '/home/yaboulna/tmp/mapred_staging'
