@@ -68,8 +68,8 @@ compUgrams = LOAD '%(root)scompgrams/len%(l)s/$day.csv' USING %(funcSchema)s
             compUgramsP%(m)s::date as date, 
             TOTUPLE(unigramsP%(n)s::ngram, compUgramsP%(m)s::ngram)  as ngram, 
             %(k)s as ngramLen, 
-            compUgramsP%(n)s::tweetLen as tweetLen, 
-            compUgramsP%(n)s::pos as pos; 
+            compUgramsP%(m)s::tweetLen as tweetLen, 
+            compUgramsP%(m)s::pos as pos; 
         """% { "m":str(n+1), # "root": args.root, 
                "n": str(n), "k": str(args.len+1)}    
          
