@@ -115,8 +115,10 @@ compUgrams = LOAD '%(root)scompgrams/len%(l)s/$day.csv' USING %(funcSchema)s
         
         
     #
+    if(maxIter< maxPos):
+        split += ", compUgramsP%(p)s IF pos==%(p)s"% {"p":str(maxIter)};
+    
     split += ";"
-
     storeSplits += ";"
     
     # joincconcat already well terminated
