@@ -192,7 +192,7 @@ foreach(day=G.days,
       tryCatch({
             
             daySuccess <<- extendCompgramOfDay(day, 
-                epoch2 = CGX.epoch2, ngramlen2 = CGX.ngramlen2,  db = CGX.db, support = CGX.support)
+                epoch2 = CGX.epoch2, ngramlen2 = CGX.ngramlen2,  db = CGX.db) #, support = CGX.support)
             
           }
           ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
