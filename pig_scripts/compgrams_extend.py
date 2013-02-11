@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import sys
-
+import string
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--root", help="The root of where the data is stored", default="")
@@ -16,45 +16,50 @@ if not printOnly:
     from org.apache.pig.scripting import Pig
     Pig.set("default_parallel", "50")
 
-unigramSchema  = """yaboulna.pig.ByPosStorage('%(dbname)s', 
+posPerIter = 8
+for startPos in range(0,64+1,posPerIter):
+    unigramSchema  = """yaboulna.pig.ByPosStorage('%(dbname)s', 
       'id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int'); 
 """ % {"dbname": args.db}
          
-compgramSchema = """ PigStorage('\\t') as 
+    compgramSchema = """ PigStorage('\\t') as 
     (id: long, timeMillis:long, date:int, ngram:chararray, ngramLen:int, tweetLen:int,  pos:int); 
     """ # %  {"tupleSchema": "ugram1:chararray,ugram2:chararray"} #TODO dynamic with length
 
-# Load the compound ngrams of length up to len (arg)
-scriptStr = """ 
+    # Load the compound ngrams of length up to len (arg)
+    scriptStr = """ 
 REGISTER %(udf)syaboulna-udf-0.0.1-SNAPSHOT.jar;
 --- extending ngrams that are positively associated according to YuleQ  
 compUgrams = LOAD '%(root)scompgrams/len%(l)s/$day.csv' USING %(funcSchema)s
 """ % {"root": args.root, "funcSchema": compgramSchema, "l": args.len, "udf": args.udf}
 
-# split it by position
-split = " SPLIT  compUgrams INTO compUgramsP0 IF pos == 0 "
+    # split it by position
+    split = " SPLIT  compUgrams INTO compUgramsP%(p)s IF pos == %(p)s " % {"p":startPos}
 
-storeSplits = ""
+    storeSplits = ""
 
-joinConcat = "-- join ngrams with unigrams then concat to generate longer ngrams"
-union = " compBigrams = UNION afterBigramsP0 "
+    joinConcat = "-- join ngrams with unigrams then concat to generate longer ngrams"
+    union = " compBigrams = UNION afterBigramsP%(p)s " % {"p":startPos}
 
-maxPos = 70
-numIters = maxPos+1 # +1 beause range stops 1 before the last number
-for n in range(0,numIters):
+    maxPos = 70
+    maxIter = startPos + posPerIter 
+    if(maxIter >= maxPos):
+        maxIter = maxPos + 1 # +1 beause range stops 1 before the last number
+                          
+    for n in range(startPos,maxIter):
     
         #join with the unigram coming before (extend to the left)
-    if(n>0 and n<=(numIters - args.len)):
+        if(n>startPos and n<=(maxIter - args.len)):
         #only unigrams at positions less that args.len needs to be loaded
-        if(n<=args.len):
-            joinConcat += """
+            if(n<=startPos+args.len):
+                joinConcat += """
             
             unigramsP%(m)s = LOAD 'unigramsP%(m)s' USING %(funcSchema)s
             unigramsP%(m)s = FILTER  unigramsP%(m)s BY date==$day;""" % {"funcSchema": unigramSchema, 
                                                                          #"root": args.root,
                                                                          "m":str((n)-1)} 
             
-        joinConcat += """
+            joinConcat += """
         
         beforeJoinP%(m)s = JOIN compUgramsP%(u)s BY id, unigramsP%(m)s BY id;
         beforeBigramsP%(m)s = FOREACH beforeJoinP%(m)s GENERATE 
@@ -68,13 +73,13 @@ for n in range(0,numIters):
         """% { "m":str((n)-1), # "root": args.root, 
                "u": str(n), "k": str(args.len+1)}    
          
-        union += """,
+            union += """,
         beforeBigramsP%(u)s"""% {"u":str(n-1)}
  
     
-    # join with the unigram coming after (extend to the right)
-    if(n<=maxPos-args.len):
-        joinConcat += """
+        # join with the unigram coming after (extend to the right)
+        if(n<=maxPos-args.len):
+            joinConcat += """
         
         unigramsP%(o)s = LOAD 'unigramsP%(o)s' USING %(funcSchema)s
         unigramsP%(o)s = FILTER  unigramsP%(o)s BY date==$day;
@@ -91,16 +96,16 @@ for n in range(0,numIters):
         """% {"funcSchema": unigramSchema, "o":str((n)+args.len), # "root": args.root, 
                "u": str((n)), "k": str(args.len+1)}
         
-        if(n>0):
-            union += """,
+            if(n>startPos):
+                union += """,
         afterBigramsP%(u)s"""% {"u":str(n)}
     
-    if(n<=numIters-args.len):
-        if(n>0):
-            split += """,
+        if(n<=maxIter-args.len):
+            if(n>startPos):
+                split += """,
             compUgramsP%(p)s IF pos==%(p)s"""% {"p":str(n)}
     
-        storeSplits += """ 
+            storeSplits += """ 
         STORE compUgramsP%(p)s INTO '%(root)sbypos/compgrams%(l)s/pos%(p)s/$day' USING PigStorage('\\t');
         """ % {"root": args.root, "p": str(n), "l": args.len}
         
@@ -109,18 +114,18 @@ for n in range(0,numIters):
     
         
         
-#
-split += ";"
+    #
+    split += ";"
 
-storeSplits += ";"
+    storeSplits += ";"
     
-# joincconcat already well terminated
+    # joincconcat already well terminated
 
-union +=  ";"
+    union +=  ";"
 
-storeBigrams = " STORE compBigrams INTO '%(root)sngrams/comp%(k)s/$day' USING PigStorage('\\t'); "% {"k": str(args.len+1), "root": args.root}
+    storeBigrams = " STORE compBigrams INTO '%(root)sngrams/comp%(k)s/$day' USING PigStorage('\\t'); "% {"k": str(args.len+1), "root": args.root}
        
-scriptStr += """ set debug 'on'
+    scriptStr += """ set debug 'on'
     set mapreduce.jobtracker.staging.root.dir '/home/yaboulna/tmp/mapred_staging'
       
      """ + split + """
@@ -129,28 +134,27 @@ scriptStr += """ set debug 'on'
      """ + union + """
      """ + storeBigrams + """
      """
-#The splits will be small files, which will be problematic later on
-""" + storeSplits + """ 
-# Done in config file: set mapred.child.java.opts '-Djava.io.tmpdir=/home/yaboulna/tmp'    
+     #The splits will be small files, which will be problematic later on
+     #""" + storeSplits + """ 
+     # Done in config file: set mapred.child.java.opts '-Djava.io.tmpdir=/home/yaboulna/tmp'    
 
-import string
-scriptTemplate = string.Template(scriptStr)
+    scriptTemplate = string.Template(scriptStr)
 
-for d in [120913,  120914,  120925,  120926,  121003,  121008,  121010,  121016,  121020,  121026,  121027,  121028,  121029,  121030,  121103,  121104,  121105,  121106,  121108,  121110,  121114,  121116,  121122,  121123,  121125,  121126,  121128,  121205,  121206,  121210,  121212,  121214,  121217,  121222,  121223,  130103,  130104]:
+    for d in [120913]: #,  120914,  120925,  120926,  121003,  121008,  121010,  121016,  121020,  121026,  121027,  121028,  121029,  121030,  121103,  121104,  121105,  121106,  121108,  121110,  121114,  121116,  121122,  121123,  121125,  121126,  121128,  121205,  121206,  121210,  121212,  121214,  121217,  121222,  121223,  130103,  130104]:
     #[121110, 130103, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219]:
-    print("++++++++++++++++ Running for the Day %(day)s +++++++++++++++++++++++++++") % {"day":str(d)}
-    print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-    dayScript = scriptTemplate.substitute(day=str(d))
+        print("++++++++++++++++ Running for the Day %(day)s +++++++++++++++++++++++++++") % {"day":str(d)}
+        print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        dayScript = scriptTemplate.substitute(day=str(d))
 
-    print(dayScript)    
+        print(dayScript)    
 
-    if printOnly:
-        continue
+        if printOnly:
+            continue
 
-    script = Pig.compile(dayScript)
-    bound = script.bind()
-    #try: Unitil I'm sure it runs fine, then I'll let it roll to another ady if one day has something wrong in it
-    stat = bound.runSingle()
+        script = Pig.compile(dayScript)
+        bound = script.bind()
+        #try: Unitil I'm sure it runs fine, then I'll let it roll to another ady if one day has something wrong in it
+        stat = bound.runSingle()
     #except:
     #    print("Exception while processing day %(day)s: %(err)s" % {"day": str(d), "err": sys.exc_info()[0]})
 
