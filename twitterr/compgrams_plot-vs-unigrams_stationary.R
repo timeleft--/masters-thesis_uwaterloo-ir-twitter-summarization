@@ -2,7 +2,7 @@ G.plotsRoot <- "~/plots_r/"
 
 logLabelCPU <- "compgrams_plot-vs-unigrams"
 
-DEBUG_CPU <- FALSE
+DEBUG_CPU <- TRUE
 
 CPU.epoch2 <- '1hr'
 CPU.ngramlen2 <- 2
@@ -37,9 +37,6 @@ while(!require(RPostgreSQL)){
   install.packages("RPostgreSQL")
 } 
 
-while(!require(sm)){
-  install.packages("sm")
-}
 
 plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch2, ngramlen2=CPU.ngramlen2, db = G.dbCPU, support=CPU.supp) {
  
@@ -71,18 +68,33 @@ plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch
   
   ################
   
-  sql <- sprintf("SELECT 1  as qnum, epochstartmillis/1000 as epochstartux,cnt FROM  cnt_%s%d where date=%d  and cnt > %d UNION ALL SELECT 2 as qnum, epochstartux,cnt FROM %s;", epoch1, ngramlen1, day, support, inTable)
-  # Test SQL:
-  # SELECT 1  as qnum, epochstartmillis/1000 as epochstartux,ngramlen,'{'||ngramarr[1]||','||ngramarr[2]||'}',date,cnt FROM  cnt_1hr2 where date=121106 and  epochstartmillis = 1352203200000  and cnt > 5 UNION ALL SELECT 2 as qnum, epochstartux,ngramlen,ngramarr,date,cnt FROM compound1hr2_121106 WHERE date=121106 and epochstartux = 1352203200;
-  try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Fetching compgrams using sql: \n", sql)))
+  sql <- sprintf("SELECT epochstartmillis/1000 as epochstartux,cnt FROM  cnt_%s%d where date=%d  and cnt > %d;",epoch1, ngramlen1, day, support)
+
+  try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Fetching ngrams using sql: \n", sql)))
   
-  compgramsRs <- dbSendQuery(con, sql)
+  ngramsRs <- dbSendQuery(con,sql)
   
-  compgramsDf <- fetch(compgramsRs,n=-1)
+  ngramsDf <- fetch(ngramsRs,n=-1)
   
-  try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Fetched compgrams num rows: ", nrow(compgramsDf))))
+  try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Fetched ngrams num rows: ", nrow(ngramsDf))))
   
-  try(dbClearResult(compgramsRs))
+  try(dbClearResult(ngramsRs))
+  
+  #####################
+  
+  sql <- sprintf("SELECT epochstartux,cnt FROM %s;", inTable)
+  
+  try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Fetching compound using sql: \n", sql)))
+  
+  compoundRs <- dbSendQuery(con,sql)
+  
+  compoundDf <- fetch(compoundRs,n=-1)
+  
+  try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Fetched compound num rows: ", nrow(compoundDf))))
+  
+  try(dbClearResult(compoundRs))
+  
+  #####################
   # dbDisconnect(con, ...) closes the connection. Eg.
   try(dbDisconnect(con))
   # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
@@ -91,34 +103,35 @@ plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch
   
   ###################
   
-  divideByQNumAndPlot <- function(eg){
-   
+  densityPlotPerEpoch <- function(eg){
+ 
     try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Will plot epoch", eg$epochstartux[1])))
-  
+    
+    ngramEpochMask <- which(ngramsDf$epochstartux==eg$epochstartux[1])
+    
     epochOut <- paste(outRoot, "/density_",day,"-",eg$epochstartux[1],sep="")
     
     pdf(paste(epochOut,".pdf",sep=""))
    
-    par(lwd=3)
-    equality <- sm.density.compare(eg$cnt, eg$qnum, 
-        xlab=paste("Number of occurrences per",epoch2))# I give up.. it stays cyan! col.band="gray", 
-# the cyan area which I dont understand (yet)        model="equal")
-
-    title(main=paste("Densities of ngrams",epoch1,ngramlen1," and compgrams",epoch2,ngramlen2,"\n in the epoch starting",eg$epochstartux[1]))
+    #par(lwd=3)
+    plot(density(eg$cnt), #,kernel="cosine"),  
+        xlab=paste("Number of occurrences per",epoch2), 
+        main=paste("Densities of ngrams",epoch1,ngramlen1," and compgrams",epoch2,ngramlen2,"\n in the epoch starting",eg$epochstartux[1]),
+        col="blue",log="xy")
+    lines(density(ngramsDf[ngramEpochMask,"cnt"]), #kernel="cosine"),
+        col="red",lty=2)
+    #mean
+    #lines(c(rep(mean,2),c(0,1))
     
     # Add a legend (the color numbers start from 2 and go up)
-    legend("topright", legend=c(1,ngramlen2), fill=c(2,3))
+    legend("topright", legend=c(paste("ngrams",ngramlen1),paste("compound",ngramlen2)), fill=c("red","blue"))
    
     dev.off()
     
-#    cat(paste("p:",equality$p,"\nupper:",paste(equality$upper,collapse=","),"\nlower:",paste(equality$lower,collapse=","),"\nh:",equality$h)
-#    ,file=paste(epochOut,"_equality.txt",sep=""))
-
     try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Finished plotting epoch", eg$epochstartux[1])))
   }
-#  debug(divideByQNumAndPlot)
-  # idata.frame(: I doubt that sm.denisty.compare can't work with the idate.frame.. is this possible?? we pass columns!
-  d_ply(compgramsDf, c("epochstartux"), divideByQNumAndPlot)
+  debug(densityPlotPerEpoch)
+  d_ply(idata.frame(compoundDf), c("epochstartux"), densityPlotPerEpoch)
   
   return(paste("Success for day", day))
 }

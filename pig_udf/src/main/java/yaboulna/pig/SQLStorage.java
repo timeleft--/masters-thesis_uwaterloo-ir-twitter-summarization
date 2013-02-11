@@ -442,10 +442,12 @@ public abstract class SQLStorage<K> extends LoadFunc
       int tupleSize = t.size(); // - NAMESPACE_OFFSET;
 
 // writeStmt.setString(1, bitmapNamespace);
-      writeStmt.setInt(1, btreeNamespace);
+      for(int j=1; j<=btreeNamespace; ++j){
+        writeStmt.setInt(j, btreeNamespace);
+      }
 
       for (int i = 0; i < tupleSize; ++i) {
-        int j = i + namespaceOffset;
+        int j = i + namespaceOffset +1;
         switch (parsedSchema.getFields()[i].getType()) {
 
 // case DataType.NULL:
@@ -622,12 +624,15 @@ public abstract class SQLStorage<K> extends LoadFunc
   public void prepareToWrite(RecordWriter writer) throws IOException {
     loadSchema();
     sqlStrBuilder.setLength(0);
-    sqlStrBuilder.append(" INSERT INTO " + tableName + " VALUES (?"); // bitmapNamespace
-    int numberOfCols = parsedSchema.fieldNames().length;
-    for (int i = 0; i < numberOfCols; ++i) {
-      sqlStrBuilder.append(", ?");
+    sqlStrBuilder.append(" INSERT INTO " + tableName + " VALUES ("); // bitmapNamespace
+    for(int i=0; i<btreeNamespace; ++i){
+      sqlStrBuilder.append("?,");
     }
-    sqlStrBuilder.append(");");
+    int numberOfCols = parsedSchema.fieldNames().length;
+    for (int i = 0; i < numberOfCols-1; ++i) {
+      sqlStrBuilder.append("?,");
+    }
+    sqlStrBuilder.append("?);");
 
     String sqlStr = sqlStrBuilder.toString();
     writeStmt = prepare(writeStmt, sqlStr);
