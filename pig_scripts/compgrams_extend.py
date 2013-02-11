@@ -42,39 +42,39 @@ compUgrams = LOAD '%(root)scompgrams/len%(l)s/$day.csv' USING %(funcSchema)s
     union = " compBigrams = UNION afterBigramsP%(p)s " % {"p":startPos}
 
     maxPos = 70
-    maxIter = startPos + posPerIter 
+    maxIter = startPos + posPerIter  
     if(maxIter >= maxPos):
         maxIter = maxPos + 1 # +1 beause range stops 1 before the last number
                           
     for n in range(startPos,maxIter):
     
         #join with the unigram coming before (extend to the left)
-        if(n>startPos and n<=(maxIter - args.len)):
+        if(n<=(maxPos - args.len)):
         #only unigrams at positions less that args.len needs to be loaded
-            if(n<=startPos+args.len):
+            if(n<startPos+args.len):
                 joinConcat += """
             
-            unigramsP%(m)s = LOAD 'unigramsP%(m)s' USING %(funcSchema)s
-            unigramsP%(m)s = FILTER  unigramsP%(m)s BY date==$day;""" % {"funcSchema": unigramSchema, 
+            unigramsP%(n)s = LOAD 'unigramsP%(n)s' USING %(funcSchema)s
+            unigramsP%(n)s = FILTER  unigramsP%(n)s BY date==$day;""" % {"funcSchema": unigramSchema, 
                                                                          #"root": args.root,
-                                                                         "m":str((n)-1)} 
+                                                                         "n":str(n)} 
             
             joinConcat += """
         
-        beforeJoinP%(m)s = JOIN compUgramsP%(u)s BY id, unigramsP%(m)s BY id;
-        beforeBigramsP%(m)s = FOREACH beforeJoinP%(m)s GENERATE 
-            compUgramsP%(u)s::id as id, 
-            compUgramsP%(u)s::timeMillis as timeMillis, 
-            compUgramsP%(u)s::date as date, 
-            TOTUPLE(unigramsP%(m)s::ngram, compUgramsP%(u)s::ngram)  as ngram, 
+        beforeJoinP%(n)s = JOIN compUgramsP%(m)s BY id, unigramsP%(n)s BY id;
+        beforeBigramsP%(n)s = FOREACH beforeJoinP%(n)s GENERATE 
+            compUgramsP%(m)s::id as id, 
+            compUgramsP%(m)s::timeMillis as timeMillis, 
+            compUgramsP%(m)s::date as date, 
+            TOTUPLE(unigramsP%(n)s::ngram, compUgramsP%(m)s::ngram)  as ngram, 
             %(k)s as ngramLen, 
-            compUgramsP%(u)s::tweetLen as tweetLen, 
-            compUgramsP%(u)s::pos as pos; 
-        """% { "m":str((n)-1), # "root": args.root, 
-               "u": str(n), "k": str(args.len+1)}    
+            compUgramsP%(n)s::tweetLen as tweetLen, 
+            compUgramsP%(n)s::pos as pos; 
+        """% { "m":str(n+1), # "root": args.root, 
+               "n": str(n), "k": str(args.len+1)}    
          
             union += """,
-        beforeBigramsP%(u)s"""% {"u":str(n-1)}
+        beforeBigramsP%(n)s"""% {"n":str(n)}
  
     
         # join with the unigram coming after (extend to the right)
@@ -84,24 +84,23 @@ compUgrams = LOAD '%(root)scompgrams/len%(l)s/$day.csv' USING %(funcSchema)s
         unigramsP%(o)s = LOAD 'unigramsP%(o)s' USING %(funcSchema)s
         unigramsP%(o)s = FILTER  unigramsP%(o)s BY date==$day;
         
-        afterJoinP%(u)s = JOIN compUgramsP%(u)s BY id, unigramsP%(o)s BY id;
-        afterBigramsP%(u)s = FOREACH afterJoinP%(u)s GENERATE 
-            compUgramsP%(u)s::id as id, 
-            compUgramsP%(u)s::timeMillis as timeMillis, 
-            compUgramsP%(u)s::date as date, 
-            TOTUPLE(compUgramsP%(u)s::ngram, unigramsP%(o)s::ngram)  as ngram, 
+        afterJoinP%(n)s = JOIN compUgramsP%(n)s BY id, unigramsP%(o)s BY id;
+        afterBigramsP%(n)s = FOREACH afterJoinP%(n)s GENERATE 
+            compUgramsP%(n)s::id as id, 
+            compUgramsP%(n)s::timeMillis as timeMillis, 
+            compUgramsP%(n)s::date as date, 
+            TOTUPLE(compUgramsP%(n)s::ngram, unigramsP%(o)s::ngram)  as ngram, 
             %(k)s as ngramLen, 
-            compUgramsP%(u)s::tweetLen as tweetLen, 
-            compUgramsP%(u)s::pos as pos; 
+            compUgramsP%(n)s::tweetLen as tweetLen, 
+            compUgramsP%(n)s::pos as pos; 
         """% {"funcSchema": unigramSchema, "o":str((n)+args.len), # "root": args.root, 
-               "u": str((n)), "k": str(args.len+1)}
+               "n": str(n), "k": str(args.len+1)}
         
             if(n>startPos):
                 union += """,
-        afterBigramsP%(u)s"""% {"u":str(n)}
+        afterBigramsP%(n)s"""% {"n":str(n)}
     
-        if(n<=maxIter+1-args.len 
-           and n<=maxPos+1-args.len): # to handle the last special iteration
+        if(n<=maxPos-args.len):
             if(n>startPos):
                 split += """,
             compUgramsP%(p)s IF pos==%(p)s"""% {"p":str(n)}
