@@ -128,7 +128,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
         
       sql <- paste(sprintf(sqlTemplate,p),idsForBefore,");",sep="")
         
-      CGX.log(paste("Fetching unigrams of Start positions, using sql:\n",sql))
+      CGX.log(paste("Fetching unigrams of Start positions, using sql:\n",sprintf(sqlTemplate,p)))
         
       ugStartPosRs <- dbSendQuery(con,sql) 
       ugStartPosDf <- fetch(ugStartPosRs,n=-1)
@@ -166,7 +166,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
           idsForAfter,");",sep="")
       
         
-      CGX.log(paste("Fetching unigrams of end position, using sql:\n",sql))
+      CGX.log(paste("Fetching unigrams of end position, using sql:\n",sprintf(sqlTemplate, p+ngramlen2)))
         
       ugEndPosRs <- dbSendQuery(con,sql)
       ugEndPosDf <- fetch(ugEndPosRs,n=-1)
