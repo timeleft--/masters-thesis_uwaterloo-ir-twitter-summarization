@@ -5,7 +5,7 @@
 
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
-CGX.DEBUG <- TRUE
+CGX.DEBUG <- FALSE
 
 CGX.epoch2 <- '1hr'
 CGX.ngramlen2 <- 2
@@ -146,8 +146,9 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
       
         dbClearResult(ugStartPosRs)
         
-        within(ugStartPosDf,unigram=stripEndChars(unigram))
-        
+        if(nrow(ugStartPosDf)>0){
+           within(ugStartPosDf,{unigram=stripEndChars(unigram)})
+        }
       } else {
         ugStartPosDf <- ugDfCache[[p+1]]
       }
@@ -202,10 +203,10 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
       
       
       dbClearResult(ugEndPosRs)
-
-      within(ngEndPosDf,unigram=stripEndChars(unigram))
-      
+     
       if(nrow(ugEndPosDf)){
+        
+        within(ngEndPosDf,{unigram=stripEndChars(unigram)})
         
         afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
         if(nrow(afterJoin)>0){
@@ -235,6 +236,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
   
   return(paste("Success for day:",day))
 }
+
 
 #debug(extendCompgramOfDay)
 #setBreakpoint(findLineNum("compgrams_extend.R#176"))
