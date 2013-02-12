@@ -143,7 +143,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
       if(nrow(ugStartPosDf)>0){
         beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
         if(nrow(beforeJoin) > 0){
-          beforeJoin$ngram = paste(stripEndChars(beforeJoin$unigram),stripEndChars(beforeJoin$ngram),sep=",")
+          beforeJoin$ngram = paste(stripEndChars(beforeJoin$unigram),beforeJoin$ngram,sep=",")
           beforeJoin$unigram <- NULL
           beforeJoin$ngramlen <- ngramlen2 + 1 #beforeJoin$ngramlen + 1
           beforeJoin$pos <- p
@@ -178,7 +178,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
       if(nrow(ugEndPosDf)){
         afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
         if(nrow(afterJoin)>0){
-          afterJoin$ngram = paste(stripEndChars(afterJoin$ngram),stripEndChars(afterJoin$unigram),sep=",")
+          afterJoin$ngram = paste(afterJoin$ngram,stripEndChars(afterJoin$unigram),sep=",")
           afterJoin$unigram <- NULL
           afterJoin$ngramLen <- ngramlen2 + 1 
           
