@@ -112,7 +112,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
     
   sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (",day)
       # and cnt > %d, support
-  ids<-paste(cgOcc$id,collapse=",")
+  
 #  ugDfCache <- data.frame(pos=c(startPos:maxPos))
       
   for(p in c(startPos:(maxPos - ngramlen2))) { # ( c( startPos : floor((maxPos+1)/2)) * 2 ) ){
@@ -121,11 +121,12 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 
     ##### Join the unigram before the compgram
     cgOccMaskForBefore <- which(cgOcc$pos==(p+1))
+    idsForBefore<-paste(cgOcc[cgOccMaskForBefore,"id"],collapse=",")
     if(length(cgOccMaskForBefore)>0){
       
       #      if(p<ngramlen2){
         
-      sql <- paste(sprintf(sqlTemplate,p),ids,");",sep="")
+      sql <- paste(sprintf(sqlTemplate,p),idsForBefore,");",sep="")
         
       CGX.log(paste("Fetching unigrams of Start positions, using sql:\n",sql))
         
@@ -159,8 +160,11 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
     
     ###### join the unigram after the compgram  
     cgOccMaskForAfter <- which(cgOcc$pos==p)
+    idsForAfter<-paste(cgOcc[cgOccMaskForAfter,"id"],collapse=",")
     if(length(cgOccMaskForAfter)){
-      sql <- sprintf(sqlTemplate, p+ngramlen2)
+      sql <- paste(sprintf(sqlTemplate, p+ngramlen2),
+          idsForAfter,");",sep="")
+      
         
       CGX.log(paste("Fetching unigrams of end position, using sql:\n",sql))
         
