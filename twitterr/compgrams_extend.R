@@ -49,9 +49,9 @@ while(!require(RPostgreSQL)){
   install.packages("RPostgreSQL")
 } 
 
-CGX.log <- function(msg){
-  try(stop(paste(Sys.time(), CGX.loglabel, msg, sep=" - "))) 
-}
+#CGX.log <- function(msg){
+#  try(stop(paste(Sys.time(), CGX.loglabel, msg, sep=" - "))) 
+#}
 
 
 stripEndChars <- function(ngram) {
@@ -92,11 +92,11 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
   con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
       host="hops.cs.uwaterloo.ca", port="5433")
   
-  CGX.log("Connected to DB")
+  try(stop(paste(Sys.time(), CGX.loglabel, paste("Connected to DB",db), sep=" - "))) 
   
   origCompgramOccPath <- paste(inputPath,day,".csv",sep="");
   
-  CGX.log(paste("Reading original compound unigrams from file", origCompgramOccPath))
+  try(stop(paste(Sys.time(), CGX.loglabel, paste("Reading original compound unigrams from file", origCompgramOccPath), sep=" - ")))
   
   if(!file.exists(origCompgramOccPath)){
     stop(paste("Compgram occurrences input for day doesn't exist!"))
@@ -108,7 +108,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
         colClasses = c("numeric","numeric","integer","character","integer","integer","integer"),
         fileEncoding = "UTF-8")
   
-  CGX.log(paste("Read original compound unigrams - nrows:", nrow(cgOcc)))
+  try(stop(paste(Sys.time(), CGX.loglabel, paste("Read original compound unigrams - nrows:", nrow(cgOcc)), sep=" - ")))
+  
     
   sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d ;",day)
 #  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (",day)
@@ -118,7 +119,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
   cgOccMaskForBeforePrevIter<-NULL      
   for(p in c(startPos:(maxPos - ngramlen2))) { # ( c( startPos : floor((maxPos+1)/2)) * 2 ) ){
     
-    CGX.log(paste("Proccessing position",p))
+#    CGX.log(paste("Proccessing position",p))
 
     ##### Join the unigram before the compgram
     cgOccMaskForBefore <- which(cgOcc$pos==(p+1))
@@ -130,21 +131,31 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 #        sql <- paste(sprintf(sqlTemplate,p),idsForBefore,");",sep="")
         sql <- sprintf(sqlTemplate,p)
         
-        CGX.log(paste("Fetching unigrams of Start positions, using sql:\n",sql))
-          
+#        CGX.log(paste("Fetching unigrams of Start positions, using sql:\n",sql))
+      try(stop(paste(Sys.time(), CGX.loglabel,
+                  paste("Fetching unigrams of Start positions, using sql:\n",sql),
+                  sep=" - ")))
+      
         ugStartPosRs <- dbSendQuery(con,sql) 
         ugStartPosDf <- fetch(ugStartPosRs,n=-1)
           
-        CGX.log(paste("Fetched unigrams of Start position, num rows:",nrow(ugStartPosDf)))
-          
+#        CGX.log(paste("Fetched unigrams of Start position, num rows:",nrow(ugStartPosDf)))
+      try(stop(paste(Sys.time(), CGX.loglabel,
+                  paste("Fetched unigrams of Start position, num rows:",nrow(ugStartPosDf)),
+                  sep=" - ")))
+      
         dbClearResult(ugStartPosRs)
+        
+        within(ugStartPosDf,unigram=stripEndChars(unigram))
+        
       } else {
         ugStartPosDf <- ugDfCache[[p+1]]
       }
       if(nrow(ugStartPosDf)>0){
+        
         beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
         if(nrow(beforeJoin) > 0){
-          beforeJoin$ngram = paste(stripEndChars(beforeJoin$unigram),beforeJoin$ngram,sep=",")
+          beforeJoin$ngram = paste(beforeJoin$unigram,beforeJoin$ngram,sep=",")
           beforeJoin$unigram <- NULL
           beforeJoin$ngramlen <- ngramlen2 + 1 #beforeJoin$ngramlen + 1
           beforeJoin$pos <- p
@@ -175,19 +186,30 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 #          idsForAfter,");",sep="")
       sql <- sprintf(sqlTemplate, p+ngramlen2)
         
-      CGX.log(paste("Fetching unigrams of end position, using sql:\n",sql))
+#      CGX.log(paste("Fetching unigrams of end position, using sql:\n",sql))
+      try(stop(paste(Sys.time(), CGX.loglabel,
+                  paste("Fetching unigrams of end position, using sql:\n",sql),
+                  sep=" - ")))
+      
         
       ugEndPosRs <- dbSendQuery(con,sql)
       ugEndPosDf <- fetch(ugEndPosRs,n=-1)
         
-      CGX.log(paste("Fetched unigrams of end position, num rows:",nrow(ugEndPosDf)))
-        
+#      CGX.log(paste("Fetched unigrams of end position, num rows:",nrow(ugEndPosDf)))
+      try(stop(paste(Sys.time(), CGX.loglabel,
+                  paste("Fetched unigrams of end position, num rows:",nrow(ugEndPosDf)),
+                  sep=" - ")))
+      
+      
       dbClearResult(ugEndPosRs)
-     
+
+      within(ngEndPosDf,unigram=stripEndChars(unigram))
+      
       if(nrow(ugEndPosDf)){
+        
         afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
         if(nrow(afterJoin)>0){
-          afterJoin$ngram = paste(afterJoin$ngram,stripEndChars(afterJoin$unigram),sep=",")
+          afterJoin$ngram = paste(afterJoin$ngram,afterJoin$unigram,sep=",")
           afterJoin$unigram <- NULL
           afterJoin$ngramLen <- ngramlen2 + 1 
           
@@ -234,7 +256,9 @@ foreach(day=CGX.days,
             
           }
           ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
-          ,finally=CGX.log(daySuccess)
+          ,finally=try(stop(paste(Sys.time(), CGX.loglabel,
+                      daySuccess,
+                      sep=" - ")))
       )
     }
 
