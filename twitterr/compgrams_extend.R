@@ -145,13 +145,17 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
                   sep=" - ")))
       
         dbClearResult(ugStartPosRs)
+        
+        within(ugStartPosDf,unigram=stripEndChars(unigram))
+        
       } else {
         ugStartPosDf <- ugDfCache[[p+1]]
       }
       if(nrow(ugStartPosDf)>0){
+        
         beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
         if(nrow(beforeJoin) > 0){
-          beforeJoin$ngram = paste(stripEndChars(beforeJoin$unigram),beforeJoin$ngram,sep=",")
+          beforeJoin$ngram = paste(beforeJoin$unigram,beforeJoin$ngram,sep=",")
           beforeJoin$unigram <- NULL
           beforeJoin$ngramlen <- ngramlen2 + 1 #beforeJoin$ngramlen + 1
           beforeJoin$pos <- p
@@ -198,11 +202,14 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
       
       
       dbClearResult(ugEndPosRs)
-     
+
+      within(ngEndPosDf,unigram=stripEndChars(unigram))
+      
       if(nrow(ugEndPosDf)){
+        
         afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
         if(nrow(afterJoin)>0){
-          afterJoin$ngram = paste(afterJoin$ngram,stripEndChars(afterJoin$unigram),sep=",")
+          afterJoin$ngram = paste(afterJoin$ngram,afterJoin$unigram,sep=",")
           afterJoin$unigram <- NULL
           afterJoin$ngramLen <- ngramlen2 + 1 
           
