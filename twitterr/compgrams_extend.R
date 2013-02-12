@@ -5,7 +5,7 @@
 
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
-CGX.DEBUG <- TRUE
+CGX.DEBUG <- FALSE
 
 CGX.epoch2 <- '1hr'
 CGX.ngramlen2 <- 2
@@ -115,7 +115,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 #  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (",day)
 #      # and cnt > %d, support
   
-  ugDfCache <- vector("list",(maxPos-startPos+1))
+#  ugDfCache <- vector("list",(maxPos-startPos+1))
+  ugDfCache <- new.env()
   cgOccMaskForBeforePrevIter<-NULL      
   for(p in c(startPos:(maxPos - ngramlen2))) { # ( c( startPos : floor((maxPos+1)/2)) * 2 ) ){
   
@@ -154,9 +155,10 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 #           within(ugStartPosDf,{unigram=stripEndChars(unigram)})
 #        }
       } else {
-        ugStartPosDf <- ugDfCache[[p+1]]
+#        ugStartPosDf <- ugDfCache[[p+1]]
+      ugStartPosDf <- get(paste("unigrams",p,sep=""),envir=ugDfCache,inherits = FALSE)
         try(stop(paste(Sys.time(), CGX.loglabel,
-                    paste("Loaded cached unigrams of Start position, from:",str(ugDfCache[[p+1]])),
+                    paste("Loaded cached unigrams of Start position"), # , from:",str(ugDfCache)),
                     sep=" - ")))
       }
       if(is.null(ugStartPosDf)){
@@ -185,7 +187,9 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
     }
     tryCatch({
 #        rm(ugDfCache[[p+1]])
-        ugDfCache[[p+1]] <- NULL },
+#        ugDfCache[[p+1]] <- NULL
+      assign(paste("unigrams",p,sep=""),NULL,envir=ugDfCache)
+    },
       error=function(e) NULL
     )
     ###### join the unigram after the compgram  
@@ -236,12 +240,13 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
               fileEncoding = "UTF-8")
         }
       }
-      ugDfCache[[p+ngramlen2+1]] <- ugEndPosDf
+#      ugDfCache[[p+ngramlen2+1]] <- ugEndPosDf
+      assign(paste("unigrams",p+ngramlen2,sep=""),ugEndPosDf,envir=ugDfCache)
 #      rm(afterJoin)
 #      rm(ugEndPosDf)
 #    }
     cgOccMaskForBeforePrevIter <<- cgOccMaskForBefore
-    ugDfCache <<- ugDfCache
+#    ugDfCache <<- ugDfCache
   }
  
   file.rename(stagingPath, outPath)
@@ -252,7 +257,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 }
 
 
-debug(extendCompgramOfDay)
+#debug(extendCompgramOfDay)
 #setBreakpoint(findLineNum("compgrams_extend.R#176"))
 
 ###############################
