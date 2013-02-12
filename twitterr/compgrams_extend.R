@@ -110,8 +110,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
   
   CGX.log(paste("Read original compound unigrams - nrows:", nrow(cgOcc)))
     
-  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (%s);",day,
-     paste(cgOcc$id,collapse=",")) # and cnt > %d, support
+  sqlTemplate <- paste(sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (",day),
+     paste(cgOcc$id,collapse=","),");",sep="") # and cnt > %d, support
   
 #  ugDfCache <- data.frame(pos=c(startPos:maxPos))
       
