@@ -65,7 +65,9 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 
   CGX.loglabel <- paste("extendCompgramOfDay(day=",day,",epoch2=",epoch2,",ngramlen2=",ngramlen2,",db=",db)
   
-  outPath <- paste(outputRoot,"/compgrams_",epoch2,ngramlen2,"_",day,".csv",sep="")
+  outputRoot <- paste(outputRoot,"/compgrams_",epoch2,ngramlen2,sep="")
+  
+  outPath <- paste(outputRoot,"/",day,".csv",sep="")
 
   if(file.exists(outPath)){
     if(SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS){
@@ -91,6 +93,9 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
   CGX.log("Connected to DB")
   
   origCompgramOccPath <- paste(inputPath,day,".csv",sep="");
+  
+  CGX.log(paste("Reading original compound unigrams from file", origCompgramOccPath))
+  
   if(!file.exists(origCompgramOccPath)){
     stop(paste("Compgram occurrences input for day doesn't exist!"))
   }
@@ -100,6 +105,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
         col.names = c("id","timemillis","date","ngram","ngramlen","tweetlen","pos"),
         colClasses = c("numeric","numeric","integer","character","integer","integer","integer"),
         fileEncoding = "UTF-8")
+  
+  CGX.log(paste("Read original compound unigrams - nrows:", nrow(cgOcc)))
     
   sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (%s);",day,
      paste(cgOcc$id,collapse=",")) # and cnt > %d, support
@@ -186,6 +193,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
  
   file.rename(stagingPath, outPath)
   
+  CGX.loglabel <- CGX.loglabel.DEFAULT
+  
   return(paste("Success for day:",day))
 }
 
@@ -200,7 +209,7 @@ nullCombine <- function(a,b) NULL
 foreach(day=CGX.days,
         .inorder=FALSE, .combine='nullCombine') %dopar%
     {
-      daySuccess <- paste("Success for day", day) #"Unkown result for day",day)
+      daySuccess <- paste("Unkown result for day",day)
       
       tryCatch({
             
@@ -209,7 +218,7 @@ foreach(day=CGX.days,
             
           }
           ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
-          ,finally=try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ", daySuccess)))
+          ,finally=CGX.log(daySuccess)
       )
     }
 
