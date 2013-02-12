@@ -5,7 +5,7 @@
 
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
-CGX.DEBUG <- TRUE
+CGX.DEBUG <- FALSE
 
 CGX.epoch2 <- '1hr'
 CGX.ngramlen2 <- 2
@@ -22,7 +22,7 @@ if(CGX.DEBUG){
   maxPos=70
   startPos=0
   inputPath = "~/r_output/compound_unigrams/"
-  outputRoot = "~/r_output/"
+  outputRoot = "~/r_output/compgrams_byday/"
   CGX.days <- c(121110, 130103)
   CGX.db <- 'full'
 } else {
@@ -57,7 +57,7 @@ stripEndChars <- function(ngram) {
 }
 
 extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,db=CGX.db,maxPos=70,startPos=0,
-    inputPath = "~/r_output/compound_unigrams/",outputRoot = "~/r_output/"){
+    inputPath = "~/r_output/compound_unigrams/",outputRoot = "~/r_output/compgrams_byday/"){
   
   # those can't change
   epoch1 <- epoch2
@@ -110,74 +110,87 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
     
     CGX.log(paste("Proccessing position",p))
 
-    
     ##### Join the unigram before the compgram
-#      if(p<ngramlen2){
+    cgOccMaskForBefore <- which(cgOcc$pos==(p+1))
+    if(length(cgOccMaskForBefore)>0){
       
-        sql <- sprintf(sqlTemplate,p)
-      
-        CGX.log(paste("Fetching unigrams of Start positions, using sql:\n",sql))
-      
-        ugStartPosRs <- dbSendQuery(con,sql) 
-        ugStartPosDf <- fetch(ugStartPosRs,n=-1)
-      
-        CGX.log(paste("Fetched unigrams of Start position, num rows:",nrow(ugStartPosDf)))
-      
-        dbClearResult(ugStartPosRs)
-#      } else {
-#        ugStartPosDf <- ugDfCache['pos'==p,'ugrams'][[1]]
-#        ugDfCache['pos'==p,'ugrams'] <- NULL
-#      }
-      
-      beforeJoin <- join(ugStartPosDf, cgOcc[which(cgOcc$pos==(p+1)),], by="id", type="inner", match="all")
-      
-      beforeJoin$ngram = paste(stripEndChars(beforeJoin$unigram),stripEndChars(beforeJoin$ngram),sep=",")
-      beforeJoin$unigram <- NULL
-      beforeJoin$ngramlen <- ngramlen2 + 1 #beforeJoin$ngramlen + 1
-      beforeJoin$pos <- p
-      
-      write.table(beforeJoin, file = stagingPath, append = TRUE, quote = FALSE, sep = "\t",
-          eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-          col.names = FALSE, # qmethod = c("escape", "double"),
-          fileEncoding = "UTF-8")
-      
+      #      if(p<ngramlen2){
+        
+      sql <- sprintf(sqlTemplate,p)
+        
+      CGX.log(paste("Fetching unigrams of Start positions, using sql:\n",sql))
+        
+      ugStartPosRs <- dbSendQuery(con,sql) 
+      ugStartPosDf <- fetch(ugStartPosRs,n=-1)
+        
+      CGX.log(paste("Fetched unigrams of Start position, num rows:",nrow(ugStartPosDf)))
+        
+      dbClearResult(ugStartPosRs)
+  #      } else {
+  #        ugStartPosDf <- ugDfCache['pos'==p,'ugrams'][[1]]
+  #        ugDfCache['pos'==p,'ugrams'] <- NULL
+  #      }
+      if(nrow(ugStartPosDf)>0){
+        beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
+        if(nrow(beforeJoin) > 0){
+          beforeJoin$ngram = paste(stripEndChars(beforeJoin$unigram),stripEndChars(beforeJoin$ngram),sep=",")
+          beforeJoin$unigram <- NULL
+          beforeJoin$ngramlen <- ngramlen2 + 1 #beforeJoin$ngramlen + 1
+          beforeJoin$pos <- p
+          
+          write.table(beforeJoin, file = stagingPath, append = TRUE, quote = FALSE, sep = "\t",
+              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+              col.names = FALSE, # qmethod = c("escape", "double"),
+              fileEncoding = "UTF-8")
+        }
+      }
       rm(ugStartPosDf)
-  
-  ###### join the unigram after the compgram  
+      rm(beforeJoin)
+    }
+    
+    ###### join the unigram after the compgram  
+    cgOccMaskForAfter <- which(cgOcc$pos==p)
+    if(length(cgOccMaskForAfter)){
       sql <- sprintf(sqlTemplate, p+ngramlen2)
-      
+        
       CGX.log(paste("Fetching unigrams of end position, using sql:\n",sql))
-      
+        
       ugEndPosRs <- dbSendQuery(con,sql)
       ugEndPosDf <- fetch(ugEndPosRs,n=-1)
-      
+        
       CGX.log(paste("Fetched unigrams of end position, num rows:",nrow(ugEndPosDf)))
-      
+        
       dbClearResult(ugEndPosRs)
+     
+      if(nrow(ugEndPosDf)){
+        afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
+        if(nrow(afterJoin)>0){
+          afterJoin$ngram = paste(stripEndChars(afterJoin$ngram),stripEndChars(afterJoin$unigram),sep=",")
+          afterJoin$unigram <- NULL
+          afterJoin$ngramLen <- ngramlen2 + 1 
+          
+          # already afterJoin$pos <- p
       
-      afterJoin <- join(ugEndPosDf, cgOcc[which(cgOcc$pos==p),], by="id", type="inner", match="all")
-      
-      afterJoin$ngram = paste(stripEndChars(afterJoin$ngram),stripEndChars(afterJoin$unigram),sep=",")
-      afterJoin$unigram <- NULL
-      afterJoin$ngramLen <- ngramlen2 + 1 
-      
-      # already afterJoin$pos <- p
-  
-      write.table(afterJoin, file = stagingPath, append = TRUE, quote = FALSE, sep = "\t",
-          eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-          col.names = FALSE, # qmethod = c("escape", "double"),
-          fileEncoding = "UTF-8")
-    
-      
-#      ugDfCache['pos'==p+ngramlen2,'ugrams'] <- I(list(ugEndPosDf))
-    
+          write.table(afterJoin, file = stagingPath, append = TRUE, quote = FALSE, sep = "\t",
+              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+              col.names = FALSE, # qmethod = c("escape", "double"),
+              fileEncoding = "UTF-8")
+        }
+        #Caching will be a source of bugs, and the DB seems to be fast anyway
+  #      ugDfCache['pos'==p+ngramlen2,'ugrams'] <- I(list(ugEndPosDf))
+      }
+      rm(afterJoin)
+      rm(ugEndPosDf)
+    }
   }
  
   file.rename(stagingPath, outPath)
   
-  return(paste("Success for day:"),day)
+  return(paste("Success for day:",day))
 }
-debug(extendCompgramOfDay)
+
+#debug(extendCompgramOfDay)
+#setBreakpoint(findLineNum("compgrams_extend.R#176"))
 
 ###############################
 ### Driver
