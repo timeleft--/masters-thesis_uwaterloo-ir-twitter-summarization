@@ -126,7 +126,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 #    idsForBefore<-paste(cgOcc[cgOccMaskForBefore,"id"],collapse=",")
     if(length(cgOccMaskForBefore)>0){
       
-      if(p<ngramlen2){
+      if(p<ngramlen2||p==(maxPos - ngramlen2)){
         
 #        sql <- paste(sprintf(sqlTemplate,p),idsForBefore,");",sep="")
         sql <- sprintf(sqlTemplate,p)
