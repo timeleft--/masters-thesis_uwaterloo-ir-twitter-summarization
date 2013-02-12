@@ -100,6 +100,59 @@ plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch
   # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
   try(dbUnloadDriver(drv))
   
+  ##################
+  ygrid <- c((1:20)*0.05)
+  histogramPerEpoch <- function(eg){
+    
+    try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Will plot histogram for epoch", eg$epochstartux[1])))
+  
+    ngramEpochMask <- which(ngramsDf$epochstartux==eg$epochstartux[1])
+    
+    summaryNgrams <- summary(ngramsDf[ngramEpochMask,"cnt"])
+    summaryCompgrams <- summary(eg$cnt)
+    
+#    occBreaks <- c(5,10,20,30,40,50,100,200,300,400,500,1000,2000,(summaryNgrams['Max.']+1)) # >= summaryCompgrams['Max.']
+    occBreaks <- c(1:(log(summaryNgrams['Max.']+1)+1)) # >= summaryCompgrams['Max.']
+
+    epochOut <- paste(outRoot, "/hist_",day,"-",eg$epochstartux[1],sep="")
+    
+    par(mfrow=c(2,1))
+    
+    pdf(paste(epochOut,".pdf",sep=""))
+    
+    hist(log(ngramsDf[ngramEpochMask,"cnt"]), occBreaks, freq=FALSE, 
+        axes=FALSE, xlab="LOG Occurrences less than or equal",
+        main=paste("Density of Ngrams of length",ngramlen1,"in each occurrences per",epoch1,"bin.\nN",
+            paste(names(summaryNgrams),collapse="\t"),"\n",length(ngramEpochMask),paste(summaryNgrams,collapse="\t")))
+    axis(2,c(0,ygrid))
+    axis(1,c(0,occBreaks))
+    abline(h=ygrid,col="gray", lty=3)
+
+    legend("topright",legend=c("log(mean)","log(median)"),fill=c("blue","green"))
+    abline(v=log(summaryNgrams['Mean']),col="blue")
+    abline(v=log(summaryNgrams['Median']),col="green")
+    
+    
+    hist(log(eg$cnt), occBreaks, freq=FALSE, 
+        axes=FALSE,xlab="LOG Occurrences less than or equal",
+        main=paste("Density of Compgrams of length",ngramlen2,"in each occurrences per",epoch2,"bin.\nN",
+            paste(names(summaryNgrams),collapse="\t"),"\n",length(eg$cnt),paste(summaryCompgrams,collapse="\t")))
+    axis(2,c(0,ygrid))
+    axis(1,c(0,occBreaks))
+    abline(h=ygrid,col="gray", lty=3)
+    
+    legend("topright",legend=c("log(mean)","log(median)"),fill=c("blue","green"))
+    abline(v=log(summaryCompgrams['Mean']),col="blue")
+    abline(v=log(summaryCompgrams['Median']),col="green")
+    
+    
+    dev.off()
+    
+    try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Finished plotting histogram of epoch", eg$epochstartux[1])))
+  }
+#  debug(histogramPerEpoch)
+  d_ply(idata.frame(compoundDf), c("epochstartux"), histogramPerEpoch)
+  
   
   ###################
   
@@ -113,15 +166,15 @@ plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch
     
     pdf(paste(epochOut,".pdf",sep=""))
    
-    #par(lwd=3)
-    plot(density(eg$cnt), #,kernel="cosine"),  
-        xlab=paste("Number of occurrences per",epoch2), 
-        main=paste("Densities of ngrams",epoch1,ngramlen1," and compgrams",epoch2,ngramlen2,"\n in the epoch starting",eg$epochstartux[1]),
-        col="blue",log="xy")
-    lines(density(ngramsDf[ngramEpochMask,"cnt"]), #kernel="cosine"),
-        col="red",lty=2)
-    #mean
-    #lines(c(rep(mean,2),c(0,1))
+#    #par(lwd=3)
+#    plot(density(eg$cnt), #,kernel="cosine"),  
+#        xlab=paste("Number of occurrences per",epoch2), 
+#        main=paste("Densities of ngrams",epoch1,ngramlen1," and compgrams",epoch2,ngramlen2,"\n in the epoch starting",eg$epochstartux[1]),
+#        col="blue",log="xy")
+#    lines(density(ngramsDf[ngramEpochMask,"cnt"]), #kernel="cosine"),
+#        col="red",lty=2)
+#    #mean
+#    #lines(c(rep(mean,2),c(0,1))
     
     # Add a legend (the color numbers start from 2 and go up)
     legend("topright", legend=c(paste("ngrams",ngramlen1),paste("compound",ngramlen2)), fill=c("red","blue"))
@@ -130,8 +183,10 @@ plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch
     
     try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Finished plotting epoch", eg$epochstartux[1])))
   }
-  debug(densityPlotPerEpoch)
-  d_ply(idata.frame(compoundDf), c("epochstartux"), densityPlotPerEpoch)
+#  debug(densityPlotPerEpoch)
+#  d_ply(idata.frame(compoundDf), c("epochstartux"), densityPlotPerEpoch)
+  
+  
   
   return(paste("Success for day", day))
 }
