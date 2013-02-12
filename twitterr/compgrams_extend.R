@@ -206,7 +206,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
      
       if(nrow(ugEndPosDf)){
         
-        within(ngEndPosDf,{unigram=stripEndChars(unigram)})
+        within(ugEndPosDf,{unigram=stripEndChars(unigram)})
         
         afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
         if(nrow(afterJoin)>0){
@@ -221,9 +221,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
               col.names = FALSE, # qmethod = c("escape", "double"),
               fileEncoding = "UTF-8")
         }
-        #Caching will be a source of bugs, and the DB seems to be fast anyway
-        ugDfCache[[p+ngramlen2+1]] <- ugEndPosDf
       }
+      ugDfCache[[p+ngramlen2+1]] <- ugEndPosDf
       rm(afterJoin)
       rm(ugEndPosDf)
     }
