@@ -167,12 +167,16 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
                     sep=" - ")))
       }else
       if(nrow(ugStartPosDf)>0){
-        
+        ugStartPosDf$mergePos <- p+1
 #        beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
-      beforeJoin <- merge(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", sort=F, suffixes=c("",""))
+      beforeJoin <- merge(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by.x=c("id","mergePos"),by.y=c("id","pos"), 
+          sort=F, suffixes=c("",""))
+      ugStartPosDf$mergePos <- NULL
+      
         if(nrow(beforeJoin) > 0){
           beforeJoin$ngram = paste(stripEndChars(beforeJoin$unigram),beforeJoin$ngram,sep=",")
           beforeJoin$unigram <- NULL
+          beforeJoin$mergePos <- NULL
           beforeJoin$ngramlen <- ngramlen2 + 1 #beforeJoin$ngramlen + 1
           beforeJoin$pos <- p
           
@@ -224,12 +228,16 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
       if(nrow(ugEndPosDf)){
         
 #        within(ugEndPosDf,{unigram=stripEndChars(unigram)})
-        
+        ugEndPosDf$mergePos <- p-ngramlen2
 #        afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
-        afterJoin <- merge(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", sort=F,suffixes=c("",""))
+        afterJoin <- merge(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by.x=c("id","mergePos"),by.y=c("id","pos"),
+            sort=F,suffixes=c("",""))
+        ugEndPosDf$mergePos <- NULL
+        
         if(nrow(afterJoin)>0){
           afterJoin$ngram = paste(afterJoin$ngram,stripEndChars(afterJoin$unigram),sep=",")
           afterJoin$unigram <- NULL
+          afterJoin$mergePos <- NULL
           afterJoin$ngramLen <- ngramlen2 + 1 
           
           # already afterJoin$pos <- p
