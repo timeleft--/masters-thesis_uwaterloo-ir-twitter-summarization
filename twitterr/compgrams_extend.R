@@ -168,8 +168,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
               fileEncoding = "UTF-8")
         }
       }
-#      rm(ugStartPosDf)
-#      rm(beforeJoin)
+      rm(ugStartPosDf)
+      rm(beforeJoin)
     }
     tryCatch({
 #        rm(ugDfCache[[p+1]])
@@ -225,8 +225,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
         }
       }
       ugDfCache[[p+ngramlen2+1]] <- ugEndPosDf
-#      rm(afterJoin)
-#      rm(ugEndPosDf)
+      rm(afterJoin)
+      rm(ugEndPosDf)
     }
     cgOccMaskForBeforePrevIter <- cgOccMaskForBefore
   }
