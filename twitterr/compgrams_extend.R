@@ -100,8 +100,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
     stop(paste("Compgram occurrences input for day doesn't exist!"))
   }
   
-  cgOcc <- read.table(origCompgramOccPath, header = FALSE, quote = NULL, sep = "\t",
-        na = "NA", dec = ".", row.names = NULL,
+  cgOcc <- read.table(origCompgramOccPath, header = FALSE, quote = "", comment.char="", 
+        sep = "\t", na = "NA", dec = ".", row.names = NULL,
         col.names = c("id","timemillis","date","ngram","ngramlen","tweetlen","pos"),
         colClasses = c("numeric","numeric","integer","character","integer","integer","integer"),
         fileEncoding = "UTF-8")
