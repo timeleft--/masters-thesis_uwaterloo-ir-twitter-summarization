@@ -167,7 +167,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
                     sep=" - ")))
       }else
       if(nrow(ugStartPosDf)>0){
-        
+      # This merge results in multiple rows for each id.. the mask already selects one pos, so how are there 
+    # multiple records with the same id after selecting one pos!!!! Check the by pos tables!
 #        beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
       beforeJoin <- merge(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", sort=F, suffixes=c("",""))
         if(nrow(beforeJoin) > 0){
