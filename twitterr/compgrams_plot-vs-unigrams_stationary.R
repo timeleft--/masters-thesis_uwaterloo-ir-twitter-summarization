@@ -112,7 +112,7 @@ plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch
     summaryCompgrams <- summary(eg$cnt)
     
 #    occBreaks <- c(5,10,20,30,40,50,100,200,300,400,500,1000,2000,(summaryNgrams['Max.']+1)) # >= summaryCompgrams['Max.']
-    occBreaks <- c(1:(log(summaryNgrams['Max.']+1)+1)) # >= summaryCompgrams['Max.']
+    occBreaks <- c(1:(log(max(summaryCompgrams['Max.']+1,summaryNgrams['Max.']+1))+1)) 
 
     epochOut <- paste(outRoot, "/hist_",day,"-",eg$epochstartux[1],sep="")
     
