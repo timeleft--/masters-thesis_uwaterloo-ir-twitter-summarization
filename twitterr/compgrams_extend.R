@@ -5,7 +5,7 @@
 
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
-CGX.DEBUG <- FALSE
+CGX.DEBUG <- TRUE
 
 CGX.epoch2 <- '1hr'
 CGX.ngramlen2 <- 2
@@ -118,15 +118,19 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
   ugDfCache <- vector("list",(maxPos-startPos+1))
   cgOccMaskForBeforePrevIter<-NULL      
   for(p in c(startPos:(maxPos - ngramlen2))) { # ( c( startPos : floor((maxPos+1)/2)) * 2 ) ){
-    
+  
+    try(stop(paste(Sys.time(), CGX.loglabel,
+                paste("Proccessing position",p),
+                sep=" - ")))
 #    CGX.log(paste("Proccessing position",p))
 
+  
     ##### Join the unigram before the compgram
     cgOccMaskForBefore <- which(cgOcc$pos==(p+1))
 #    idsForBefore<-paste(cgOcc[cgOccMaskForBefore,"id"],collapse=",")
     if(length(cgOccMaskForBefore)>0){
       
-      if(p<ngramlen2||p==(maxPos - ngramlen2)){
+      if(p<ngramlen2){
         
 #        sql <- paste(sprintf(sqlTemplate,p),idsForBefore,");",sep="")
         sql <- sprintf(sqlTemplate,p)
@@ -151,7 +155,15 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 #        }
       } else {
         ugStartPosDf <- ugDfCache[[p+1]]
+        try(stop(paste(Sys.time(), CGX.loglabel,
+                    paste("Loaded cached unigrams of Start position, from:",str(ugDfCache[[p+1]])),
+                    sep=" - ")))
       }
+      if(is.null(ugStartPosDf)){
+        try(stop(paste(Sys.time(), CGX.loglabel,
+                    paste("ERROR failed to load unigrams of Start position:",p),
+                    sep=" - ")))
+      }else
       if(nrow(ugStartPosDf)>0){
         
 #        beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
@@ -168,8 +180,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
               fileEncoding = "UTF-8")
         }
       }
-      rm(ugStartPosDf)
-      rm(beforeJoin)
+#      rm(ugStartPosDf)
+#      rm(beforeJoin)
     }
     tryCatch({
 #        rm(ugDfCache[[p+1]])
@@ -182,8 +194,8 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
     } else {
       cgOccMaskForAfter <- which(cgOcc$pos==p)
     }
-    idsForAfter<-paste(cgOcc[cgOccMaskForAfter,"id"],collapse=",")
-    if(length(cgOccMaskForAfter)){
+#    idsForAfter<-paste(cgOcc[cgOccMaskForAfter,"id"],collapse=",")
+#    if(length(cgOccMaskForAfter)){
 #      sql <- paste(sprintf(sqlTemplate, p+ngramlen2),
 #          idsForAfter,");",sep="")
       sql <- sprintf(sqlTemplate, p+ngramlen2)
@@ -225,10 +237,11 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
         }
       }
       ugDfCache[[p+ngramlen2+1]] <- ugEndPosDf
-      rm(afterJoin)
-      rm(ugEndPosDf)
-    }
-    cgOccMaskForBeforePrevIter <- cgOccMaskForBefore
+#      rm(afterJoin)
+#      rm(ugEndPosDf)
+#    }
+    cgOccMaskForBeforePrevIter <<- cgOccMaskForBefore
+    ugDfCache <<- ugDfCache
   }
  
   file.rename(stagingPath, outPath)
@@ -239,7 +252,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 }
 
 
-#debug(extendCompgramOfDay)
+debug(extendCompgramOfDay)
 #setBreakpoint(findLineNum("compgrams_extend.R#176"))
 
 ###############################
@@ -254,8 +267,8 @@ foreach(day=CGX.days,
       
       tryCatch({
             
-            daySuccess <<- extendCompgramOfDay(day, 
-                epoch2 = CGX.epoch2, ngramlen2 = CGX.ngramlen2,  db = CGX.db) #, support = CGX.support)
+            daySuccess <<- extendCompgramOfDay(day) 
+#                epoch2 = CGX.epoch2, ngramlen2 = CGX.ngramlen2,  db = CGX.db) #, support = CGX.support)
             
           }
           ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
