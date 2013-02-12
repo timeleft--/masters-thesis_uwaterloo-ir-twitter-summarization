@@ -206,7 +206,7 @@ allMonthes <- foreach(day=CPU.days,
       
       tryCatch({
             
-            daySuccess <<- plotDensitiesForDay(day, ngramlen1=2) 
+            daySuccess <<- plotDensitiesForDay(day, ngramlen1=1) 
 #                epoch2 = CPU.epoch2, ngramlen2 = CPU.ngramlen2,  db = G.dbCPU)
             
           }
