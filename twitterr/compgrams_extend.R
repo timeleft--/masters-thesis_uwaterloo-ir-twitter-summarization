@@ -5,7 +5,7 @@
 
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
-CGX.DEBUG <- FALSE
+CGX.DEBUG <- TRUE
 
 CGX.epoch2 <- '1hr'
 CGX.ngramlen2 <- 2
@@ -110,36 +110,37 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
   
   CGX.log(paste("Read original compound unigrams - nrows:", nrow(cgOcc)))
     
-  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (",day)
-      # and cnt > %d, support
+  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d ;",day)
+#  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (",day)
+#      # and cnt > %d, support
   
-#  ugDfCache <- data.frame(pos=c(startPos:maxPos))
-      
+  ugDfCache <- vector("list",(maxPos-startPos+1))
+  cgOccMaskForBeforePrevIter<-NULL      
   for(p in c(startPos:(maxPos - ngramlen2))) { # ( c( startPos : floor((maxPos+1)/2)) * 2 ) ){
     
     CGX.log(paste("Proccessing position",p))
 
     ##### Join the unigram before the compgram
     cgOccMaskForBefore <- which(cgOcc$pos==(p+1))
-    idsForBefore<-paste(cgOcc[cgOccMaskForBefore,"id"],collapse=",")
+#    idsForBefore<-paste(cgOcc[cgOccMaskForBefore,"id"],collapse=",")
     if(length(cgOccMaskForBefore)>0){
       
-      #      if(p<ngramlen2){
+      if(p<ngramlen2){
         
-      sql <- paste(sprintf(sqlTemplate,p),idsForBefore,");",sep="")
+#        sql <- paste(sprintf(sqlTemplate,p),idsForBefore,");",sep="")
+        sql <- sprintf(sqlTemplate,p)
         
-      CGX.log(paste("Fetching unigrams of Start positions, using sql:\n",sprintf(sqlTemplate,p)))
-        
-      ugStartPosRs <- dbSendQuery(con,sql) 
-      ugStartPosDf <- fetch(ugStartPosRs,n=-1)
-        
-      CGX.log(paste("Fetched unigrams of Start position, num rows:",nrow(ugStartPosDf)))
-        
-      dbClearResult(ugStartPosRs)
-  #      } else {
-  #        ugStartPosDf <- ugDfCache['pos'==p,'ugrams'][[1]]
-  #        ugDfCache['pos'==p,'ugrams'] <- NULL
-  #      }
+        CGX.log(paste("Fetching unigrams of Start positions, using sql:\n",sql))
+          
+        ugStartPosRs <- dbSendQuery(con,sql) 
+        ugStartPosDf <- fetch(ugStartPosRs,n=-1)
+          
+        CGX.log(paste("Fetched unigrams of Start position, num rows:",nrow(ugStartPosDf)))
+          
+        dbClearResult(ugStartPosRs)
+      } else {
+        ugStartPosDf <- ugDfCache[[p+1]]
+      }
       if(nrow(ugStartPosDf)>0){
         beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
         if(nrow(beforeJoin) > 0){
@@ -157,16 +158,24 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
       rm(ugStartPosDf)
       rm(beforeJoin)
     }
-    
+    tryCatch({
+#        rm(ugDfCache[[p+1]])
+        ugDfCache[[p+1]] <- NULL },
+      error=function(e) NULL
+    )
     ###### join the unigram after the compgram  
-    cgOccMaskForAfter <- which(cgOcc$pos==p)
+    if(!is.null(cgOccMaskForBeforePrevIter)) {
+      cgOccMaskForAfter <- cgOccMaskForBeforePrevIter 
+    } else {
+      cgOccMaskForAfter <- which(cgOcc$pos==p)
+    }
     idsForAfter<-paste(cgOcc[cgOccMaskForAfter,"id"],collapse=",")
     if(length(cgOccMaskForAfter)){
-      sql <- paste(sprintf(sqlTemplate, p+ngramlen2),
-          idsForAfter,");",sep="")
-      
+#      sql <- paste(sprintf(sqlTemplate, p+ngramlen2),
+#          idsForAfter,");",sep="")
+      sql <- sprintf(sqlTemplate, p+ngramlen2)
         
-      CGX.log(paste("Fetching unigrams of end position, using sql:\n",sprintf(sqlTemplate, p+ngramlen2)))
+      CGX.log(paste("Fetching unigrams of end position, using sql:\n",sql))
         
       ugEndPosRs <- dbSendQuery(con,sql)
       ugEndPosDf <- fetch(ugEndPosRs,n=-1)
@@ -190,11 +199,12 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
               fileEncoding = "UTF-8")
         }
         #Caching will be a source of bugs, and the DB seems to be fast anyway
-  #      ugDfCache['pos'==p+ngramlen2,'ugrams'] <- I(list(ugEndPosDf))
+        ugDfCache[[p+ngramlen2+1]] <- ugEndPosDf
       }
       rm(afterJoin)
       rm(ugEndPosDf)
     }
+    cgOccMaskForBeforePrevIter <- cgOccMaskForBefore
   }
  
   file.rename(stagingPath, outPath)
