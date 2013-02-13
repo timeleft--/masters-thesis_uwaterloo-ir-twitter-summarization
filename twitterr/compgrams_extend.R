@@ -151,9 +151,9 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
       
         dbClearResult(ugStartPosRs)
         
-#        if(nrow(ugStartPosDf)>0){
-#           within(ugStartPosDf,{unigram=stripEndChars(unigram)})
-#        }
+        if(nrow(ugStartPosDf)>0){
+          ugStartPosDf <- within(ugStartPosDf,{unigram=stripEndChars(unigram)})
+        }
       } else {
 #        ugStartPosDf <- ugDfCache[[p+1]]
       ugStartPosDf <- get(paste("unigrams",p,sep=""),envir=ugDfCache,inherits = FALSE)
@@ -172,7 +172,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 #        beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
       beforeJoin <- merge(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", sort=F, suffixes=c("",""))
         if(nrow(beforeJoin) > 0){
-          beforeJoin$ngram = paste(stripEndChars(beforeJoin$unigram),beforeJoin$ngram,sep=",")
+          beforeJoin$ngram = paste(beforeJoin$unigram,beforeJoin$ngram,sep="+")
           beforeJoin$unigram <- NULL
           beforeJoin$ngramlen <- ngramlen2 + 1 #beforeJoin$ngramlen + 1
           beforeJoin$pos <- p
@@ -222,14 +222,14 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
       
       dbClearResult(ugEndPosRs)
      
-      if(nrow(ugEndPosDf)){
+      if(nrow(ugEndPosDf) > 0){
         
-#        within(ugEndPosDf,{unigram=stripEndChars(unigram)})
+        ugEndPosDf <- within(ugEndPosDf,{unigram=stripEndChars(unigram)})
         
 #        afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
         afterJoin <- merge(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", sort=F,suffixes=c("",""))
         if(nrow(afterJoin)>0){
-          afterJoin$ngram = paste(afterJoin$ngram,stripEndChars(afterJoin$unigram),sep="+")
+          afterJoin$ngram = paste(afterJoin$ngram,afterJoin$unigram,sep="+")
           afterJoin$unigram <- NULL
           afterJoin$ngramLen <- ngramlen2 + 1 
           
