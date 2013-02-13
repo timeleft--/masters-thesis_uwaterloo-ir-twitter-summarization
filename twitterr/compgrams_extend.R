@@ -17,7 +17,7 @@ CGX.loglabel <- CGX.loglabel.DEFAULT
 if(CGX.DEBUG){
   epoch2=CGX.epoch2
   ngramlen2=CGX.ngramlen2
-  db='sample-0.01'
+  db='full' #'sample-0.01'
   day<-121110
   maxPos=70
   startPos=0
@@ -105,13 +105,13 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
   cgOcc <- read.table(origCompgramOccPath, header = FALSE, quote = "", comment.char="", 
         sep = "\t", na = "NA", dec = ".", row.names = NULL,
         col.names = c("id","timemillis","date","ngram","ngramlen","tweetlen","pos"),
-        colClasses = c("numeric","numeric","integer","character","integer","integer","integer"),
+        colClasses = c("character","numeric","integer","character","integer","integer","integer"),
         fileEncoding = "UTF-8")
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Read original compound unigrams - nrows:", nrow(cgOcc)), sep=" - ")))
   
-    
-  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d ;",day)
+  # SELECT DISTINCT on (id) id,ngram as unigram from unigramsp3 where date=121110  
+  sqlTemplate <- sprintf("SELECT DISTINCT ON (id) CAST(id as varchar),ngram as unigram from unigramsp%%d where date=%d order by id;",day)
 #  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (",day)
 #      # and cnt > %d, support
   
@@ -229,7 +229,7 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
 #        afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
         afterJoin <- merge(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", sort=F,suffixes=c("",""))
         if(nrow(afterJoin)>0){
-          afterJoin$ngram = paste(afterJoin$ngram,stripEndChars(afterJoin$unigram),sep=",")
+          afterJoin$ngram = paste(afterJoin$ngram,stripEndChars(afterJoin$unigram),sep="+")
           afterJoin$unigram <- NULL
           afterJoin$ngramLen <- ngramlen2 + 1 
           
@@ -251,6 +251,11 @@ extendCompgramOfDay <- function(day, epoch2=CGX.epoch2, ngramlen2=CGX.ngramlen2,
   }
  
   file.rename(stagingPath, outPath)
+  
+  # dbDisconnect(con, ...) closes the connection. Eg.
+  try(dbDisconnect(con))
+  # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
+  try(dbUnloadDriver(drv))
   
   CGX.loglabel <- CGX.loglabel.DEFAULT
   
