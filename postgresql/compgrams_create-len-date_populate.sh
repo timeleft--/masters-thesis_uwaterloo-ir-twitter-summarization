@@ -17,9 +17,10 @@ do
 ${psql} 'DROP TABLE IF EXISTS compgrams${len}_${day};' 
 ${psql} 'CREATE TABLE compgrams${len}_${day} (CHECK (ngramLen = ${len} and date = ${day})) INHERITS(compgrams);'
 ${psql} 'ALTER TABLE compgrams${len}_${day} ALTER COLUMN ngramlen SET DEFAULT ${len};'
-${psql} "COPY compgrams${len}_${day} FROM '${root}/${day}.csv'; \
+sql="COPY compgrams${len}_${day} FROM '${root}/${day}.csv'; \
 CREATE TABLE cnt_${epoch}${len}_${day} as select  ${len} as ngramLen, regexp_split_to_array(ngram,'+') as ngramarr, ${day} as date, floor(timemillis/3600000) * 3600000 as epochstartmillis, count(*) as cnt from compgrams${len}_${day} group by floor(timemillis/3600000),ngram; \
-CREATE TABLE volume_${epoch}${len}_${day} as select  ${len} as ngramLen, epochstartmillis, sum(cnt) as totalcnt from cnt_${epoch}${len}_${day} group by epochstartmillis;"&
+CREATE TABLE volume_${epoch}${len}_${day} as select  ${len} as ngramLen, epochstartmillis, sum(cnt) as totalcnt from cnt_${epoch}${len}_${day} group by epochstartmillis;"
+${psql} ${sql}&
     
 done
 
