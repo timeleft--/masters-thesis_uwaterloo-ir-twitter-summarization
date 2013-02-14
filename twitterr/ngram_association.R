@@ -10,16 +10,9 @@ while(!require(plyr)){
   install.packages("plyr")
 }
 lookupIxs <- function(comps, lkp){
-#  comps <- strsplit(ngram,",")
   return(laply(comps, function(cmp) lkp[cmp]))
 }
 
-# Unit tests
-#testIxs <- lookupIxs(unlist(strsplit("ug1,ug3",",")),testLkp)
-#str(testIxs)
-## testIxs[["ug1"]]
-#testIxs[[1]]
-#testIxs[1]
 
 ############################
 
@@ -87,7 +80,7 @@ NGA.DEBUG_ERRORS <- TRUE
       
       ngram <- ng # there will be only one (unique)
       
-      comps <- strsplit(ngram,",")
+      comps <- strsplit(ngram,"+") #",")
       
       ngRes <- data.frame(ngram=ngram,#comps = I(comps), 
           stringsAsFactors=F)
