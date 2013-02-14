@@ -226,7 +226,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     ngramOccCopyMask <- c()
     
     ngramFun <- function(ng){
-      ugramsInNgram <- unlist(strsplit(ng[1,"ngram"],","))
+      ugramsInNgram <- unlist(strsplit(ng[1,"ngram"],"+")) #","))
       
       #TODO Pure?
     

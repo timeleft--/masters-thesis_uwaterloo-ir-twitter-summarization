@@ -93,9 +93,11 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
   # b.date as date, b.ngramlen as ngramlen,
   sql <- sprintf("select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, 
           b.ngramarr as ngram, b.cnt as togethercnt
-          from cnt_%s%d b 
-          join volume_%s%d v on v.epochstartmillis = b.epochstartmillis
-          where b.date=%d and b.cnt > %d;", epoch2, ngramlen2, epoch1, ngramlen1, day, support)
+          from cnt_%s%d%s b 
+          join volume_%s%d%s v on v.epochstartmillis = b.epochstartmillis
+          where b.date=%d and b.cnt > %d;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste(day)), 
+      epoch1, ngramlen1, ifelse(ngramlen1<3,'',paste(day)), 
+      day, support)
   # order by b.epochstartmillis asc <- necessary for the index shifting idea
   ngramRs <- dbSendQuery(con,sql)
 # Test SQL: select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, b.ngramarr as ngram, b.cnt as togethercnt from cnt_1hr2 b join volume_1hr1 v on v.epochstartmillis = b.epochstartmillis where b.date=121106 and b.cnt > 5;
@@ -104,15 +106,20 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
   
   try(stop(paste(Sys.time(), "conttable_construct() for day:", day, " - Fetched ngrams' cnts using sql: ", sql)))
   
-  ngramDf <- within(ngramDf,{  # SQL below selects the array element: unigram=stripEndChars(unigram)
+  if(ngramlen2==2) # the result is from pig tokenization so it has useless paranthesis
+    ngramDf <- within(ngramDf,{  # SQL below selects the array element: unigram=stripEndChars(unigram)
         ngram=stripEndChars(ngram)})
   
   #cleanup
   # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
   try(dbClearResult(ngramRs))
-  
-  sql <- sprintf("select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt
+  if(ngramlen1==1){
+    sql <- sprintf("select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt
                   from cnt_%s%d where date=%d and cnt > %d order by cnt desc;", epoch1, ngramlen1, day, support)
+  } else {
+    sql <- sprintf("select epochstartux, ngramarr as unigram, cnt as unigramcnt
+										from compound%s%d_%d;",epoch1, ngramlen1, day) #order by cnt desc
+  }
   ugramRs <- dbSendQuery(con,sql)
    #epochstartmillis asc, -> I had an idea but if I can't get it right.. screw it! I wanna finish my masters!
 #Test SQL: select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt from cnt_1hr1 where date=121106 and cnt > 5 order by cnt desc;
@@ -123,6 +130,10 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
   #cleanup
   # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
   try(dbClearResult(ugramRs))
+  
+  if(ngramlen1!=1){ #maybe == 2 and stripEndChars when constructing the trigram??
+    ugramDf <- within(ugramDf,{ unigram=stripEndChars(unigram)})
+  }
   
 #  # The idea is that number of unique unigrams will be added to the mask start index, so that we don't have
 #  # to do any checks of equality with epochstartux to find the unigrams pertaining to the current epoch
@@ -271,7 +282,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
       # apply to each ngram in the epoch   
       countCooccurNooccurNgram <- function(ng) {
         
-        ugramsInNgram <- unlist(strsplit(ng[1,"ngram"],","))
+        ugramsInNgram <- unlist(strsplit(ng[1,"ngram"],"+")) # ","))
         
         if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 && any(duplicated(ugramsInNgram))){
           pureNgrams[ng[1,"ngram"]] <- FALSE
