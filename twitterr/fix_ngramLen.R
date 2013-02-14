@@ -3,6 +3,16 @@
 # Author: yia
 ###############################################################################
 
+
+
+while(!require(foreach)){
+  install.packages("foreach")
+}
+while(!require(doMC)){
+  install.packages("doMC")
+}
+registerDoMC(cores=30)
+
 removeExtraCol <- function(day,inRoot){
   inPath<-paste(inRoot,day,".csv",sep="")
 orig <- read.table(inPath, header = FALSE, quote = "", comment.char="", 
