@@ -42,7 +42,7 @@ foreach(day=c(121110), #130103, 121016, 121206, 121210, 120925, 121223, 121205, 
       
       tryCatch({
             
-            daySuccess <<- removeExtraCol("~/r_output/compgrams_byday/compgrams_1hr2/") 
+            daySuccess <<- removeExtraCol(day, "~/r_output/compgrams_byday/compgrams_1hr2/") 
             
           }
           ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
