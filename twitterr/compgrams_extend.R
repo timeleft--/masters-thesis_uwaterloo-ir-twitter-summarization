@@ -5,7 +5,7 @@
 
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
-CGX.DEBUG <- TRUE
+CGX.DEBUG <- FALSE
 
 #CGX.epoch2 <- '1hr'
 CGX.ngramlen2 <- 2
