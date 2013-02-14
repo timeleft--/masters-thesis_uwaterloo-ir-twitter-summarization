@@ -5,7 +5,7 @@
 
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
-CGX.DEBUG <- FALSE
+CGX.DEBUG <- TRUE
 
 #CGX.epoch2 <- '1hr'
 CGX.ngramlen2 <- 2
@@ -238,7 +238,7 @@ extendCompgramOfDay <- function(day,
         if(nrow(afterJoin)>0){
           afterJoin$ngram = paste(afterJoin$ngram,afterJoin$unigram,sep="+")
           afterJoin$unigram <- NULL
-          afterJoin$ngramLen <- ngramlen2 + 1 
+          afterJoin$ngramlen <- ngramlen2 + 1 
           
           # already afterJoin$pos <- p
       
