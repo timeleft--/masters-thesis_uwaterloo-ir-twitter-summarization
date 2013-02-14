@@ -43,11 +43,10 @@ foreach(day=c(121110), #130103, 121016, 121206, 121210, 120925, 121223, 121205, 
       tryCatch({
             
             daySuccess <<- removeExtraCol("~/r_output/compgrams_byday/compgrams_1hr2/") 
-#                epoch2 = CGX.epoch2, ngramlen2 = CGX.ngramlen2,  db = CGX.db) #, support = CGX.support)
             
           }
           ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
-          ,finally=try(stop(paste(Sys.time(), CGX.loglabel,
+          ,finally=try(stop(paste(Sys.time(), 
                       daySuccess,
                       sep=" - ")))
       )
