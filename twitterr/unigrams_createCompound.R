@@ -33,7 +33,7 @@ if(DEBUG_UGC){
       #c(121021,121229)
       #c(121110, 130103, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219)
   G.db<-"full"
-  G.nCores <- 30 # because we load ngram occs.. so this might be too much for mem.. better safe than sorry
+  G.nCores <- 34 # because we load ngram occs.. so this might be too much for mem.. better safe than sorry
 }
 
 
@@ -144,7 +144,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
    #We want all unigrams, not only those with high support.. or not! Screw the low support unigrams.. yaay!
   # Sorting is good if we'd use index to split: order by epochstartmillis asc 
   sql <- sprintf("select *
-          from cnt_%s%d where date=%d  and cnt > %d ;", epoch1, ngramlen1, day, support)
+          from cnt_%s%d%s where date=%d  %s;", epoch1, ngramlen1, ifelse(ngramlen2<3,'',paste("_",day, sep="")), day, ifelse(ngramlen2<3,paste(" and cnt >",support),''))
   
   try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetching unigrams' cnts using sql:", sql)))
   
@@ -167,7 +167,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   sec0NextDay <- sec0CurrDay + (60*60*24)
   
   sql <- sprintf("select epochstartmillis, totalcnt
-          from volume_%s%d where epochstartmillis >= %.0f and epochstartmillis < %.0f;", epoch2, ngramlen2,
+          from volume_%s%d%s where epochstartmillis >= %.0f and epochstartmillis < %.0f;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste("_",day, sep="")),
       (sec0CurrDay-(120*60)) * 1000, (sec0NextDay+(120*60)) * 1000) # add 2 hours to either side to avoid timezone shit
   
   try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetching ngram volumes using sql:\n ", sql)))
