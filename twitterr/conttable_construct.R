@@ -118,9 +118,9 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
           b.ngramarr as ngram, b.cnt as togethercnt
           from cnt_%s%d%s b 
           join volume_%s%d%s v on v.epochstartmillis = b.epochstartmillis
-          where b.date=%d and b.cnt > %d;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste("_",day, sep="")), 
+          where b.date=%d  %s;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste("_",day, sep="")), 
       epoch1, ngramlen1, ifelse(ngramlen1<2,'',paste("_",day,sep="")), 
-      day, support)
+      day, ifelse(ngramlen2<3,paste(" and b.cnt >",support),''))
   # order by b.epochstartmillis asc <- necessary for the index shifting idea
   ngramRs <- dbSendQuery(con,sql)
 # Test SQL: select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, b.ngramarr as ngram, b.cnt as togethercnt from cnt_1hr2 b join volume_1hr1 v on v.epochstartmillis = b.epochstartmillis where b.date=121106 and b.cnt > 5;
