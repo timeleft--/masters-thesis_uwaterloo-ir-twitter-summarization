@@ -117,6 +117,8 @@ extendCompgramOfDay <- function(day,
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Read original compound unigrams - nrows:", nrow(cgOcc)), sep=" - ")))
   
+  #TODONOT: stripEndChars from cgOcc
+  
   # SELECT DISTINCT on (id) id,ngram as unigram from unigramsp3 where date=121110  
   sqlTemplate <- sprintf("SELECT DISTINCT ON (id) CAST(id as varchar),ngram as unigram from unigramsp%%d where date=%d order by id;",day)
 #  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (",day)

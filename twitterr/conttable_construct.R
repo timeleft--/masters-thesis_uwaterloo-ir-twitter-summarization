@@ -11,14 +11,14 @@ TOTAL <- "TOTAL"
 
 EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 <- TRUE
 
-DEBUG_CTC <- TRUE
+DEBUG_CTC <- FALSE
 #options(error=utils::recover) 
 #For debug
 if(DEBUG_CTC){
 day<-121110
 epoch1<-'1hr'
 ngramlen2<-3
-ngramlen1<-1
+ngramlen1<-2
 support<-5
 epoch2<-NULL
 db<-"full" #"sample-0.01"
@@ -30,11 +30,36 @@ parOpts <- "cores=2"
 progress<-"none" #text isn't good with parallel
 }
 
+while(!require(plyr)){
+  install.packages("plyer")
+}
 
 ########################################################
 
 stripEndChars <- function(ngram) {
   return(substring(ngram, 2, nchar(ngram)-1))
+}
+
+########################################################
+
+splitNgramToCompgrams <- function(ngram,compgramlen){
+  if(compgramlen == 2){
+    ugramsInNgram <- unlist(strsplit(ngram, ","))
+  } else {
+    ugramsInNgram <- unlist(strsplit(ngram, '"'))
+    ugramsInNgram <- aaply(ugramsInNgram[which(nzchar(ugramsInNgram))],1,function(str){
+          
+          ch1 <- substring(str,1,1)
+          if(ch1=='('){
+            return(stripEndChars(str))
+          } else if(ch1==','){
+            return(substring(str,2,nchar(str)))
+          } else { # The coma will be the last char
+            return(substring(str,1,nchar(str)-1))
+          }
+        })
+  }
+  return(ugramsInNgram)
 }
 
 ##########################################################
@@ -50,9 +75,7 @@ align_epochs <- function(dframe, epoch) {
     missingEpochs <- data.frame(c(dframe[[kTS]][i] + ( seq( 1: numMissingEpochs) * kEpochLenTemp)))
     names(missingEpochs) <- c(kTS)
     
-    while(!require(plyr)){
-      install.packages("plyer")
-    }
+    
     dframe <- rbind.fill(dframe[1:i, ], 
         missingEpochs,
         dframe[(i+1):nrow(dframe), ])
@@ -95,8 +118,8 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
           b.ngramarr as ngram, b.cnt as togethercnt
           from cnt_%s%d%s b 
           join volume_%s%d%s v on v.epochstartmillis = b.epochstartmillis
-          where b.date=%d and b.cnt > %d;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste(day)), 
-      epoch1, ngramlen1, ifelse(ngramlen1<3,'',paste(day)), 
+          where b.date=%d and b.cnt > %d;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste("_",day, sep="")), 
+      epoch1, ngramlen1, ifelse(ngramlen1<2,'',paste("_",day,sep="")), 
       day, support)
   # order by b.epochstartmillis asc <- necessary for the index shifting idea
   ngramRs <- dbSendQuery(con,sql)
@@ -106,8 +129,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
   
   try(stop(paste(Sys.time(), "conttable_construct() for day:", day, " - Fetched ngrams' cnts using sql: ", sql)))
   
-  if(ngramlen2==2) # the result is from pig tokenization so it has useless paranthesis
-    ngramDf <- within(ngramDf,{  # SQL below selects the array element: unigram=stripEndChars(unigram)
+  ngramDf <- within(ngramDf,{  # SQL below selects the array element: unigram=stripEndChars(unigram)
         ngram=stripEndChars(ngram)})
   
   #cleanup
@@ -282,7 +304,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
       # apply to each ngram in the epoch   
       countCooccurNooccurNgram <- function(ng) {
         
-        ugramsInNgram <- unlist(strsplit(ng[1,"ngram"],"+")) # ","))
+        ugramsInNgram <- splitNgramToCompgrams(ng[1,"ngram"],ngramlen2)
         
         if(!EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 && any(duplicated(ugramsInNgram))){
           pureNgrams[ng[1,"ngram"]] <- FALSE

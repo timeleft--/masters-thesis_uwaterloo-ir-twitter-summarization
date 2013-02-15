@@ -80,7 +80,7 @@ NGA.DEBUG_ERRORS <- TRUE
       
       ngram <- ng # there will be only one (unique)
       
-      comps <- strsplit(ngram,"+") #",")
+      comps <- splitNgramToCompgrams(ngram,ngramlen)
       
       ngRes <- data.frame(ngram=ngram,#comps = I(comps), 
           stringsAsFactors=F)
@@ -202,7 +202,9 @@ if(DEBUG_NGA){
 
   supp<-5
   epoch<-'1hr'
-  ngramlen<-2
+  compgramlen<-2
+  ngramlen<-compgramlen+1
+  
 
   source("conttable_construct.R")
   
@@ -246,7 +248,7 @@ if(DEBUG_NGA){
         }
         
         dayEpochGrps <- # doesn't work in case of dopar.. they must be doing something with environments NULL 
-          conttable_construct(day, db=db, ngramlen2=ngramlen, epoch1=epoch, support=supp)
+          conttable_construct(day, db=db, ngramlen1=compgramlen,ngramlen2=ngramlen, epoch1=epoch, support=supp)
           #, parallel=parallelWithinDay, parOpts=parOpts)
         if(is.null(dayEpochGrps)){
           stop(paste("ngram_assoc() for day:", day, " - Didn't get  back the cooccurrence matrix"))
