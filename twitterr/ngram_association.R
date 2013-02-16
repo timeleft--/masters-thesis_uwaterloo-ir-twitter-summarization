@@ -45,7 +45,7 @@ agreementTable <- function(comps,cooccurs,
 
 NGA.handleErrors <- function(e) {
   if(NGA.DEBUG_ERRORS){
-    print(e)
+    try(stop(e))
   } else {
     stop(e)
   }
@@ -178,7 +178,7 @@ NGA.DEBUG_ERRORS <- TRUE
 
 ####################################################    
 #driver
-DEBUG_NGA<-FALSE
+DEBUG_NGA<-TRUE
 
 REMOVE_EXITING_OUTPUTS<-FALSE
 
