@@ -11,7 +11,7 @@ TOTAL <- "TOTAL"
 
 EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 <- TRUE
 
-DEBUG_CTC <- TRUE
+DEBUG_CTC <- FALSE
 #options(error=utils::recover) 
 #For debug
 if(DEBUG_CTC){
@@ -40,31 +40,7 @@ while(!require(Matrix)){
 
 ########################################################
 
-stripEndChars <- function(ngram) {
-  return(substring(ngram, 2, nchar(ngram)-1))
-}
-
-########################################################
-
-splitNgramToCompgrams <- function(ngram,compgramlen){
-  if(compgramlen == 2){
-    ugramsInNgram <- unlist(strsplit(ngram, ","))
-  } else {
-    ugramsInNgram <- unlist(strsplit(ngram, '"'))
-    ugramsInNgram <- aaply(ugramsInNgram[which(nzchar(ugramsInNgram))],1,function(str){
-          
-          ch1 <- substring(str,1,1)
-          if(ch1=='('){
-            return(stripEndChars(str))
-          } else if(ch1==','){
-            return(substring(str,2,nchar(str)))
-          } else { # The coma will be the last char
-            return(substring(str,1,nchar(str)-1))
-          }
-        })
-  }
-  return(ugramsInNgram)
-}
+source("compgrams_utils.R")
 
 ##########################################################
 # Makes sure all epochs are the same length
@@ -144,8 +120,9 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
     sql <- sprintf("select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt
                   from cnt_%s%d where date=%d and cnt > %d order by cnt desc;", epoch1, ngramlen1, day, support)
   } else {
+    # compgrams with no enough support were not originally stored 
     sql <- sprintf("select epochstartux, ngramarr as unigram, cnt as unigramcnt
-										from compound%s%d_%d;",epoch1, ngramlen1, day) #order by cnt desc
+										from compcnt_%s%d_%d;",epoch1, ngramlen1, day) #order by cnt desc
   }
   ugramRs <- dbSendQuery(con,sql)
    #epochstartmillis asc, -> I had an idea but if I can't get it right.. screw it! I wanna finish my masters!

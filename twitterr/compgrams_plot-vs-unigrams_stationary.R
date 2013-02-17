@@ -50,7 +50,7 @@ plotDensitiesForDay <- function (day, epoch1=NULL, ngramlen1=1, epoch2=CPU.epoch
   
   try(stop(paste(Sys.time(), logLabelCPU, " for day:", day, " - Connected to DB",db)))
   
-  inTable <- paste('compound',epoch2,ngramlen2,'_',day,sep="")
+  inTable <- paste('compcnt_',epoch2,ngramlen2,'_',day,sep="")
   if(!dbExistsTable(con,inTable)){
     stop(paste("Input table",inTable,"doesn't exist.. cannot process the day")) #skippinng the day
   }

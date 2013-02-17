@@ -2,7 +2,8 @@
 # 
 # Author: yia
 ###############################################################################
-G.outputRoot <- "~/r_output/cnt_compound/"
+G.workingRoot <- "~/r_output/occ_yuleq_working/"
+G.dataRoot <- "~/r_output/"
 G.epoch2 <- '1hr'
 G.ngramlen1 <- 2
 G.ngramlen2 <- G.ngramlen1 + 1
@@ -19,23 +20,26 @@ if(DEBUG_UGC){
   G.nCores <- 2
   G.db <- "sample-0.01"
   
+  workingRoot="~/r_output_debug/occ_yuleq_working/"
+  dataRoot="~/r_output_debug/"
+  
   ngramlen1<-2
   epoch1<-NULL
-  
-  
   epoch2 <- G.epoch2  
   ngramlen2 <- G.ngramlen2
   support <- G.support
   
-  day <- 121110
+  day <- 121106
   db <- G.db
 }else {
-  G.days<- c(120914, 120925, 120926, 120930, 121008, 121013, 121016, 121026, 121027, 121028, 121029, 121030, 121103, 121104, 121105, 121106, 121108, 121110, 121116, 121119, 121120, 121122, 121123, 121125, 121205, 121206, 121210, 121214, 121215, 121222, 121223, 121231, 130103, 130104)
+  
+  G.days <- unique(c( 120925,  120926,  120930,  121008,  121013,  121016,  121026,  121027,  121028,  121029,  121030,  121103,  121104,  121105,  121106,  121108,  121110,  121116,  121119,  121120,  121122,  121123,  121125,  121205,  121206,  121210,  121214,  121215,  121231,  130103,  130104)) #missing data: 120914,121222,  121223, 
+      
       #c(121223,120914)
       #c(121021,121229)
       #c(121110, 130103, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219)
   G.db<-"full"
-  G.nCores <- 34 # because we load ngram occs.. so this might be too much for mem.. better safe than sorry
+  G.nCores <- min(50, length(G.days)) # because we load ngram occs.. so this might be too much for mem.. better safe than sorry
 }
 
 
@@ -55,8 +59,10 @@ while(!require(RPostgreSQL)){
   install.packages("RPostgreSQL")
 } 
 
+source("compgrams_utils.R")
 
-compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoch1=NULL,support=5,db=G.db){
+compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoch1=NULL,support=5,db=G.db,
+    workingRoot=G.workingRoot,dataRoot=G.dataRoot){
 
   # opposite of what happens in conttable_construct
   if(is.null(epoch1)){
@@ -82,13 +88,20 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     stop(paste("Input table",inTable,"doesn't exist.. cannot process the day")) #skippinng the day 
   }
   
-  outTable <- paste('compound',epoch2,ngramlen2,'_',day,sep="") 
+  outTable <- paste('compcnt_',epoch2,ngramlen2,'_',day,sep="") 
   
+  stagingDir <- G.workingRoot
+  if(!file.exists(stagingDir))
+    dir.create(stagingDir,recursive = T)
   
-  outputPath <- paste(G.outputRoot,"/cnt_",epoch2,ngramlen2,sep="")
+  stagingFile <- paste(stagingDir,"/",day,".csv",sep="")
+  file.create(stagingFile) #create or truncate
   
-  dayNgramOccPath <- paste(outputPath,day,".csv",sep="");
-  if(file.exists(dayNgramOccPath)){
+  outputDir <- paste(dataRoot,"/occ_yuleq_",ngramlen2,"/",sep="")
+  
+  outputFile <- paste(outputDir,day,".csv",sep="");
+  
+  if(file.exists(outputFile)){
     
     if(SKIP_DAY_IF_COMPGRAM_FILE_EXISTS){
       if(dbExistsTable(con,outTable)){
@@ -96,19 +109,19 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
       }
     }
     
-    bakname <- paste(dayNgramOccPath,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
-    warning(paste("Renaming existing output file",dayNgramOccPath,bakname))
-    file.rename(dayNgramOccPath, #from
+    bakname <- paste(outputFile,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
+    warning(paste("Renaming existing output file",outputFile,bakname))
+    file.rename(outputFile, #from
         bakname) #to
   } else {
     
-    if(!file.exists(outputPath))
-       dir.create(outputPath,recursive = TRUE)
+    if(!file.exists(outputDir))
+       dir.create(outputDir,recursive = TRUE)
   }
   
-  # create file to make sure this will be possible
-  file.create(dayNgramOccPath)
-  
+#  # create file to make sure this will be possible
+#  file.create(outputFile)
+#  
   
   if(dbExistsTable(con,outTable)){
     if(REMOVE_EXITING_COMPGRAM_TABLES){
@@ -147,10 +160,11 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   # Sorting is good if we'd use index to split: order by epochstartmillis asc
   if(ngramlen1==1){
     sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis, cnt 
-          from cnt_%s%d%s where date=%d  %s;", epoch1, ngramlen1, ifelse(ngramlen2<3,'',paste("_",day, sep="")), day, ifelse(ngramlen2<3,paste(" and cnt >",support),''))
+          from cnt_%s%d%s where date=%d and cnt > %d;", epoch1, ngramlen1, ifelse(ngramlen2<3,'',paste("_",day, sep="")), day, support)
   } else {
+    # compgrams with less occs than support wasn't written out last time.. see the yaay above :)
     sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis, cnt
-					from compound%s%d_%d;", epoch1, ngramlen1, day)
+					from compcnt_%s%d_%d;", epoch1, ngramlen1, day)
   }
   try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetching unigrams' cnts using sql:", sql)))
   
@@ -211,12 +225,16 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
 #  
 
   if(ngramlen2 == 2){
-    sqlTemplate <- sprintf("select * from ngrams%d where date=%d where timemillis >= %%d and timemillis < %%d order by timemillis;",ngramlen2,day)
+    sqlTemplate <- sprintf("select * from ngrams%d where date=%d where timemillis >= %%.0f and timemillis < %%.0f order by timemillis;",ngramlen2,day)
   } else {
-    sqlTemplate <- sprintf("select * from compgrams%d_%d where timemillis >= %%d and timemillis < %%d order by timemillis;",ngramlen2,day)    
+    sqlTemplate <- sprintf("select * from compgrams%d_%d where timemillis >= %%.0f and timemillis < %%.0f order by timemillis;",ngramlen2,day)    
   }
 
   MILLIS_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) * 1000
+  
+  flattenNgram <- function(ngram){
+    paste("{",paste(splitNgramToCompgrams(ngram,ngramlen2),collapse=","),"}",sep="")
+  } 
   
   epochGroupFun <- function(eg) {
     
@@ -238,6 +256,17 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   
     try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngram occurrences for epoch",currEpochMillis,". Num Rows: ", nrow(epochNgramOccs))))
     
+    # epochNgramOccs will be in the uni+(ngA,ngB,..) remove the paranthesis and convert plus to ,
+    # The we need to remove duplicates
+    epochNgramOccs <- within(epochNgramOccs,{
+          # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
+          #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
+          ngram <-  sub('(','"(',ngram,fixed=TRUE)
+          ngram <-  sub(')',')"',ngram,fixed=TRUE)
+          ngram <-  sub('+',',',ngram,fixed=TRUE)
+          
+        })
+    
     if(DEBUG_UGC){
       earlierEpochCheck <- which(epochNgramOccs$timemillis < currEpochMillis)
       if(any(earlierEpochCheck)){
@@ -255,52 +284,68 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     ngramOccCopyMask <- c()
     
     ngramFun <- function(ng){
-      ugramsInNgram <- unlist(strsplit(ng[1,"ngram"],ifelse(ngramlen2<3,",","+"),fixed=TRUE)) 
+      
+      ######## Mark occurrences for copying
+      if(ngramlen2<3){
+        ngramOccs <- which(epochNgramOccs$ngram == paste("(",ng[1,"ngram"],")",sep=""))
+      } else {
+        ngramOccs <- which(epochNgramOccs$ngram == ng[1,"ngram"])
+      }
+      if(DEBUG_UGC){
+        if(length(ngramOccs) != ng[1,"cnt"]){
+          try(stop(paste(ng[1,"ngram"],"ngram Occs retrieved:",length(ngramOccs),"not equal to the recorded count:",
+                      ng[1,"cnt"])))
+        }
+      }
+      
+      ngramOccCopyMask <<- c(ngramOccCopyMask, ngramOccs)
+      
+      ###### Reduce counts
+      
+      ugramsInNgram <- splitNgramToCompgrams(ng[1,"ngram"],ngramlen2) 
       
       #TODO Pure?
-    
-    ######## Mark occurrences for copying
-    if(ngramlen2<3){
-      ngramOccs <- which(epochNgramOccs$ngram == paste("(",ng[1,"ngram"],")",sep=""))
-    } else {
-      ngramOccs <- which(epochNgramOccs$ngram == ng[1,"ngram"])
-    }
-    if(DEBUG_UGC){
-      if(length(ngramOccs) != ng[1,"cnt"]){
-        try(stop(paste("ngramOccs retrieved:",length(ngramOccs),"not equal to the recorded count",ng[1,"cnt"])))
-      }
-    }
-    
-    ngramOccCopyMask <<- c(ngramOccCopyMask, ngramOccs)
-    
-    ######## Reduce counts
       for(u in 1:length(ugramsInNgram)){
         ugram <- ugramsInNgram[u]
-        
-        if(ngramlen2>2){
-          #remove the paranthesis, TODO: use braces instead of paranthesis to save the two lines below??
-          ugram<-stripEndChars(ugram)   
-        }
         
         srchStr <- paste("{",ugram,"}",sep="")
         
         ugramIx <- which(epochUnigrams$ngramarr == srchStr)
         
+        if(is.null(ugramIx)){
+          try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - WARNING: couldn't find index for component in compgrams cnt DF when trying to deduct the count of ngram",ng[1,"ngram"],"from its component",ugram)))
+        }
+        #No problem because of overlapping "(i,love)",u and i,"(love,u)" since their components will be
+        # different compgrams from the begining so the cnt will be reduced once from each component
         epochUnigrams[ugramIx,"cnt"] <- epochUnigrams[ugramIx, "cnt"] - ng[1,"cnt"]
       }
       
+     
       return(data.frame(ngramlen=ngramlen2,
-              ngramarr=paste("{",ng[1,"ngram"],"}",sep=""), 
+              ngramarr=paste("{",paste(ugramsInNgram,collapse=","),"}",sep=""), 
               date=day,epochstartmillis=currEpochMillis,
               cnt=ng[1,"cnt"])) #, TODO: lineage=ng[1,"row.names"]))
     } 
-    #debug(ngramFun)
+#    debug(ngramFun)
     
     epochCompound <- adply(idata.frame(eg),1,ngramFun,.expand=F) 
     epochCompound["X1"] <- NULL
     
+    ngramOccCopy <- epochNgramOccs[ngramOccCopyMask,]
+    if(ngramlen2>2){
+      #The returned compgrams is now flattened so that (i,love),u and i,(love,u) become i,love,u 
+      # so all the different ways it got composed should be mapped to one row with one of their counts
+      # (all counts should be the same because the YuleQ is calculated per epoch) 
+      epochCompound <- epochCompound[!duplicated(epochCompound["ngramarr"]),]
+      
+      ngramOccCopy$ngram <- aaply(ngramOccCopy$ngram,1,flattenNgram)
+
+      #same idea for occurrences, but this time per tweet
+      ngramOccCopy <- ngramOccCopy[!duplicated(ngramOccCopy["id","ngram"]),]    
+    } 
+    
     #### Copy Ngram Occs
-    write.table(epochNgramOccs[ngramOccCopyMask,], file = dayNgramOccPath, append = TRUE, quote = FALSE, sep = "\t",
+    write.table(ngramOccCopy, file = stagingFile, append = TRUE, quote = FALSE, sep = "\t",
         eol = "\n", na = "NA", dec = ".", row.names = FALSE,
         col.names = FALSE, # qmethod = c("escape", "double"),
         fileEncoding = "UTF-8")
@@ -322,23 +367,23 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     
     return(res)
   }
-  #debug(epochGroupFun)
+#  debug(epochGroupFun)
       
   combinedDf <- ddply(idata.frame(ngramDf),c("epochstartux"), epochGroupFun)
   
-
-  ######## STORE IT #######
   
+  ######## STORE IT #######
   try(stop(paste(Sys.time(), logLabelUGC, " for day:", day, " - Connected to DB",db)))
   
   try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write combinedDf to DB")))
   dbWriteTable(con,outTable,combinedDf)
   try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished writing to DB")))
   
+  file.rename(stagingFile, outputFile)
   
   #########################
   #  
-  try(dbClearResult(ngramOccRs))
+#  try(dbClearResult(ngramOccRs))
   # dbDisconnect(con, ...) closes the connection. Eg.
   try(dbDisconnect(con))
   # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
@@ -349,7 +394,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   
 #  return (combinedDf) 
 
-   return(paste("Success for day",day)) #Somehow this doesn't make it to the value of daySuccess, so it's duplicated below
+#   return(paste("Success for day",day)) #Somehow this doesn't make it to the value of daySuccess, so it's duplicated below
 }
 
 ###############################
@@ -360,13 +405,13 @@ nullCombine <- function(a,b) NULL
 allMonthes <- foreach(day=G.days,
         .inorder=FALSE, .combine='nullCombine') %dopar%
     {
-      daySuccess <- paste("Success for day", day) #"Unkown result for day",day)
+      daySuccess <- paste("Unkown result for day",day)
       
       tryCatch({
             
-            daySuccess <<- compoundUnigramsFromNgrams(day, 
+            compoundUnigramsFromNgrams(day, 
                 epoch2 = G.epoch2, ngramlen1 = G.ngramlen1, ngramlen2 = G.ngramlen2,  db = G.db, support = G.support)
-             
+            daySuccess <<- paste("Success for day", day)
           }
           ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
           ,finally=try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ", daySuccess)))

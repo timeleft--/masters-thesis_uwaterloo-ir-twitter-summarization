@@ -8,8 +8,8 @@ SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 CGX.DEBUG <- FALSE
 
 #CGX.epoch2 <- '1hr'
-CGX.ngramlen2 <- 2
-CGX.support <- 5
+CGX.ngramlen2 <- 3
+#CGX.support <- 5
 
 CGX.loglabel.DEFAULT <- "compgrams-extend"
 CGX.loglabel <- CGX.loglabel.DEFAULT
@@ -17,20 +17,22 @@ CGX.loglabel <- CGX.loglabel.DEFAULT
 if(CGX.DEBUG){
 #  epoch2=CGX.epoch2
   ngramlen2=CGX.ngramlen2
-  db='full' #'sample-0.01'
-  day<-121110
+  CGX.db <- 'sample-0.01'
+  db<-CGX.db
+  day<-121106
   maxPos=70
   startPos=0
-  inputPath = "~/r_output/compound_unigrams/"
-  outputRoot = "~/r_output/compgrams_byday/"
-  CGX.days <- c(121110, 130103)
-  CGX.db <- 'full'
+  dataPath = "~/r_output_debug/"
+  workingRoot = "~/r_output_debug/occ_extended_working/"
+  CGX.days <- c(121106, 121110)
+  
   CGX.nCores<-2
 } else {
-  CGX.days <- c(121114,121009,121129)
+  CGX.days <- unique(c( 120925,  120926,  120930,  121008,  121013,  121016,  121026,  121027,  121028,  121029,  121030,  121103,  121104,  121105,  121106,  121108,  121110,  121116,  121119,  121120,  121122,  121123,  121125,  121205,  121206,  121210,  121214,  121215,  121231,  130103,  130104)) #missing data: 120914,121222,  121223,
+      #c(121114,121009,121129)
       #c(121110, 130103, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219)
   CGX.db <- 'full'
-  CGX.nCores<-30
+  CGX.nCores<-min(50, length(CGX.days)) 
 }
 
 
@@ -54,15 +56,12 @@ while(!require(RPostgreSQL)){
 #  try(stop(paste(Sys.time(), CGX.loglabel, msg, sep=" - "))) 
 #}
 
-
-stripEndChars <- function(ngram) {
-  return(substring(ngram, 2, nchar(ngram)-1))
-}
+source("compgrams_utils.R")
 
 extendCompgramOfDay <- function(day, 
-#    epoch2=CGX.epoch2, 
+#    epoch2=CGX.epoch2, support=CGX.support,
     ngramlen2=CGX.ngramlen2,db=CGX.db,maxPos=70,startPos=0,
-    inputPath = "~/r_output/compound_unigrams/",outputRoot = "~/r_output/compgrams_byday/"){
+    dataPath = "~/r_output/",workingRoot = "~/r_output/occ_extended_working/"){
   
   # those can't change
 #  epoch1 <- epoch2
@@ -72,12 +71,15 @@ extendCompgramOfDay <- function(day,
 #      ",epoch2=",epoch2,
       ",ngramlen2=",ngramlen2,",db=",db)
   
-  outputRoot <- paste(outputRoot,"/compgrams_",
-#      epoch2,
-      ngramlen2,sep="")
+  lenDir <- paste("/occ_extended",
+      #      epoch2,
+      ngramlen2 + 1, sep="")
+  outDir <- paste(dataPath,lenDir,sep="")
   
-  outPath <- paste(outputRoot,"/",day,".csv",sep="")
+  dayFile <- paste(lenDir,"/",day,".csv",sep="")
+  outPath <- paste(dataPath,dayFile,sep="")
 
+  # if(!file.exists(dataPath)) will fail when trying to find the input file
   if(file.exists(outPath)){
     if(SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS){
        stop(paste("Output already exists:",outPath))
@@ -85,14 +87,21 @@ extendCompgramOfDay <- function(day,
     bakname <- paste(outPath,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
     warning(paste("Renaming existing output file",outPath,bakname))
     file.rename(outPath,bakname)
-   } else {
-    if(!file.exists(outputRoot))
-      dir.create(outputRoot,recursive = TRUE)
+  } else {
+    if(!file.exists(outDir)){
+      dir.create(outDir,recursive = TRUE)
+    }
   }
-
-  stagingPath <- paste(outPath,"staging",sep=".")
+  
+  stagingDir <- paste(workingRoot,lenDir,sep="")  
+  
+  if(!file.exists(stagingDir))
+    dir.create(stagingDir,recursive = TRUE)
+  
+  
   # create file to make sure this will be possible 
   # AND ALSO TO TRUNCATE ANY PARTIAL OUTPUT FROM EARLIER
+  stagingPath <- paste(workingRoot,dayFile,sep="")
   file.create(stagingPath)
   
   drv <- dbDriver("PostgreSQL")
@@ -101,7 +110,7 @@ extendCompgramOfDay <- function(day,
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Connected to DB",db), sep=" - "))) 
   
-  origCompgramOccPath <- paste(inputPath,day,".csv",sep="");
+  origCompgramOccPath <- paste(dataPath,"/occ_yuleq_",ngramlen2,"/",day,".csv",sep="");
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Reading original compound unigrams from file", origCompgramOccPath), sep=" - ")))
   
