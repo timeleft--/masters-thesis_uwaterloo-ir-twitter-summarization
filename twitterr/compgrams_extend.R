@@ -84,8 +84,8 @@ extendCompgramOfDay <- function(day,
     bakname <- paste(outPath,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
     warning(paste("Renaming existing output file",outPath,bakname))
     file.rename(outPath,bakname)
-   } 
-  }
+  } 
+  
     
   stagingPath <- paste(workingRoot,dayFile,sep="")
   if(!file.exists(workingRoot))
