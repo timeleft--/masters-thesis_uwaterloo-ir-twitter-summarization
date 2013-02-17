@@ -19,7 +19,7 @@ splitNgramToCompgrams <- function(ngram,compgramlen){
     ugramsInNgram <- aaply(ugramsInNgram[which(nzchar(ugramsInNgram))],1,function(s){
           Encoding(s) <- "UTF-8"
           ch1 <- substring(s,1,1)
-          if(ch1=='('){
+          if(ch1=='('||ch1=='{'){
             return(stripEndChars(s))
           } else if(ch1==','){
             return(substring(s,2,nchar(s)))
