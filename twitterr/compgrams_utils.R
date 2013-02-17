@@ -4,6 +4,12 @@
 ###############################################################################
 
 
+stripEndChars <- function(ngram) {
+  return(substring(ngram, 2, nchar(ngram)-1))
+}
+
+########################################################
+
 
 splitNgramToCompgrams <- function(ngram,compgramlen){
   if(compgramlen == 2){
