@@ -20,8 +20,8 @@ if(DEBUG_UGC){
   G.nCores <- 2
   G.db <- "sample-0.01"
   
-  workingRoot=G.workingRoot
-  dataRoot=G.dataRoot
+  workingRoot="~/r_output_debug/occ_yuleq_working/"
+  dataRoot="~/r_output_debug/"
   
   ngramlen1<-2
   epoch1<-NULL
