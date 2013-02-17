@@ -17,7 +17,7 @@ DEBUG_CTC <- FALSE
 if(DEBUG_CTC){
 day<-121106
 epoch1<-'1hr'
-ngramlen1<-2
+ngramlen1<-3
 ngramlen2<-ngramlen1+1
 support<-5
 epoch2<-NULL
