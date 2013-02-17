@@ -2,7 +2,8 @@
 # 
 # Author: yia
 ###############################################################################
-G.outputRoot <- "~/r_output/cntcomp_working/"
+G.outputRoot <- "~/r_output/occ_yuleq_working/"
+G.dataRoot <- "~/r_output/"
 G.epoch2 <- '1hr'
 G.ngramlen1 <- 2
 G.ngramlen2 <- G.ngramlen1 + 1
