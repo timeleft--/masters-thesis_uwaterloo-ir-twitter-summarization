@@ -18,8 +18,9 @@ do
 echo "${psql} 'DROP TABLE IF EXISTS compgrams${len}_${day};'"
 echo "${psql} 'CREATE TABLE compgrams${len}_${day} (CHECK (ngramLen = ${len} and date = ${day})) INHERITS(compgrams);'"
 echo "${psql} 'ALTER TABLE compgrams${len}_${day} ALTER COLUMN ngramlen SET DEFAULT ${len};'"
+echo "${psql} 'CREATE TABLE cnt_${epoch}${len}_${day} () INHERITS(cnt_${epoch}${len});'"
 echo "${psql} \"COPY compgrams${len}_${day} FROM '${root}/occ_extended${len}/${day}.csv'; \
-CREATE TABLE cnt_${epoch}${len}_${day} as select  ${len} as ngramLen, regexp_split_to_array(ngram,'\\+') as ngramarr, ${day} as date, floor(timemillis/3600000) * 3600000 as epochstartmillis, count(*) as cnt from compgrams${len}_${day} group by floor(timemillis/3600000),ngram; \"&"
-    
+ INSERT INTO cnt_${epoch}${len}_${day} select  ${len} as ngramLen, regexp_split_to_array(ngram,'\\+') as ngramarr, ${day} as date, floor(timemillis/3600000) * 3600000 as epochstartmillis, count(*) as cnt from compgrams${len}_${day} group by floor(timemillis/3600000),ngram; \"&"
+#Will insert  need explicit type casing? 
 done
 
