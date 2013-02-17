@@ -122,7 +122,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
   } else {
     # compgrams with no enough support were not originally stored 
     sql <- sprintf("select epochstartux, ngramarr as unigram, cnt as unigramcnt
-										from compound%s%d_%d;",epoch1, ngramlen1, day) #order by cnt desc
+										from compcnt_%s%d_%d;",epoch1, ngramlen1, day) #order by cnt desc
   }
   ugramRs <- dbSendQuery(con,sql)
    #epochstartmillis asc, -> I had an idea but if I can't get it right.. screw it! I wanna finish my masters!

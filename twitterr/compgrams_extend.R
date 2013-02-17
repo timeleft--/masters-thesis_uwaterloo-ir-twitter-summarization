@@ -110,7 +110,7 @@ extendCompgramOfDay <- function(day,
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Connected to DB",db), sep=" - "))) 
   
-  origCompgramOccPath <- paste(dataPath,"/occ_yuleq",ngramlen2,"/",day,".csv",sep="");
+  origCompgramOccPath <- paste(dataPath,"/occ_yuleq_",ngramlen2,"/",day,".csv",sep="");
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Reading original compound unigrams from file", origCompgramOccPath), sep=" - ")))
   
