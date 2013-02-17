@@ -22,7 +22,7 @@ if(CGX.DEBUG){
   maxPos=70
   startPos=0
   inputPath = "~/r_output/compound_unigrams/"
-  outputRoot = "~/r_output/compgrams_byday/"
+  outputRoot = "~/r_output/compgrams/"
   CGX.days <- c(121110, 130103)
   CGX.db <- 'full'
   CGX.nCores<-2
@@ -74,7 +74,7 @@ extendCompgramOfDay <- function(day,
   
   outputRoot <- paste(outputRoot,"/compgrams_",
 #      epoch2,
-      ngramlen2,sep="")
+      ngramlen2 + 1,sep="")
   
   outPath <- paste(outputRoot,"/",day,".csv",sep="")
 

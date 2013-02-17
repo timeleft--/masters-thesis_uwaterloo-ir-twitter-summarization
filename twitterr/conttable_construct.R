@@ -45,26 +45,7 @@ stripEndChars <- function(ngram) {
 }
 
 ########################################################
-
-splitNgramToCompgrams <- function(ngram,compgramlen){
-  if(compgramlen == 2){
-    ugramsInNgram <- unlist(strsplit(ngram, ","))
-  } else {
-    ugramsInNgram <- unlist(strsplit(ngram, '"'))
-    ugramsInNgram <- aaply(ugramsInNgram[which(nzchar(ugramsInNgram))],1,function(str){
-          
-          ch1 <- substring(str,1,1)
-          if(ch1=='('){
-            return(stripEndChars(str))
-          } else if(ch1==','){
-            return(substring(str,2,nchar(str)))
-          } else { # The coma will be the last char
-            return(substring(str,1,nchar(str)-1))
-          }
-        })
-  }
-  return(ugramsInNgram)
-}
+source("compgrams_utils.R")
 
 ##########################################################
 # Makes sure all epochs are the same length
