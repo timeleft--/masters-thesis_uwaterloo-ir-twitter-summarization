@@ -5,7 +5,7 @@ if [ $# -ne 2 ]; then #3
 fi
 db=${1}
 len=${2}
-root='~/r_output/' #${3}
+root='/home/yaboulna/r_output' #${3}
 epoch='1hr'
 psql="psql -p 5433 -d ${db} -c "
 
