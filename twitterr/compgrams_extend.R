@@ -21,8 +21,8 @@ if(CGX.DEBUG){
   day<-121110
   maxPos=70
   startPos=0
-  inputPath = "~/r_output/compound_unigrams/"
-  outputRoot = "~/r_output/compgrams/"
+  dataPath = "~/r_output_debug/"
+  workingRoot = "~/r_output_debug/occ_extended_working/"
   CGX.days <- c(121110, 130103)
   CGX.db <- 'full'
   CGX.nCores<-2
@@ -59,7 +59,7 @@ source("compgrams_utils.R")
 extendCompgramOfDay <- function(day, 
 #    epoch2=CGX.epoch2, 
     ngramlen2=CGX.ngramlen2,db=CGX.db,maxPos=70,startPos=0,
-    inputPath = "~/r_output/compound_unigrams/",outputRoot = "~/r_output/compgrams_byday/"){
+    dataPath = "~/r_output/",workingRoot = "~/r_output/occ_extended_working/"){
   
   # those can't change
 #  epoch1 <- epoch2
@@ -69,12 +69,12 @@ extendCompgramOfDay <- function(day,
 #      ",epoch2=",epoch2,
       ",ngramlen2=",ngramlen2,",db=",db)
   
-  outputRoot <- paste(outputRoot,"/compgrams_",
-#      epoch2,
-      ngramlen2 + 1,sep="")
-  
-  outPath <- paste(outputRoot,"/",day,".csv",sep="")
+  dayFile <- paste("/occ_extended",
+    #      epoch2,
+    ngramlen2 + 1,"/",day,".csv",sep="")
+  outPath <- paste(dataPath,dayFile,sep="")
 
+  # if(!file.exists(dataPath)) will fail when trying to find the input file
   if(file.exists(outPath)){
     if(SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS){
        stop(paste("Output already exists:",outPath))
@@ -82,12 +82,12 @@ extendCompgramOfDay <- function(day,
     bakname <- paste(outPath,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
     warning(paste("Renaming existing output file",outPath,bakname))
     file.rename(outPath,bakname)
-   } else {
-    if(!file.exists(outputRoot))
-      dir.create(outputRoot,recursive = TRUE)
+   } 
   }
-
-  stagingPath <- paste(outPath,"staging",sep=".")
+    
+  stagingPath <- paste(workingRoot,dayFile,sep="")
+  if(!file.exists(workingRoot))
+    dir.create(workingRoot,recursive = TRUE)
   # create file to make sure this will be possible 
   # AND ALSO TO TRUNCATE ANY PARTIAL OUTPUT FROM EARLIER
   file.create(stagingPath)
@@ -98,7 +98,7 @@ extendCompgramOfDay <- function(day,
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Connected to DB",db), sep=" - "))) 
   
-  origCompgramOccPath <- paste(inputPath,day,".csv",sep="");
+  origCompgramOccPath <- paste(dataPath,"/occ_yuleq",ngramlen2,"/",day,".csv",sep="");
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Reading original compound unigrams from file", origCompgramOccPath), sep=" - ")))
   
