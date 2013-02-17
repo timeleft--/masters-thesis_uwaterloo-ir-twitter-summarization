@@ -71,9 +71,12 @@ extendCompgramOfDay <- function(day,
 #      ",epoch2=",epoch2,
       ",ngramlen2=",ngramlen2,",db=",db)
   
-  dayFile <- paste("/occ_extended",
-    #      epoch2,
-    ngramlen2 + 1,"/",day,".csv",sep="")
+  lenDir <- paste("/occ_extended",
+      #      epoch2,
+      ngramlen2 + 1, sep="")
+  outDir <- paste(dataPath,lenDir,sep="")
+  
+  dayFile <- paste(lenDir,"/",day,".csv",sep="")
   outPath <- paste(dataPath,dayFile,sep="")
 
   # if(!file.exists(dataPath)) will fail when trying to find the input file
@@ -84,14 +87,21 @@ extendCompgramOfDay <- function(day,
     bakname <- paste(outPath,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
     warning(paste("Renaming existing output file",outPath,bakname))
     file.rename(outPath,bakname)
-  } 
+  } else {
+    if(!file.exists(outDir)){
+      dir.create(outDir,recursive = TRUE)
+    }
+  }
   
-    
-  stagingPath <- paste(workingRoot,dayFile,sep="")
-  if(!file.exists(workingRoot))
-    dir.create(workingRoot,recursive = TRUE)
+  stagingDir <- paste(workingRoot,lenDir,sep="")  
+  
+  if(!file.exists(stagingDir))
+    dir.create(stagingDir,recursive = TRUE)
+  
+  
   # create file to make sure this will be possible 
   # AND ALSO TO TRUNCATE ANY PARTIAL OUTPUT FROM EARLIER
+  stagingPath <- paste(workingRoot,dayFile,sep="")
   file.create(stagingPath)
   
   drv <- dbDriver("PostgreSQL")
