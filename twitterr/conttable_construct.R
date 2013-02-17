@@ -15,13 +15,13 @@ DEBUG_CTC <- FALSE
 #options(error=utils::recover) 
 #For debug
 if(DEBUG_CTC){
-day<-121110
+day<-121106
 epoch1<-'1hr'
-ngramlen2<-3
 ngramlen1<-2
+ngramlen2<-ngramlen1+1
 support<-5
 epoch2<-NULL
-db<-"full" #"sample-0.01"
+db<-"sample-0.01"
 alignEpochs<-FALSE
 appendPosixTime<-FALSE
 withTotal<-TRUE
@@ -31,8 +31,12 @@ progress<-"none" #text isn't good with parallel
 }
 
 while(!require(plyr)){
-  install.packages("plyer")
+  install.packages("plyr")
 }
+while(!require(Matrix)){
+  install.packages("Matrix")
+}
+
 
 ########################################################
 
@@ -118,9 +122,9 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
           b.ngramarr as ngram, b.cnt as togethercnt
           from cnt_%s%d%s b 
           join volume_%s%d%s v on v.epochstartmillis = b.epochstartmillis
-          where b.date=%d  %s;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste("_",day, sep="")), 
+          where b.date=%d and b.cnt > %d;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste("_",day, sep="")), 
       epoch1, ngramlen1, ifelse(ngramlen1<2,'',paste("_",day,sep="")), 
-      day, ifelse(ngramlen2<3,paste(" and b.cnt >",support),''))
+      day, support)
   # order by b.epochstartmillis asc <- necessary for the index shifting idea
   ngramRs <- dbSendQuery(con,sql)
 # Test SQL: select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, b.ngramarr as ngram, b.cnt as togethercnt from cnt_1hr2 b join volume_1hr1 v on v.epochstartmillis = b.epochstartmillis where b.date=121106 and b.cnt > 5;
@@ -129,16 +133,18 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
   
   try(stop(paste(Sys.time(), "conttable_construct() for day:", day, " - Fetched ngrams' cnts using sql: ", sql)))
   
-  ngramDf <- within(ngramDf,{  # SQL below selects the array element: unigram=stripEndChars(unigram)
-        ngram=stripEndChars(ngram)})
-  
   #cleanup
   # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
   try(dbClearResult(ngramRs))
+  
+  ngramDf <- within(ngramDf,{  # SQL below selects the array element: unigram=stripEndChars(unigram)
+        ngram=stripEndChars(ngram)})
+  
   if(ngramlen1==1){
     sql <- sprintf("select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt
                   from cnt_%s%d where date=%d and cnt > %d order by cnt desc;", epoch1, ngramlen1, day, support)
   } else {
+    # compgrams with no enough support were not originally stored 
     sql <- sprintf("select epochstartux, ngramarr as unigram, cnt as unigramcnt
 										from compound%s%d_%d;",epoch1, ngramlen1, day) #order by cnt desc
   }
@@ -176,28 +182,11 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
   # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
   try(dbUnloadDriver(drv))
 
-  
-  while(!require(plyr)){
-    install.packages("plyr")
-  }
-#  if(parallel){
-#    while(!require(foreach)){
-#      install.packages("foreach")
-#    }
-#    if(!require(doMC)){
-#      install.packages("doMC")
-#    }
-#    registerDoMC()
-#  }
-  
-  while(!require(Matrix)){
-    install.packages("Matrix")
-  }
- 
+
   
   handleErrors <- function(e) {
     if(DEBUG_ERRORS){
-      print(e)
+      try(stop(e))
     } else {
       stop(e)
     }
@@ -393,7 +382,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
         cooccurs <<- cooccurs
       }
    
-#      debug(countCooccurNooccurNgram)
+      #debug(countCooccurNooccurNgram)
 #      setBreakpoint("conttable_construct.R#249")
       ngramGrp <- d_ply(idata.frame(eg), c("ngram"), countCooccurNooccurNgram)
 
@@ -416,7 +405,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
       }
       return(res)    
     }
-#    debug(createCooccurNooccur)
+    #debug(createCooccurNooccur)
 #setBreakpoint("concattable_construct.R#69")
    
     try(stop(paste(Sys.time(), "conttable_construct() for day:", day, " - Will create epoch groups")))
