@@ -54,10 +54,7 @@ while(!require(RPostgreSQL)){
 #  try(stop(paste(Sys.time(), CGX.loglabel, msg, sep=" - "))) 
 #}
 
-
-stripEndChars <- function(ngram) {
-  return(substring(ngram, 2, nchar(ngram)-1))
-}
+source("compgrams_utils.R")
 
 extendCompgramOfDay <- function(day, 
 #    epoch2=CGX.epoch2, 

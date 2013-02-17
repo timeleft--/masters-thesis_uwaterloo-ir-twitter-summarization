@@ -40,11 +40,6 @@ while(!require(Matrix)){
 
 ########################################################
 
-stripEndChars <- function(ngram) {
-  return(substring(ngram, 2, nchar(ngram)-1))
-}
-
-########################################################
 source("compgrams_utils.R")
 
 ##########################################################
