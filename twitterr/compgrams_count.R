@@ -2,7 +2,7 @@
 # 
 # Author: yia
 ###############################################################################
-G.outputRoot <- "~/r_output/occ_yuleq_working/"
+G.workingRoot <- "~/r_output/occ_yuleq_working/"
 G.dataRoot <- "~/r_output/"
 G.epoch2 <- '1hr'
 G.ngramlen1 <- 2
@@ -19,6 +19,9 @@ if(DEBUG_UGC){
   G.days<-c(121106,121110)
   G.nCores <- 2
   G.db <- "sample-0.01"
+  
+  workingRoot=G.workingRoot
+  dataRoot=G.dataRoot
   
   ngramlen1<-2
   epoch1<-NULL
@@ -58,7 +61,8 @@ while(!require(RPostgreSQL)){
 
 source("compgrams_utils.R")
 
-compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoch1=NULL,support=5,db=G.db){
+compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoch1=NULL,support=5,db=G.db,
+    workingRoot=G.workingRoot,dataRoot=G.dataRoot){
 
   # opposite of what happens in conttable_construct
   if(is.null(epoch1)){
@@ -84,13 +88,20 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     stop(paste("Input table",inTable,"doesn't exist.. cannot process the day")) #skippinng the day 
   }
   
-  outTable <- paste('compound',epoch2,ngramlen2,'_',day,sep="") 
+  outTable <- paste('compcnt_',epoch2,ngramlen2,'_',day,sep="") 
   
+  stagingDir <- G.workingRoot
+  if(!file.exists(stagingDir))
+    dir.create(stagingDir,recursive = T)
   
-  outputPath <- paste(G.outputRoot,"/cnt_",epoch2,ngramlen2,"/",sep="")
+  stagingFile <- paste(stagingDir,"/",day,".csv",sep="")
+  file.create(stagingFile) #create or truncate
   
-  dayNgramOccPath <- paste(outputPath,day,".csv",sep="");
-  if(file.exists(dayNgramOccPath)){
+  outputDir <- paste(dataRoot,"/occ_yuleq_",ngramlen2,"/",sep="")
+  
+  outputFile <- paste(outputDir,day,".csv",sep="");
+  
+  if(file.exists(outputFile)){
     
     if(SKIP_DAY_IF_COMPGRAM_FILE_EXISTS){
       if(dbExistsTable(con,outTable)){
@@ -98,19 +109,19 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
       }
     }
     
-    bakname <- paste(dayNgramOccPath,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
-    warning(paste("Renaming existing output file",dayNgramOccPath,bakname))
-    file.rename(dayNgramOccPath, #from
+    bakname <- paste(outputFile,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
+    warning(paste("Renaming existing output file",outputFile,bakname))
+    file.rename(outputFile, #from
         bakname) #to
   } else {
     
-    if(!file.exists(outputPath))
-       dir.create(outputPath,recursive = TRUE)
+    if(!file.exists(outputDir))
+       dir.create(outputDir,recursive = TRUE)
   }
   
-  # create file to make sure this will be possible
-  file.create(dayNgramOccPath)
-  
+#  # create file to make sure this will be possible
+#  file.create(outputFile)
+#  
   
   if(dbExistsTable(con,outTable)){
     if(REMOVE_EXITING_COMPGRAM_TABLES){
@@ -153,7 +164,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   } else {
     # compgrams with less occs than support wasn't written out last time.. see the yaay above :)
     sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis, cnt
-					from compound%s%d_%d;", epoch1, ngramlen1, day)
+					from compcnt_%s%d_%d;", epoch1, ngramlen1, day)
   }
   try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetching unigrams' cnts using sql:", sql)))
   
@@ -334,7 +345,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     } 
     
     #### Copy Ngram Occs
-    write.table(ngramOccCopy, file = dayNgramOccPath, append = TRUE, quote = FALSE, sep = "\t",
+    write.table(ngramOccCopy, file = stagingFile, append = TRUE, quote = FALSE, sep = "\t",
         eol = "\n", na = "NA", dec = ".", row.names = FALSE,
         col.names = FALSE, # qmethod = c("escape", "double"),
         fileEncoding = "UTF-8")
@@ -360,19 +371,19 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
       
   combinedDf <- ddply(idata.frame(ngramDf),c("epochstartux"), epochGroupFun)
   
-
-  ######## STORE IT #######
   
+  ######## STORE IT #######
   try(stop(paste(Sys.time(), logLabelUGC, " for day:", day, " - Connected to DB",db)))
   
   try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write combinedDf to DB")))
   dbWriteTable(con,outTable,combinedDf)
   try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished writing to DB")))
   
+  file.rename(stagingFile, outputFile)
   
   #########################
   #  
-  try(dbClearResult(ngramOccRs))
+#  try(dbClearResult(ngramOccRs))
   # dbDisconnect(con, ...) closes the connection. Eg.
   try(dbDisconnect(con))
   # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
