@@ -205,7 +205,7 @@ if(DEBUG_NGA){
 
   supp<-5
   epoch<-'1hr'
-  compgramlen<-2
+  compgramlen<-3 #should actually say ngramlen1 but ok
   ngramlen<-compgramlen+1
   
 
