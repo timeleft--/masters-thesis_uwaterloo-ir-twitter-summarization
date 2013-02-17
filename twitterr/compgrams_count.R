@@ -5,7 +5,7 @@
 G.workingRoot <- "~/r_output/occ_yuleq_working/"
 G.dataRoot <- "~/r_output/"
 G.epoch2 <- '1hr'
-G.ngramlen1 <- 2
+G.ngramlen1 <- 3
 G.ngramlen2 <- G.ngramlen1 + 1
 G.support<-5
 
