@@ -2,7 +2,7 @@
 # 
 # Author: yia
 ###############################################################################
-G.outputRoot <- "~/r_output/cnt_compound/"
+G.outputRoot <- "~/r_output/cntcomp_working/"
 G.epoch2 <- '1hr'
 G.ngramlen1 <- 2
 G.ngramlen2 <- G.ngramlen1 + 1
