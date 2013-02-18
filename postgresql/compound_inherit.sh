@@ -19,7 +19,7 @@ for day in  121110 130103 121016 121206 121210 120925 121223 121205 130104 12110
 do
 
 echo "${psql} \"ALTER TABLE compcnt_${epoch}${len}_${day} DROP COLUMN IF EXISTS epochstartmillis;\
-    ALTER TABLE compcnt_${epoch}${len}_${day} INHERIT (compcnt_${epoch}${len}) ;\""
+    ALTER TABLE compcnt_${epoch}${len}_${day} INHERIT compcnt_${epoch}${len} ;\""
     
 done
 
