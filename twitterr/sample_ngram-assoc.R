@@ -17,6 +17,8 @@ conFull <- dbConnect(drv, dbname="full", user="yaboulna", password="5#afraPG",
 conSample <- dbConnect(drv, dbname="sample-0.01", user="yaboulna", password="5#afraPG",
     host="hops.cs.uwaterloo.ca", port="5433")
 
+######################
+
 sql <- sprintf("select * from cnt_%s%d%s b where date=%s ;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste("_",day, sep="")), 
     day)
 
@@ -27,7 +29,7 @@ ngramDf <- fetch(ngramRs, n=-1)
 
 try(dbClearResult(ngramRs))
 
-chosenIx <- sample(1:nrow(ngramDf),nrow(ngramDf)/10)
+chosenIx <- sample(1:nrow(ngramDf),nrow(ngramDf)/100)
 ngramSample <- ngramDf[chosenIx,]
 
 dbWriteTable(conSample,sprintf("cnt_%s%d%s",epoch2,ngramlen2,ifelse(ngramlen2<3,'',paste("_",day, sep=""))),ngramSample)
@@ -72,6 +74,21 @@ try(dbClearResult(ugramRs))
 ugramDf["row.names"] <- NULL
 
 dbWriteTable(conSample,sprintf("compcnt_%s%d_%d",epoch1, ngramlen1, day),ugramDf)
+
+##################################################
+#This is actually for compgrams_count, but I'm sneaking it in
+
+compgramsFullRs <- dbSendQuery(conFull,sprintf("SELECT * FROM compgrams%d_%d", ngramlen2,day))
+compgramsFullDf <- fetch(compgramsFullRs,n=-1)
+try(dbClearResult(compgramsFullRs))
+
+compgramsSampleIx <- sample(1:nrow(compgramsFullDf),nrow(compgramsFullDf)/100)
+compgramsSampleDf <- compgramsFullDf[compgramsSampleIx,]
+rm(compgramsFullDf)
+dbWriteTable(conSample,sprintf("compgrams%d_%d", ngramlen2,day),compgramsSampleDf)
+rm(compgramsSampleDf)
+
+##################################################
 
 try(dbDisconnect(conFull))
 try(dbDisconnect(conSample))

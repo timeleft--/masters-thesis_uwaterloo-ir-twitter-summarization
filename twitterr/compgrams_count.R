@@ -6,7 +6,7 @@ G.workingRoot <- "~/r_output/occ_yuleq_working/"
 G.dataRoot <- "~/r_output/"
 G.epoch2 <- '1hr'
 G.ngramlen1 <- 3
-G.ngramlen2 <- G.ngramlen1 + 1
+#G.ngramlen2 <- G.ngramlen1 + 1
 G.support<-5
 
 logLabelUGC <- "unigrams_createCompound()" #Recall()???
@@ -23,10 +23,10 @@ if(DEBUG_UGC){
   workingRoot="~/r_output_debug/occ_yuleq_working/"
   dataRoot="~/r_output_debug/"
   
-  ngramlen1<-2
+  ngramlen1<-G.ngramlen1
   epoch1<-NULL
   epoch2 <- G.epoch2  
-  ngramlen2 <- G.ngramlen2
+#  ngramlen2 <- G.ngramlen2
   support <- G.support
   
   day <- 121106
@@ -61,9 +61,12 @@ while(!require(RPostgreSQL)){
 
 source("compgrams_utils.R")
 
-compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoch1=NULL,support=5,db=G.db,
+compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,support=5,db=G.db,
     workingRoot=G.workingRoot,dataRoot=G.dataRoot){
 
+  #can't be changed
+  ngramlen2 <- ngramlen1 + 1
+  
   # opposite of what happens in conttable_construct
   if(is.null(epoch1)){
     epoch1<-epoch2
@@ -90,7 +93,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   
   outTable <- paste('compcnt_',epoch2,ngramlen2,'_',day,sep="") 
   
-  stagingDir <- G.workingRoot
+  stagingDir <- workingRoot
   if(!file.exists(stagingDir))
     dir.create(stagingDir,recursive = T)
   
@@ -159,11 +162,11 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
    #We want all unigrams, not only those with high support.. or not! Screw the low support unigrams.. yaay!
   # Sorting is good if we'd use index to split: order by epochstartmillis asc
   if(ngramlen1==1){
-    sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis, cnt 
+    sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis/1000 as epochstartux, cnt 
           from cnt_%s%d%s where date=%d and cnt > %d;", epoch1, ngramlen1, ifelse(ngramlen2<3,'',paste("_",day, sep="")), day, support)
   } else {
     # compgrams with less occs than support wasn't written out last time.. see the yaay above :)
-    sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis, cnt
+    sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis/1000 as epochstartux, cnt
 					from compcnt_%s%d_%d;", epoch1, ngramlen1, day)
   }
   try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetching unigrams' cnts using sql:", sql)))
@@ -225,12 +228,12 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
 #  
 
   if(ngramlen2 == 2){
-    sqlTemplate <- sprintf("select * from ngrams%d where date=%d where timemillis >= %%.0f and timemillis < %%.0f order by timemillis;",ngramlen2,day)
+    sqlTemplate <- sprintf("select * from ngrams%d where date=%d where timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 10000::INT8) order by timemillis;",ngramlen2,day)
   } else {
-    sqlTemplate <- sprintf("select * from compgrams%d_%d where timemillis >= %%.0f and timemillis < %%.0f order by timemillis;",ngramlen2,day)    
+    sqlTemplate <- sprintf("select * from compgrams%d_%d where timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) order by timemillis;",ngramlen2,day)    
   }
 
-  MILLIS_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) * 1000
+  SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
   
   flattenNgram <- function(ngram){
     paste("{",paste(splitNgramToCompgrams(ngram,ngramlen2),collapse=","),"}",sep="")
@@ -238,15 +241,15 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   
   epochGroupFun <- function(eg) {
     
-    currEpochMillis <- eg[1,"epochstartux"] * 1000
-    epochUnigrams <- ugramDf[ugramDf$epochstartmillis == (currEpochMillis),]
+    epochstartux <- eg[1,"epochstartux"] #stay away from large numbers * 1000
+    epochUnigrams <- ugramDf[ugramDf$epochstartux == (epochstartux),]
     
-#    epochNgramVol <- ngramVolDf[ngramVolDf$epochstartmillis == (currEpochMillis), "totalcnt"]
+#    epochNgramVol <- ngramVolDf[ngramVolDf$epochstartux == (epochstartux), "totalcnt"]
 #    
 #    epochNgramOccs <- fetch(ngramOccRs, n=epochNgramVol) # if ordered we can fetch them in chuncks
     
     sql <- sprintf(sqlTemplate,
-         currEpochMillis, (currEpochMillis + MILLIS_IN_EPOCH[[paste("X",epoch2,sep="")]]))
+         epochstartux, (epochstartux + SEC_IN_EPOCH[[paste("X",epoch2,sep="")]]))
   
     try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetching ngram occurrences for epoch using sql:\n ", sql)))
   
@@ -254,29 +257,35 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     epochNgramOccs <- fetch(epochNgramOccRs, n=-1)
     try(dbClearResult(epochNgramOccRs))
   
-    try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngram occurrences for epoch",currEpochMillis,". Num Rows: ", nrow(epochNgramOccs))))
+    try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngram occurrences for epoch",epochstartux,". Num Rows: ", nrow(epochNgramOccs))))
     
     # epochNgramOccs will be in the uni+(ngA,ngB,..) remove the paranthesis and convert plus to ,
     # The we need to remove duplicates
-    epochNgramOccs <- within(epochNgramOccs,{
+    if(ngramlen2>3){
+      epochNgramOccs <- within(epochNgramOccs,{
           # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
           #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
-          ngram <-  sub(ifelse(ngramlen2>3,'{','('),'"(',ngram,fixed=TRUE)
-#          ngram <-  sub('{','"(',ngram,fixed=TRUE)
-          ngram <-  sub(ifelse(ngramlen2>3,'}',')'),')"',ngram,fixed=TRUE)
-#          ngram <-  sub('}',')"',ngram,fixed=TRUE)
+          ngram <-  sub('{','"{',ngram,fixed=TRUE)
+          ngram <-  sub('}','}"',ngram,fixed=TRUE)
           ngram <-  sub('+',',',ngram,fixed=TRUE)
-          
         })
-    
+    } else {
+      epochNgramOccs <- within(epochNgramOccs,{
+            # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
+            #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
+            ngram <-  sub('(','"(',ngram,fixed=TRUE)
+            ngram <-  sub(')',')"',ngram,fixed=TRUE)
+            ngram <-  sub('+',',',ngram,fixed=TRUE)
+          })
+    }
     if(DEBUG_UGC){
-      earlierEpochCheck <- which(epochNgramOccs$timemillis < currEpochMillis)
+      earlierEpochCheck <- which(epochNgramOccs$timemillis / 1000 < epochstartux)
       if(any(earlierEpochCheck)){
         warning("Some ngrams we are fetching are of an earlier epoch", paste(earlierEpochCheck,collapse = "|"))
       }
       rm(earlierEpochCheck)
       
-      laterEpochCheck <- which(epochNgramOccs$timemillis >= (3600000 + currEpochMillis)) # THIS IS for 1hr epoch only
+      laterEpochCheck <- which(epochNgramOccs$timemillis / 1000 >= (3600 + epochstartux)) # THIS IS for 1hr epoch only
       if(any(laterEpochCheck)){
         warning("Some ngrams we are fetching are of a later epoch", paste(laterEpochCheck,collapse = "|"))
       }
@@ -316,6 +325,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
         
         if(is.null(ugramIx)){
           try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - WARNING: couldn't find index for component in compgrams cnt DF when trying to deduct the count of ngram",ng[1,"ngram"],"from its component",ugram)))
+          next
         }
         #No problem because of overlapping "(i,love)",u and i,"(love,u)" since their components will be
         # different compgrams from the begining so the cnt will be reduced once from each component
@@ -325,7 +335,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
      
       return(data.frame(ngramlen=ngramlen2,
               ngramarr=paste("{",paste(ugramsInNgram,collapse=","),"}",sep=""), 
-              date=day,epochstartmillis=currEpochMillis,
+              date=day,#epochstartux=epochstartux,
               cnt=ng[1,"cnt"])) #, TODO: lineage=ng[1,"row.names"]))
     } 
 #    debug(ngramFun)
@@ -358,13 +368,13 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     ######################
 #    
 #    epochUnigrams <- arrange(epochUnigrams, -cnt)
-#    origUnigrams <- arrange(ugramDf[ugramDf$epochstartmillis == (currEpochMillis),"cnt"],-ct)
+#    origUnigrams <- arrange(ugramDf[ugramDf$epochstartmillis == (epochstartux),"cnt"],-ct)
 #  source("plot_unigramVsCompound_hist.R")
 #  plotUnigramVsCompoundHistogram(combinedDf, ugramDf);
 
     
     ### END PLOTTING#######
-    
+    epochUnigrams$epochstartux <- NULL # Will be added by ddply
     res <- rbind(epochUnigrams, epochCompound) #.fill -> destroys the ngramarr of epochCompound
     
     return(res)
