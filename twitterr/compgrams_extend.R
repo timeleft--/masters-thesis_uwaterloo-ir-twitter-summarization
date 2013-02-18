@@ -7,8 +7,9 @@ SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
 CGX.DEBUG <- FALSE
 
+CGX.argv <- commandArgs(trailingOnly = TRUE)
 #CGX.epoch2 <- '1hr'
-CGX.ngramlen2 <- 4
+CGX.ngramlen2 <- as.integer(CGX.argv[1]) + 1
 #CGX.support <- 5
 
 CGX.loglabel.DEFAULT <- "compgrams-extend"
