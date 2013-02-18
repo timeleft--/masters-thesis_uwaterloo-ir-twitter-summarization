@@ -9,7 +9,7 @@ len=${2}
 epoch='1hr'
 psql="psql -p 5433 -d ${db} -c "
 
-echo "${psql} 'CREATE TABLE compcnt_${epoch}${len} (row.names  text, \
+echo "${psql} 'CREATE TABLE compcnt_${epoch}${len} (\"row.names\"  text, \
 epochstartux double, \
 ngramlen double, \
 ngramarr  text, \
