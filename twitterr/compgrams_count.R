@@ -422,7 +422,7 @@ allMonthes <- foreach(day=G.days,
       tryCatch({
             
             compoundUnigramsFromNgrams(day, 
-                epoch2 = G.epoch2, ngramlen1 = G.ngramlen1, ngramlen2 = G.ngramlen2,  db = G.db, support = G.support)
+                epoch2 = G.epoch2, ngramlen1 = G.ngramlen1,  db = G.db, support = G.support)
             daySuccess <<- paste("Success for day", day)
           }
           ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
