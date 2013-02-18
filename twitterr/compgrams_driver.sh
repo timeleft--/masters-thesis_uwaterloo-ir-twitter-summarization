@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for ngramlen1 in {4..10}
+for ngramlen1 in 4 5 6 7 8 9 10
 do
     ngramlen2=`expr ${ngramlen1} + 1`
     echo "\
