@@ -11,7 +11,7 @@ G.support<-5
 
 logLabelUGC <- "unigrams_createCompound()" #Recall()???
 
-REMOVE_EXITING_COMPGRAM_TABLES<-FALSE
+REMOVE_EXITING_COMPGRAM_TABLES<-TRUE
 SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE
 DEBUG_UGC <- FALSE
 
@@ -261,10 +261,10 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
     epochNgramOccs <- within(epochNgramOccs,{
           # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
           #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
-          ngram <-  sub('(','"(',ngram,fixed=TRUE)
-          ngram <-  sub('{','"(',ngram,fixed=TRUE)
-          ngram <-  sub(')',')"',ngram,fixed=TRUE)
-          ngram <-  sub('}',')"',ngram,fixed=TRUE)
+          ngram <-  sub(ifelse(ngramlen2>3,'{','('),'"(',ngram,fixed=TRUE)
+#          ngram <-  sub('{','"(',ngram,fixed=TRUE)
+          ngram <-  sub(ifelse(ngramlen2>3,'}',')'),')"',ngram,fixed=TRUE)
+#          ngram <-  sub('}',')"',ngram,fixed=TRUE)
           ngram <-  sub('+',',',ngram,fixed=TRUE)
           
         })
