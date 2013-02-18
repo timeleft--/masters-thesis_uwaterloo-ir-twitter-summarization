@@ -125,7 +125,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
   
   if(dbExistsTable(con,outTable)){
     if(REMOVE_EXITING_COMPGRAM_TABLES){
-      stop(paste("Output table",outTable,"already exist. Removing it."))
+      try(stop(paste("Output table",outTable,"already exist. Removing it.")))
       dbRemoveTable(con,outTable)
     } else {
       try(dbDisconnect(con))
