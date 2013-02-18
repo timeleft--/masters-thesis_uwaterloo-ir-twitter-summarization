@@ -22,7 +22,8 @@ do
     sh ../postgresql/compgrams_${ngramlen2}_index.sh > ../postgresql/compgrams_${ngramlen2}_index.out \n\
 \n\
     echo \"Creating volume table as aggregate of counts of compgrams of legnthes UPTO ${ngramlen1}. Commands logged in: ../postgresql/volume_1hr${ngramlen1}_aggregate.sh\"\n\
-    sh ../postgresql/compound_aggregate.sh full ${ngramlen1} > ../postgresql/volume_1hr$ {ngramlen1}_aggregate.sh \n\
+    sh ../postgresql/compound_aggregate.sh full ${ngramlen1} > ../postgresql/volume_1hr$
+{ngramlen1}_aggregate.sh \n\
     sh ../postgresql/volume_1hr${ngramlen1}_aggregate.sh > ../postgresql/volume_1hr${ngramlen1}_aggregate.out \n\
 \n\
     echo \"Creating compcnt inheritence heirarchny, just for convinence of analysis. Commands logged in: ../postgresql/compcnt-hier_1hr${ngramlen1}_alter.sh\" \n\
