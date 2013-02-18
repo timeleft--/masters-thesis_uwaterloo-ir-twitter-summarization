@@ -6,7 +6,7 @@
 
 DEBUG_NGA<-FALSE
 
-REMOVE_EXITING_OUTPUTS<-FALSE
+REMOVE_EXITING_OUTPUTS<-TRUE
 
 # parallelWithinDay<-FALSE
 #parOpts<-"cores=24" #2 for debug 
@@ -254,8 +254,8 @@ NGA.DEBUG_ERRORS <- TRUE
         if(dbExistsTable(con,tableName)){
           if(REMOVE_EXITING_OUTPUTS){
             dbRemoveTable(con,tableName)
-            try(dbDisconnect(con))
-            try(dbUnloadDriver(drv))
+#            try(dbDisconnect(con))
+#            try(dbUnloadDriver(drv))
           } else {
             try(dbDisconnect(con))
             try(dbUnloadDriver(drv))
@@ -263,7 +263,7 @@ NGA.DEBUG_ERRORS <- TRUE
           }
         }
         try(dbDisconnect(con))
-#        try(dbUnloadDriver(drv))
+       try(dbUnloadDriver(drv))
         
         dayEpochGrps <- # doesn't work in case of dopar.. they must be doing something with environments NULL 
           conttable_construct(day, db=db, ngramlen1=compgramlen,ngramlen2=ngramlen, epoch1=epoch, support=supp)
@@ -279,6 +279,7 @@ NGA.DEBUG_ERRORS <- TRUE
         #Leave the hour of the day.. it's good
 #            ngrams2AssocT['X1'] <- NULL
         
+        drv <- dbDriver("PostgreSQL")
         con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
                 host="hops.cs.uwaterloo.ca", port="5433")
         try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write", tablename, "to DB")))
