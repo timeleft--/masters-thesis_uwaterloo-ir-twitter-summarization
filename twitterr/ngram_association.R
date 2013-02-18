@@ -30,7 +30,18 @@ agreementTable <- function(comps,cooccurs,
 #  sec0   |      |      |
      
   secAfterNotFirst <- cooccurs[compsIx[2],totalIx] - cooccurs[compsIx[1],compsIx[2]] # THIS WAS WRONG notoccurs[compsIx[2],compsIx[1]],
+  
+  if(secAfterNotFirst < 0){
+    try(stop(paste("WARNING: a0b1 was negative: ",secAfterNotFirst,". bCnt =",cooccurs[compsIx[2],totalIx],", compsIx:", paste(compsIx,collapse="|"))))
+    secAfterNotFirst <- 0
+  }
+  
   firstBeforeNotSec <- cooccurs[compsIx[1],totalIx] - cooccurs[compsIx[1],compsIx[2]] # notoccurs[compsIx[1], compsIx[2]]
+  
+  if(secAfterNotFirst < 0){
+    try(stop(paste("WARNING: a1b0 was negative: ",firstBeforeNotSec,". aCnt =",cooccurs[compsIx[1],totalIx],", compsIx:", paste(compsIx,collapse="|"))))
+    firstBeforeNotSec <- 0
+  }
   
   agreement <- matrix(c(cooccurs[compsIx[1],compsIx[2]],secAfterNotFirst,
           firstBeforeNotSec,
@@ -173,7 +184,7 @@ NGA.DEBUG_ERRORS <- TRUE
     return(data.frame(ngramlen=ngramlen,date=day,epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=ngAssoc)) 
   }
   
-#  debug(calcEpochAssoc)
+  #debug(calcEpochAssoc)
 
 
 ####################################################    
@@ -230,7 +241,7 @@ if(DEBUG_NGA){
   allMonthes <- foreach(day=days,
           .inorder=FALSE, .combine='nullCombine') %dopar%
       {
-        daySuccess <- paste("Unkown result for day",day)
+        daySuccess <- paste("Unknown result for day",day)
         
         tryCatch({
         tableName <- paste('assoc',epoch,ngramlen,'_',day,sep="") 
@@ -249,6 +260,8 @@ if(DEBUG_NGA){
             stop(paste("Output table",tableName,"already exist. Please remove it yourself."))
           }
         }
+        try(dbDisconnect(con))
+#        try(dbUnloadDriver(drv))
         
         dayEpochGrps <- # doesn't work in case of dopar.. they must be doing something with environments NULL 
           conttable_construct(day, db=db, ngramlen1=compgramlen,ngramlen2=ngramlen, epoch1=epoch, support=supp)
@@ -264,7 +277,9 @@ if(DEBUG_NGA){
         #Leave the hour of the day.. it's good
 #            ngrams2AssocT['X1'] <- NULL
         
-        try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write ngrams2AssocT to DB")))
+        con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
+                host="hops.cs.uwaterloo.ca", port="5433")
+        try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write", tablename, "to DB")))
         dbWriteTable(con,tableName,ngrams2AssocT)
         try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished writing to DB")))
         try(dbDisconnect(con))

@@ -262,7 +262,9 @@ compoundUnigramsFromNgrams <- function(day, epoch2, ngramlen2, ngramlen1=1, epoc
           # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
           #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
           ngram <-  sub('(','"(',ngram,fixed=TRUE)
+          ngram <-  sub('{','"(',ngram,fixed=TRUE)
           ngram <-  sub(')',')"',ngram,fixed=TRUE)
+          ngram <-  sub('}',')"',ngram,fixed=TRUE)
           ngram <-  sub('+',',',ngram,fixed=TRUE)
           
         })
