@@ -9,7 +9,8 @@ CGX.DEBUG <- FALSE
 
 CGX.argv <- commandArgs(trailingOnly = TRUE)
 #CGX.epoch2 <- '1hr'
-CGX.ngramlen2 <- as.integer(CGX.argv[1]) + 1
+# FIXME ngramlen2 should say ngramlen orig.. but that's fine!
+CGX.ngramlen2 <- as.integer(CGX.argv[1])
 #CGX.support <- 5
 
 CGX.loglabel.DEFAULT <- "compgrams-extend"
@@ -66,7 +67,7 @@ extendCompgramOfDay <- function(day,
   
   # those can't change
 #  epoch1 <- epoch2
-  ngramlen1 <- 1
+# This is useless here:  ngramlen1 <- 1
 
   CGX.loglabel <- paste("extendCompgramOfDay(day=",day,
 #      ",epoch2=",epoch2,
