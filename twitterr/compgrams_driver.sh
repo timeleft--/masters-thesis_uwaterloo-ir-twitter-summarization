@@ -5,7 +5,7 @@ exit 1
 fi
 
 runTS=${1}
-db=sample=0.01
+db=sample-0.01
 
 for ngramlen1 in 2 3 4 5 6 7 8 9 10
 do
