@@ -63,9 +63,6 @@ registerDoMC(cores=nCores)
 while(!require(RPostgreSQL)){
   install.packages("RPostgreSQL")
 }  
-while(!require(clue)){
-  install.packages("clue")
-}
 ############################
 while(!require(plyr)){
   install.packages("plyr")
