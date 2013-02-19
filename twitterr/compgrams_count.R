@@ -3,12 +3,7 @@
 # Author: yia
 ###############################################################################
 
-CGC.argv <- commandArgs(trailingOnly = TRUE)
-#G.workingRoot <- "~/r_output/occ_yuleq_working/"
-#G.dataRoot <- "~/r_output/"
 G.epoch2 <- '1hr'
-G.ngramlen1 <- as.integer(CGC.argv[1])
-#G.ngramlen2 <- G.ngramlen1 + 1
 G.support<-5
 
 logLabelUGC <- "unigrams_createCompound()" #Recall()???
@@ -21,10 +16,15 @@ if(DEBUG_UGC){
   G.days<-c(121106,121110)
   G.nCores <- 2
   G.db <- "sample-0.01"
+
+  CGC.dataRoot <- "~/r_output_debug/"
   
 #  workingRoot="~/r_output_debug/occ_yuleq_working/"
 #  dataRoot="~/r_output_debug/"
 #  
+  G.ngramlen1 <- 1
+#G.ngramlen2 <- G.ngramlen1 + 1
+  
   ngramlen1<-G.ngramlen1
   epoch1<-NULL
   epoch2 <- G.epoch2  
@@ -42,6 +42,12 @@ if(DEBUG_UGC){
       #c(121110, 130103, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219)
   G.db<-"full"
   G.nCores <- min(50, length(G.days)) # because we load ngram occs.. so this might be too much for mem.. better safe than sorry
+  
+  CGC.dataRoot <- "~/r_output/"
+  CGC.argv <- commandArgs(trailingOnly = TRUE)
+  G.ngramlen1 <- as.integer(CGC.argv[1])
+#G.ngramlen2 <- G.ngramlen1 + 1
+  
 }
 
 
@@ -79,6 +85,11 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
     #TODO: subtract 10 hours from epochstartmillis to align both timezones.. but is this right?
   }
   
+  occCntFile <- paste(CGC.dataRoot,"/occ_yuleq_",ngramlen2,"/cnt_",day,".csv",sep="")
+  if(!file.exists(occCntFile)){
+    stop(pate(Sys.time(), logLabelUGC, " for day:", day, " - Cannot process day because counts file not found:",occCntFile))  
+  }
+  
   drv <- dbDriver("PostgreSQL")
   con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
       host="hops.cs.uwaterloo.ca", port="5433")
@@ -87,13 +98,6 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   
   
   
-  inTable <- paste('assoc',epoch2,ngramlen2,'_',day,sep="")
-  
-  if(!dbExistsTable(con,inTable)){
-    stop(paste("Input table",inTable,"doesn't exist.. cannot process the day")) #skippinng the day 
-  }
-  
-  outTable <- paste('compcnt_',epoch2,ngramlen2,'_',day,sep="") 
   
 #  stagingDir <- workingRoot
 #  if(!file.exists(stagingDir))
@@ -127,7 +131,8 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
 ##  # create file to make sure this will be possible
 ##  file.create(outputFile)
 ##  
-  
+  outTable <- paste('compcnt_',epoch2,ngramlen2,'_',day,sep="") 
+
   if(dbExistsTable(con,outTable)){
     if(REMOVE_EXITING_COMPGRAM_TABLES){
       try(stop(paste("Output table",outTable,"already exist. Removing it.")))
@@ -138,26 +143,39 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
       stop(paste("Output table",outTable,"already exist. Please remove it yourself."))
     }
   }
+ 
   
-  
-  #* 1000 as epochstartmillis
-  # For lineage:  "row.names", "X1" as hod, but Later
-  # Sorting to make sure that the epochs are proccessed in order, because we get ngramOccs by index shifting   
-  sql <- sprintf('select  epochstartux , "ngramAssoc.ngram" as ngram, 
-							"ngramAssoc.a1b1" as cnt
-							from %s where 
-							"ngramAssoc.yuleQ" > 0 order by epochstartux asc;', inTable) ########## THIS LINE IS CRUCIAL FOR WHAT THIS FUNCTION DOES
+  #  inTable <- paste('assoc',epoch2,ngramlen2,'_',day,sep="")
+#  
+#  if(!dbExistsTable(con,inTable)){
+#    stop(paste("Input table",inTable,"doesn't exist.. cannot process the day")) #skippinng the day 
+#  }
+#  #* 1000 as epochstartmillis
+#  # For lineage:  "row.names", "X1" as hod, but Later
+#  # Sorting to make sure that the epochs are proccessed in order, because we get ngramOccs by index shifting   
+#  sql <- sprintf('select  epochstartux , "ngramAssoc.ngram" as ngram, 
+#							"ngramAssoc.a1b1" as cnt
+#							from %s where 
+#							"ngramAssoc.yuleQ" > 0 order by epochstartux asc;', inTable) ########## THIS LINE IS CRUCIAL FOR WHAT THIS FUNCTION DOES
+#
+#  try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetching ngrams' association using sql: ", sql)))        
+#      
+#  ngramRs <- dbSendQuery(con,sql)
+#  
+#  ngramDf <- fetch(ngramRs, n=-1)
+#  
+#  try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngrams' association length: ", nrow(ngramDf))))
+#  #cleanup
+#  # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
+#  try(dbClearResult(ngramRs))
 
-  try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetching ngrams' association using sql: ", sql)))        
-      
-  ngramRs <- dbSendQuery(con,sql)
-  
-  ngramDf <- fetch(ngramRs, n=-1)
-  
-  try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngrams' association length: ", nrow(ngramDf))))
-  #cleanup
-  # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
-  try(dbClearResult(ngramRs))
+ngramDf <- read.table(occCntFile, header = FALSE, quote = "", comment.char="", 
+    sep = "\t", na = "NA", dec = ".", row.names = NULL,
+    col.names = c("ngram","cnt","epochstartux","date","ngramlen"),
+    colClasses = c("character","integer","numeric","integer","integer"),
+    fileEncoding = "UTF-8")
+
+try(stop(paste(Sys.time(), logLabelUGC, paste("Read  compound unigrams count - nrows:", nrow(ngramDf)), sep=" - ")))
 
   #####################
   
@@ -325,7 +343,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
         
         ugramIx <- which(epochUnigrams$ngramarr == srchStr)
         
-        if(is.null(ugramIx)){
+        if(is.null(ugramIx)){ # I trust my earlier debugging, even though I'd say this should be is.an or == 0
           try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - WARNING: couldn't find index for component in compgrams cnt DF when trying to deduct the count of ngram",ng[1,"ngram"],"from its component",ugram)))
           next
         }
@@ -334,7 +352,8 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
         epochUnigrams[ugramIx,"cnt"] <- epochUnigrams[ugramIx, "cnt"] - ng[1,"cnt"]
       }
       
-     
+      epochUnigrams <<- epochUnigrams
+      
       return(data.frame(ngramlen=ngramlen2,
               ngramarr=paste("{",paste(ugramsInNgram,collapse=","),"}",sep=""), 
               date=day,#epochstartux=epochstartux,

@@ -22,8 +22,8 @@ if(DEBUG_NGA){
   db<-"sample-0.01" #"full"
   nCores <- 2
   
-  workingRoot="~/r_output_debug/occ_yuleq_working/"
-  dataRoot="~/r_output_debug/"
+  workingRoot <- G.workingRoot <- "~/r_output_debug/occ_yuleq_working/"
+  dataRoot<-G.dataRoot<-"~/r_output_debug/"
   
   NGA.ngramlen1<-1
 } else {
@@ -298,9 +298,9 @@ NGA.DEBUG_ERRORS <- TRUE
 #  
     
     if(ngramlen2 == 2){
-      sqlTemplate <- sprintf("select * from ngrams%d where date=%d and timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) order by timemillis;",ngramlen2,day)
+      sqlTemplate <- sprintf("select CAST(id as varchar), CAST(timemillis as varchar), date, ngram, ngramlen, tweetlen, pos from ngrams%d where date=%d and timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) order by timemillis;",ngramlen2,day)
     } else {
-      sqlTemplate <- sprintf("select * from compgrams%d_%d where timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) order by timemillis;",ngramlen2,day)    
+      sqlTemplate <- sprintf("select CAST(id as varchar), CAST(timemillis as varchar), date, ngram, ngramlen, tweetlen, pos from compgrams%d_%d where timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) order by timemillis;",ngramlen2,day)    
     }
     
     SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
@@ -367,73 +367,82 @@ NGA.DEBUG_ERRORS <- TRUE
     
     positiveYuleQ <- which(ngAssoc$yuleQ > 0)
     
-    occAssoc <- merge(epochNgramOccs, ngAssoc[positiveYuleQ,c("ngram","yuleQ")], by="ngram", sort=F, suffixes=c("",""))
-#    cbind(ngAssoc[positiveYuleQ,"ngram"],ngAssoc[positiveYuleQ,"yuleQ"])
-  
-    contextualAssoc <- function(tweetOccs){
-      if(nrow(tweetOccs)==1){
-        # Not just for perfrmance.. also for correctness: nrow-1
-        return(tweetOccs[1,])
-      }
-      
-      tweetOccs <- arrange(tweetOccs,pos)
-
-      # max(pos) + 1 because position is 0 based: *(max(tweetOccs$pos)+1))
-      assignmentBenefit <- matrix(rep(0,(nrow(tweetOccs)^2)), ncol=nrow(tweetOccs))
-      rownames(assignmentBenefit) <- tweetOccs$pos
-      
-      for(i in c(1:(nrow(tweetOccs)-1))){
-        endPos <- tweetOccs$pos[i] + ngramlen2 - 1
-        if(endPos == tweetOccs$pos[i+1]){
-          #There is an overlap between this bigram (of unigram and ngram) and the next.. we have to choose one
-          # as both has postivive YuleQ
-        
-          if(tweetOccs$yuleQ[i] == tweetOccs$yuleQ[i+1]){
-            # Should we use another metric? We'll see how many times this happen
-            try(stop(paste("INFO: equal yuleQ for ngrams:\n\t",paste(tweetOccs[i,],collapse="|"),"\n\t",paste(tweetOccs[i+1,],collapse="|"))))
-          } 
-        
-          # Add rows to the assignment problem matrix. These row represents the position(s) under dispute, and they
-          # will be assigned to either i or i+1 according to YuleQ's value (maximizing over all association)
-          assignmentBenefit[paste(tweetOccs$pos[i+1]),i]  <- tweetOccs$yuleQ[i]
-          
-        } else if(endPos < tweetOccs$pos[i+1]) {
-          #No overlap with another ngram with positive yuleQ
-          #TODONOT: make the problem smaller by... I bet the package does that already
-        } else {
-          # This might be caused by duplicate records in the occurrence table for some reason.. 
-          if(identical(tweetOccs[i,],tweetOccs[i+1,])){
-            try(stop(paste("WARNING - Duplicated occurrence! tweetOccs[i] =",
-                    paste(tweetOccs[i,],collapse="|"),"tweetOccs[i+1] = ", paste(tweetOccs[i+1,],collapse="|"))))
-          } else {
-            try(stop(paste("ERROR! Overlap of more than one position, which should be impossible.. the assignment problem cannot solve this! tweetOccs[i] =",
-                  paste(tweetOccs[i,],collapse="|"),"tweetOccs[i+1] = ", paste(tweetOccs[i+1,],collapse="|"))))
-          }
-        }
-        assignmentBenefit[paste(tweetOccs$pos[i]),i]  <- tweetOccs$yuleQ[i]
-      }
-      assignmentBenefit[paste(tweetOccs$pos[nrow(tweetOccs)]),nrow(tweetOccs)]  <- tweetOccs$yuleQ[nrow(tweetOccs)]
-      
-      assgn <- solve_LSAP(assignmentBenefit,maximum=TRUE)
-      
-      return(tweetOccs[assgn,])
-    }
-    #debug(contextualAssoc)
+    occAssoc <- merge(epochNgramOccs, ngAssoc[positiveYuleQ,c("ngram","yuleQ","a1b1","dunningLambda")], by="ngram", sort=F, suffixes=c("",""))
     
-#idata.frame( <- causes the error:
-# Error in as.vector(x, "character") :   cannot coerce type 'environment' to vector of type 'character'
-    bestAssoc <- ddply(occAssoc,c("id"),contextualAssoc)
-    
+    #### Copy Ngram Occs
     if(ngramlen2>2){
       
-      bestAssoc$ngram <- aaply(bestAssoc$ngram,1,flattenNgram)
+      towrite <- aaply(occAssoc[,c("id","timemillis","date","ngram","ngramlen","tweetlen","pos")],1,function(occ) { occ$ngram<-flattenNgram(occ$ngram) } )
+      
+    } else {
+      
+      towrite <- occAssoc[,c("id","timemillis","date","ngram","ngramlen","tweetlen","pos")]
       
     }
-    #### Copy Ngram Occs
-    write.table(bestAssoc, file = stagingFile, append = TRUE, quote = FALSE, sep = "\t",
+    
+    write.table(towrite, file = stagingFile, append = TRUE, quote = FALSE, sep = "\t",
         eol = "\n", na = "NA", dec = ".", row.names = FALSE,
         col.names = FALSE, # qmethod = c("escape", "double"),
         fileEncoding = "UTF-8")
+    
+    rm(towrite)
+    ####### Select the occurrences for which to discount counts of shorter compgrams
+    contextualAssoc <- function(tweetOccs){
+      if(nrow(tweetOccs) == 1){
+        return(tweetOccs)
+      }
+      
+      tweetOccs$dunningLambda[which(is.na(tweetOccs$dunningLambda))] <- Inf
+      
+      tweetOccs <- arrange(tweetOccs,desc(yuleQ),desc(a1b1),desc(dunningLambda))
+
+      occupied <- rep(0,tweetOccs$tweetlen[1])
+      
+      selection <- adply(tweetOccs,1,function(occ){
+        startPos <- occ$pos
+        endPos <- startPos + ngramlen2 - 1
+        
+        if(any(occupied[startPos:endPos]>0)){
+          return(NULL)
+        } 
+        
+        occupied[startPos:endPos] <- occupied[startPos:endPos] + 1
+        occupied <<- occupied
+        
+        return(occ)
+      })
+  
+      if(any(occupied>1)){
+        try(stop(paste("ERROR! Overlapping NGram Occurrences after all in ", tweetOccs$id[1], ":", paste(tweetOccs$ngram[which(occupied>1)],collapse="|"))))
+      }
+      
+      if(all(occupied==0)){
+        try(stop(paste("WARNING! Nothing selected from the occurrences in ", tweetOccs$id[1])))
+      }
+  
+      return(selection)
+    }
+#    debug(contextualAssoc)
+    
+    #idata.frame(
+    selOcc <- ddply(occAssoc,c("id"),contextualAssoc)
+    
+    selCnt <- ddply(idata.frame(selOcc),c("ngram"),summarize,cnt=length(id))
+    selCnt$epochstartux<-epochstartux
+    selCnt$date<-day
+    selCnt$ngramlen<-ngramlen2
+    
+    write.table(selCnt, file = cntStaging, append = TRUE, quote = FALSE, sep = "\t",
+        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+        col.names = FALSE, # qmethod = c("escape", "double"),
+        fileEncoding = "UTF-8")
+   
+    write.table(selOcc, file = selStaging, append = TRUE, quote = FALSE, sep = "\t",
+        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+        col.names = FALSE, # qmethod = c("escape", "double"),
+        fileEncoding = "UTF-8")
+    
+    ### Aggregate to counts by ngram
     
     
     try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished forming compgrams for epoch",eg[1,"epochstartux"])))
@@ -487,7 +496,19 @@ NGA.DEBUG_ERRORS <- TRUE
         stagingFile <- paste(stagingDir,"/",day,".csv",sep="")
         file.create(stagingFile) #create or truncate
         
+        cntStaging <- paste(stagingDir,"cnt_",day,".csv",sep="")
+        file.create(cntStaging)
+        
+        selStaging <- paste(stagingDir,"sel_",day,".csv",sep="")
+        file.create(selStaging)
+        
+        
         outputDir <- paste(dataRoot,"/occ_yuleq_",ngramlen2,"/",sep="")
+        
+        
+        if(!file.exists(outputDir))
+          dir.create(outputDir,recursive = TRUE)
+        
         
         outputFile <- paste(outputDir,day,".csv",sep="");
         
@@ -501,11 +522,41 @@ NGA.DEBUG_ERRORS <- TRUE
           warning(paste("Renaming existing output file",outputFile,bakname))
           file.rename(outputFile, #from
               bakname) #to
-        } else {
-          
-          if(!file.exists(outputDir))
-            dir.create(outputDir,recursive = TRUE)
         }
+        
+        
+        
+        cntOutput <- paste(outputDir,"/cnt_",day,".csv",sep="");
+        
+        if(file.exists(cntOutput)){
+          
+          if(SKIP_DAY_IF_COMPGRAM_FILE_EXISTS){
+            return(paste("Skipping day for which output exists:",day)) # This gets ignored somehow.. connect then the default "Success"
+          }
+          
+          bakname <- paste(cntOutput,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
+          warning(paste("Renaming existing output file",cntOutput,bakname))
+          file.rename(cntOutput, #from
+              bakname) #to
+        }
+       
+
+        
+        selOutput <- paste(outputDir,"/sel_",day,".csv",sep="");
+        
+        if(file.exists(selOutput)){
+          
+          if(SKIP_DAY_IF_COMPGRAM_FILE_EXISTS){
+            return(paste("Skipping day for which output exists:",day)) # This gets ignored somehow.. connect then the default "Success"
+          }
+          
+          bakname <- paste(selOutput,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
+          warning(paste("Renaming existing output file",selOutput,bakname))
+          file.rename(selOutput, #from
+              bakname) #to
+        }
+        
+        
         
 #  # create file to make sure this will be possible
 #  file.create(outputFile)
@@ -526,11 +577,13 @@ NGA.DEBUG_ERRORS <- TRUE
 #            ngrams2AssocT['X1'] <- NULL
         
         file.rename(stagingFile, outputFile)    
-            
+        file.rename(cntStaging, cntOutput)
+        file.rename(selStaging, selOutput)
+        
 #        drv <- dbDriver("PostgreSQL")
 #        con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
 #                host="hops.cs.uwaterloo.ca", port="5433")
-        try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write", tablename, "to DB")))
+        try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write", tableName, "to DB")))
         dbWriteTable(con,tableName,ngrams2AssocT)
         try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished writing to DB")))
         try(dbDisconnect(con))
