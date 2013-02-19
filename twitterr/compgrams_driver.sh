@@ -34,7 +34,7 @@ sh ../postgresql/volume_1hr${ngramlen1}_aggregate.sh > ../postgresql/volume_1hr$
     sh ../postgresql/compound_inherit.sh full ${ngramlen2} > ../postgresql/compcnt-hier_1hr${ngramlen2}_alter.sh \n\
     sh ../postgresql/compcnt-hier_1hr${ngramlen2}_alter.sh > ../postgresql/compcnt-hier_1hr${ngramlen2}_alter.out 2> ../postgresql/compcnt-hier_1hr${ngramlen2}_alter.err \n\
 \n\
-echo \"Done for ngramlen1: ${ngramlen1} and ngramlen2: ${ngramlen2}\"" > compgrams-driver_${ngramlen1}-${ngramlen2}.sh
-#sh compgrams-driver_${ngramlen1}-${ngramlen2}.sh
+echo \"Done for ngramlen1: ${ngramlen1} and ngramlen2: ${ngramlen2}\"" > compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
+#sh compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
 
 done
