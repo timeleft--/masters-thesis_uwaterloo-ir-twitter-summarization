@@ -2,13 +2,14 @@
 # 
 # Author: yaboulna
 ###############################################################################
-
+NGA.argv <- commandArgs(trailingOnly = TRUE)
+NGA.ngramlen1<-as.integer(NGA.argv[1])
 G.workingRoot <- "~/r_output/occ_yuleq_working/"
 G.dataRoot <- "~/r_output/"
 
 NGA.logLabel <- "ngram_assoc"
 
-DEBUG_NGA<-FALSE
+DEBUG_NGA<-TRUE
 
 REMOVE_EXITING_OUTPUTS<-TRUE
 SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE
@@ -36,8 +37,7 @@ if(DEBUG_NGA){
   db<-"full"
   nCores <- 31
   
-  NGA.argv <- commandArgs(trailingOnly = TRUE)
-  NGA.ngramlen1<-as.integer(NGA.argv[1]) 
+ 
 }
 
 
@@ -580,7 +580,8 @@ calcEpochAssoc <- function(eg,ngramlen2,day){
         }
         
         ngrams2AssocT <- 
-          adply(idata.frame(dayEpochGrps), 1, calcEpochAssoc, ngramlen2=ngramlen2,day=day, .expand=F) #, .progress=progress)
+          adply(idata.frame(dayEpochGrps), 1, calcEpochAssoc, ngramlen2=ngramlen2,day=day, .expand=F,
+              stagingFile=stagingFile,cntStaging=cntStaging,selStaging=selStaging) #, .progress=progress)
               # This will be a disaster, because we are already in dopar: .parallel = parallelWithinDay,.paropts=parOpts)
         #Leave the hour of the day.. it's good
 #            ngrams2AssocT['X1'] <- NULL

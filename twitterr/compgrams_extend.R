@@ -5,7 +5,7 @@
 
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
-CGX.DEBUG <- FALSE
+CGX.DEBUG <- TRUE
 
 CGX.argv <- commandArgs(trailingOnly = TRUE)
 #CGX.epoch2 <- '1hr'
