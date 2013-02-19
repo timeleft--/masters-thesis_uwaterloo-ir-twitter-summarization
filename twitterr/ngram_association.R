@@ -3,10 +3,15 @@
 # Author: yaboulna
 ###############################################################################
 
+G.workingRoot <- "~/r_output/occ_yuleq_working/"
+G.dataRoot <- "~/r_output/"
+
+NGA.logLabel <- "ngram_assoc"
 
 DEBUG_NGA<-FALSE
 
 REMOVE_EXITING_OUTPUTS<-TRUE
+SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE
 
 # parallelWithinDay<-FALSE
 #parOpts<-"cores=24" #2 for debug 
@@ -16,6 +21,11 @@ if(DEBUG_NGA){
   days<-c(121106,121110)
   db<-"sample-0.01" #"full"
   nCores <- 2
+  
+  workingRoot="~/r_output_debug/occ_yuleq_working/"
+  dataRoot="~/r_output_debug/"
+  
+  NGA.ngramlen1<-1
 } else {
   
 #  days1<- unique(c(121123,121105,121104,121106,121215,121222,130104,120914,121231,121223,121013,120925,121016,120926,121026,120930,121008,121110,121119,121206,121122,121125))       
@@ -25,15 +35,16 @@ if(DEBUG_NGA){
   #c(121110, 130103, 121016, 121206, 121210, 120925, 121223, 121205, 130104, 121108, 121214, 121030, 120930, 121123, 121125, 121027, 121105, 121116, 121106, 121222, 121026, 121028, 120926, 121008, 121104, 121103, 121122, 121114, 121231, 120914, 121120, 121119, 121029, 121215, 121013, 121220, 121212, 121111, 121217, 130101, 121226, 121127, 121128, 121124, 121229, 121020, 120913, 121121, 121007, 121010, 121203, 121207, 121218, 130102, 121025, 120920, 120929, 121009, 121126, 121021, 121002, 121201, 120918, 120919, 120927, 121012, 120924, 120928, 121024, 121209, 121115, 121112, 121227, 121101, 121113, 121211, 121204, 120921, 121224, 121130, 121208, 120922, 121230, 121001, 121006, 121031, 121015, 121129, 121014, 121003, 121117, 121118, 121213, 121107, 121109, 121004, 121019, 121022, 121017, 121023, 121216, 121225, 121102, 121202, 121018, 121005, 121011, 120917, 121221, 121228, 120923, 121219)
   db<-"full"
   nCores <- 31
+  
+  NGA.argv <- commandArgs(trailingOnly = TRUE)
+  NGA.ngramlen1<-as.integer(NGA.argv[1]) 
 }
 
 
-NGA.argv <- commandArgs(trailingOnly = TRUE)
-
 supp<-5
 epoch<-'1hr'
-compgramlen<-as.integer(NGA.argv[1]) #should actually say ngramlen1 but ok
-ngramlen<-compgramlen+1
+
+ngramlen2<-NGA.ngramlen1+1
 
 
 source("conttable_construct.R")
@@ -52,7 +63,9 @@ registerDoMC(cores=nCores)
 while(!require(RPostgreSQL)){
   install.packages("RPostgreSQL")
 }  
-
+while(!require(clue)){
+  install.packages("clue")
+}
 ############################
 while(!require(plyr)){
   install.packages("plyr")
@@ -117,9 +130,12 @@ NGA.DEBUG_ERRORS <- TRUE
   while(!require(plyr)){
     install.packages("plyr")
   }
-  calcEpochAssoc <- function(eg,ngramlen,day){
   
-    try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Starting to calc epoch",eg[1,"epochstartux"])))
+  
+  
+  calcEpochAssoc <- function(eg,ngramlen2,day){
+  
+    try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Starting to calc  pair-wise association in epoch",eg[1,"epochstartux"])))
     
     uniqueUgrams <- eg$uniqueUnigrams[[1]]
     nUnique <- length(uniqueUgrams)
@@ -139,7 +155,7 @@ NGA.DEBUG_ERRORS <- TRUE
       
       ngram <- ng # there will be only one (unique)
       
-      comps <- splitNgramToCompgrams(ngram,ngramlen)
+      comps <- splitNgramToCompgrams(ngram,ngramlen2)
       
       ngRes <- data.frame(ngram=ngram,#comps = I(comps), 
           stringsAsFactors=F)
@@ -227,12 +243,209 @@ NGA.DEBUG_ERRORS <- TRUE
 #    ngAssoc <- arrange(ngAssoc, -dunningLambda) #-yuleQ)
     ngAssoc["X1"] <- NULL
     
-    try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished to calc epoch",eg[1,"epochstartux"])))
+    try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished to calc paiswise associtation for epoch",eg[1,"epochstartux"])))
     
-    return(data.frame(ngramlen=ngramlen,date=day,epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=ngAssoc)) 
+    #######################################################
+    
+    try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Starting to form compgrams according to high association in epoch",eg[1,"epochstartux"])))
+    
+    epochstartux<-eg$epochstartux
+    
+#  ########################
+#  sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
+#              "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
+#  #a7'er elshahr ya me3allem
+    ##  sec0NextDay <-  as.numeric(as.POSIXct(strptime(paste(day+1,"0000",sep=""),
+    ##              "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
+#  sec0NextDay <- sec0CurrDay + (60*60*24)
+#  
+#  sql <- sprintf("select epochstartmillis, totalcnt
+#          from volume_%s%d%s where epochstartmillis >= %.0f and epochstartmillis < %.0f;", epoch, ngramlen2, ifelse(ngramlen2<3,'',paste("_",day, sep="")),
+#      (sec0CurrDay-(120*60)) * 1000, (sec0NextDay+(120*60)) * 1000) # add 2 hours to either side to avoid timezone shit
+#  
+#  try(stop(paste(Sys.time(),NGA.logLabel, "for day:",day, " - Fetching ngram volumes using sql:\n ", sql)))
+#  
+#  ngramVolRs <- dbSendQuery(con, sql)
+#  
+#  ngramVolDf <- fetch(ngramVolRs, n=-1)
+#  
+#  try(stop(paste(Sys.time(),NGA.logLabel, "for day:",day, " - Fetched ngram volumes. Num Rows: ", nrow(ngramVolDf))))
+#  
+#  try(dbClearResult(ngramVolRs))
+#  
+#  ############################ 
+#  # sorted because we'll use the volume to load the data for each epoch.. this is different from using indexes for
+#  # loading parts of the cnt tables, which proved tricky :(
+#  # cannot neglect any part of the data bceause we use vollume to skip ahead: and cnt > %d support
+# 
+#  if(ngramlen2 == 2){
+#	  sql <- sprintf("select * from ngrams%d where date=%d order by timemillis;",ngramlen2,day)
+#  } else {
+#    sql <- sprintf("select * from compgrams%d_%d order by timemillis;",ngramlen2,day)    
+#  }
+#  
+#  try(stop(paste(Sys.time(),NGA.logLabel, "for day:",day, " - Fetching ngram occurrences using sql:\n ", sql)))
+#  
+#  ngramOccRs <- dbSendQuery(con,sql)
+#  
+    ##  ngramOccDf <- fetch(ngramOccRs, n=-1) # if ordered we can fetch them in chuncks
+    ##  
+    ##  try(stop(paste(Sys.time(), NGA.logLabel, "for day:", day, " - Fetched ngram occurrences. Num Rows: ", length(ngramOccDf))))
+    ##  
+    ##  try(dbClearResult(ngramOccRs))
+#  
+#  #########################
+#  
+    
+    if(ngramlen2 == 2){
+      sqlTemplate <- sprintf("select * from ngrams%d where date=%d and timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) order by timemillis;",ngramlen2,day)
+    } else {
+      sqlTemplate <- sprintf("select * from compgrams%d_%d where timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) order by timemillis;",ngramlen2,day)    
+    }
+    
+    SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
+    
+    flattenNgram <- function(ngram){
+      paste("{",paste(splitNgramToCompgrams(ngram,ngramlen2),collapse=","),"}",sep="")
+    } 
+    
+    
+    #    epochNgramVol <- ngramVolDf[ngramVolDf$epochstartux == (epochstartux), "totalcnt"]
+#    
+#    epochNgramOccs <- fetch(ngramOccRs, n=epochNgramVol) # if ordered we can fetch them in chuncks
+    
+    sql <- sprintf(sqlTemplate,
+        epochstartux, (epochstartux + SEC_IN_EPOCH[[paste("X",epoch,sep="")]]))
+    
+    try(stop(paste(Sys.time(),NGA.logLabel, "for day:",day, " - Fetching ngram occurrences for epoch using sql:\n ", sql)))
+    
+    epochNgramOccRs <- dbSendQuery(con,sql)
+    epochNgramOccs <- fetch(epochNgramOccRs, n=-1)
+    try(dbClearResult(epochNgramOccRs))
+    
+    try(stop(paste(Sys.time(), NGA.logLabel, "for day:", day, " - Fetched ngram occurrences for epoch",epochstartux,". Num Rows: ", nrow(epochNgramOccs))))
+    
+    # epochNgramOccs will be in the uni+(ngA,ngB,..) remove the paranthesis and convert plus to ,
+    if(ngramlen2>3){
+      epochNgramOccs <- within(epochNgramOccs,{
+            # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
+            #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
+            ngram <-  sub('{','"{',ngram,fixed=TRUE)
+            ngram <-  sub('}','}"',ngram,fixed=TRUE)
+            ngram <-  sub('+',',',ngram,fixed=TRUE)
+          })
+    } else if(ngramlen2==3){
+      epochNgramOccs <- within(epochNgramOccs,{
+            # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
+            #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
+            ngram <-  sub('(','"(',ngram,fixed=TRUE)
+            ngram <-  sub(')',')"',ngram,fixed=TRUE)
+            ngram <-  sub('+',',',ngram,fixed=TRUE)
+          })
+    } else {
+      epochNgramOccs <- within(epochNgramOccs,{
+            ngram <- stripEndChars(ngram)
+          })
+    }
+    
+    if(DEBUG_NGA){
+      earlierEpochCheck <- which(epochNgramOccs$timemillis < (epochstartux * 1000))
+      if(any(earlierEpochCheck)){
+        warning("Some ngrams we are fetching are of an earlier epoch", paste(earlierEpochCheck,collapse = "|"))
+      }
+      rm(earlierEpochCheck)
+      
+      laterEpochCheck <- which(epochNgramOccs$timemillis >= ((3600 + epochstartux) * 1000)) # THIS IS for 1hr epoch only
+      if(any(laterEpochCheck)){
+        warning("Some ngrams we are fetching are of a later epoch", paste(laterEpochCheck,collapse = "|"))
+      }
+      rm(laterEpochCheck)
+    }
+    
+#    # If there are duplicates then assignment problem solution will not work.. we don't want to risk that
+#    epochNgramOccs <- epochNgramOccs[!duplicated(epochNgramOccs["id","ngram","pos"]),]
+    
+    positiveYuleQ <- which(ngAssoc$yuleQ > 0)
+    
+    occAssoc <- merge(epochNgramOccs, ngAssoc[positiveYuleQ,c("ngram","yuleQ")], by="ngram", sort=F, suffixes=c("",""))
+#    cbind(ngAssoc[positiveYuleQ,"ngram"],ngAssoc[positiveYuleQ,"yuleQ"])
+  
+    contextualAssoc <- function(tweetOccs){
+      if(nrow(tweetOccs)==1){
+        # Not just for perfrmance.. also for correctness: nrow-1
+        return(tweetOccs[1,])
+      }
+      
+      tweetOccs <- arrange(tweetOccs,pos)
+
+      # max(pos) + 1 because position is 0 based: *(max(tweetOccs$pos)+1))
+      assignmentBenefit <- matrix(rep(0,(nrow(tweetOccs)^2)), ncol=nrow(tweetOccs))
+      rownames(assignmentBenefit) <- tweetOccs$pos
+      
+      for(i in c(1:(nrow(tweetOccs)-1))){
+        endPos <- tweetOccs$pos[i] + ngramlen2 - 1
+        if(endPos == tweetOccs$pos[i+1]){
+          #There is an overlap between this bigram (of unigram and ngram) and the next.. we have to choose one
+          # as both has postivive YuleQ
+        
+          if(tweetOccs$yuleQ[i] == tweetOccs$yuleQ[i+1]){
+            # Should we use another metric? We'll see how many times this happen
+            try(stop(paste("INFO: equal yuleQ for ngrams:\n\t",paste(tweetOccs[i,],collapse="|"),"\n\t",paste(tweetOccs[i+1,],collapse="|"))))
+          } 
+        
+          # Add rows to the assignment problem matrix. These row represents the position(s) under dispute, and they
+          # will be assigned to either i or i+1 according to YuleQ's value (maximizing over all association)
+          assignmentBenefit[paste(tweetOccs$pos[i+1]),i]  <- tweetOccs$yuleQ[i]
+          
+        } else if(endPos < tweetOccs$pos[i+1]) {
+          #No overlap with another ngram with positive yuleQ
+          #TODONOT: make the problem smaller by... I bet the package does that already
+        } else {
+          # This might be caused by duplicate records in the occurrence table for some reason.. 
+          if(identical(tweetOccs[i,],tweetOccs[i+1,])){
+            try(stop(paste("WARNING - Duplicated occurrence! tweetOccs[i] =",
+                    paste(tweetOccs[i,],collapse="|"),"tweetOccs[i+1] = ", paste(tweetOccs[i+1,],collapse="|"))))
+          } else {
+            try(stop(paste("ERROR! Overlap of more than one position, which should be impossible.. the assignment problem cannot solve this! tweetOccs[i] =",
+                  paste(tweetOccs[i,],collapse="|"),"tweetOccs[i+1] = ", paste(tweetOccs[i+1,],collapse="|"))))
+          }
+        }
+        assignmentBenefit[paste(tweetOccs$pos[i]),i]  <- tweetOccs$yuleQ[i]
+      }
+      assignmentBenefit[paste(tweetOccs$pos[nrow(tweetOccs)]),nrow(tweetOccs)]  <- tweetOccs$yuleQ[nrow(tweetOccs)]
+      
+      assgn <- solve_LSAP(assignmentBenefit,maximum=TRUE)
+      
+      return(tweetOccs[assgn,])
+    }
+    #debug(contextualAssoc)
+    
+#idata.frame( <- causes the error:
+# Error in as.vector(x, "character") :   cannot coerce type 'environment' to vector of type 'character'
+    bestAssoc <- ddply(occAssoc,c("id"),contextualAssoc)
+    
+    if(ngramlen2>2){
+      
+      bestAssoc$ngram <- aaply(bestAssoc$ngram,1,flattenNgram)
+      
+    }
+    #### Copy Ngram Occs
+    write.table(bestAssoc, file = stagingFile, append = TRUE, quote = FALSE, sep = "\t",
+        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+        col.names = FALSE, # qmethod = c("escape", "double"),
+        fileEncoding = "UTF-8")
+    
+    
+    try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished forming compgrams for epoch",eg[1,"epochstartux"])))
+    
+    
+    #######################################
+    
+    
+    return(data.frame(ngramlen=ngramlen2,date=day,epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=ngAssoc)) 
   }
   
-  #debug(calcEpochAssoc)
+#  debug(calcEpochAssoc)
 
 
 ####################################################    
@@ -246,7 +459,7 @@ NGA.DEBUG_ERRORS <- TRUE
         daySuccess <- paste("Unknown result for day",day)
         
         tryCatch({
-        tableName <- paste('assoc',epoch,ngramlen,'_',day,sep="") 
+        tableName <- paste('assoc',epoch,ngramlen2,'_',day,sep="") 
         
         drv <- dbDriver("PostgreSQL")
         con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
@@ -254,34 +467,69 @@ NGA.DEBUG_ERRORS <- TRUE
         if(dbExistsTable(con,tableName)){
           if(REMOVE_EXITING_OUTPUTS){
             dbRemoveTable(con,tableName)
-#            try(dbDisconnect(con))
-#            try(dbUnloadDriver(drv))
+##            try(dbDisconnect(con))
+##            try(dbUnloadDriver(drv))
           } else {
             try(dbDisconnect(con))
             try(dbUnloadDriver(drv))
             stop(paste("Output table",tableName,"already exist. Please remove it yourself."))
           }
         }
-        try(dbDisconnect(con))
-       try(dbUnloadDriver(drv))
+#        try(dbDisconnect(con))
+#        try(dbUnloadDriver(drv))
+        
+        workingRoot<-G.workingRoot
+        dataRoot<-G.dataRoot
+        stagingDir <- workingRoot
+        if(!file.exists(stagingDir))
+          dir.create(stagingDir,recursive = T)
+        
+        stagingFile <- paste(stagingDir,"/",day,".csv",sep="")
+        file.create(stagingFile) #create or truncate
+        
+        outputDir <- paste(dataRoot,"/occ_yuleq_",ngramlen2,"/",sep="")
+        
+        outputFile <- paste(outputDir,day,".csv",sep="");
+        
+        if(file.exists(outputFile)){
+          
+          if(SKIP_DAY_IF_COMPGRAM_FILE_EXISTS){
+            return(paste("Skipping day for which output exists:",day)) # This gets ignored somehow.. connect then the default "Success"
+          }
+          
+          bakname <- paste(outputFile,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
+          warning(paste("Renaming existing output file",outputFile,bakname))
+          file.rename(outputFile, #from
+              bakname) #to
+        } else {
+          
+          if(!file.exists(outputDir))
+            dir.create(outputDir,recursive = TRUE)
+        }
+        
+#  # create file to make sure this will be possible
+#  file.create(outputFile)
         
         dayEpochGrps <- # doesn't work in case of dopar.. they must be doing something with environments NULL 
-          conttable_construct(day, db=db, ngramlen1=compgramlen,ngramlen2=ngramlen, epoch1=epoch, support=supp)
+          conttable_construct(day, db=db, ngramlen1=NGA.ngramlen1,ngramlen2=ngramlen2, epoch1=epoch, support=supp)
           #, parallel=parallelWithinDay, parOpts=parOpts)
         if(is.null(dayEpochGrps)){
           stop(paste("ngram_assoc() for day:", day, " - Didn't get  back the cooccurrence matrix"))
         } else {
           try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Got back the cooccurrence matrix")))
         }
+        
         ngrams2AssocT <- 
-          adply(idata.frame(dayEpochGrps), 1, calcEpochAssoc, ngramlen=ngramlen,day=day, .expand=F) #, .progress=progress)
+          adply(idata.frame(dayEpochGrps), 1, calcEpochAssoc, ngramlen2=ngramlen2,day=day, .expand=F) #, .progress=progress)
               # This will be a disaster, because we are already in dopar: .parallel = parallelWithinDay,.paropts=parOpts)
         #Leave the hour of the day.. it's good
 #            ngrams2AssocT['X1'] <- NULL
         
-        drv <- dbDriver("PostgreSQL")
-        con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
-                host="hops.cs.uwaterloo.ca", port="5433")
+        file.rename(stagingFile, outputFile)    
+            
+#        drv <- dbDriver("PostgreSQL")
+#        con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
+#                host="hops.cs.uwaterloo.ca", port="5433")
         try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write", tablename, "to DB")))
         dbWriteTable(con,tableName,ngrams2AssocT)
         try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished writing to DB")))

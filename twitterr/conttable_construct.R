@@ -11,13 +11,13 @@ TOTAL <- "TOTAL"
 
 EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 <- TRUE
 
-DEBUG_CTC <- FALSE
+DEBUG_CTC <- TRUE
 #options(error=utils::recover) 
 #For debug
 if(DEBUG_CTC){
 day<-121106
 epoch1<-'1hr'
-ngramlen1<-3
+ngramlen1<-1
 ngramlen2<-ngramlen1+1
 support<-5
 epoch2<-NULL

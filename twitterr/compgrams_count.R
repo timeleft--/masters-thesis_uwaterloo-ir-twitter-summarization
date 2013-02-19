@@ -4,8 +4,8 @@
 ###############################################################################
 
 CGC.argv <- commandArgs(trailingOnly = TRUE)
-G.workingRoot <- "~/r_output/occ_yuleq_working/"
-G.dataRoot <- "~/r_output/"
+#G.workingRoot <- "~/r_output/occ_yuleq_working/"
+#G.dataRoot <- "~/r_output/"
 G.epoch2 <- '1hr'
 G.ngramlen1 <- as.integer(CGC.argv[1])
 #G.ngramlen2 <- G.ngramlen1 + 1
@@ -14,7 +14,7 @@ G.support<-5
 logLabelUGC <- "unigrams_createCompound()" #Recall()???
 
 REMOVE_EXITING_COMPGRAM_TABLES<-TRUE
-SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE
+#SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE
 DEBUG_UGC <- FALSE
 
 if(DEBUG_UGC){
@@ -22,9 +22,9 @@ if(DEBUG_UGC){
   G.nCores <- 2
   G.db <- "sample-0.01"
   
-  workingRoot="~/r_output_debug/occ_yuleq_working/"
-  dataRoot="~/r_output_debug/"
-  
+#  workingRoot="~/r_output_debug/occ_yuleq_working/"
+#  dataRoot="~/r_output_debug/"
+#  
   ngramlen1<-G.ngramlen1
   epoch1<-NULL
   epoch2 <- G.epoch2  
@@ -63,8 +63,8 @@ while(!require(RPostgreSQL)){
 
 source("compgrams_utils.R")
 
-compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,support=5,db=G.db,
-    workingRoot=G.workingRoot,dataRoot=G.dataRoot){
+compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,support=5,db=G.db){
+#    workingRoot=G.workingRoot,dataRoot=G.dataRoot
 
   #can't be changed
   ngramlen2 <- ngramlen1 + 1
@@ -95,38 +95,38 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   
   outTable <- paste('compcnt_',epoch2,ngramlen2,'_',day,sep="") 
   
-  stagingDir <- workingRoot
-  if(!file.exists(stagingDir))
-    dir.create(stagingDir,recursive = T)
-  
-  stagingFile <- paste(stagingDir,"/",day,".csv",sep="")
-  file.create(stagingFile) #create or truncate
-  
-  outputDir <- paste(dataRoot,"/occ_yuleq_",ngramlen2,"/",sep="")
-  
-  outputFile <- paste(outputDir,day,".csv",sep="");
-  
-  if(file.exists(outputFile)){
-    
-    if(SKIP_DAY_IF_COMPGRAM_FILE_EXISTS){
-      if(dbExistsTable(con,outTable)){
-        return(paste("Skipping day for which output exists:",day)) # This gets ignored somehow.. connect then the default "Success"
-      }
-    }
-    
-    bakname <- paste(outputFile,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
-    warning(paste("Renaming existing output file",outputFile,bakname))
-    file.rename(outputFile, #from
-        bakname) #to
-  } else {
-    
-    if(!file.exists(outputDir))
-       dir.create(outputDir,recursive = TRUE)
-  }
-  
-#  # create file to make sure this will be possible
-#  file.create(outputFile)
+#  stagingDir <- workingRoot
+#  if(!file.exists(stagingDir))
+#    dir.create(stagingDir,recursive = T)
 #  
+#  stagingFile <- paste(stagingDir,"/",day,".csv",sep="")
+#  file.create(stagingFile) #create or truncate
+#  
+#  outputDir <- paste(dataRoot,"/occ_yuleq_",ngramlen2,"/",sep="")
+#  
+#  outputFile <- paste(outputDir,day,".csv",sep="");
+#  
+#  if(file.exists(outputFile)){
+#    
+#    if(SKIP_DAY_IF_COMPGRAM_FILE_EXISTS){
+#      if(dbExistsTable(con,outTable)){
+#        return(paste("Skipping day for which output exists:",day)) # This gets ignored somehow.. connect then the default "Success"
+#      }
+#    }
+#    
+#    bakname <- paste(outputFile,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
+#    warning(paste("Renaming existing output file",outputFile,bakname))
+#    file.rename(outputFile, #from
+#        bakname) #to
+#  } else {
+#    
+#    if(!file.exists(outputDir))
+#       dir.create(outputDir,recursive = TRUE)
+#  }
+#  
+##  # create file to make sure this will be possible
+##  file.create(outputFile)
+##  
   
   if(dbExistsTable(con,outTable)){
     if(REMOVE_EXITING_COMPGRAM_TABLES){
@@ -181,138 +181,138 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   #cleanup
   # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
   try(dbClearResult(ugramRs))
-  
-  
-#  ########################
-#  sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
-#              "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
-#  #a7'er elshahr ya me3allem
-##  sec0NextDay <-  as.numeric(as.POSIXct(strptime(paste(day+1,"0000",sep=""),
+#  
+#  
+##  ########################
+##  sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
 ##              "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
-#  sec0NextDay <- sec0CurrDay + (60*60*24)
-#  
-#  sql <- sprintf("select epochstartmillis, totalcnt
-#          from volume_%s%d%s where epochstartmillis >= %.0f and epochstartmillis < %.0f;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste("_",day, sep="")),
-#      (sec0CurrDay-(120*60)) * 1000, (sec0NextDay+(120*60)) * 1000) # add 2 hours to either side to avoid timezone shit
-#  
-#  try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetching ngram volumes using sql:\n ", sql)))
-#  
-#  ngramVolRs <- dbSendQuery(con, sql)
-#  
-#  ngramVolDf <- fetch(ngramVolRs, n=-1)
-#  
-#  try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetched ngram volumes. Num Rows: ", nrow(ngramVolDf))))
-#  
-#  try(dbClearResult(ngramVolRs))
-#  
-#  ############################ 
-#  # sorted because we'll use the volume to load the data for each epoch.. this is different from using indexes for
-#  # loading parts of the cnt tables, which proved tricky :(
-#  # cannot neglect any part of the data bceause we use vollume to skip ahead: and cnt > %d support
-# 
+##  #a7'er elshahr ya me3allem
+###  sec0NextDay <-  as.numeric(as.POSIXct(strptime(paste(day+1,"0000",sep=""),
+###              "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
+##  sec0NextDay <- sec0CurrDay + (60*60*24)
+##  
+##  sql <- sprintf("select epochstartmillis, totalcnt
+##          from volume_%s%d%s where epochstartmillis >= %.0f and epochstartmillis < %.0f;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste("_",day, sep="")),
+##      (sec0CurrDay-(120*60)) * 1000, (sec0NextDay+(120*60)) * 1000) # add 2 hours to either side to avoid timezone shit
+##  
+##  try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetching ngram volumes using sql:\n ", sql)))
+##  
+##  ngramVolRs <- dbSendQuery(con, sql)
+##  
+##  ngramVolDf <- fetch(ngramVolRs, n=-1)
+##  
+##  try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetched ngram volumes. Num Rows: ", nrow(ngramVolDf))))
+##  
+##  try(dbClearResult(ngramVolRs))
+##  
+##  ############################ 
+##  # sorted because we'll use the volume to load the data for each epoch.. this is different from using indexes for
+##  # loading parts of the cnt tables, which proved tricky :(
+##  # cannot neglect any part of the data bceause we use vollume to skip ahead: and cnt > %d support
+## 
+##  if(ngramlen2 == 2){
+##	  sql <- sprintf("select * from ngrams%d where date=%d order by timemillis;",ngramlen2,day)
+##  } else {
+##    sql <- sprintf("select * from compgrams%d_%d order by timemillis;",ngramlen2,day)    
+##  }
+##  
+##  try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetching ngram occurrences using sql:\n ", sql)))
+##  
+##  ngramOccRs <- dbSendQuery(con,sql)
+##  
+###  ngramOccDf <- fetch(ngramOccRs, n=-1) # if ordered we can fetch them in chuncks
+###  
+###  try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngram occurrences. Num Rows: ", length(ngramOccDf))))
+###  
+###  try(dbClearResult(ngramOccRs))
+##  
+##  #########################
+##  
+#
 #  if(ngramlen2 == 2){
-#	  sql <- sprintf("select * from ngrams%d where date=%d order by timemillis;",ngramlen2,day)
+#    sqlTemplate <- sprintf("select * from ngrams%d where date=%d where timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 10000::INT8) order by timemillis;",ngramlen2,day)
 #  } else {
-#    sql <- sprintf("select * from compgrams%d_%d order by timemillis;",ngramlen2,day)    
+#    sqlTemplate <- sprintf("select * from compgrams%d_%d where timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) order by timemillis;",ngramlen2,day)    
 #  }
+#
+#  SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
 #  
-#  try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetching ngram occurrences using sql:\n ", sql)))
+#  flattenNgram <- function(ngram){
+#    paste("{",paste(splitNgramToCompgrams(ngram,ngramlen2),collapse=","),"}",sep="")
+#  } 
 #  
-#  ngramOccRs <- dbSendQuery(con,sql)
-#  
-##  ngramOccDf <- fetch(ngramOccRs, n=-1) # if ordered we can fetch them in chuncks
-##  
-##  try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngram occurrences. Num Rows: ", length(ngramOccDf))))
-##  
-##  try(dbClearResult(ngramOccRs))
-#  
-#  #########################
-#  
-
-  if(ngramlen2 == 2){
-    sqlTemplate <- sprintf("select * from ngrams%d where date=%d where timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 10000::INT8) order by timemillis;",ngramlen2,day)
-  } else {
-    sqlTemplate <- sprintf("select * from compgrams%d_%d where timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) order by timemillis;",ngramlen2,day)    
-  }
-
-  SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
-  
-  flattenNgram <- function(ngram){
-    paste("{",paste(splitNgramToCompgrams(ngram,ngramlen2),collapse=","),"}",sep="")
-  } 
-  
   epochGroupFun <- function(eg) {
     
     epochstartux <- eg[1,"epochstartux"] #stay away from large numbers * 1000
     epochUnigrams <- ugramDf[ugramDf$epochstartux == (epochstartux),]
     
-#    epochNgramVol <- ngramVolDf[ngramVolDf$epochstartux == (epochstartux), "totalcnt"]
+##    epochNgramVol <- ngramVolDf[ngramVolDf$epochstartux == (epochstartux), "totalcnt"]
+##    
+##    epochNgramOccs <- fetch(ngramOccRs, n=epochNgramVol) # if ordered we can fetch them in chuncks
 #    
-#    epochNgramOccs <- fetch(ngramOccRs, n=epochNgramVol) # if ordered we can fetch them in chuncks
-    
-    sql <- sprintf(sqlTemplate,
-         epochstartux, (epochstartux + SEC_IN_EPOCH[[paste("X",epoch2,sep="")]]))
-  
-    try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetching ngram occurrences for epoch using sql:\n ", sql)))
-  
-    epochNgramOccRs <- dbSendQuery(con,sql)
-    epochNgramOccs <- fetch(epochNgramOccRs, n=-1)
-    try(dbClearResult(epochNgramOccRs))
-  
-    try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngram occurrences for epoch",epochstartux,". Num Rows: ", nrow(epochNgramOccs))))
-    
-    # epochNgramOccs will be in the uni+(ngA,ngB,..) remove the paranthesis and convert plus to ,
-    # The we need to remove duplicates
-    if(ngramlen2>3){
-      epochNgramOccs <- within(epochNgramOccs,{
-          # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
-          #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
-          ngram <-  sub('{','"{',ngram,fixed=TRUE)
-          ngram <-  sub('}','}"',ngram,fixed=TRUE)
-          ngram <-  sub('+',',',ngram,fixed=TRUE)
-        })
-    } else {
-      epochNgramOccs <- within(epochNgramOccs,{
-            # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
-            #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
-            ngram <-  sub('(','"(',ngram,fixed=TRUE)
-            ngram <-  sub(')',')"',ngram,fixed=TRUE)
-            ngram <-  sub('+',',',ngram,fixed=TRUE)
-          })
-    }
-    if(DEBUG_UGC){
-      earlierEpochCheck <- which(epochNgramOccs$timemillis / 1000 < epochstartux)
-      if(any(earlierEpochCheck)){
-        warning("Some ngrams we are fetching are of an earlier epoch", paste(earlierEpochCheck,collapse = "|"))
-      }
-      rm(earlierEpochCheck)
-      
-      laterEpochCheck <- which(epochNgramOccs$timemillis / 1000 >= (3600 + epochstartux)) # THIS IS for 1hr epoch only
-      if(any(laterEpochCheck)){
-        warning("Some ngrams we are fetching are of a later epoch", paste(laterEpochCheck,collapse = "|"))
-      }
-      rm(laterEpochCheck)
-    }
-     
-    ngramOccCopyMask <- c()
-    
+#    sql <- sprintf(sqlTemplate,
+#         epochstartux, (epochstartux + SEC_IN_EPOCH[[paste("X",epoch2,sep="")]]))
+#  
+#    try(stop(paste(Sys.time(),logLabelUGC, "for day:",day, " - Fetching ngram occurrences for epoch using sql:\n ", sql)))
+#  
+#    epochNgramOccRs <- dbSendQuery(con,sql)
+#    epochNgramOccs <- fetch(epochNgramOccRs, n=-1)
+#    try(dbClearResult(epochNgramOccRs))
+#  
+#    try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetched ngram occurrences for epoch",epochstartux,". Num Rows: ", nrow(epochNgramOccs))))
+#    
+#    # epochNgramOccs will be in the uni+(ngA,ngB,..) remove the paranthesis and convert plus to ,
+#    # The we need to remove duplicates
+#    if(ngramlen2>3){
+#      epochNgramOccs <- within(epochNgramOccs,{
+#          # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
+#          #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
+#          ngram <-  sub('{','"{',ngram,fixed=TRUE)
+#          ngram <-  sub('}','}"',ngram,fixed=TRUE)
+#          ngram <-  sub('+',',',ngram,fixed=TRUE)
+#        })
+#    } else {
+#      epochNgramOccs <- within(epochNgramOccs,{
+#            # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
+#            #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
+#            ngram <-  sub('(','"(',ngram,fixed=TRUE)
+#            ngram <-  sub(')',')"',ngram,fixed=TRUE)
+#            ngram <-  sub('+',',',ngram,fixed=TRUE)
+#          })
+#    }
+#    if(DEBUG_UGC){
+#      earlierEpochCheck <- which(epochNgramOccs$timemillis / 1000 < epochstartux)
+#      if(any(earlierEpochCheck)){
+#        warning("Some ngrams we are fetching are of an earlier epoch", paste(earlierEpochCheck,collapse = "|"))
+#      }
+#      rm(earlierEpochCheck)
+#      
+#      laterEpochCheck <- which(epochNgramOccs$timemillis / 1000 >= (3600 + epochstartux)) # THIS IS for 1hr epoch only
+#      if(any(laterEpochCheck)){
+#        warning("Some ngrams we are fetching are of a later epoch", paste(laterEpochCheck,collapse = "|"))
+#      }
+#      rm(laterEpochCheck)
+#    }
+#     
+#    ngramOccCopyMask <- c()
+#    
     ngramFun <- function(ng){
       
-      ######## Mark occurrences for copying
-      if(ngramlen2<3){
-        ngramOccs <- which(epochNgramOccs$ngram == paste("(",ng[1,"ngram"],")",sep=""))
-      } else {
-        ngramOccs <- which(epochNgramOccs$ngram == ng[1,"ngram"])
-      }
-      if(DEBUG_UGC){
-        if(length(ngramOccs) != ng[1,"cnt"]){
-          try(stop(paste(ng[1,"ngram"],"ngram Occs retrieved:",length(ngramOccs),"not equal to the recorded count:",
-                      ng[1,"cnt"])))
-        }
-      }
-      
-      ngramOccCopyMask <<- c(ngramOccCopyMask, ngramOccs)
-      
+#      ######## Mark occurrences for copying
+#      if(ngramlen2<3){
+#        ngramOccs <- which(epochNgramOccs$ngram == paste("(",ng[1,"ngram"],")",sep=""))
+#      } else {
+#        ngramOccs <- which(epochNgramOccs$ngram == ng[1,"ngram"])
+#      }
+#      if(DEBUG_UGC){
+#        if(length(ngramOccs) != ng[1,"cnt"]){
+#          try(stop(paste(ng[1,"ngram"],"ngram Occs retrieved:",length(ngramOccs),"not equal to the recorded count:",
+#                      ng[1,"cnt"])))
+#        }
+#      }
+#      
+#      ngramOccCopyMask <<- c(ngramOccCopyMask, ngramOccs)
+#      
       ###### Reduce counts
       
       ugramsInNgram <- splitNgramToCompgrams(ng[1,"ngram"],ngramlen2) 
@@ -345,25 +345,28 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
     epochCompound <- adply(idata.frame(eg),1,ngramFun,.expand=F) 
     epochCompound["X1"] <- NULL
     
-    ngramOccCopy <- epochNgramOccs[ngramOccCopyMask,]
+    #
+#    ngramOccCopy <- epochNgramOccs[ngramOccCopyMask,]
     if(ngramlen2>2){
+
       #The returned compgrams is now flattened so that (i,love),u and i,(love,u) become i,love,u 
       # so all the different ways it got composed should be mapped to one row with one of their counts
       # (all counts should be the same because the YuleQ is calculated per epoch) 
       epochCompound <- epochCompound[!duplicated(epochCompound["ngramarr"]),]
-      
-      ngramOccCopy$ngram <- aaply(ngramOccCopy$ngram,1,flattenNgram)
-
-      #same idea for occurrences, but this time per tweet
-      ngramOccCopy <- ngramOccCopy[!duplicated(ngramOccCopy["id","ngram"]),]    
+#      
+#      ngramOccCopy$ngram <- aaply(ngramOccCopy$ngram,1,flattenNgram)
+#
+#      #same idea for occurrences, but this time per tweet
+#      ngramOccCopy <- ngramOccCopy[!duplicated(ngramOccCopy["id","ngram"]),]    
     } 
     
-    #### Copy Ngram Occs
-    write.table(ngramOccCopy, file = stagingFile, append = TRUE, quote = FALSE, sep = "\t",
-        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-        col.names = FALSE, # qmethod = c("escape", "double"),
-        fileEncoding = "UTF-8")
     
+#    #### Copy Ngram Occs
+#    write.table(ngramOccCopy, file = stagingFile, append = TRUE, quote = FALSE, sep = "\t",
+#        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+#        col.names = FALSE, # qmethod = c("escape", "double"),
+#        fileEncoding = "UTF-8")
+#    
     
     ######################
     ######Plotting (TODO: move from here)
@@ -393,7 +396,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   dbWriteTable(con,outTable,combinedDf)
   try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished writing to DB")))
   
-  file.rename(stagingFile, outputFile)
+#  file.rename(stagingFile, outputFile)
   
   #########################
   #  
