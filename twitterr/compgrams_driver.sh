@@ -5,7 +5,7 @@ exit 1
 fi
 
 runTS=${1}
-for ngramlen1 in 1 # 2 3 4 5 6 7 8 9 10
+for ngramlen1 in 2 3 4 5 6 7 8 9 10
 do
     ngramlen2=`expr ${ngramlen1} + 1`
     echo "\
@@ -17,7 +17,7 @@ sh ../postgresql/compgrams_create-len-date_populate.sh full ${ngramlen2} > ../po
 sh ../postgresql/compgrams_${ngramlen2}_populate.sh > ../postgresql/compgrams_${ngramlen2}_populate.out 2> ../postgresql/compgrams_${ngramlen2}_populate.err \n\
 \n\
 echo \"Indexing newly populated tables. Commands logged in: ../postgresql/compgrams_${ngramlen2}_index.sh\" \n\
-sh ../postgresql/compgrams_inex.sh full ${ngramlen2} > ../postgresql/compgrams_${ngramlen2}_index.sh \n\
+sh ../postgresql/compgrams_index.sh full ${ngramlen2} > ../postgresql/compgrams_${ngramlen2}_index.sh \n\
 sh ../postgresql/compgrams_${ngramlen2}_index.sh > ../postgresql/compgrams_${ngramlen2}_index.out 2> ../postgresql/compgrams_${ngramlen2}_index.err \n\
 \n\
 echo \"Creating volume table as aggregate of counts of compgrams of legnthes UPTO ${ngramlen1}. Commands logged in: ../postgresql/volume_1hr${ngramlen1}_aggregate.sh\"\n\
