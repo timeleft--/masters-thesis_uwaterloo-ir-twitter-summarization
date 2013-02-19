@@ -3,6 +3,11 @@
 # Author: yia
 ###############################################################################
 
+CGC.argv <- commandArgs(trailingOnly = TRUE)
+G.ngramlen1 <- as.integer(CGC.argv[1])
+#G.ngramlen2 <- G.ngramlen1 + 1
+
+
 G.epoch2 <- '1hr'
 G.support<-5
 
@@ -10,7 +15,8 @@ logLabelUGC <- "unigrams_createCompound()" #Recall()???
 
 REMOVE_EXITING_COMPGRAM_TABLES<-TRUE
 #SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE
-DEBUG_UGC <- FALSE
+DEBUG_UGC <- TRUE
+
 
 if(DEBUG_UGC){
   G.days<-c(121106,121110)
@@ -44,10 +50,7 @@ if(DEBUG_UGC){
   G.nCores <- min(50, length(G.days)) # because we load ngram occs.. so this might be too much for mem.. better safe than sorry
   
   CGC.dataRoot <- "~/r_output/"
-  CGC.argv <- commandArgs(trailingOnly = TRUE)
-  G.ngramlen1 <- as.integer(CGC.argv[1])
-#G.ngramlen2 <- G.ngramlen1 + 1
-  
+ 
 }
 
 
