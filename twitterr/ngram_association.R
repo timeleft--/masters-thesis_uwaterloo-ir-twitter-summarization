@@ -140,7 +140,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging)
   #No notoccurrs
 #    notoccurs <- eg$unigramsNotoccurs[[1]]
     
-    epochvolume <- eg$epochvol
+    epochvolume <- eg$epochvol[1]
     
     ixLkp <- array(1:(nUnique+1))
     rownames(ixLkp) <- c(uniqueUgrams,TOTAL)
@@ -163,7 +163,8 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging)
       
       if(any(is.na(compsIx))){
         tryCatch(
-            stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ERROR: compsIx not positive:",paste(compsIx,collapse="|"),eg$epochstartux,paste(ng,collapse="|")))
+            stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ERROR: compsIx not positive:",paste(compsIx,collapse="|"),
+                    eg$epochstartux[1],paste(ng,collapse="|")))
             ,error=NGA.handleErrors)
         return(NULL)
       }
@@ -246,7 +247,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging)
     
     try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Starting to form compgrams according to high association in epoch",eg[1,"epochstartux"])))
     
-    epochstartux<-eg$epochstartux
+    epochstartux<-eg$epochstartux[1]
     
 #  ########################
 #  sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
@@ -460,7 +461,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging)
     #######################################
     
     
-    return(data.frame(ngramlen=ngramlen2,date=day,epochstartux=eg$epochstartux,epochvol=eg$epochvol,ngramAssoc=ngAssoc)) 
+    return(data.frame(ngramlen=ngramlen2,date=day,epochstartux=eg$epochstartux[1],epochvol=eg$epochvol[1],ngramAssoc=ngAssoc)) 
   }
   
 #  debug(calcEpochAssoc)
