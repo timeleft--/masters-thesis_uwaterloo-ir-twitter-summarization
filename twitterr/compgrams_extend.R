@@ -298,9 +298,9 @@ foreach(day=CGX.days,
       
       tryCatch({
             
-            daySuccess <<- extendCompgramOfDay(day) 
+             extendCompgramOfDay(day) 
 #                epoch2 = CGX.epoch2, ngramlen2 = CGX.ngramlen2,  db = CGX.db) #, support = CGX.support)
-            
+            daySuccess <<-paste("Success for day:",day)
           }
           ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
           ,finally=try(stop(paste(Sys.time(), CGX.loglabel,

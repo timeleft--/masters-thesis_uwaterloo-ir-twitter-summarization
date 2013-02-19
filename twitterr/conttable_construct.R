@@ -67,7 +67,7 @@ align_epochs <- function(dframe, epoch) {
 
 #####################################3
 toPosixTime <- function(timestamp){
-  as.POSIXct(timestamp/MILLIS_PUT_1000,origin="1970-01-01", tz="GMT")
+  return(as.POSIXct(timestamp/MILLIS_PUT_1000,origin="1970-01-01", tz="GMT"))
 }
 
 
@@ -256,6 +256,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
            }
       
           cooccurs <<- cooccurs
+          return("ignored")
         }
         #debug(initDiagonals)
         a_ply(idata.frame(ugramDf[epochUgramMask,]),1,.expand=FALSE,initDiagonals)
@@ -356,11 +357,12 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
           }
         }
         cooccurs <<- cooccurs
+        return("ignrored")
       }
    
       #debug(countCooccurNooccurNgram)
 #      setBreakpoint("conttable_construct.R#249")
-      ngramGrp <- d_ply(idata.frame(eg), c("ngram"), countCooccurNooccurNgram)
+      d_ply(idata.frame(eg), c("ngram"), countCooccurNooccurNgram)
 
       try(stop(paste(Sys.time(), "conttable_construct() for day:", day, " - Finished creating cooccurrence matrix for",currEpoch)))
       if(EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1){
