@@ -9,7 +9,7 @@ G.dataRoot <- "~/r_output/"
 
 NGA.logLabel <- "ngram_assoc"
 
-DEBUG_NGA<-TRUE
+DEBUG_NGA<-FALSE
 
 REMOVE_EXITING_OUTPUTS<-TRUE
 SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE

@@ -11,7 +11,7 @@ TOTAL <- "TOTAL"
 
 EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 <- TRUE
 
-DEBUG_CTC <- TRUE
+DEBUG_CTC <- FALSE
 #options(error=utils::recover) 
 #For debug
 if(DEBUG_CTC){
