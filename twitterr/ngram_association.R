@@ -130,7 +130,7 @@ NGA.DEBUG_ERRORS <- TRUE
   
   
   
-  calcEpochAssoc <- function(eg,ngramlen2,day){
+calcEpochAssoc <- function(eg,ngramlen2,day){
   
     try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Starting to calc  pair-wise association in epoch",eg[1,"epochstartux"])))
     
@@ -316,9 +316,18 @@ NGA.DEBUG_ERRORS <- TRUE
     
     try(stop(paste(Sys.time(),NGA.logLabel, "for day:",day, " - Fetching ngram occurrences for epoch using sql:\n ", sql)))
     
+    drv <- dbDriver("PostgreSQL")
+    con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
+        host="hops.cs.uwaterloo.ca", port="5433")
+    
     epochNgramOccRs <- dbSendQuery(con,sql)
     epochNgramOccs <- fetch(epochNgramOccRs, n=-1)
     try(dbClearResult(epochNgramOccRs))
+    
+    # dbDisconnect(con, ...) closes the connection. Eg.
+    try(dbDisconnect(con))
+    # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
+    try(dbUnloadDriver(drv))
     
     try(stop(paste(Sys.time(), NGA.logLabel, "for day:", day, " - Fetched ngram occurrences for epoch",epochstartux,". Num Rows: ", nrow(epochNgramOccs))))
     
@@ -369,7 +378,10 @@ NGA.DEBUG_ERRORS <- TRUE
     #### Copy Ngram Occs
     if(ngramlen2>2){
       
-      towrite <- aaply(occAssoc[,c("id","timemillis","date","ngram","ngramlen","tweetlen","pos")],1,function(occ) { occ$ngram<-flattenNgram(occ$ngram) } )
+      towrite <- aaply(occAssoc[,c("id","timemillis","date","ngram","ngramlen","tweetlen","pos")],1,function(occ) { 
+            occ$ngram<-flattenNgram(occ$ngram)
+            return(occ)
+          } )
       
     } else {
       
@@ -473,16 +485,16 @@ NGA.DEBUG_ERRORS <- TRUE
         if(dbExistsTable(con,tableName)){
           if(REMOVE_EXITING_OUTPUTS){
             dbRemoveTable(con,tableName)
-##            try(dbDisconnect(con))
-##            try(dbUnloadDriver(drv))
+#            try(dbDisconnect(con))
+#            try(dbUnloadDriver(drv))
           } else {
             try(dbDisconnect(con))
             try(dbUnloadDriver(drv))
             stop(paste("Output table",tableName,"already exist. Please remove it yourself."))
           }
         }
-#        try(dbDisconnect(con))
-#        try(dbUnloadDriver(drv))
+        try(dbDisconnect(con))
+        try(dbUnloadDriver(drv))
         
         workingRoot<-G.workingRoot
         dataRoot<-G.dataRoot
@@ -577,9 +589,9 @@ NGA.DEBUG_ERRORS <- TRUE
         file.rename(cntStaging, cntOutput)
         file.rename(selStaging, selOutput)
         
-#        drv <- dbDriver("PostgreSQL")
-#        con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
-#                host="hops.cs.uwaterloo.ca", port="5433")
+        drv <- dbDriver("PostgreSQL")
+        con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
+                host="hops.cs.uwaterloo.ca", port="5433")
         try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write", tableName, "to DB")))
         dbWriteTable(con,tableName,ngrams2AssocT)
         try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished writing to DB")))

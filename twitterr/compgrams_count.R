@@ -258,7 +258,12 @@ try(stop(paste(Sys.time(), logLabelUGC, paste("Read  compound unigrams count - n
 #  flattenNgram <- function(ngram){
 #    paste("{",paste(splitNgramToCompgrams(ngram,ngramlen2),collapse=","),"}",sep="")
 #  } 
-#  
+
+# dbDisconnect(con, ...) closes the connection. Eg.
+try(dbDisconnect(con))
+# dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
+try(dbUnloadDriver(drv))
+
   epochGroupFun <- function(eg) {
     
     epochstartux <- eg[1,"epochstartux"] #stay away from large numbers * 1000
@@ -407,6 +412,9 @@ try(stop(paste(Sys.time(), logLabelUGC, paste("Read  compound unigrams count - n
       
   combinedDf <- ddply(idata.frame(ngramDf),c("epochstartux"), epochGroupFun)
   
+  drv <- dbDriver("PostgreSQL")
+  con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
+      host="hops.cs.uwaterloo.ca", port="5433")
   
   ######## STORE IT #######
   try(stop(paste(Sys.time(), logLabelUGC, " for day:", day, " - Connected to DB",db)))
@@ -430,7 +438,7 @@ try(stop(paste(Sys.time(), logLabelUGC, paste("Read  compound unigrams count - n
   
 #  return (combinedDf) 
 
-#   return(paste("Success for day",day)) #Somehow this doesn't make it to the value of daySuccess, so it's duplicated below
+   return(paste("Success for day",day)) #Somehow this doesn't make it to the value of daySuccess, so it's duplicated below
 }
 
 ###############################
