@@ -5,7 +5,7 @@ exit 1
 fi
 
 runTS=${1}
-for ngramlen1 in 5 6 7 8 9 10
+for ngramlen1 in 1 # 2 3 4 5 6 7 8 9 10
 do
     ngramlen2=`expr ${ngramlen1} + 1`
     echo "\
@@ -34,7 +34,7 @@ sh ../postgresql/volume_1hr${ngramlen1}_aggregate.sh > ../postgresql/volume_1hr$
     sh ../postgresql/compound_inherit.sh full ${ngramlen2} > ../postgresql/compcnt-hier_1hr${ngramlen2}_alter.sh \n\
     sh ../postgresql/compcnt-hier_1hr${ngramlen2}_alter.sh > ../postgresql/compcnt-hier_1hr${ngramlen2}_alter.out 2> ../postgresql/compcnt-hier_1hr${ngramlen2}_alter.err \n\
 \n\
-echo \"Done for ngramlen1: ${ngramlen1} and ngramlen2: ${ngramlen2}\"" > compgrams-driver_${ngramlen1}-${ngramlen2}.sh
-#sh compgrams-driver_${ngramlen1}-${ngramlen2}.sh
+echo \"Done for ngramlen1: ${ngramlen1} and ngramlen2: ${ngramlen2}\"" > compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
+#sh compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
 
 done
