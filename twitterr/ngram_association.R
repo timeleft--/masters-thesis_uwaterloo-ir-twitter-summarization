@@ -130,7 +130,7 @@ NGA.DEBUG_ERRORS <- TRUE
   
   
   
-calcEpochAssoc <- function(eg,ngramlen2,day){
+calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging){
   
     try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Starting to calc  pair-wise association in epoch",eg[1,"epochstartux"])))
     
@@ -389,7 +389,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day){
       
     }
     
-    write.table(towrite, file = stagingFile, append = TRUE, quote = FALSE, sep = "\t",
+    write.table(towrite, file = alloccStaging, append = TRUE, quote = FALSE, sep = "\t",
         eol = "\n", na = "NA", dec = ".", row.names = FALSE,
         col.names = FALSE, # qmethod = c("escape", "double"),
         fileEncoding = "UTF-8")
@@ -502,8 +502,8 @@ calcEpochAssoc <- function(eg,ngramlen2,day){
         if(!file.exists(stagingDir))
           dir.create(stagingDir,recursive = T)
         
-        stagingFile <- paste(stagingDir,"/",day,".csv",sep="")
-        file.create(stagingFile) #create or truncate
+        alloccStaging <- paste(stagingDir,"/",day,".csv",sep="")
+        file.create(alloccStaging) #create or truncate
         
         cntStaging <- paste(stagingDir,"cnt_",day,".csv",sep="")
         file.create(cntStaging)
@@ -581,12 +581,12 @@ calcEpochAssoc <- function(eg,ngramlen2,day){
         
         ngrams2AssocT <- 
           adply(idata.frame(dayEpochGrps), 1, calcEpochAssoc, ngramlen2=ngramlen2,day=day, .expand=F,
-              stagingFile=stagingFile,cntStaging=cntStaging,selStaging=selStaging) #, .progress=progress)
+              alloccStaging=alloccStaging,cntStaging=cntStaging,selStaging=selStaging) #, .progress=progress)
               # This will be a disaster, because we are already in dopar: .parallel = parallelWithinDay,.paropts=parOpts)
         #Leave the hour of the day.. it's good
 #            ngrams2AssocT['X1'] <- NULL
         
-        file.rename(stagingFile, outputFile)    
+        file.rename(alloccStaging, outputFile)    
         file.rename(cntStaging, cntOutput)
         file.rename(selStaging, selOutput)
         
