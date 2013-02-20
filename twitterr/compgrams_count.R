@@ -15,7 +15,7 @@ logLabelUGC <- "unigrams_createCompound()" #Recall()???
 
 REMOVE_EXITING_COMPGRAM_TABLES<-TRUE
 #SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE
-DEBUG_UGC <- FALSE
+DEBUG_UGC <- T
 
 
 if(DEBUG_UGC){

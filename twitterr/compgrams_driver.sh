@@ -1,11 +1,11 @@
 #!/bin/bash
-if [ $# -ne 1 ]; then
+if [ $# -ne 2 ]; then
 echo "usage"
 exit 1
 fi
 
 runTS=${1}
-db=full
+db=${2}
 
 for ngramlen1 in 1 2 3 4 5 6 7 8 9 10
 do
