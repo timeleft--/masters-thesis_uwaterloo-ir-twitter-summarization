@@ -130,7 +130,9 @@ NGA.DEBUG_ERRORS <- TRUE
   
   
   
-calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging){
+calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
+#    cntStaging,
+    selStaging){
   
     try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Starting to calc  pair-wise association in epoch",eg[1,"epochstartux"])))
     
@@ -442,21 +444,21 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging)
     #idata.frame(
     selOcc <- ddply(occAssoc,c("id"),contextualAssoc)
     
-    selCnt <- ddply(idata.frame(selOcc),c("ngram"),summarize,cnt=length(id))
-    selCnt$epochstartux<-epochstartux
-    selCnt$date<-day
-    selCnt$ngramlen<-ngramlen2
-    
-    write.table(selCnt, file = cntStaging, append = TRUE, quote = FALSE, sep = "\t",
-        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-        col.names = FALSE, # qmethod = c("escape", "double"),
-        fileEncoding = "UTF-8")
-   
     write.table(selOcc, file = selStaging, append = TRUE, quote = FALSE, sep = "\t",
         eol = "\n", na = "NA", dec = ".", row.names = FALSE,
         col.names = FALSE, # qmethod = c("escape", "double"),
         fileEncoding = "UTF-8")
     
+#    selCnt <- ddply(idata.frame(selOcc),c("ngram"),summarize,cnt=length(id))
+#    selCnt$epochstartux<-epochstartux
+#    selCnt$date<-day
+#    selCnt$ngramlen<-ngramlen2
+#    
+#    write.table(selCnt, file = cntStaging, append = TRUE, quote = FALSE, sep = "\t",
+#        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+#        col.names = FALSE, # qmethod = c("escape", "double"),
+#        fileEncoding = "UTF-8")
+   
     ### Aggregate to counts by ngram
     
     
@@ -511,8 +513,8 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging)
         alloccStaging <- paste(stagingDir,"/",day,".csv",sep="")
         file.create(alloccStaging) #create or truncate
         
-        cntStaging <- paste(stagingDir,"cnt_",day,".csv",sep="")
-        file.create(cntStaging)
+#        cntStaging <- paste(stagingDir,"cnt_",day,".csv",sep="")
+#        file.create(cntStaging)
         
         selStaging <- paste(stagingDir,"sel_",day,".csv",sep="")
         file.create(selStaging)
@@ -541,19 +543,19 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging)
         
         
         
-        cntOutput <- paste(outputDir,"/cnt_",day,".csv",sep="");
-        
-        if(file.exists(cntOutput)){
-          
-          if(SKIP_DAY_IF_COMPGRAM_FILE_EXISTS){
-            return(paste("Skipping day for which output exists:",day)) # This gets ignored somehow.. connect then the default "Success"
-          }
-          
-          bakname <- paste(cntOutput,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
-          warning(paste("Renaming existing output file",cntOutput,bakname))
-          file.rename(cntOutput, #from
-              bakname) #to
-        }
+#        cntOutput <- paste(outputDir,"/cnt_",day,".csv",sep="");
+#        
+#        if(file.exists(cntOutput)){
+#          
+#          if(SKIP_DAY_IF_COMPGRAM_FILE_EXISTS){
+#            return(paste("Skipping day for which output exists:",day)) # This gets ignored somehow.. connect then the default "Success"
+#          }
+#          
+#          bakname <- paste(cntOutput,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
+#          warning(paste("Renaming existing output file",cntOutput,bakname))
+#          file.rename(cntOutput, #from
+#              bakname) #to
+#        }
        
 
         
@@ -587,13 +589,15 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging)
         
         ngrams2AssocT <- 
           adply(idata.frame(dayEpochGrps), 1, calcEpochAssoc, ngramlen2=ngramlen2,day=day, .expand=F,
-              alloccStaging=alloccStaging,cntStaging=cntStaging,selStaging=selStaging) #, .progress=progress)
+              alloccStaging=alloccStaging,
+#              cntStaging=cntStaging,
+              selStaging=selStaging) #, .progress=progress)
               # This will be a disaster, because we are already in dopar: .parallel = parallelWithinDay,.paropts=parOpts)
         #Leave the hour of the day.. it's good
 #            ngrams2AssocT['X1'] <- NULL
         
         file.rename(alloccStaging, outputFile)    
-        file.rename(cntStaging, cntOutput)
+#        file.rename(cntStaging, cntOutput)
         file.rename(selStaging, selOutput)
         
         drv <- dbDriver("PostgreSQL")

@@ -29,6 +29,8 @@ sh ../postgresql/volume_1hr${ngramlen1}_aggregate.sh > ../postgresql/volume_1hr$
     echo \"Calculating ngram association for candidates of length ${ngramlen2}, follow: ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err\" \n\
     R -f ngram_association.R --args ${ngramlen1} > ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.out 2> ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err \n\
 \n\
+    echo \"Creating and populating occurrence table for selected compgrams of length ${ngramlen2}. Commands logged in: 
+\n\
     echo \"Adjusting counts to incorporate good ngrams of length  ${ngramlen2} as compgrams. Follow: ~/logs_r/compgrams-count_${ngramlen2}_${runTS}.err\" \n\
     R -f compgrams_count.R --args ${ngramlen1} > ~/logs_r/compgrams-count_${ngramlen2}_${runTS}.out 2>  ~/logs_r/compgrams-count_${ngramlen2}_${runTS}.err \n\
 \n\
