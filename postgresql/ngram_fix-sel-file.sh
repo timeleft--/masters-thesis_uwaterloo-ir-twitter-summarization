@@ -4,6 +4,12 @@ for d in 121106 121110 130103 121016 121206 121210 120925 121223 121205 130104 1
 do
 for l in 2 3 4 5 6 7 8 9 10 11 
 do
+
+if [ ! -e ${pp}${l}/sel_${d}.csv ] 
+then 
+    continue
+fi
+
 cut -d "	" -f 1 ${pp}${l}/sel_${d}.csv | nl -s "{" | cut -c7- > ${pp}${l}/fix1_${d}.tmp
 cut -d "	" -f 2- ${pp}${l}/sel_${d}.csv | nl -s "	" | cut -c7- > ${pp}${l}/fix2_${d}.tmp
 mv ${pp}${l}/sel_${d}.csv ${pp}${l}/sel_${d}.bak
