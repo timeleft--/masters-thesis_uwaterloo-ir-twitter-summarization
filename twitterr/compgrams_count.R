@@ -439,7 +439,7 @@ try(dbUnloadDriver(drv))
   ######## STORE IT #######
   try(stop(paste(Sys.time(), logLabelUGC, " for day:", day, " - Connected to DB",db)))
   
-  try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write combinedDf to DB")))
+  try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Will write combinedDf to DB:",outTable)))
   dbWriteTable(con,outTable,combinedDf)
   try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished writing to DB")))
   
