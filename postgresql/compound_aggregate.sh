@@ -15,6 +15,11 @@ for day in 120925  120926  120930  121008  121013  121016  121026  121027  12102
 do
 echo "${psql} \" DROP TABLE IF EXISTS volume_${epoch}${len}_${day}; \""
 echo "${psql} \"CREATE TABLE volume_${epoch}${len}_${day} as select  ${len} as ngramLen, epochstartux * 1000 as epochstartmillis, sum(cnt) as totalcnt from compcnt_${epoch}${len}_${day} group by epochstartmillis;\"&"
-    
+
+echo 'for job in `jobs -p` 
+do 
+echo $job 
+wait $job 
+done' 
 done
 
