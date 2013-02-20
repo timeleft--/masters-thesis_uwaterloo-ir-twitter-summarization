@@ -187,7 +187,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
   
   #where date=%d 
-  sql <-  sprintf("select floor(timemillis/%d)*%d as epochstartux, compgram, count(*) as cnt from %s group by epochstartux,compgram;",
+  sql <-  sprintf("select floor(timemillis/%d)*%d as epochstartux, compgram as ngram, count(*) as cnt from %s group by epochstartux,compgram;",
       MILLIS_IN_EPOCH[[paste("X",epoch2,sep="")]],SEC_IN_EPOCH[[paste("X",epoch2,sep="")]],occTable,day)
 
   ngramRs <- dbSendQuery(con,sql)
@@ -478,7 +478,7 @@ allMonthes <- foreach(day=G.days,
             daySuccess <<- paste("Success for day", day)
           }
           ,error=function(e) daySuccess <<- paste("Failure for day",day,e)
-          ,finally=try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ", daySuccess)))
+          ,finally=try(stop(paste(Sys.time(), logLabelUGC ,"for day:", day, " - ", daySuccess)))
       )
     }
 
