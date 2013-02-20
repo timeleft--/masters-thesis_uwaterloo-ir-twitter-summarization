@@ -10,7 +10,7 @@ db=${2}
 for ngramlen1 in 1 2 3 4 5 6 7 8 9 10
 do
     ngramlen2=`expr ${ngramlen1} + 1`
-if [ ngramlen1 > 1 ]
+if [ ngramlen1 -gt 1 ]
 then
     echo "\
 echo \"Extending good ngrams of length ${ngramlen1} by another unigram. Follow: ~/logs_r/compgrams-extend_${ngramlen2}_${runTS}.err\" \n\
@@ -32,6 +32,7 @@ chmod + ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh \n\
 ./../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh > ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.out 2> ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.err \n\
 " > compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
 fi
+
 echo "echo \"Calculating ngram association for candidates of length ${ngramlen2}, follow: ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err\" \n\
     R -f ngram_association.R --args ${ngramlen1} > ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.out 2> ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err \n\
 \n\
