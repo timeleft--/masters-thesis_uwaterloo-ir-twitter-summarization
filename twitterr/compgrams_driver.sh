@@ -1,11 +1,12 @@
 #!/bin/bash
-if [ $# -ne 2 ]; then
+if [ $# -ne 3 ]; then
 echo "usage"
 exit 1
 fi
 
 runTS=${1}
 db=${2}
+root=${root}
 
 for ngramlen1 in 1 2 3 4 5 6 7 8 9 10
 do
@@ -17,7 +18,7 @@ echo \"Extending good ngrams of length ${ngramlen1} by another unigram. Follow: 
 R -f compgrams_extend.R --args ${ngramlen1} > ~/logs_r/compgrams-extend_${ngramlen2}_${runTS}.out 2> ~/logs_r/compgrams-extend_${ngramlen2}_${runTS}.err \n\
 \n\
 echo \"Populating DB by candidate compgrams of length ${ngramlen2} and their counts. Commands logged in: ../postgresql/compgrams_${ngramlen2}_populate_${runTS}.sh\" \n\
-sh ../postgresql/compgrams_create-len-date_populate.sh ${db} ${ngramlen2} > ../postgresql/compgrams_${ngramlen2}_populate_${runTS}.sh \n\
+sh ../postgresql/compgrams_create-len-date_populate.sh ${db} ${ngramlen2} ${root} > ../postgresql/compgrams_${ngramlen2}_populate_${runTS}.sh \n\
 chmod +x ../postgresql/compgrams_${ngramlen2}_populate_${runTS}.sh \n\
 ./../postgresql/compgrams_${ngramlen2}_populate_${runTS}.sh > ../postgresql/compgrams_${ngramlen2}_populate_${runTS}.out 2> ../postgresql/compgrams_${ngramlen2}_populate_${runTS}.err \n\
 \n\
@@ -37,7 +38,7 @@ echo "echo \"Calculating ngram association for candidates of length ${ngramlen2}
     R -f ngram_association.R --args ${ngramlen1} > ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.out 2> ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err \n\
 \n\
     echo \"Creating and populating occurrence table for selected compgrams of length ${ngramlen2}. Commands logged in: ../postgresql/occs_${ngramlen2}_populate_${runTS}.sh\" \n\
-sh ../postgresql/occs_create-len-date_populate.sh ${db} ${ngramlen2} > ../postgresql/occs_${ngramlen2}_populate_${runTS}.sh \n\
+sh ../postgresql/occs_create-len-date_populate.sh ${db} ${ngramlen2} ${root} > ../postgresql/occs_${ngramlen2}_populate_${runTS}.sh \n\
 chmod +x ../postgresql/occs_${ngramlen2}_populate_${runTS}.sh \n\
 ./../postgresql/occs_${ngramlen2}_populate_${runTS}.sh > ../postgresql/occs_${ngramlen2}_populate_${runTS}.out 2> ../postgresql/occs_${ngramlen2}_populate_${runTS}.err \n\
 \n\

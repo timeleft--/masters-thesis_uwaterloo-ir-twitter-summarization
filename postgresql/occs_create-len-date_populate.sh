@@ -1,11 +1,11 @@
 #!/bin/bash
-if [ $# -ne 2 ]; then #3
+if [ $# -ne 3 ]; then 
     echo "usage"
     exit 1
 fi
 db=${1}
 len=${2}
-root='/home/yaboulna/r_output' #${3}
+root=${3}
 epoch='1hr'
 psql="psql -p 5433 -d ${db} -c "
 
