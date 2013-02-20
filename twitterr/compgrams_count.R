@@ -205,9 +205,8 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
     sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis/1000 as epochstartux, cnt 
           from cnt_%s%d%s where date=%d and cnt > %d;", epoch1, ngramlen1, ifelse(ngramlen2<3,'',paste("_",day, sep="")), day, support)
   } else {
-    # compgrams with less occs than support wasn't written out last time.. see the yaay above :)
     sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis/1000 as epochstartux, cnt
-					from compcnt_%s%d_%d;", epoch1, ngramlen1, day)
+					from compcnt_%s%d_%d and cnt > %d;", epoch1, ngramlen1, day, support)
   }
   try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetching unigrams' cnts using sql:", sql)))
   

@@ -118,7 +118,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
   
   if(ngramlen1==1){
     sql <- sprintf("select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt
-                  from cnt_%s%d where date=%d and cnt > %d order by cnt desc;", epoch1, ngramlen1, day, support)
+                  from cnt_%s%d where date=%d and cnt > %d;", epoch1, ngramlen1, day, support) # order by cnt desc
   } else {
     # compgrams with no enough support were not originally stored 
     sql <- sprintf("select epochstartux, ngramarr as unigram, cnt as unigramcnt
