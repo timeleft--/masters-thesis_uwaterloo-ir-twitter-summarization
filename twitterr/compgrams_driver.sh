@@ -7,9 +7,11 @@ fi
 runTS=${1}
 db=full
 
-for ngramlen1 in 1 #2 3 4 5 6 7 8 9 10
+for ngramlen1 in 1 2 3 4 5 6 7 8 9 10
 do
     ngramlen2=`expr ${ngramlen1} + 1`
+if [ ngramlen1 > 1 ]
+then
     echo "\
 echo \"Extending good ngrams of length ${ngramlen1} by another unigram. Follow: ~/logs_r/compgrams-extend_${ngramlen2}_${runTS}.err\" \n\
 R -f compgrams_extend.R --args ${ngramlen1} > ~/logs_r/compgrams-extend_${ngramlen2}_${runTS}.out 2> ~/logs_r/compgrams-extend_${ngramlen2}_${runTS}.err \n\
@@ -28,8 +30,9 @@ echo \"Creating volume table as aggregate of counts of compgrams of legnthes UPT
 sh ../postgresql/compound_aggregate.sh ${db} ${ngramlen1} > ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh \n\
 chmod + ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh \n\
 ./../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh > ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.out 2> ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.err \n\
-\n\
-    echo \"Calculating ngram association for candidates of length ${ngramlen2}, follow: ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err\" \n\
+"
+fi
+echo "echo \"Calculating ngram association for candidates of length ${ngramlen2}, follow: ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err\" \n\
     R -f ngram_association.R --args ${ngramlen1} > ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.out 2> ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err \n\
 \n\
     echo \"Creating and populating occurrence table for selected compgrams of length ${ngramlen2}. Commands logged in: ../postgresql/occs_${ngramlen2}_populate_${runTS}.sh\" \n\
