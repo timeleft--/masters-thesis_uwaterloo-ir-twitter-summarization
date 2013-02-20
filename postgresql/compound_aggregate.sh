@@ -16,10 +16,11 @@ do
 echo "${psql} \" DROP TABLE IF EXISTS volume_${epoch}${len}_${day}; \""
 echo "${psql} \"CREATE TABLE volume_${epoch}${len}_${day} as select  ${len} as ngramLen, epochstartux * 1000 as epochstartmillis, sum(cnt) as totalcnt from compcnt_${epoch}${len}_${day} group by epochstartmillis;\"&"
 
+done
+
 echo 'for job in `jobs -p` 
 do 
 echo $job 
 wait $job 
 done' 
-done
 

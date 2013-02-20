@@ -21,11 +21,11 @@ echo "${psql} \"CREATE UNLOGGED TABLE unigramsP${p} (CHECK (pos = ${p})) INHERIT
     CREATE INDEX unigramsP${p}_date ON unigramsP${p}(date);\"&"
 #    CREATE INDEX ngrams${len}_ngramLen ON ngrams${len}(ngramLen);\""
 
+done
+
 echo 'for job in `jobs -p` 
 do 
 echo $job 
 wait $job 
 done' 
-
-done
 

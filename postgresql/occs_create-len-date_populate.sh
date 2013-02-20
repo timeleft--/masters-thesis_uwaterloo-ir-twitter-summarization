@@ -20,12 +20,12 @@ echo "${psql} \"COPY occ_${len}_${day} FROM '${root}/occ_yuleq_${len}/sel_${day}
 #echo "${psql} \"CREATE INDEX occ_${len}_${day}_date ON occ_${len}_${day}(date); \"&"
 #    CREATE INDEX occ_${len}_${day}_len ON occ_${len}_${day}(compgramlen);
 
+done
+
 echo 'for job in `jobs -p` 
 do 
 echo $job 
 wait $job 
 done' 
-
-done
 
 
