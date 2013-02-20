@@ -30,7 +30,7 @@ echo \"Creating volume table as aggregate of counts of compgrams of legnthes UPT
 sh ../postgresql/compound_aggregate.sh ${db} ${ngramlen1} > ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh \n\
 chmod + ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh \n\
 ./../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh > ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.out 2> ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.err \n\
-"
+" > compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
 fi
 echo "echo \"Calculating ngram association for candidates of length ${ngramlen2}, follow: ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err\" \n\
     R -f ngram_association.R --args ${ngramlen1} > ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.out 2> ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err \n\
@@ -48,7 +48,7 @@ chmod +x ../postgresql/occs_${ngramlen2}_populate_${runTS}.sh \n\
     chmod +x ../postgresql/compcnt-hier_1hr${ngramlen2}_alter_${runTS}.sh \n\
     ./../postgresql/compcnt-hier_1hr${ngramlen2}_alter_${runTS}.sh > ../postgresql/compcnt-hier_1hr${ngramlen2}_alter_${runTS}.out 2> ../postgresql/compcnt-hier_1hr${ngramlen2}_alter_${runTS}.err \n\
 \n\
-echo \"Done for ngramlen1: ${ngramlen1} and ngramlen2: ${ngramlen2}\"" > compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
+echo \"Done for ngramlen1: ${ngramlen1} and ngramlen2: ${ngramlen2}\"" >> compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
 #sh compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
 
 done
