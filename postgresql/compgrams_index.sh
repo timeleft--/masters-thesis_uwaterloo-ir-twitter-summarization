@@ -14,5 +14,12 @@ do
 echo "${psql} 'CREATE INDEX compgrams${len}_${day}_time ON compgrams${len}_${day}(timemillis);'&"
 #echo "${psql} 'CREATE INDEX compgrams${len}_${day}_date ON compgrams${len}_${day}(date);'&"
 echo "${psql} 'CREATE INDEX cnt_${epoch}${len}_${day}_date ON cnt_${epoch}${len}_${day}(date);'&"
+
+echo 'for job in `jobs -p` 
+do 
+echo $job 
+wait $job 
+done' 
+
 done
 

@@ -17,6 +17,13 @@ do
 echo "${psql} 'CREATE TABLE occ_${len}_${day} (CHECK (ngramlen = ${len} and date = ${day})) INHERITS(occurrences);'"
 #echo "${psql} 'ALTER TABLE occ_${len}_${day} ALTER COLUMN ngramlen SET DEFAULT ${len};'"
 echo "${psql} \"COPY occ_${len}_${day} FROM '${root}/occ_yuleq_${len}/sel_${day}.csv' WITH NULL AS 'NA'; \"&"
-    
+#echo "${psql} \"CREATE INDEX occ_${len}_${day}_date ON occ_${len}_${day}(date); \"&"
+#    CREATE INDEX occ_${len}_${day}_len ON occ_${len}_${day}(compgramlen);
+done
+
+for job in `jobs -p`
+do
+echo $job
+wait $job
 done
 

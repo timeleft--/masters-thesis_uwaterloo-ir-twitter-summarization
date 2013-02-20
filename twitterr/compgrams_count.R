@@ -186,7 +186,8 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
   MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
   
-  sql <-  sprintf("select floor(timemillis/%d)*%d as epochstartux, compgram, count(*) as cnt from %s where date=%d group by epochstartux,compgram;",
+  #where date=%d 
+  sql <-  sprintf("select floor(timemillis/%d)*%d as epochstartux, compgram, count(*) as cnt from %s group by epochstartux,compgram;",
       MILLIS_IN_EPOCH[[paste("X",epoch,sep="")]],SEC_IN_EPOCH[[paste("X",epoch,sep="")]],occTable,day)
 
   ngramRs <- dbSendQuery(con,sql)

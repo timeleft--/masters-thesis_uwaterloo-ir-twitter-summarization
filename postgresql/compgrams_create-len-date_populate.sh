@@ -21,6 +21,12 @@ echo "${psql} 'ALTER TABLE compgrams${len}_${day} ALTER COLUMN ngramlen SET DEFA
 echo "${psql} 'CREATE TABLE cnt_${epoch}${len}_${day} () INHERITS(cnt_${epoch}${len});'"
 echo "${psql} \"COPY compgrams${len}_${day} FROM '${root}/occ_extended${len}/${day}.csv'; \
  INSERT INTO cnt_${epoch}${len}_${day} select  ${len} as ngramLen, regexp_split_to_array(ngram,'\\+') as ngramarr, ${day} as date, floor(timemillis/3600000) * 3600000 as epochstartmillis, count(*) as cnt from compgrams${len}_${day} group by floor(timemillis/3600000),ngram; \"&"
-#Will insert  need explicit type casing? 
-done
+#Will insert  need explicit type casing? No, it didn't
 
+echo 'for job in `jobs -p` 
+do 
+echo $job 
+wait $job 
+done' 
+
+done
