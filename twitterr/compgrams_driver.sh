@@ -6,7 +6,7 @@ fi
 
 runTS=${1}
 db=${2}
-root=${root}
+root=${3}
 
 for ngramlen1 in 1 2 3 4 5 6 7 8 9 10
 do
