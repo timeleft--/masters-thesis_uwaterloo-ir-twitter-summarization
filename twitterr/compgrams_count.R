@@ -187,8 +187,8 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
   
   #where date=%d 
-  sql <-  sprintf("select floor(timemillis/%d)*%d as epochstartux, compgram as ngram, count(*) as cnt from %s group by epochstartux,compgram;",
-      MILLIS_IN_EPOCH[[paste("X",epoch2,sep="")]],SEC_IN_EPOCH[[paste("X",epoch2,sep="")]],occTable,day)
+  sql <-  sprintf("select floor(timemillis/%d)*%d as epochstartux, compgram as ngram, count(*) as cnt from %s group by epochstartux,compgram having count(*) > %d;",
+      MILLIS_IN_EPOCH[[paste("X",epoch2,sep="")]],SEC_IN_EPOCH[[paste("X",epoch2,sep="")]],occTable,day,support)
 
   ngramRs <- dbSendQuery(con,sql)
   ngramDf <- fetch(ngramRs,n=-1)
@@ -207,7 +207,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   } else {
     # compgrams with less occs than support wasn't written out last time.. see the yaay above :)
     sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis/1000 as epochstartux, cnt
-					from compcnt_%s%d_%d;", epoch1, ngramlen1, day)
+					from compcnt_%s%d_%d where cnt > %d;", epoch1, ngramlen1, day, support)
   }
   try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetching unigrams' cnts using sql:", sql)))
   
