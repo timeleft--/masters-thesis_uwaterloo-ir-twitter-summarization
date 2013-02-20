@@ -379,18 +379,23 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging)
     #### Copy Ngram Occs
     if(ngramlen2>2){
       
-      towrite <- aaply(occAssoc[,c("id","timemillis","date","ngram","ngramlen","tweetlen","pos")],1,function(occ) { 
-            occ$ngram<-flattenNgram(occ$ngram)
-            return(occ)
-          } )
+      occAssoc <- within(occAssoc,{
+            ngram<-flattenNgram(ngram)
+          })
+#          aaply(occAssoc,1,function(occ) { 
+#            occ$ngram<-flattenNgram(occ$ngram)
+#            return(occ)
+#          } )
       
     } else {
       
-      towrite <- occAssoc[,c("id","timemillis","date","ngram","ngramlen","tweetlen","pos")]
+      occAssoc <- within(occAssoc,{
+            ngram<-paste("{",ngram,"}",sep="")
+          })
       
     }
     
-    write.table(towrite, file = alloccStaging, append = TRUE, quote = FALSE, sep = "\t",
+    write.table(occAssoc[,c("id","timemillis","date","ngram","ngramlen","tweetlen","pos")], file = alloccStaging, append = TRUE, quote = FALSE, sep = "\t",
         eol = "\n", na = "NA", dec = ".", row.names = FALSE,
         col.names = FALSE, # qmethod = c("escape", "double"),
         fileEncoding = "UTF-8")
@@ -402,7 +407,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,cntStaging,selStaging)
         return(tweetOccs)
       }
       
-      tweetOccs$dunningLambda[which(is.na(tweetOccs$dunningLambda))] <- Inf
+      #tweetOccs$dunningLambda[which(is.na(tweetOccs$dunningLambda))] <- Inf
       
       tweetOccs <- arrange(tweetOccs,desc(yuleQ),desc(a1b1),desc(dunningLambda))
 
