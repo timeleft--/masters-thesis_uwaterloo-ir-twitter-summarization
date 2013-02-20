@@ -10,7 +10,7 @@ db=${2}
 for ngramlen1 in 1 2 3 4 5 6 7 8 9 10
 do
     ngramlen2=`expr ${ngramlen1} + 1`
-if [ $ngramlen1 > "1" ]
+if [ $ngramlen1 -gt 1 ]
 then
     echo "\
 echo \"Extending good ngrams of length ${ngramlen1} by another unigram. Follow: ~/logs_r/compgrams-extend_${ngramlen2}_${runTS}.err\" \n\
