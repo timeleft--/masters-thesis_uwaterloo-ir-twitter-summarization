@@ -172,13 +172,29 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
 #  # dbClearResult(rs, ...) flushes any pending data and frees the resources used by resultset. Eg.
 #  try(dbClearResult(ngramRs))
 
-ngramDf <- read.table(occCntFile, header = FALSE, quote = "", comment.char="", 
-    sep = "\t", na = "NA", dec = ".", row.names = NULL,
-    col.names = c("ngram","cnt","epochstartux","date","ngramlen"),
-    colClasses = c("character","integer","numeric","integer","integer"),
-    fileEncoding = "UTF-8")
+#ngramDf <- read.table(occCntFile, header = FALSE, quote = "", comment.char="", 
+#    sep = "\t", na = "NA", dec = ".", row.names = NULL,
+#    col.names = c("ngram","cnt","epochstartux","date","ngramlen"),
+#    colClasses = c("character","integer","numeric","integer","integer"),
+#    fileEncoding = "UTF-8")
 
-try(stop(paste(Sys.time(), logLabelUGC, paste("Read  compound unigrams count - nrows:", nrow(ngramDf)), sep=" - ")))
+  occTable <- paste("occ",ngramlen2,day,sep="_")
+  if(!dbExistsTable(con,occTable)){
+    stop(paste("Occurrences table",occTable,"doesn't exist.. cannot process the day"))
+  }
+
+  SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
+  MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
+  
+  sql <-  sprintf("select floor(timemillis/%d)*%d as epochstartux, compgram, count(*) as cnt from %s where date=%d group by epochstartux,compgram;",
+      MILLIS_IN_EPOCH[[paste("X",epoch,sep="")]],SEC_IN_EPOCH[[paste("X",epoch,sep="")]],occTable,day)
+
+  ngramRs <- dbSendQuery(con,sql)
+  ngramDf <- fetch(ngramRs,n=-1)
+  
+  try(dbClearResult(ngramRs))
+  
+  try(stop(paste(Sys.time(), logLabelUGC, paste("Read  compound unigrams count - nrows:", nrow(ngramDf)), sep=" - ")))
 
   #####################
   
