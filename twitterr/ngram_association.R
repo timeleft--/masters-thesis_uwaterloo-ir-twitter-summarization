@@ -564,7 +564,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
         daySuccess <- paste("Unknown result for day",day)
         
         tryCatch({
-        tableName <- paste('assoc',epoch,ngramlen2,'_',day,sep="") 
+        tableName <- paste('assoc',epoch,NGA.ngramlen2,'_',day,sep="") 
         
         drv <- dbDriver("PostgreSQL")
         con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
