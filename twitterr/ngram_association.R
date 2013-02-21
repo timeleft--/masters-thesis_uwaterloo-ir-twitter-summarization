@@ -4,6 +4,9 @@
 ###############################################################################
 NGA.argv <- commandArgs(trailingOnly = TRUE)
 NGA.ngramlen1<-as.integer(NGA.argv[1])
+
+NGA.ngramlen2<-NGA.ngramlen1+1
+
 G.workingRoot <- "~/r_output/occ_yuleq_working/"
 G.dataRoot <- "~/r_output/"
 
@@ -27,6 +30,7 @@ if(DEBUG_NGA){
   dataRoot<-G.dataRoot<-"~/r_output_debug/"
   
   ngramlen1<-1
+  ngramlen2<-ngramlen1+1
 } else {
   
 #  days1<- unique(c(121123,121105,121104,121106,121215,121222,130104,120914,121231,121223,121013,120925,121016,120926,121026,120930,121008,121110,121119,121206,121122,121125))       
@@ -44,7 +48,7 @@ if(DEBUG_NGA){
 supp<-5
 epoch<-'1hr'
 
-ngramlen2<-NGA.ngramlen1+1
+
 
 
 source("conttable_construct.R")
@@ -579,7 +583,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
 #  file.create(outputFile)
         
         dayEpochGrps <- # doesn't work in case of dopar.. they must be doing something with environments NULL 
-          conttable_construct(day, db=db, ngramlen1=NGA.ngramlen1,ngramlen2=ngramlen2, epoch1=epoch, support=supp)
+          conttable_construct(day, db=db, ngramlen1=NGA.ngramlen1,ngramlen2=NGA.ngramlen2, epoch1=epoch, support=supp)
           #, parallel=parallelWithinDay, parOpts=parOpts)
         if(is.null(dayEpochGrps)){
           stop(paste("ngram_assoc() for day:", day, " - Didn't get  back the cooccurrence matrix"))
@@ -588,7 +592,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
         }
         
         ngrams2AssocT <- 
-          adply(idata.frame(dayEpochGrps), 1, calcEpochAssoc, ngramlen2=ngramlen2,day=day, .expand=F,
+          adply(idata.frame(dayEpochGrps), 1, calcEpochAssoc, ngramlen2=NGA.ngramlen2,day=day, .expand=F,
               alloccStaging=alloccStaging,
 #              cntStaging=cntStaging,
               selStaging=selStaging) #, .progress=progress)
