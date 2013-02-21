@@ -29,8 +29,8 @@ if(DEBUG_NGA){
   workingRoot <- G.workingRoot <- "~/r_output_debug/occ_yuleq_working/"
   dataRoot<-G.dataRoot<-"~/r_output_debug/"
   
-  ngramlen1<-1
-  ngramlen2<-ngramlen1+1
+  #ngramlen1<-1
+  #ngramlen2<-ngramlen1+1
 } else {
   
 #  days1<- unique(c(121123,121105,121104,121106,121215,121222,130104,120914,121231,121223,121013,120925,121016,120926,121026,120930,121008,121110,121119,121206,121122,121125))       
