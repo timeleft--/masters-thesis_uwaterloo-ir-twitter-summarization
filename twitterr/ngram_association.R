@@ -378,9 +378,9 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
 #    # If there are duplicates then assignment problem solution will not work.. we don't want to risk that
 #    epochNgramOccs <- epochNgramOccs[!duplicated(epochNgramOccs["id","ngram","pos"]),]
     
-    positiveYuleQ <- which(ngAssoc$yuleQ > 0)
+#    positiveYuleQ <- which(ngAssoc$yuleQ > 0)
     
-    occAssoc <- merge(epochNgramOccs, ngAssoc[positiveYuleQ,c("ngram","yuleQ","a1b1","dunningLambda")], by="ngram", sort=F, suffixes=c("",""))
+    occAssoc <- merge(epochNgramOccs, subset(ngAssoc,yuleQ > 0,select=c(ngram,yuleQ,a1b1,dunningLambda)), by="ngram", sort=F, suffixes=c("",""))
     
     #### Copy Ngram Occs
     if(ngramlen2>2){
