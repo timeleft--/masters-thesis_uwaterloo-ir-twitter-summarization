@@ -12,8 +12,8 @@ G.dataRoot <- "~/r_output/"
 
 NGA.logLabel <- "ngram_assoc"
 
-DEBUG_NGA<-T
-NGA.TRACE<-F
+DEBUG_NGA<-TRUE
+NGA.TRACE<-FALSE
 REMOVE_EXITING_OUTPUTS<-TRUE
 SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE
 
@@ -32,9 +32,9 @@ if(DEBUG_NGA){
   if(NGA.TRACE){
     NGA.ngramlen1<-1
     NGA.ngramlen2<-NGA.ngramlen1+1
-    
-#  ngramlen1<-1
-#  ngramlen2<-ngramlen1+1
+      
+    ngramlen1<-1
+    ngramlen2<-ngramlen1+1
   }
 } else {
   

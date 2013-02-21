@@ -360,8 +360,8 @@ try(dbUnloadDriver(drv))
 #      
       ###### Reduce counts
       
-      ugramsInNgram <- splitNgramToCompgrams(ng[1,"ngram"],ngramlen2) 
-      
+#      ugramsInNgram <- splitNgramToCompgrams(ng[1,"ngram"],ngramlen2) 
+      ugramsInNgram <- unlist(strsplit(stripEndChars(ng[1,"ngram"]), ",",fixed = TRUE))
       #TODO Pure?
       for(u in 1:length(ugramsInNgram)){
         ugram <- ugramsInNgram[u]
