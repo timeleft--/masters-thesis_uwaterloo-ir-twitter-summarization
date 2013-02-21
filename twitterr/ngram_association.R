@@ -33,8 +33,8 @@ if(DEBUG_NGA){
     NGA.ngramlen1<-1
     NGA.ngramlen2<-NGA.ngramlen1+1
     
-  ngramlen1<-1
-  ngramlen2<-ngramlen1+1
+#  ngramlen1<-1
+#  ngramlen2<-ngramlen1+1
   }
 } else {
   
