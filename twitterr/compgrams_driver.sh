@@ -29,7 +29,7 @@ chmod +x ../postgresql/compgrams_${ngramlen2}_index_${runTS}.sh \n\
 \n\
 echo \"Creating volume table as aggregate of counts of compgrams of legnthes UPTO ${ngramlen1}. Commands logged in: ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh\"\n\
 sh ../postgresql/compound_aggregate.sh ${db} ${ngramlen1} > ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh \n\
-chmod + ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh \n\
+chmod +x ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh \n\
 ./../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh > ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.out 2> ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.err \n\
 " > compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
 fi
