@@ -17,7 +17,7 @@ DEBUG_CTC <- T
 if(DEBUG_CTC){
 day<-121106
 epoch1<-'1hr'
-ngramlen1<-1
+ngramlen1<-2
 ngramlen2<-ngramlen1+1
 support<-5
 epoch2<-NULL
@@ -122,7 +122,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
   } else {
     # compgrams with no enough support were not originally stored 
     sql <- sprintf("select epochstartux, ngramarr as unigram, cnt as unigramcnt
-										from compcnt_%s%d_%d;",epoch1, ngramlen1, day) #order by cnt desc
+										from compcnt_%s%d_%d where cnt > %d;",epoch1, ngramlen1, day, support) #order by cnt desc
   }
   ugramRs <- dbSendQuery(con,sql)
    #epochstartmillis asc, -> I had an idea but if I can't get it right.. screw it! I wanna finish my masters!
