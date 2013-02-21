@@ -599,7 +599,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
         file.create(selStaging)
         
         
-        outputDir <- paste(dataRoot,"/occ_yuleq_",ngramlen2,"/",sep="")
+        outputDir <- paste(dataRoot,"/occ_yuleq_",NGA.ngramlen2,"/",sep="")
         
         
         if(!file.exists(outputDir))
