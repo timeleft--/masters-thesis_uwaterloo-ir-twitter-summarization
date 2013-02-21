@@ -254,6 +254,11 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
     #idata.frame( causes Error in seq_len(nrow(df)) :   argument must be coercible to non-negative integer 
     ngAssoc <- adply(uniqueNgrams,1,calcNgramAssoc,.expand=F)
     
+    if(is.null(ngAssoc) || is.null(ngAssoc$yuleQ)) {
+      try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - no ngrams with positive yuleQ for epoch",eg[1,"epochstartux"])))
+      return(NULL)
+    }
+    
 #    ngAssoc <- arrange(ngAssoc, -dunningLambda) #-yuleQ)
     ngAssoc["X1"] <- NULL
     
