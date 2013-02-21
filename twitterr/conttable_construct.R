@@ -12,22 +12,25 @@ TOTAL <- "TOTAL"
 EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 <- TRUE
 
 DEBUG_CTC <- T
+CTC.TRACE <- FALSE
 #options(error=utils::recover) 
 #For debug
 if(DEBUG_CTC){
-day<-121106
-epoch1<-'1hr'
-ngramlen1<-2
-ngramlen2<-ngramlen1+1
-support<-5
-epoch2<-NULL
-db<-"sample-0.01"
-alignEpochs<-FALSE
-appendPosixTime<-FALSE
-withTotal<-TRUE
-#parallel<-FALSE
-parOpts <- "cores=2"
-progress<-"none" #text isn't good with parallel
+  if(CTC.TRACE){
+    day<-121106
+    epoch1<-'1hr'
+    ngramlen1<-2
+    ngramlen2<-ngramlen1+1
+    support<-5
+    epoch2<-NULL
+    db<-"sample-0.01"
+    alignEpochs<-FALSE
+    appendPosixTime<-FALSE
+    withTotal<-TRUE
+    #parallel<-FALSE
+    parOpts <- "cores=2"
+    progress<-"none" #text isn't good with parallel
+  }  
 }
 
 while(!require(plyr)){

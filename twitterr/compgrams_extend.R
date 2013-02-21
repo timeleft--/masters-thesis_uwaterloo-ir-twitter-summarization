@@ -6,6 +6,7 @@
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
 CGX.DEBUG <- T
+CGX.TRACE <- FALSE
 
 CGX.argv <- commandArgs(trailingOnly = TRUE)
 #CGX.epoch2 <- '1hr'
@@ -18,19 +19,25 @@ CGX.loglabel <- CGX.loglabel.DEFAULT
 
 if(CGX.DEBUG){
 #  epoch2=CGX.epoch2
-  ngramlen2=CGX.ngramlen2
   CGX.db <- 'sample-0.01'
-  db<-CGX.db
-  day<-121106
-  maxPos=70
-  startPos=0
+  
   CGX.dataPath <- "~/r_output_debug/"
   CGX.workingRoot <- "~/r_output_debug/occ_extended_working/"
-  dataPath <- CGX.dataPath
-  workingRoot <- CGX.workingRoot
+
   CGX.days <- c(121106, 121110)
   
   CGX.nCores<-2
+  if(CGX.TRACE){
+    ngramlen2=CGX.ngramlen2
+  
+    db<-CGX.db
+    day<-121106
+    maxPos=70
+    startPos=0
+    
+    dataPath <- CGX.dataPath
+    workingRoot <- CGX.workingRoot
+  }
 } else {
   CGX.dataPath <- "~/r_output/"
   CGX.workingRoot <- "~/r_output/occ_extended_working/"

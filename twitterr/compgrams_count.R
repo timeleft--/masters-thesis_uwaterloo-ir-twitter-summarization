@@ -16,7 +16,7 @@ logLabelUGC <- "unigrams_createCompound()" #Recall()???
 REMOVE_EXITING_COMPGRAM_TABLES<-TRUE
 #SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE
 DEBUG_UGC <- T
-
+UGC.TRACE <- FALSE
 
 if(DEBUG_UGC){
   G.days<-c(121106,121110)
@@ -30,15 +30,16 @@ if(DEBUG_UGC){
 #  
   G.ngramlen1 <- 1
 #G.ngramlen2 <- G.ngramlen1 + 1
-  
-  ngramlen1<-G.ngramlen1
-  epoch1<-NULL
-  epoch2 <- G.epoch2  
-#  ngramlen2 <- G.ngramlen2
-  support <- G.support
-  
-  day <- 121106
-  db <- G.db
+  if(UGC.TRACE){
+    ngramlen1<-G.ngramlen1
+    epoch1<-NULL
+    epoch2 <- G.epoch2  
+  #  ngramlen2 <- G.ngramlen2
+    support <- G.support
+    
+    day <- 121106
+    db <- G.db
+  }
 }else {
   
   G.days <- unique(c( 120925,  120926,  120930,  121008,  121013,  121016,  121026,  121027,  121028,  121029,  121030,  121103,  121104,  121105,  121106,  121108,  121110,  121116,  121119,  121120,  121122,  121123,  121125,  121205,  121206,  121210,  121214,  121215,  121231,  130103,  130104)) #missing data: 120914,121222,  121223, 
