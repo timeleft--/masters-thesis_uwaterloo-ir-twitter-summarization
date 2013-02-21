@@ -672,9 +672,12 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
               # This will be a disaster, because we are already in dopar: .parallel = parallelWithinDay,.paropts=parOpts)
         #Leave the hour of the day.. it's good
 #            ngrams2AssocT['X1'] <- NULL
-        
+     
+        try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - writing", outputFile)))
         file.rename(alloccStaging, outputFile)    
 #        file.rename(cntStaging, cntOutput)
+  
+         try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - writing", selOutput)))
         file.rename(selStaging, selOutput)
         
         drv <- dbDriver("PostgreSQL")
