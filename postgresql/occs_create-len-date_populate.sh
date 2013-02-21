@@ -16,7 +16,17 @@ do
 echo "${psql} 'DROP TABLE IF EXISTS occ_${len}_${day};'"
 echo "${psql} 'CREATE TABLE occ_${len}_${day} (CHECK (compgramlen = ${len} and date = ${day})) INHERITS(occurrences);'"
 #echo "${psql} 'ALTER TABLE occ_${len}_${day} ALTER COLUMN compgramlen SET DEFAULT ${len};'"
-echo "${psql} \"COPY occ_${len}_${day} FROM '${root}/occ_yuleq_${len}/sel_${day}.csv' WITH NULL AS 'NA'; \"&"
+
+fpath=${root}/occ_yuleq_${len}/sel_${day}.csv
+
+echo "cut -d '	' -f 1 ${fpath} | nl -s '{' | cut -c7- > ${fpath}_fix1_tmp"
+echo "cut -d '	' -f 2- ${fpath} | nl -s '	' | cut -c7- > ${fpath}_fix2_tmp"
+#echo "mv ${fpath} ${fpath}.bak"
+echo "paste -d '}' ${fpath}_fix1_tmp ${fpath}_fix2_tmp > ${fpath}"
+echo "rm ${fpath}_fix1_tmp"
+echo "rm ${fpath}_fix2_tmp"
+
+echo "${psql} \"COPY occ_${len}_${day} FROM '${fpath}' WITH NULL AS 'NA'; \"&"
 #echo "${psql} \"CREATE INDEX occ_${len}_${day}_date ON occ_${len}_${day}(date); \"&"
 #    CREATE INDEX occ_${len}_${day}_len ON occ_${len}_${day}(compgramlen);
 

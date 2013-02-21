@@ -13,7 +13,7 @@ G.dataRoot <- "~/r_output/"
 NGA.logLabel <- "ngram_assoc"
 
 DEBUG_NGA<-T
-
+NGA.TRACE<-F
 REMOVE_EXITING_OUTPUTS<-TRUE
 SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE
 
@@ -29,8 +29,13 @@ if(DEBUG_NGA){
   workingRoot <- G.workingRoot <- "~/r_output_debug/occ_yuleq_working/"
   dataRoot<-G.dataRoot<-"~/r_output_debug/"
   
-  #ngramlen1<-1
-  #ngramlen2<-ngramlen1+1
+  if(NGA.TRACE){
+    NGA.ngramlen1<-1
+    NGA.ngramlen2<-NGA.ngramlen1+1
+    
+  ngramlen1<-1
+  ngramlen2<-ngramlen1+1
+  }
 } else {
   
 #  days1<- unique(c(121123,121105,121104,121106,121215,121222,130104,120914,121231,121223,121013,120925,121016,120926,121026,120930,121008,121110,121119,121206,121122,121125))       
@@ -67,6 +72,8 @@ registerDoMC(cores=nCores)
 while(!require(RPostgreSQL)){
   install.packages("RPostgreSQL")
 }  
+
+require(Matrix)
 ############################
 while(!require(plyr)){
   install.packages("plyr")
@@ -184,53 +191,56 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
       }
       ngRes[1,"yuleQ"] <-  Yule(agreet,Y=F)
       
-      # As per Dunning (1993): Using likelihood ration test for testing the hypothesis that 
-      # the unigrams are independent, that is p(first|second) = p(first|~second)= p(first)
-      # The first row of agreement table can give the distribution of "first" given presence
-      # of second: P(f|s) = P(f,s) / p(s) = (cnt(f,s)/epochvol) / (cnt(s)/epochvol) = agreet[1,1]/cnt(s)
-      # The second row gives: P(f|~s) = P(f,~s) / p(~s) = agreet[2,1]/(epochvol - cnt(s))
-      # Notice that p(~f|s) = 1 - p(f|s) = (cnt(s) - agreet[1,1])/cnt(s) => not in table
-      # Also: (epochvol - cnt(s)) != cnt(first), as could be thought from looking at agreement table
-      # Using the formula in the paper for the likelihood ratio, we put
-      # n1 = cnt(s), k1 = cnt(f,s), n2 = (epochvol - cnt(s)), k2 = cnt(f,~s)
-      n1 <- cooccurs[compsIx[2],totalIx]
-      n2 <- (epochvolume - n1) #is this too large? should we use grand total of strong ngrams?
-      k1 <- agreet[1,1]
-      k2 <- agreet[2,1]
-      p1 <- k1 / n1 # k1/n1
-      p2 <- k2 / n2 # k2/n2
-      pNumer <- cooccurs[compsIx[1],totalIx] / epochvolume #(k1+k2)/(n1+n2) = cnt(first)/(n1+n2)
-      
-      # for numerical stability
-      lp1 <- log(p1)
-      lp2 <- log(p2)
-      lpNumer <- log(pNumer)
-      
-      lp1C <- log(1-p1)
-      lp2C <- log(1-p2)
-      lpNumerC <- log(1-pNumer) 
-      
-      lnumer <- (cooccurs[compsIx[1],totalIx] * lpNumer) + ((epochvolume-cooccurs[compsIx[1],totalIx]) * lpNumerC)
-      
-      ldenim <- (k1 * lp1) + ((n1-k1) * lp1C) + (k2 * lp2) + ((n2-k2) * lp2C) 
-      
-# It happens when one of the two unigrams appears only with the other.. that is if n1==k1 or if k2 == 0
-#      if(is.nan(lnumer) || is.nan(ldenim)){
-#        warning(paste("Dunning Lambda Not a Number (aOccs,k1,n1,k2,n2)=",cooccurs[compsIx[1],totalIx],k1,n1,k2,n2,
-#                "ngram=",ngram))
-#      }
-      
-      ngRes[1,"dunningLambda"] <- -2 * (lnumer - ldenim)
-      
-#      #L(p,k1,n1)L(p,k2,n2) = p^k1*(1-p)^(n1-k1)*p^k2*(1-p)^(n2-k2) = p^(k1+k2)*(1-p)^(n1+n2-(k1+k2))
-#      numer <- (pNumer^cooccurs[compsIx[1],totalIx]) * ((1-pNumer)^(epochvolume-cooccurs[compsIx[1],totalIx]))
+      if(ngRes[1,"yuleQ"]<=0){
+        return(NULL)
+      }
+#      # As per Dunning (1993): Using likelihood ration test for testing the hypothesis that 
+#      # the unigrams are independent, that is p(first|second) = p(first|~second)= p(first)
+#      # The first row of agreement table can give the distribution of "first" given presence
+#      # of second: P(f|s) = P(f,s) / p(s) = (cnt(f,s)/epochvol) / (cnt(s)/epochvol) = agreet[1,1]/cnt(s)
+#      # The second row gives: P(f|~s) = P(f,~s) / p(~s) = agreet[2,1]/(epochvol - cnt(s))
+#      # Notice that p(~f|s) = 1 - p(f|s) = (cnt(s) - agreet[1,1])/cnt(s) => not in table
+#      # Also: (epochvol - cnt(s)) != cnt(first), as could be thought from looking at agreement table
+#      # Using the formula in the paper for the likelihood ratio, we put
+#      # n1 = cnt(s), k1 = cnt(f,s), n2 = (epochvol - cnt(s)), k2 = cnt(f,~s)
+#      n1 <- cooccurs[compsIx[2],totalIx]
+#      n2 <- (epochvolume - n1) #is this too large? should we use grand total of strong ngrams?
+#      k1 <- agreet[1,1]
+#      k2 <- agreet[2,1]
+#      p1 <- k1 / n1 # k1/n1
+#      p2 <- k2 / n2 # k2/n2
+#      pNumer <- cooccurs[compsIx[1],totalIx] / epochvolume #(k1+k2)/(n1+n2) = cnt(first)/(n1+n2)
 #      
-#      #L(p1,k1,n1)L(p2,k2,n2)
-#      denim <- (p1^k1)*((1-p1)^(n1-k1))*(p2^k2)*((1-p2)^(n2-k2))
+#      # for numerical stability
+#      lp1 <- log(p1)
+#      lp2 <- log(p2)
+#      lpNumer <- log(pNumer)
 #      
-#      lhr <- numer / denim
+#      lp1C <- log(1-p1)
+#      lp2C <- log(1-p2)
+#      lpNumerC <- log(1-pNumer) 
 #      
-#      ngRes[1,"dunningLambda"] <- -2 * log(lhr)
+#      lnumer <- (cooccurs[compsIx[1],totalIx] * lpNumer) + ((epochvolume-cooccurs[compsIx[1],totalIx]) * lpNumerC)
+#      
+#      ldenim <- (k1 * lp1) + ((n1-k1) * lp1C) + (k2 * lp2) + ((n2-k2) * lp2C) 
+#      
+## It happens when one of the two unigrams appears only with the other.. that is if n1==k1 or if k2 == 0
+##      if(is.nan(lnumer) || is.nan(ldenim)){
+##        warning(paste("Dunning Lambda Not a Number (aOccs,k1,n1,k2,n2)=",cooccurs[compsIx[1],totalIx],k1,n1,k2,n2,
+##                "ngram=",ngram))
+##      }
+#      
+#      ngRes[1,"dunningLambda"] <- -2 * (lnumer - ldenim)
+#      
+##      #L(p,k1,n1)L(p,k2,n2) = p^k1*(1-p)^(n1-k1)*p^k2*(1-p)^(n2-k2) = p^(k1+k2)*(1-p)^(n1+n2-(k1+k2))
+##      numer <- (pNumer^cooccurs[compsIx[1],totalIx]) * ((1-pNumer)^(epochvolume-cooccurs[compsIx[1],totalIx]))
+##      
+##      #L(p1,k1,n1)L(p2,k2,n2)
+##      denim <- (p1^k1)*((1-p1)^(n1-k1))*(p2^k2)*((1-p2)^(n2-k2))
+##      
+##      lhr <- numer / denim
+##      
+##      ngRes[1,"dunningLambda"] <- -2 * log(lhr)
       
       ngRes[1,"a1b1"] <- agreet[1,1]
       ngRes[1,"a1b0"] <- agreet[2,1]
@@ -360,114 +370,172 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
             ngram <- stripEndChars(ngram)
           })
     }
-    
-    if(DEBUG_NGA){
-      earlierEpochCheck <- which(epochNgramOccs$timemillis < (epochstartux * 1000))
-      if(any(earlierEpochCheck)){
-        warning("Some ngrams we are fetching are of an earlier epoch", paste(earlierEpochCheck,collapse = "|"))
-      }
-      rm(earlierEpochCheck)
-      
-      laterEpochCheck <- which(epochNgramOccs$timemillis >= ((3600 + epochstartux) * 1000)) # THIS IS for 1hr epoch only
-      if(any(laterEpochCheck)){
-        warning("Some ngrams we are fetching are of a later epoch", paste(laterEpochCheck,collapse = "|"))
-      }
-      rm(laterEpochCheck)
-    }
-    
-#    # If there are duplicates then assignment problem solution will not work.. we don't want to risk that
-#    epochNgramOccs <- epochNgramOccs[!duplicated(epochNgramOccs["id","ngram","pos"]),]
-    
-#    positiveYuleQ <- which(ngAssoc$yuleQ > 0)
-    
-    occAssoc <- merge(epochNgramOccs, subset(ngAssoc,yuleQ > 0,select=c(ngram,yuleQ,a1b1,dunningLambda)), by="ngram", sort=F, suffixes=c("",""))
-    
-    #### Copy Ngram Occs
-    if(ngramlen2>2){
-      
-      occAssoc <- within(occAssoc,{
-            ngram<-flattenNgram(ngram)
-          })
-#          aaply(occAssoc,1,function(occ) { 
-#            occ$ngram<-flattenNgram(occ$ngram)
-#            return(occ)
-#          } )
-      
-    } else {
-      
-      occAssoc <- within(occAssoc,{
-            ngram<-paste("{",ngram,"}",sep="")
-          })
-      
-    }
-    
-    write.table(occAssoc[,c("id","timemillis","date","ngram","ngramlen","tweetlen","pos")], file = alloccStaging, append = TRUE, quote = FALSE, sep = "\t",
-        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-        col.names = FALSE, # qmethod = c("escape", "double"),
-        fileEncoding = "UTF-8")
-    
-    rm(towrite)
-    ####### Select the occurrences for which to discount counts of shorter compgrams
-    contextualAssoc <- function(tweetOccs){
-      if(nrow(tweetOccs) == 1){
-        return(tweetOccs)
-      }
-      
-      #tweetOccs$dunningLambda[which(is.na(tweetOccs$dunningLambda))] <- Inf
-      
-      tweetOccs <- arrange(tweetOccs,desc(yuleQ),desc(a1b1),desc(dunningLambda))
 
-      occupied <- rep(0,tweetOccs$tweetlen[1])
+# Won't work now that the time is cast as a varchar    
+#    if(DEBUG_NGA){
+#      earlierEpochCheck <- which(epochNgramOccs$timemillis < (epochstartux * 1000))
+#      if(any(earlierEpochCheck)){
+#        warning("Some ngrams we are fetching are of an earlier epoch", paste(earlierEpochCheck,collapse = "|"))
+#      }
+#      rm(earlierEpochCheck)
+#      
+#      laterEpochCheck <- which(epochNgramOccs$timemillis >= ((3600 + epochstartux) * 1000)) # THIS IS for 1hr epoch only
+#      if(any(laterEpochCheck)){
+#        warning("Some ngrams we are fetching are of a later epoch", paste(laterEpochCheck,collapse = "|"))
+#      }
+#      rm(laterEpochCheck)
+#    }
+    
+###########################
+    
+    ngAssoc <- arrange(ngAssoc,desc(yuleQ),desc(a1b1))
+    
+    epochDocId <- unique(epochNgramOccs$id)
+   
+    occupiedPos1 <- Matrix(0,
+        nrow=length(epochDocId),
+        ncol=71,
+        byrow=FALSE,
+        sparse=TRUE,
+        dimnames=list(epochDocId,NULL))
+    
+    selOccsMask1 <- rep(FALSE, nrow(epochNgramOccs))
+    
+    ix1 <-1
+    ngramSelect <- function(nga) { 
       
-      selection <- adply(tweetOccs,1,function(occ){
-        startPos <- occ$pos
+      ngramMask <- (epochNgramOccs$ngram == nga$ngram)
+      ngramIxes <- which(ngramMask) 
+          
+      occSelect <- function(occ) { 
+        startPos <- occ$pos + 1 # pos is 0 based
         endPos <- startPos + ngramlen2 - 1
         
-        if(any(occupied[startPos:endPos]>0)){
-          return(NULL)
-        } 
         
-        occupied[startPos:endPos] <- occupied[startPos:endPos] + 1
-        occupied <<- occupied
+        if(!any(occupiedPos1[occ$id,startPos:endPos]>0)){
+          occupiedPos1[occ$id,startPos:endPos] <<- occupiedPos1[occ$id,startPos:endPos] + 1
+          selOccsMask1[ngramIxes[ix1]] <<- TRUE
+        }
+        
+        ix1 <<- ix1 + 1
         
         return(occ)
-      })
-  
-      if(any(occupied>1)){
-        try(stop(paste("ERROR! Overlapping NGram Occurrences after all in ", tweetOccs$id[1], ":", paste(tweetOccs$ngram[which(occupied>1)],collapse="|"))))
       }
+#      debug(occSelect)
       
-      if(all(occupied==0)){
-        try(stop(paste("WARNING! Nothing selected from the occurrences in ", tweetOccs$id[1])))
-      }
-  
-      return(selection)
+      ngramOccsDf <- adply(epochNgramOccs[ngramMask,],1,occSelect,.expand=F)
+      
+      return(ngramOccsDf)
     }
-#    debug(contextualAssoc)
+#    debug(ngramSelect)
     
-    #idata.frame(
-    selOcc <- ddply(occAssoc,c("id"),contextualAssoc)
+    yuleOccs <- adply(idata.frame(ngAssoc),1,ngramSelect, .expand=F)
+    yuleOccs$X1 <- NULL
     
-    write.table(selOcc, file = selStaging, append = TRUE, quote = FALSE, sep = "\t",
+    write.table(yuleOccs, file = alloccStaging, append = TRUE, quote = FALSE, sep = "\t",
+        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+        col.names = FALSE, # qmethod = c("escape", "double"),
+        fileEncoding = "UTF-8")
+
+    selOccs <- subset(epochNgramOccs,selOccsMask1,select=c("ngram","id","timemillis","date","ngramlen","tweetlen","pos"))
+    write.table(selOccs, file = selStaging, append = TRUE, quote = FALSE, sep = "\t",
         eol = "\n", na = "NA", dec = ".", row.names = FALSE,
         col.names = FALSE, # qmethod = c("escape", "double"),
         fileEncoding = "UTF-8")
     
-#    selCnt <- ddply(idata.frame(selOcc),c("ngram"),summarize,cnt=length(id))
-#    selCnt$epochstartux<-epochstartux
-#    selCnt$date<-day
-#    selCnt$ngramlen<-ngramlen2
+##    # If there are duplicates then assignment problem solution will not work.. we don't want to risk that
+##    epochNgramOccs <- epochNgramOccs[!duplicated(epochNgramOccs["id","ngram","pos"]),]
 #    
-#    write.table(selCnt, file = cntStaging, append = TRUE, quote = FALSE, sep = "\t",
+#    positiveYuleQ <- which(ngAssoc$yuleQ > 0)
+#    
+#    occAssoc <- merge(epochNgramOccs, subset(ngAssoc,yuleQ > 0,select=c(ngram,yuleQ,a1b1,dunningLambda)), by="ngram", sort=F, suffixes=c("",""))
+#    
+#    #### Copy Ngram Occs
+#    if(ngramlen2>2){
+#      
+#      occAssoc <- within(occAssoc,{
+#            ngram<-flattenNgram(ngram)
+#          })
+##          aaply(occAssoc,1,function(occ) { 
+##            occ$ngram<-flattenNgram(occ$ngram)
+##            return(occ)
+##          } )
+#      
+#    } else {
+#      
+#      occAssoc <- within(occAssoc,{
+#            ngram<-paste("{",ngram,"}",sep="")
+#          })
+#      
+#    }
+#    
+#    write.table(occAssoc[,c("id","timemillis","date","ngram","ngramlen","tweetlen","pos")], file = alloccStaging, append = TRUE, quote = FALSE, sep = "\t",
 #        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
 #        col.names = FALSE, # qmethod = c("escape", "double"),
 #        fileEncoding = "UTF-8")
-   
-    ### Aggregate to counts by ngram
-    
-    
-    try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished forming compgrams for epoch",eg[1,"epochstartux"])))
-    
+#    
+#    rm(towrite)
+#    ####### Select the occurrences for which to discount counts of shorter compgrams
+#    contextualAssoc <- function(tweetOccs){
+#      if(nrow(tweetOccs) == 1){
+#        return(tweetOccs)
+#      }
+#      
+#      #tweetOccs$dunningLambda[which(is.na(tweetOccs$dunningLambda))] <- Inf
+#      
+#      tweetOccs <- arrange(tweetOccs,desc(yuleQ),desc(a1b1),desc(dunningLambda))
+#
+#      occupied <- rep(0,tweetOccs$tweetlen[1])
+#      
+#      selection <- adply(tweetOccs,1,function(occ){
+#        startPos <- occ$pos
+#        endPos <- startPos + ngramlen2 - 1
+#        
+#        if(any(occupied[startPos:endPos]>0)){
+#          return(NULL)
+#        } 
+#        
+#        occupied[startPos:endPos] <- occupied[startPos:endPos] + 1
+#        occupied <<- occupied
+#        
+#        return(occ)
+#      })
+#  
+#      if(any(occupied>1)){
+#        try(stop(paste("ERROR! Overlapping NGram Occurrences after all in ", tweetOccs$id[1], ":", paste(tweetOccs$ngram[which(occupied>1)],collapse="|"))))
+#      }
+#      
+#      if(all(occupied==0)){
+#        try(stop(paste("WARNING! Nothing selected from the occurrences in ", tweetOccs$id[1])))
+#      }
+#  
+#      return(selection)
+#    }
+##    debug(contextualAssoc)
+#    
+#    #idata.frame(
+#    selOcc <- ddply(occAssoc,c("id"),contextualAssoc)
+#    
+#    write.table(selOcc, file = selStaging, append = TRUE, quote = FALSE, sep = "\t",
+#        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+#        col.names = FALSE, # qmethod = c("escape", "double"),
+#        fileEncoding = "UTF-8")
+#    
+##    selCnt <- ddply(idata.frame(selOcc),c("ngram"),summarize,cnt=length(id))
+##    selCnt$epochstartux<-epochstartux
+##    selCnt$date<-day
+##    selCnt$ngramlen<-ngramlen2
+##    
+##    write.table(selCnt, file = cntStaging, append = TRUE, quote = FALSE, sep = "\t",
+##        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+##        col.names = FALSE, # qmethod = c("escape", "double"),
+##        fileEncoding = "UTF-8")
+#   
+#    ### Aggregate to counts by ngram
+#    
+#    
+#    try(stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - Finished forming compgrams for epoch",eg[1,"epochstartux"])))
+#    
     
     #######################################
     
