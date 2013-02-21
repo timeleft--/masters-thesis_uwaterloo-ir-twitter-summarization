@@ -198,18 +198,18 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   try(stop(paste(Sys.time(), logLabelUGC, paste("Read  compound unigrams count - nrows:", nrow(ngramDf)), sep=" - ")))
 
   #####################
-  
-   #We write counts of compgrams with high support only.. because those counts will be used for calculating the
-  # association of bigrams with high support. That is, if a compgram doesn't have high support it can't be part of
-  # such a bigram when conttable_construct is fetching candidates. This however doesn't make it unnecssary to check for
-  # cnt > support when fetching candidates, because extending them reduces their support (in table cnt_ not compcnt_)
-  # Sorting is good if we'd use index to split: order by epochstartmillis asc
+# I can't find anything else to blame for what's happening, so I'm reverting the "enhancements"  
+#   #We write counts of compgrams with high support only.. because those counts will be used for calculating the
+#  # association of bigrams with high support. That is, if a compgram doesn't have high support it can't be part of
+#  # such a bigram when conttable_construct is fetching candidates. This however doesn't make it unnecssary to check for
+#  # cnt > support when fetching candidates, because extending them reduces their support (in table cnt_ not compcnt_)
+#  # Sorting is good if we'd use index to split: order by epochstartmillis asc
   if(ngramlen1==1){
     sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis/1000 as epochstartux, cnt 
           from cnt_%s%d%s where date=%d and cnt > %d;", epoch1, ngramlen1, ifelse(ngramlen2<3,'',paste("_",day, sep="")), day, support)
   } else {
     sql <- sprintf("select ngramlen, ngramarr, date, epochstartmillis/1000 as epochstartux, cnt
-					from compcnt_%s%d_%d where cnt > %d;", epoch1, ngramlen1, day, support)
+					from compcnt_%s%d_%d;", epoch1, ngramlen1, day) #  where cnt > %d, support)
   }
   try(stop(paste(Sys.time(), logLabelUGC, "for day:", day, " - Fetching unigrams' cnts using sql:", sql)))
   
