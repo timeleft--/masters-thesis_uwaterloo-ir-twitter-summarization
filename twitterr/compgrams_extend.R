@@ -139,8 +139,8 @@ extendCompgramOfDay <- function(day,
   if(ONLY_SEL){
     cgOcc <- read.table(origCompgramOccPath, header = FALSE, quote = "", comment.char="", 
         sep = "\t", na = "NA", dec = ".", row.names = NULL,
-        col.names = c("ngram","id","timemillis","date","ngramlen","tweetlen","pos"),
-        colClasses = c("character","character","numeric","integer","integer","integer","integer"),
+        col.names = c("ngram","id","timemillis","date","ngramlen","tweetlen","pos","yq","c","dl"),
+        colClasses = c("character","character","numeric","integer","integer","integer","integer","NULL","NULL","NULL"),
         fileEncoding = "UTF-8")
     
   } else {  
