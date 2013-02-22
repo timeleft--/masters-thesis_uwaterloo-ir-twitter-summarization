@@ -123,7 +123,10 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
     sql <- sprintf("select epochstartmillis/1000 as epochstartux, ngramarr[1] as unigram, cnt as unigramcnt
                   from cnt_%s%d where date=%d and cnt > %d;", epoch1, ngramlen1, day, support) # order by cnt desc
   } else {
-    # compgrams with no enough support were not originally stored 
+    # after reducing the support of compgrams of lengths UP TO ngramlen1 in compgram_count, some of the unigams
+    # seize to have enough support by themselves, yet they are part of compgrams with enough support (the downward
+    # closure rule doesn't apply any more).. they shouldn't participate in compgrams any more because
+    # without overlap then there can't be enough support for the newly formed compgrams.
     sql <- sprintf("select epochstartux, ngramarr as unigram, cnt as unigramcnt
 										from compcnt_%s%d_%d where cnt > %d;",epoch1, ngramlen1, day, support) #order by cnt desc
   }
@@ -243,12 +246,17 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
         
           ixugram <- ixLookup[ugram]
           if(is.na(ixugram) || ixugram <= 0){
+            if(any(ugram==',')){
+            #this is the compgram in the unigram-compgram bigram  
+            
             tryCatch(
                 stop(paste("conttable_construct() for day:", day, " - ERROR: ixugram not positive:",ixugram,ugramCnt,ugram,currEpoch,nUnique,
                             epochUgramMask[1],"-",epochUgramMask[length(epochUgramMask)],paste(ugramDf[epochUgramMask[1],],collapse="|"),paste(ugramDf[epochUgramMask[length(epochUgramMask)],],collapse="|")))
                    ,error=handleErrors)
             return(NULL)
             #ixugram <- 0
+            } # else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
+            
           }
           
           
@@ -296,12 +304,17 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
           ixugram <- ixLookup[ugram]
           
           if(is.na(ixugram) || ixugram <= 0){
+            if(any(ugram==',')){
+              #this is the compgram in the unigram-compgram bigram  
+              
             tryCatch(
                 stop(paste("conttable_construct#countCooccurNooccurNgram() for day:", day, " - ERROR: ixugram not positive:",ixugram,cnt,paste(ugramsInNgram,collapse="|"),ugram,currEpoch,nUnique,
                         epochUgramMask[1],"-",epochUgramMask[length(epochUgramMask)],paste(ugramDf[epochUgramMask[1],],collapse="|"),paste(ugramDf[epochUgramMask[length(epochUgramMask)],],collapse="|")))
             ,error=handleErrors)
             next
             #ixugram <- 0
+            } # else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
+              
           }
           
     
@@ -344,6 +357,9 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
               ixugram2 <- ixLookup[ugram2]
               
               if(is.na(ixugram2) || ixugram2 <= 0){
+                if(any(ugram==',')){
+                  #this is the compgram in the unigram-compgram bigram  
+                  
                 tryCatch(
                     stop(paste("conttable_construct() for day:", day, 
                             " - ERROR: ixugram2 not positive:",
@@ -352,6 +368,9 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
                 ,error=handleErrors)
                 next
                 #ixugram2 <- 0
+        
+                }# else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
+                
               }
             
               #increase the co-occurrence counts

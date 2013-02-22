@@ -187,7 +187,9 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
   MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
   
-  #where date=%d 
+  # 1) where date=%d <- they will be already partitioned
+  # 2) where cnt > support <- since the candidates for which yuleq was calculated orignally had high support, then no
+  #  low support compgram can make it to the positive yuleQ pool   
   sql <-  sprintf("select floor(timemillis/%d)*%d as epochstartux, compgram as ngram, count(*) as cnt from %s group by epochstartux,compgram;",
       MILLIS_IN_EPOCH[[paste("X",epoch2,sep="")]],SEC_IN_EPOCH[[paste("X",epoch2,sep="")]],occTable,day)
 
@@ -201,7 +203,15 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   try(stop(paste(Sys.time(), logLabelUGC, paste("Fetched  compound-grams epoch counts - nrows:", nrow(ngramDf)), sep=" - ")))
 
   #####################
-# I can't find anything else to blame for what's happening, so I'm reverting the "enhancements"  
+# I think it's good that we don't filter with support when choosing unigrams, because this will lead to errors that 
+# the unigram cannot be found... the logic below is actualy flawed since the compcnt table includes counts for
+# compgrams up to length l.. which includes the unigrams whcih are used blindly to extend compgrams. Exceptionally
+# when the cnts come from cnt_XX1 the support is important because .. hold on... 
+
+#THE ABOVE AND THE BELOW ARE BOTH FLAWED: we check for the support when selecting the extended candidates for which we want to 
+# calculate association in conttable_construct.. thus no compgram would make it to the yuleq selection unless it
+# oringially had support high enough... that is, checking for support here woulndn't have any effect at all 
+
 #   #We write counts of compgrams with high support only.. because those counts will be used for calculating the
 #  # association of bigrams with high support. That is, if a compgram doesn't have high support it can't be part of
 #  # such a bigram when conttable_construct is fetching candidates. This however doesn't make it unnecssary to check for

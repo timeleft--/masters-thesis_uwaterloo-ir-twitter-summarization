@@ -174,12 +174,17 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
       
       compsIx <- lookupIxs(comps, ixLkp)
       
-      if(any(is.na(compsIx))){
+      naIx <- which(is.na(compsIx))
+      if(length(naIx) > 0){
+        if(length(naIx) > 1 || any(comps[naIx[1]]==',') ){ 
+          #this is the compgram in the unigram-compgram bigram  
+          
         tryCatch(
             stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ERROR: compsIx not positive:",paste(compsIx,collapse="|"),
-                    eg$epochstartux[1],paste(ng,collapse="|")))
+                    eg$epochstartux[1],paste(comps,collapse="|")))
             ,error=NGA.handleErrors)
         return(NULL)
+      }# else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
       }
       
       agreet <- agreementTable(comps, cooccurs, 
