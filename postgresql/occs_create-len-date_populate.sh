@@ -20,16 +20,16 @@ echo "${psql} 'DROP TABLE IF EXISTS occ_${len}_${day};'"
 echo "${psql} 'CREATE TABLE occ_${len}_${day} (CHECK (compgramlen = ${len} and date = ${day})) INHERITS(occurrences);'"
 #echo "${psql} 'ALTER TABLE occ_${len}_${day} ALTER COLUMN compgramlen SET DEFAULT ${len};'"
 
-echo "${psql} 'ALTER TABLE occ_2_${day} ADD yuleq float8, ADD epochcnt int8, ADD dunningl float8;'"
+#echo "${psql} 'ALTER TABLE occ_2_${day} ADD yuleq float8, ADD epochcnt int8, ADD dunningl float8;'"
 
 fpath=${root}/occ_yuleq_${len}/sel_${day}.csv
 
-#echo "cut -d '	' -f 1 ${fpath} | nl -s '{' | cut -c7- > ${fpath}_fix1_tmp"
-#echo "cut -d '	' -f 2- ${fpath} | nl -s '	' | cut -c7- > ${fpath}_fix2_tmp"
-#echo "mv ${fpath} ${fpath}_fix_${runid}.bak"
-#echo "paste -d '}' ${fpath}_fix1_tmp ${fpath}_fix2_tmp > ${fpath}"
-#echo "rm ${fpath}_fix1_tmp"
-#echo "rm ${fpath}_fix2_tmp"
+echo "cut -d '	' -f 1 ${fpath} | nl -s '{' | cut -c7- > ${fpath}_fix1_tmp"
+echo "cut -d '	' -f 2- ${fpath} | nl -s '	' | cut -c7- > ${fpath}_fix2_tmp"
+echo "mv ${fpath} ${fpath}_fix_${runid}.bak"
+echo "paste -d '}' ${fpath}_fix1_tmp ${fpath}_fix2_tmp > ${fpath}"
+echo "rm ${fpath}_fix1_tmp"
+echo "rm ${fpath}_fix2_tmp"
 
 # No need to do the same for the file with all occurrences.. use it just to extend the compgrams,
 # unlike the selection file which is insert into the occs tables used by FIM

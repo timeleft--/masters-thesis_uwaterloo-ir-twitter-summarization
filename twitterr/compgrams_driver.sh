@@ -8,7 +8,7 @@ runTS=${1}
 db=${2}
 root=${3}
 
-for ngramlen1 in 1 2 3 4 5 6 7 8 9 10
+for ngramlen1 in 2 3 4 5 6 7 8 9 10
 do
     ngramlen2=`expr ${ngramlen1} + 1`
 if [ $ngramlen1 -gt 1 ]
