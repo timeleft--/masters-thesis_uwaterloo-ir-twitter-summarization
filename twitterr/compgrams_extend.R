@@ -147,8 +147,8 @@ extendCompgramOfDay <- function(day,
 #  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (",day)
 #      # and cnt > %d, support
   
-  compgramLeft <- ifelse(ngramlen2==2,"(","{")
-  compgramRight <- ifelse(ngramlen2==2,")","}")
+  compgramLeft <- ifelse(ngramlen2==2,'"(','"{')
+  compgramRight <- ifelse(ngramlen2==2,')"','}"')
 
 #  ugDfCache <- vector("list",(maxPos-startPos+1))
   ugDfCache <- new.env()
@@ -207,7 +207,7 @@ extendCompgramOfDay <- function(day,
 #        beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
       beforeJoin <- merge(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", sort=F, suffixes=c("",""))
         if(nrow(beforeJoin) > 0){
-          beforeJoin$ngram = paste(beforeJoin$unigram,paste(compgramLeft,beforeJoin$ngram,compgramRight,sep=""),sep="+")
+          beforeJoin$ngram = paste(beforeJoin$unigram,paste(compgramLeft,beforeJoin$ngram,compgramRight,sep=""),sep=",")# ,sep="+")
           beforeJoin$unigram <- NULL
           beforeJoin$ngramlen <- ngramlen2 + 1 #beforeJoin$ngramlen + 1
           beforeJoin$pos <- p
@@ -264,7 +264,7 @@ extendCompgramOfDay <- function(day,
 #        afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
         afterJoin <- merge(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", sort=F,suffixes=c("",""))
         if(nrow(afterJoin)>0){
-          afterJoin$ngram = paste(paste(compgramLeft,afterJoin$ngram,compgramRight,sep=""),afterJoin$unigram,sep="+")
+          afterJoin$ngram = paste(paste(compgramLeft,afterJoin$ngram,compgramRight,sep=""),afterJoin$unigram,sep=",") #sep="+")
           afterJoin$unigram <- NULL
           afterJoin$ngramlen <- ngramlen2 + 1 
           

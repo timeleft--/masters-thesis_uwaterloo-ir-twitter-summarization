@@ -22,10 +22,13 @@ fpath=${root}/occ_yuleq_${len}/sel_${day}.csv
 
 echo "cut -d '	' -f 1 ${fpath} | nl -s '{' | cut -c7- > ${fpath}_fix1_tmp"
 echo "cut -d '	' -f 2- ${fpath} | nl -s '	' | cut -c7- > ${fpath}_fix2_tmp"
-#echo "mv ${fpath} ${fpath}.bak"
+echo "mv ${fpath} ${fpath}_fix.bak"
 echo "paste -d '}' ${fpath}_fix1_tmp ${fpath}_fix2_tmp > ${fpath}"
 echo "rm ${fpath}_fix1_tmp"
 echo "rm ${fpath}_fix2_tmp"
+
+# No need to do the same for the file with all occurrences.. use it just to extend the compgrams,
+# unlike the selection file which is insert into the occs tables used by FIM
 
 echo "${psql} \"COPY occ_${len}_${day} FROM '${fpath}' WITH NULL AS 'NA'; \"&"
 #echo "${psql} \"CREATE INDEX occ_${len}_${day}_date ON occ_${len}_${day}(date); \"&"

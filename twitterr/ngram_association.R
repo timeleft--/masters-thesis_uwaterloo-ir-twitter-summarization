@@ -353,24 +353,25 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
     
     try(stop(paste(Sys.time(), NGA.logLabel, "for day:", day, " - Fetched ngram occurrences for epoch",epochstartux,". Num Rows: ", nrow(epochNgramOccs))))
     
-    # epochNgramOccs will be in the uni+(ngA,ngB,..) remove the paranthesis and convert plus to ,
-    if(ngramlen2>3){
-      epochNgramOccs <- within(epochNgramOccs,{
-            # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
-            #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
-            ngram <-  sub('{','"{',ngram,fixed=TRUE)
-            ngram <-  sub('}','}"',ngram,fixed=TRUE)
-            ngram <-  sub('+',',',ngram,fixed=TRUE)
-          })
-    } else if(ngramlen2==3){
-      epochNgramOccs <- within(epochNgramOccs,{
-            # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
-            #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
-            ngram <-  sub('(','"(',ngram,fixed=TRUE)
-            ngram <-  sub(')',')"',ngram,fixed=TRUE)
-            ngram <-  sub('+',',',ngram,fixed=TRUE)
-          })
-    } else {
+#    # epochNgramOccs will be in the uni+(ngA,ngB,..) remove the paranthesis and convert plus to ,
+#    if(ngramlen2>3){
+#      epochNgramOccs <- within(epochNgramOccs,{
+#            # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
+#            #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
+#            ngram <-  sub('{','"{',ngram,fixed=TRUE)
+#            ngram <-  sub('}','}"',ngram,fixed=TRUE)
+#            ngram <-  sub('+',',',ngram,fixed=TRUE)
+#          })
+#    } else if(ngramlen2==3){
+#      epochNgramOccs <- within(epochNgramOccs,{
+#            # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
+#            #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
+#            ngram <-  sub('(','"(',ngram,fixed=TRUE)
+#            ngram <-  sub(')',')"',ngram,fixed=TRUE)
+#            ngram <-  sub('+',',',ngram,fixed=TRUE)
+#          })
+#    } else {
+    if(ngramlen2<3){
       epochNgramOccs <- within(epochNgramOccs,{
             ngram <- stripEndChars(ngram)
           })
