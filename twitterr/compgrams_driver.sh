@@ -38,7 +38,7 @@ echo "echo \"Calculating ngram association for candidates of length ${ngramlen2}
     R -f ngram_association.R --args ${ngramlen1} > ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.out 2> ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err \n\
 \n\
     echo \"Creating and populating occurrence table for selected compgrams of length ${ngramlen2}. Commands logged in: ../postgresql/occs_${ngramlen2}_populate_${runTS}.sh\" \n\
-sh ../postgresql/occs_create-len-date_populate.sh ${db} ${ngramlen2} ${root} > ../postgresql/occs_${ngramlen2}_populate_${runTS}.sh \n\
+sh ../postgresql/occs_create-len-date_populate.sh ${db} ${ngramlen2} ${root} ${runTS} > ../postgresql/occs_${ngramlen2}_populate_${runTS}.sh \n\
 chmod +x ../postgresql/occs_${ngramlen2}_populate_${runTS}.sh \n\
 ./../postgresql/occs_${ngramlen2}_populate_${runTS}.sh > ../postgresql/occs_${ngramlen2}_populate_${runTS}.out 2> ../postgresql/occs_${ngramlen2}_populate_${runTS}.err \n\
 \n\
