@@ -9,3 +9,8 @@ cut -d '	' -f 2- ${root}/${nobraces} | nl -s '	' -w 18 | cut -c19- > ${root}/${n
 paste -d '}' ${root}/${nobraces}_fix1.tmp ${root}/${nobraces}_fix2.tmp > ${root}/${nobraces}
 
 done
+
+
+# sel_120930.csv 
+# sel_120926.csv
+# sel_120925.csv

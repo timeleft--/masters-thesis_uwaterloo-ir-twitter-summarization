@@ -30,9 +30,5 @@ echo "${psql} \"COPY compgrams${len}_${day} FROM '${root}/occ_extended${len}/${d
 
 done
 
-echo 'for job in `jobs -p` 
-do 
-echo $job 
-wait $job 
-done' 
+echo "while [[ -n \$(ps r -U postgres  | grep -e \"${db} \[local\] \") ]]; do sleep 0.1; done " 
 

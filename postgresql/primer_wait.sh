@@ -16,3 +16,5 @@ echo $job
 wait $job 
 done
 
+YOU CANNOT WAIT FOR A PROCESS THAT IS NOT A DIRECT CHILD OF YOUR PROCESS.. so db commands are out of the question:
+echo "while [[ -n \$(ps r -U postgres  | grep -e \"${db} \[local\] \") ]]; do sleep 0.1; done " 

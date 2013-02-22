@@ -18,9 +18,6 @@ echo "${psql} \"CREATE TABLE volume_${epoch}${len}_${day} as select  ${len} as n
 
 done
 
-echo 'for job in `jobs -p` 
-do 
-echo $job 
-wait $job 
-done' 
+echo "while [[ -n \$(ps r -U postgres  | grep -e \"${db} \[local\] \") ]]; do sleep 0.1; done " 
+ 
 
