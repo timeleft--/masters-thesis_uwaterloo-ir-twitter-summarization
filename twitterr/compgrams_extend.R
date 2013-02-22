@@ -123,7 +123,6 @@ extendCompgramOfDay <- function(day,
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Connected to DB",db), sep=" - "))) 
   
-#  origCompgramOccPath <- paste(dataPath,"/occ_yuleq_",ngramlen2,"/",day,".csv",sep="");
   origCompgramOccPath <- paste(dataPath,"/occ_yuleq_",ngramlen2,"/",day,".csv",sep="");
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Reading original compound unigrams from file", origCompgramOccPath), sep=" - ")))
@@ -134,10 +133,8 @@ extendCompgramOfDay <- function(day,
   
   cgOcc <- read.table(origCompgramOccPath, header = FALSE, quote = "", comment.char="", 
         sep = "\t", na = "NA", dec = ".", row.names = NULL,
-        col.names = c("ngram","id","timemillis","date","ngramlen","tweetlen","pos"),
-        colClasses = c("character","character","numeric","integer","integer","integer","integer"),
-#        col.names = c("id","timemillis","date","ngram","ngramlen","tweetlen","pos"),
-#        colClasses = c("character","numeric","integer","character","integer","integer","integer"),
+        col.names = c("id","timemillis","date","ngram","ngramlen","tweetlen","pos"),
+        colClasses = c("character","numeric","integer","character","integer","integer","integer"),
         fileEncoding = "UTF-8")
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Read original compound unigrams - nrows:", nrow(cgOcc)), sep=" - ")))
