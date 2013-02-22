@@ -1,4 +1,14 @@
 #!/bin/bash
+db=${1}
+running="-n \$(ps -U postgres  | grep -e \"${db} \[local\] \")"
+echo "while : ; do "
+echo " while [[ ${running} ]]; do sleep 5; done "
+echo " sleep 3; "
+echo " if [[ ! ${running} ]]; then echo 'DONE'; break; fi "
+echo "done "
+ 
+
+
 echo 'for job in `jobs -p` 
 do 
 echo $job 
@@ -21,11 +31,3 @@ echo "while [[ -n \$(ps r -U postgres  | grep -e \"${db} \[local\] \") ]]; do sl
 
 OOPs.. the above might exit prematurely.. I guess it is tough luck that it tests at a moment when there is nothing running
 USE below instead??
-
-running="-n \$(ps -U postgres  | grep -e \"${db} \[local\] \")"
-echo "while : ; do "
-echo " while [[ ${running} ]]; do sleep 5; done "
-echo " sleep 3; "
-echo " if [[ ! ${running} ]]; then echo 'DONE'; break; fi "
-echo "done "
- 
