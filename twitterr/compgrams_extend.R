@@ -142,7 +142,8 @@ extendCompgramOfDay <- function(day,
         col.names = c("ngram","id","timemillis","date","ngramlen","tweetlen","pos","yq","c","dl"),
         colClasses = c("character","character","numeric","integer","integer","integer","integer","NULL","NULL","NULL"),
         fileEncoding = "UTF-8")
-    
+    # change the order of the columns to the one that we used before using the selected only.. minimum foot print!
+    cgOcc <- cgOcc[,c("id","timemillis","date","ngram","ngramlen","tweetlen","pos")]
   } else {  
     cgOcc <- read.table(origCompgramOccPath, header = FALSE, quote = "", comment.char="", 
         sep = "\t", na = "NA", dec = ".", row.names = NULL,
