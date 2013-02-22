@@ -19,7 +19,7 @@ echo "${psql} \"CREATE TABLE volume_${epoch}${len}_${day} as select  ${len} as n
 done
 
 
-running="-n \$(ps -U postgres  | grep -e \"${db} \[local\] \")"
+running="-n \$(ps r -U postgres  | grep -e \"${db} \[local\] \")"
 echo "while : ; do "
 echo " while [[ ${running} ]]; do sleep 5; done "
 echo " sleep 3; "

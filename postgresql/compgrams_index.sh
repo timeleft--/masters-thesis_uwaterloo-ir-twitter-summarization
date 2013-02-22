@@ -19,7 +19,7 @@ echo "${psql} 'CREATE INDEX cnt_${epoch}${len}_${day}_date ON cnt_${epoch}${len}
 done
 
 
-running="-n \$(ps -U postgres  | grep -e \"${db} \[local\] \")"
+running="-n \$(ps r -U postgres  | grep -e \"${db} \[local\] \")"
 echo "while : ; do "
 echo " while [[ ${running} ]]; do sleep 5; done "
 echo " sleep 3; "
