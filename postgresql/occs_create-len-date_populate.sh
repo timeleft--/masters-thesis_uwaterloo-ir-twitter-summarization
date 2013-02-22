@@ -17,7 +17,7 @@ do
 echo "${psql} 'DROP TABLE IF EXISTS occ_${len}_${day};'"
 echo "${psql} 'CREATE TABLE occ_${len}_${day} (CHECK (compgramlen = ${len} and date = ${day})) INHERITS(occurrences);'"
 #echo "${psql} 'ALTER TABLE occ_${len}_${day} ALTER COLUMN compgramlen SET DEFAULT ${len};'"
-
+echo "${psql} 'ALTER TABLE occ_${len}_${day} ADD yuleq float8, ADD epochcnt int8, ADD dunningl float8;'"
 fpath=${root}/occ_yuleq_${len}/sel_${day}.csv
 
 echo "cut -d '	' -f 1 ${fpath} | nl -s '{' | cut -c7- > ${fpath}_fix1_tmp"
