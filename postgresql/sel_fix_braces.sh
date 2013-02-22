@@ -13,7 +13,7 @@ done
 for twobraces in sel_120925.csv sel_120926.csv sel_120930.csv
 do
 
-rm ${root}/${twobraces}
+mv ${root}/${twobraces} ~/TRASH/
 mv ${root}/${twobraces}_fix_130221-2135.bak ${root}/${twobraces}
 
 done
