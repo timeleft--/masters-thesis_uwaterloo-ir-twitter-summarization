@@ -5,7 +5,7 @@
 
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
-CGX.DEBUG <- T
+CGX.DEBUG <- FALSE
 CGX.TRACE <- FALSE
 
 CGX.argv <- commandArgs(trailingOnly = TRUE)
