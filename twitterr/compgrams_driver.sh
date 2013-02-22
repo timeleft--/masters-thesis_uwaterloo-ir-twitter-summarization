@@ -11,6 +11,9 @@ root=${3}
 for ngramlen1 in 2 3 4 5 6 7 8 9 10
 do
     ngramlen2=`expr ${ngramlen1} + 1`
+
+echo "#!/bin/bash" > compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
+
 if [ $ngramlen1 -gt 1 ]
 then
     echo "\
@@ -34,7 +37,7 @@ echo "#!/bin/bash" > ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh 
 sh ../postgresql/compound_aggregate.sh ${db} ${ngramlen1} >> ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh \n\
 chmod +x ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh \n\
 ./../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.sh > ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.out 2> ../postgresql/volume_1hr${ngramlen1}_aggregate_${runTS}.err \n\
-" > compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
+" >> compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
 fi
 
 echo "echo \"Calculating ngram association for candidates of length ${ngramlen2}, follow: ~/logs_r/ngram-assoc_${ngramlen2}_${runTS}.err\" \n\
@@ -56,6 +59,7 @@ sh ../postgresql/compound_inherit.sh ${db} ${ngramlen2} >> ../postgresql/compcnt
     ./../postgresql/compcnt-hier_1hr${ngramlen2}_alter_${runTS}.sh > ../postgresql/compcnt-hier_1hr${ngramlen2}_alter_${runTS}.out 2> ../postgresql/compcnt-hier_1hr${ngramlen2}_alter_${runTS}.err \n\
 \n\
 echo \"Done for ngramlen1: ${ngramlen1} and ngramlen2: ${ngramlen2}\"" >> compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
-#sh compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
+chmod +x compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
+#./compgrams-driver_${ngramlen1}-${ngramlen2}_${runTS}.sh
 
 done
