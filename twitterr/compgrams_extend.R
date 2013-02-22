@@ -2,6 +2,7 @@
 # 
 # Author: yia
 ###############################################################################
+ONLY_SEL <- TRUE
 
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
@@ -123,7 +124,11 @@ extendCompgramOfDay <- function(day,
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Connected to DB",db), sep=" - "))) 
   
-  origCompgramOccPath <- paste(dataPath,"/occ_yuleq_",ngramlen2,"/",day,".csv",sep="");
+  if(ONLY_SEL){
+    origCompgramOccPath <- paste(dataPath,"/occ_yuleq_",ngramlen2,"/sel_",day,".csv",sep="");
+  } else {
+    origCompgramOccPath <- paste(dataPath,"/occ_yuleq_",ngramlen2,"/",day,".csv",sep="");
+  }
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Reading original compound unigrams from file", origCompgramOccPath), sep=" - ")))
   
@@ -131,11 +136,20 @@ extendCompgramOfDay <- function(day,
     stop(paste("Compgram occurrences input for day doesn't exist!"))
   }
   
-  cgOcc <- read.table(origCompgramOccPath, header = FALSE, quote = "", comment.char="", 
+  if(ONLY_SEL){
+    cgOcc <- read.table(origCompgramOccPath, header = FALSE, quote = "", comment.char="", 
+        sep = "\t", na = "NA", dec = ".", row.names = NULL,
+        col.names = c("ngram","id","timemillis","date","ngramlen","tweetlen","pos"),
+        colClasses = c("character","character","numeric","integer","integer","integer","integer"),
+        fileEncoding = "UTF-8")
+    
+  } else {  
+    cgOcc <- read.table(origCompgramOccPath, header = FALSE, quote = "", comment.char="", 
         sep = "\t", na = "NA", dec = ".", row.names = NULL,
         col.names = c("id","timemillis","date","ngram","ngramlen","tweetlen","pos"),
         colClasses = c("character","numeric","integer","character","integer","integer","integer"),
         fileEncoding = "UTF-8")
+  }
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Read original compound unigrams - nrows:", nrow(cgOcc)), sep=" - ")))
   
@@ -147,9 +161,14 @@ extendCompgramOfDay <- function(day,
 #  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (",day)
 #      # and cnt > %d, support
   
-  compgramLeft <- ifelse(ngramlen2==2,'"(','"{')
-  compgramRight <- ifelse(ngramlen2==2,')"','}"')
-
+  if(ONLY_SEL){
+    compgramLeft <- '"'
+    compgramRight <- '"'
+  } else {
+    compgramLeft <- ifelse(ngramlen2==2,'"(','"{')
+    compgramRight <- ifelse(ngramlen2==2,')"','}"')
+  }
+  
 #  ugDfCache <- vector("list",(maxPos-startPos+1))
   ugDfCache <- new.env()
   cgOccMaskForBeforePrevIter<-NULL      
