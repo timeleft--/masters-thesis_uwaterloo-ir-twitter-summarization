@@ -24,7 +24,7 @@ echo "${psql} 'ALTER TABLE compgrams${len}_${day} ALTER COLUMN ngramlen SET DEFA
 #echo "${psql} 'CREATE TABLE cnt_${epoch}${len}_${day} () INHERITS(cnt_${epoch}${len});'"
 
 echo "${psql} \"COPY compgrams${len}_${day} FROM '${root}/occ_extended${len}/${day}.csv'; \
- CREATE TABLE cnt_${epoch}${len}_${day} AS select CAST( ${len} as int2) as ngramlen, CAST(ngram as text[]) as ngramarr, CAST (${day} as int4) as date, cast( floor(timemillis/3600000) * 3600000 as int8) as epochstartmillis, cast(count(*) as int4) as cnt from compgrams${len}_${day} group by floor(timemillis/3600000),ngram; \
+ CREATE TABLE cnt_${epoch}${len}_${day} AS select CAST( ${len} as int2) as ngramlen, CAST('{' || ngram || '}' as text[]) as ngramarr, CAST (${day} as int4) as date, cast( floor(timemillis/3600000) * 3600000 as int8) as epochstartmillis, cast(count(*) as int4) as cnt from compgrams${len}_${day} group by floor(timemillis/3600000),ngram; \
     ALTER TABLE cnt_${epoch}${len}_${day} INHERIT cnt_${epoch}${len}; \"&"
 #Will insert  need explicit type casing? No, it didn't
 
