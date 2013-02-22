@@ -1,0 +1,131 @@
+# TODO: Add comment
+# 
+# Author: yia
+###############################################################################
+
+FIM.label <- "FIM"
+FIM.DEBUG <- TRUE
+FIM.TRACE <- FALSE
+
+FIM.argv <- commandArgs(trailingOnly = TRUE)
+FIM.compgramlenm<-as.integer(FIM.argv[1])
+
+FIM.epoch <- '1hr'
+FIM.support <- 5
+
+FIM.fislenm <- 15
+
+if(FIM.DEBUG){
+  FIM.db <- "sample-0.01"
+  FIM.dataRoot <- "~/r_output_debug/"
+  if(FIM.TRACE){
+    compgramlenm<-2
+    
+    epoch=FIM.epoch
+    db=FIM.db
+    support=FIM.support
+    dataRoot=FIM.dataRoot
+  }
+} else {
+  FIM.db <- "full"
+  FIM.dataRoot <- "~/r_output/"
+
+}
+
+########################################################
+
+
+require(arules)
+
+require(RPostgreSQL)
+
+
+########################################################
+
+source("compgrams_utils.R")
+
+########################################################
+
+
+occurrencesToTrans <- function(day, compgramlenm, epoch=FIM.epoch,db=FIM.db, support=FIM.support, dataRoot=FIM.dataRoot){
+  
+  ############ 
+  
+  drv <- dbDriver("PostgreSQL")
+  con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
+      host="hops.cs.uwaterloo.ca", port="5433")
+  
+  try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Connected to DB", db)))
+  
+  
+  ########Read the compgram vocabulary
+#  if(compgramlenm==1){
+#    sql <- printf("select distinct ngramarr[1] as compgram
+#            from cnt_%s%d where date=%d and cnt > %d order by cnt desc;", epoch1, ngramlen1, day, support)
+#  } else {
+#    # compgrams with no enough "support were not originally stored, but that was for item support not itemset  
+#    sql <- sprintf("select distinct ngramarr as compgram
+#            from compcnt_%s%d_%d where cnt > %d order by cnt desc;",epoch1, ngramlen1, day, support)
+#  }
+#  
+#  try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Fetching day's compgrams using sql:\n", sql)))
+#  
+#  compgramRs <- dbSendQuery(con,sql)
+#  compgramDf <- fetch(compgramRs,n=-1)
+#  try(dbClearResult(compgramRs))
+#  
+#  try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Fetched day's compgrams. nrow:", nrow(compgramDf))))
+#  
+#  if(compgramlenm!=1){
+#    compgramDf <- within(compgramDf, {compgram=stripEndChars(compgram)})
+#  }
+  
+  ########### Read the occurrences
+  
+  SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
+  MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
+
+  # DISTINCT because the fim algorithms in arules work with binary occurrence (that's ok I guess.. for query expansion)
+  sql <- sprintf("select DISTINCT ON (id,compgram) compgram,CAST(id as varchar),floor(timemillis/%d)*%d as epochstartux,compgramlen,pos from occurrences where date=%d and compgramlen<=%d;",
+      MILLIS_IN_EPOCH[[paste("X",epoch,sep="")]],SEC_IN_EPOCH[[paste("X",epoch,sep="")]],day,compgramlenm)
+ 
+  try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Fetching day's occurrences using sql:\n", sql)))
+  
+  occsRs <- dbSendQuery(con,sql)
+  occsDf <- fetch(occsRs,n=-1)
+  
+  try(dbClearResult(occRs))
+  try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Fetched day's occurrences. nrow:", nrow(occsDf))))
+  
+  
+  ########### 
+  # dbDisconnect(con, ...) closes the connection. Eg.
+  try(dbDisconnect(con))
+  # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
+  try(dbUnloadDriver(drv))
+  
+  ############# Remove overlapping occurrences
+  
+  nonovOcc <- occsDf
+  
+  ############# Do the FIM for the whole day
+  dayTrans <- as(split(nonovOcc[,"compgram"],nonovOcc[,"id"]),"transactions")
+  dayFIS <- eclat(dayTrans, parameter = list(supp = support/length(dayTrans), minlen=2, maxlen = FIM.fislenm))
+  interest=interestMeasure(dayFIS, c("lift","allConfidence","crossSupportRatio"),transactions = dayTrans)
+  quality(dayFIS) <- cbind(quality(dayFIS),
+      interest)
+  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
+
+  ############# Do the FIM for epochs
+  
+  fimForEpoch <- function(epcg) {
+    epochstart <- epcg$epochstartux[1]
+    epochOccs <- occsDf[which(epochOccs$epochstartux == epochstart)]
+    
+    # trans4 <- as(split(a_df3[,"item"], a_df3[,"TID"]), "transactions") 
+    epochTrans <- as(split(epcg[,"compgram"], epcg[,"id"]), "transactions") 
+  }
+  debug(fimForEpoch)
+  
+  d_ply(nonovOcc,c("epochstartux"),fimForEpoch)
+}
