@@ -13,7 +13,7 @@ G.support<-5
 
 logLabelUGC <- "unigrams_createCompound()" #Recall()???
 
-REMOVE_EXITING_COMPGRAM_TABLES<-FALSE
+REMOVE_EXITING_COMPGRAM_TABLES<-TRUE
 #SKIP_DAY_IF_COMPGRAM_FILE_EXISTS<-FALSE
 DEBUG_UGC <- FALSE
 UGC.TRACE <- FALSE
@@ -89,10 +89,10 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
     #TODO: subtract 10 hours from epochstartmillis to align both timezones.. but is this right?
   }
   
-  occCntFile <- paste(CGC.dataRoot,"/occ_yuleq_",ngramlen2,"/cnt_",day,".csv",sep="")
-  if(!file.exists(occCntFile)){
-    stop(pate(Sys.time(), logLabelUGC, " for day:", day, " - Cannot process day because counts file not found:",occCntFile))  
-  }
+#  occCntFile <- paste(CGC.dataRoot,"/occ_yuleq_",ngramlen2,"/cnt_",day,".csv",sep="")
+#  if(!file.exists(occCntFile)){
+#    stop(pate(Sys.time(), logLabelUGC, " for day:", day, " - Cannot process day because counts file not found:",occCntFile))  
+#  }
   
   drv <- dbDriver("PostgreSQL")
   con <- dbConnect(drv, dbname=db, user="yaboulna", password="5#afraPG",
