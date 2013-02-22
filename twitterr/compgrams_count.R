@@ -191,12 +191,14 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   sql <-  sprintf("select floor(timemillis/%d)*%d as epochstartux, compgram as ngram, count(*) as cnt from %s group by epochstartux,compgram;",
       MILLIS_IN_EPOCH[[paste("X",epoch2,sep="")]],SEC_IN_EPOCH[[paste("X",epoch2,sep="")]],occTable,day)
 
+  try(stop(paste(Sys.time(), logLabelUGC, paste("Fetching  compound-grams epoch counts - sql:\n", sql), sep=" - ")))
+  
   ngramRs <- dbSendQuery(con,sql)
   ngramDf <- fetch(ngramRs,n=-1)
   
   try(dbClearResult(ngramRs))
   
-  try(stop(paste(Sys.time(), logLabelUGC, paste("Read  compound unigrams count - nrows:", nrow(ngramDf)), sep=" - ")))
+  try(stop(paste(Sys.time(), logLabelUGC, paste("Fetched  compound-grams epoch counts - nrows:", nrow(ngramDf)), sep=" - ")))
 
   #####################
 # I can't find anything else to blame for what's happening, so I'm reverting the "enhancements"  
