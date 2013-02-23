@@ -19,7 +19,7 @@ if(DEBUG_CTC){
   if(CTC.TRACE){
     day<-121106
     epoch1<-'1hr'
-    ngramlen1<-2
+    ngramlen1<-1
     ngramlen2<-ngramlen1+1
     support<-5
     epoch2<-NULL
@@ -386,15 +386,21 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
         }
         
         if(withTotal){
-          # start the total by the "alone/with others" count, then add to it the sum of the row (with peers count)
-          cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"] + rowSums(cooccurs[,-ixTOTAL]) 
+          # start the total by the "alone/with other unigrams of low suppoer" count, 
+          cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"] +
+          ifelse(ngramlen2 > 2,
+            # add to it the sum of each row: the number of times it comes first in a unigram-compgram bigram
+            rowSums(cooccurs[,-ixTOTAL]) +
+                # and the sum of each column: the number of times it comes second in a compgram-unigram bigram
+                colSums(cooccurs),
+          0) 
         }
         
         cooccurs <<- cooccurs
         return("ignrored")
       }
    
-#      debug(countCooccurNooccurNgram)
+     # debug(countCooccurNooccurNgram)
 #      setBreakpoint("conttable_construct.R#249")
       d_ply(idata.frame(eg), c("ngram"), countCooccurNooccurNgram)
 
