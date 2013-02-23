@@ -183,8 +183,10 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
             stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ERROR: compsIx not positive:",paste(compsIx,collapse="|"),
                     eg$epochstartux[1],paste(comps,collapse="|")))
             ,error=NGA.handleErrors)
+        }# else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
+        
         return(NULL)
-      }# else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
+      
       }
       
       agreet <- agreementTable(comps, cooccurs, uniqueUgrams,

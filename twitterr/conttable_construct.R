@@ -253,9 +253,11 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
                 stop(paste("conttable_construct() for day:", day, " - ERROR: ixugram not positive:",ixugram,ugramCnt,ugram,currEpoch,nUnique,
                             epochUgramMask[1],"-",epochUgramMask[length(epochUgramMask)],paste(ugramDf[epochUgramMask[1],],collapse="|"),paste(ugramDf[epochUgramMask[length(epochUgramMask)],],collapse="|")))
                    ,error=handleErrors)
+             } # else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
+             
             return(NULL)
             #ixugram <- 0
-            } # else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
+            
             
           }
           
@@ -311,9 +313,10 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
                 stop(paste("conttable_construct#countCooccurNooccurNgram() for day:", day, " - ERROR: ixugram not positive:",ixugram,cnt,paste(ugramsInNgram,collapse="|"),ugram,currEpoch,nUnique,
                         epochUgramMask[1],"-",epochUgramMask[length(epochUgramMask)],paste(ugramDf[epochUgramMask[1],],collapse="|"),paste(ugramDf[epochUgramMask[length(epochUgramMask)],],collapse="|")))
             ,error=handleErrors)
+            } # else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
+      
             next
             #ixugram <- 0
-            } # else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
               
           }
           
@@ -366,10 +369,11 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
                             ixugram2,cnt,paste(ugramsInNgram,collapse="|"),ugram2,currEpoch,nUnique,
                             epochUgramMask[1],"-",epochUgramMask[length(epochUgramMask)],paste(ugramDf[epochUgramMask[1],],collapse="|"),paste(ugramDf[epochUgramMask[length(epochUgramMask)],],collapse="|")))
                 ,error=handleErrors)
+                }# else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
+          
                 next
                 #ixugram2 <- 0
         
-                }# else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
                 
               }
             
