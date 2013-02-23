@@ -372,7 +372,8 @@ try(dbUnloadDriver(drv))
 #      ngramOccCopyMask <<- c(ngramOccCopyMask, ngramOccs)
 #      
       ###### Reduce counts
-      
+      # FIXME: A7eeeh... leeh tefdal tedranb fel unigrams.. er7amha we na2as men el compgrams.. tab3an dah yatatallab 
+      # enn table occ lazem yekon feeh el compgrams mesh flattened, we shof ba2a beyosta7`dam feen
 #      ugramsInNgram <- splitNgramToCompgrams(ng[1,"ngram"],ngramlen2) 
       ugramsInNgram <- unlist(strsplit(stripEndChars(ng[1,"ngram"]), ",",fixed = TRUE))
       #TODO Pure?
@@ -409,9 +410,16 @@ try(dbUnloadDriver(drv))
     if(ngramlen2>2){
 
       #The returned compgrams is now flattened so that (i,love),u and i,(love,u) become i,love,u 
-      # so all the different ways it got composed should be mapped to one row with one of their counts
-      # (all counts should be the same because the YuleQ is calculated per epoch) 
-      epochCompound <- epochCompound[!duplicated(epochCompound["ngramarr"]),]
+#      # so all the different ways it got composed should be mapped to one row with one of their counts
+#      # (all counts should be the same because the YuleQ is calculated per epoch) 
+#      epochCompound <- epochCompound[!duplicated(epochCompound["ngramarr"]),]
+  #Mapped to one row with the total of their counts.. at least after selecting specific occurrences
+  # the above argumenta about YuleQ being calculated per epoch doesnt make much sense at all.. 
+  # there is no overlap, so an "love" within (i,love), you will be counted separately from the
+  # ones within i,(love,you).. thus we need the total of the count not any one of them
+  epochCompound <- ddply(epochCompound,c("ngramarr"),summarize,cnt=sum(cnt))
+  
+  
 #      
 #      ngramOccCopy$ngram <- aaply(ngramOccCopy$ngram,1,flattenNgram)
 #
