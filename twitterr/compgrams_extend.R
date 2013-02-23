@@ -11,8 +11,8 @@ CGX.TRACE <- FALSE
 
 CGX.argv <- commandArgs(trailingOnly = TRUE)
 #CGX.epoch2 <- '1hr'
-# FIXME ngramlen2 should say ngramlen orig.. but that's fine!
-CGX.ngramlen2 <- as.integer(CGX.argv[1])
+# FIXME ngramlen1 should say ngramlen orig.. but that's fine!
+CGX.ngramlen1 <- as.integer(CGX.argv[1])
 #CGX.support <- 5
 
 CGX.loglabel.DEFAULT <- "compgrams-extend"
@@ -29,7 +29,7 @@ if(CGX.DEBUG){
   
   CGX.nCores<-2
   if(CGX.TRACE){
-    ngramlen2=CGX.ngramlen2
+    ngramlen1=CGX.ngramlen1
   
     db<-CGX.db
     day<-121106
@@ -74,7 +74,7 @@ source("compgrams_utils.R")
 
 extendCompgramOfDay <- function(day, 
 #    epoch2=CGX.epoch2, support=CGX.support,
-    ngramlen2=CGX.ngramlen2,db=CGX.db,maxPos=70,startPos=0,
+    ngramlen1=CGX.ngramlen1,db=CGX.db,maxPos=70,startPos=0,
     dataPath = "~/r_output/",workingRoot = "~/r_output/occ_extended_working/"){
   
   # those can't change
@@ -83,11 +83,11 @@ extendCompgramOfDay <- function(day,
 
   CGX.loglabel <- paste("extendCompgramOfDay(day=",day,
 #      ",epoch2=",epoch2,
-      ",ngramlen2=",ngramlen2,",db=",db)
+      ",ngramlen1=",ngramlen1,",db=",db)
   
   lenDir <- paste("/occ_extended",
       #      epoch2,
-      ngramlen2 + 1, sep="")
+      ngramlen1 + 1, sep="")
   outDir <- paste(dataPath,lenDir,sep="")
   
   dayFile <- paste(lenDir,"/",day,".csv",sep="")
@@ -125,9 +125,9 @@ extendCompgramOfDay <- function(day,
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Connected to DB",db), sep=" - "))) 
   
   if(ONLY_SEL){
-    origCompgramOccPath <- paste(dataPath,"/occ_yuleq_",ngramlen2,"/sel_",day,".csv",sep="");
+    origCompgramOccPath <- paste(dataPath,"/occ_yuleq_",ngramlen1,"/sel_",day,".csv",sep="");
   } else {
-    origCompgramOccPath <- paste(dataPath,"/occ_yuleq_",ngramlen2,"/",day,".csv",sep="");
+    origCompgramOccPath <- paste(dataPath,"/occ_yuleq_",ngramlen1,"/",day,".csv",sep="");
   }
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Reading original compound unigrams from file", origCompgramOccPath), sep=" - ")))
@@ -152,13 +152,42 @@ extendCompgramOfDay <- function(day,
         fileEncoding = "UTF-8")
   }
   
+  
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Read original compound unigrams - nrows:", nrow(cgOcc)), sep=" - ")))
+  
+  #### Find extinsible occurrences
+  cgOcc <- arrange(cgOcc, c(id,pos))
+     
+  # An occurrence is extensibe backwards if there is at least one position not occupied by a compgram before it (hence the diff)
+  # An occurrence should be considered extinsible backwards if it is the first selected occ in a doc (hence the !duplicated(id)) 
+  cgOccExtensibleBackIx <- union(which(diff(cgOcc$pos) > ngramlen1),  which(!duplicated(cgOcc$id))) # cgOccFirstInDocIx)
+  
+  # The preceeding occurrence to any one that is extensible backwards is extensible forward.. if it is because of space
+  # available, then it should contend for occupying it.. and if it is because the backward extensibility is due to being 
+  # the first occ in a document, then the one before it is the last occurrence in a document, and should also be considered
+  # However, the first occurrence of all should be extensible backwards, so the index 1 is always among the extensible bac 
+  # it sure is because its id isn't duplicated, no need for if(cgOccExtensibleBackIx[1] == 1){, so we subscript from 2
+  # ALSO, the last occurrence we selected should  be considered for extensibility forwards, hence the legnth(cgOcc)
+  cgOccExtensibleForIx <- union(cgOccExtensibleBackIx[2:length(cgOccExtensibleBackIx)] - 1, length(cgOcc))
+  
+  cgOccExtensibleBack <- cgOcc[cgOccExtensibleBackIx,]
+  rm(cgOccExtensibleBackIx)
+  
+  try(stop(paste(Sys.time(), CGX.loglabel, paste("Created extensible backwards compgrams subset - nrows:", nrow(cgOccExtensibleBack)), sep=" - ")))
+  
+  cgOccExtensibleFor <- cgOcc[cgOccExtensibleForIx,]
+  rm(cgOccExtensibleForIx)
+  
+  try(stop(paste(Sys.time(), CGX.loglabel, paste("Created extensible forwards compgrams subset - nrows:", nrow(cgOccExtensibleFor)), sep=" - ")))
+  
+  rm(cgOcc)
   
   #TODONOT: stripEndChars from cgOcc
   
   # Distinct on id because the position can appear only once per tweet!
   # SELECT DISTINCT on (id) id,ngram as unigram from unigramsp3 where date=121110  
-  sqlTemplate <- sprintf("SELECT DISTINCT ON (id) CAST(id as varchar),ngram as unigram from unigramsp%%d where date=%d order by id;",day)
+  # order by id <- no reason why to do that.. just extra work!!
+  sqlTemplate <- sprintf("SELECT DISTINCT ON (id) CAST(id as varchar),ngram as unigram from unigramsp%%d where date=%d;",day)
 #  sqlTemplate <- sprintf("SELECT id,ngram as unigram from unigramsp%%d where date=%d and id in (",day)
 #      # and cnt > %d, support
   
@@ -166,14 +195,14 @@ extendCompgramOfDay <- function(day,
     compgramLeft <- '"'
     compgramRight <- '"'
   } else {
-    compgramLeft <- ifelse(ngramlen2==2,'"(','"{')
-    compgramRight <- ifelse(ngramlen2==2,')"','}"')
+    compgramLeft <- ifelse(ngramlen1==2,'"(','"{')
+    compgramRight <- ifelse(ngramlen1==2,')"','}"')
   }
   
 #  ugDfCache <- vector("list",(maxPos-startPos+1))
   ugDfCache <- new.env()
-  cgOccMaskForBeforePrevIter<-NULL      
-  for(p in c(startPos:(maxPos - ngramlen2))) { # ( c( startPos : floor((maxPos+1)/2)) * 2 ) ){
+#  cgOccMaskForBeforePrevIter<-NULL      
+  for(p in c(startPos:(maxPos - ngramlen1))) { # ( c( startPos : floor((maxPos+1)/2)) * 2 ) ){
   
     try(stop(paste(Sys.time(), CGX.loglabel,
                 paste("Proccessing position",p),
@@ -182,11 +211,11 @@ extendCompgramOfDay <- function(day,
 
   
     ##### Join the unigram before the compgram
-    cgOccMaskForBefore <- which(cgOcc$pos==(p+1))
+    cgOccMaskForBefore <- which(cgOccExtensibleBack$pos==(p+1))
 #    idsForBefore<-paste(cgOcc[cgOccMaskForBefore,"id"],collapse=",")
     if(length(cgOccMaskForBefore)>0){
       
-      if(p<ngramlen2){
+      if(p<ngramlen1){
         
 #        sql <- paste(sprintf(sqlTemplate,p),idsForBefore,");",sep="")
         sql <- sprintf(sqlTemplate,p)
@@ -225,11 +254,11 @@ extendCompgramOfDay <- function(day,
       # This merge results in multiple rows for each id.. the mask already selects one pos, so how are there 
     # multiple records with the same id after selecting one pos!!!! Check the by pos tables!
 #        beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
-      beforeJoin <- merge(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", sort=F, suffixes=c("",""))
+      beforeJoin <- merge(ugStartPosDf, cgOccExtensibleBack[cgOccMaskForBefore,], by="id", sort=F, suffixes=c("",""))
         if(nrow(beforeJoin) > 0){
           beforeJoin$ngram = paste(beforeJoin$unigram,paste(compgramLeft,beforeJoin$ngram,compgramRight,sep=""),sep=",")# ,sep="+")
           beforeJoin$unigram <- NULL
-          beforeJoin$ngramlen <- ngramlen2 + 1 #beforeJoin$ngramlen + 1
+          beforeJoin$ngramlen <- ngramlen1 + 1 #beforeJoin$ngramlen + 1
           beforeJoin$pos <- p
           
           write.table(beforeJoin, file = stagingPath, append = TRUE, quote = FALSE, sep = "\t",
@@ -249,16 +278,16 @@ extendCompgramOfDay <- function(day,
       error=function(e) NULL
     )
     ###### join the unigram after the compgram  
-    if(!is.null(cgOccMaskForBeforePrevIter)) {
-      cgOccMaskForAfter <- cgOccMaskForBeforePrevIter 
-    } else {
-      cgOccMaskForAfter <- which(cgOcc$pos==p)
-    }
+#    if(!is.null(cgOccMaskForBeforePrevIter)) {
+#      cgOccMaskForAfter <- cgOccMaskForBeforePrevIter 
+#    } else {
+     cgOccMaskForAfter <- which(cgOccExtensibleFor$pos==p)
+      
 #    idsForAfter<-paste(cgOcc[cgOccMaskForAfter,"id"],collapse=",")
 #    if(length(cgOccMaskForAfter)){
-#      sql <- paste(sprintf(sqlTemplate, p+ngramlen2),
+#      sql <- paste(sprintf(sqlTemplate, p+ngramlen1),
 #          idsForAfter,");",sep="")
-      sql <- sprintf(sqlTemplate, p+ngramlen2)
+      sql <- sprintf(sqlTemplate, p+ngramlen1)
         
 #      CGX.log(paste("Fetching unigrams of end position, using sql:\n",sql))
       try(stop(paste(Sys.time(), CGX.loglabel,
@@ -282,11 +311,11 @@ extendCompgramOfDay <- function(day,
         ugEndPosDf <- within(ugEndPosDf,{unigram=stripEndChars(unigram)})
         
 #        afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
-        afterJoin <- merge(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", sort=F,suffixes=c("",""))
+        afterJoin <- merge(ugEndPosDf, cgOccExtensibleFor[cgOccMaskForAfter,], by="id", sort=F,suffixes=c("",""))
         if(nrow(afterJoin)>0){
           afterJoin$ngram = paste(paste(compgramLeft,afterJoin$ngram,compgramRight,sep=""),afterJoin$unigram,sep=",") #sep="+")
           afterJoin$unigram <- NULL
-          afterJoin$ngramlen <- ngramlen2 + 1 
+          afterJoin$ngramlen <- ngramlen1 + 1 
           
           # already afterJoin$pos <- p
       
@@ -296,12 +325,12 @@ extendCompgramOfDay <- function(day,
               fileEncoding = "UTF-8")
         }
       }
-#      ugDfCache[[p+ngramlen2+1]] <- ugEndPosDf
-      assign(paste("unigrams",p+ngramlen2,sep=""),ugEndPosDf,envir=ugDfCache)
+#      ugDfCache[[p+ngramlen1+1]] <- ugEndPosDf
+      assign(paste("unigrams",p+ngramlen1,sep=""),ugEndPosDf,envir=ugDfCache)
 #      rm(afterJoin)
 #      rm(ugEndPosDf)
 #    }
-    cgOccMaskForBeforePrevIter <<- cgOccMaskForBefore
+#    cgOccMaskForBeforePrevIter <<- cgOccMaskForBefore
 #    ugDfCache <<- ugDfCache
   }
  
@@ -334,7 +363,7 @@ foreach(day=CGX.days,
       tryCatch({
             
              extendCompgramOfDay(day,dataPath = CGX.dataPath,workingRoot = CGX.workingRoot) 
-#                epoch2 = CGX.epoch2, ngramlen2 = CGX.ngramlen2,  db = CGX.db) #, support = CGX.support)
+#                epoch2 = CGX.epoch2, ngramlen1 = CGX.ngramlen1,  db = CGX.db) #, support = CGX.support)
             daySuccess <<-paste("Success for day:",day)
           }
           ,error=function(e) daySuccess <<- paste("Failure for day",day,e)

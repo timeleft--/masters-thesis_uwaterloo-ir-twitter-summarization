@@ -190,7 +190,7 @@ compoundUnigramsFromNgrams <- function(day, epoch2,  ngramlen1=1, epoch1=NULL,su
   # 1) where date=%d <- they will be already partitioned
   # 2) where cnt > support <- since the candidates for which yuleq was calculated orignally had high support, then no
   #  low support compgram can make it to the positive yuleQ pool   
-  sql <-  sprintf("select floor(timemillis/%d)*%d as epochstartux, compgram as ngram, count(*) as cnt from %s group by epochstartux,compgram;",
+  sql <-  sprintf("select floor(timemillis/%d)*%d as epochstartux, compgram as ngram, count(*) as cnt from %s group by epochstartux,ngram;",
       MILLIS_IN_EPOCH[[paste("X",epoch2,sep="")]],SEC_IN_EPOCH[[paste("X",epoch2,sep="")]],occTable,day)
 
   try(stop(paste(Sys.time(), logLabelUGC, paste("Fetching  compound-grams epoch counts - sql:\n", sql), sep=" - ")))
