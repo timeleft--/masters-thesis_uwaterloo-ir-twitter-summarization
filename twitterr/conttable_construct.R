@@ -216,9 +216,10 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
       cooccurs <- Matrix(0, #intially zeros
           nrow=nUnique, #no total because ther grand total isn't really useful
           ncol=maxIx,  # Will either contain +1 for total or not
-          byrow=FALSE, # I don't care. But since they prefer to store by column, I add the Totals
-          # as a column because there will always be numbers in the total and this
-          # will disrupt the sparsity.. if it can span more than one columne
+          byrow=TRUE, # because I will add each row up, so I suspect that storing by row will be faster in that
+#          byrow=FALSE, # I don't care. But since they prefer to store by column, I add the Totals
+#          # as a column because there will always be numbers in the total and this
+#          # will disrupt the sparsity.. if it can span more than one columne
           sparse=TRUE)
     
       
@@ -276,9 +277,10 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
       }
     
       
-      if(withTotal){
-        cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"]
-      }
+#      if(withTotal){
+#        # start the total by the "alone/with others" count
+#        cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"]
+#      }
       
       # apply to each ngram in the epoch   
       countCooccurNooccurNgram <- function(ng) {
@@ -382,11 +384,17 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
             }
           }
         }
+        
+        if(withTotal){
+          # start the total by the "alone/with others" count, then add to it the sum of the row (with peers count)
+          cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"] + rowSums(cooccurs[,-ixTOTAL]) 
+        }
+        
         cooccurs <<- cooccurs
         return("ignrored")
       }
    
-      #debug(countCooccurNooccurNgram)
+#      debug(countCooccurNooccurNgram)
 #      setBreakpoint("conttable_construct.R#249")
       d_ply(idata.frame(eg), c("ngram"), countCooccurNooccurNgram)
 

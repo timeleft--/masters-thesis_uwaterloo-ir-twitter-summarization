@@ -87,7 +87,7 @@ lookupIxs <- function(comps, lkp){
 
 # This focuses on the meaning that the event is appearance of first preceeding second, against appearance of first
 # preceeding anything else.. or appearnce of second preceeded by anything else
-agreementTable <- function(comps,cooccurs, uniqueUgrams,
+agreementTable <- function(comps,cooccurs, uniqueUgrams, day, epochstarux,
     totalIx, #notoccurs,
     compsIx, volume) {
   
@@ -101,14 +101,14 @@ agreementTable <- function(comps,cooccurs, uniqueUgrams,
   secAfterNotFirst <- cooccurs[compsIx[2],totalIx] - cooccurs[compsIx[1],compsIx[2]] # THIS WAS WRONG notoccurs[compsIx[2],compsIx[1]],
   
   if(secAfterNotFirst < 0){
-    try(stop(paste("WARNING: a0b1 was negative: ",secAfterNotFirst,". bCnt =",cooccurs[compsIx[2],totalIx],", comps:", paste(uniqueUgrams[compsIx],collapse="|"))))
+    try(stop(paste(Sys.time(), "ngram_assoc#agreementTable() for day/time:", day, epochstarux, " - WARNING: a0b1 was negative: ",secAfterNotFirst,". bCnt =",cooccurs[compsIx[2],totalIx],", comps:", paste(uniqueUgrams[compsIx],collapse="|"))))
     secAfterNotFirst <- 0
   }
   
   firstBeforeNotSec <- cooccurs[compsIx[1],totalIx] - cooccurs[compsIx[1],compsIx[2]] # notoccurs[compsIx[1], compsIx[2]]
   
   if(secAfterNotFirst < 0){
-    try(stop(paste("WARNING: a1b0 was negative: ",firstBeforeNotSec,". aCnt =",cooccurs[compsIx[1],totalIx],", comps:", paste(uniqueUgrams[compsIx],collapse="|"))))
+    try(stop(paste(Sys.time(), "ngram_assoc#agreementTable() for day/time:", day, epochstarux, " - WARNING: a1b0 was negative: ",firstBeforeNotSec,". aCnt =",cooccurs[compsIx[1],totalIx],", comps:", paste(uniqueUgrams[compsIx],collapse="|"))))
     firstBeforeNotSec <- 0
   }
   
@@ -189,7 +189,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
       
       }
       
-      agreet <- agreementTable(comps, cooccurs, uniqueUgrams,
+      agreet <- agreementTable(comps, cooccurs, uniqueUgrams, day, eg$epochstartux[1], 
         totalIx, #notoccurs,
         compsIx,epochvolume)
       
