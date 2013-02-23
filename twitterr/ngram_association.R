@@ -322,9 +322,11 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
 #  
     
     if(ngramlen2 == 2){
-      sqlTemplate <- sprintf("select CAST(id as varchar), CAST(timemillis as varchar), date, ngram, ngramlen, tweetlen, pos from ngrams%d where date=%d and timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) order by timemillis;",ngramlen2,day)
+      #order by timemillis
+      sqlTemplate <- sprintf("select CAST(id as varchar), CAST(timemillis as varchar), date, ngram, ngramlen, tweetlen, pos from ngrams%d where date=%d and timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) ;",ngramlen2,day)
     } else {
-      sqlTemplate <- sprintf("select CAST(id as varchar), CAST(timemillis as varchar), date, ngram, ngramlen, tweetlen, pos from compgrams%d_%d where timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) order by timemillis;",ngramlen2,day)    
+      #order by timemillis
+      sqlTemplate <- sprintf("select CAST(id as varchar), CAST(timemillis as varchar), date, ngram, ngramlen, tweetlen, pos from compgrams%d_%d where timemillis >= (%%.0f * 1000::INT8) and timemillis < (%%.0f * 1000::INT8) ;",ngramlen2,day)    
     }
     
     SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
