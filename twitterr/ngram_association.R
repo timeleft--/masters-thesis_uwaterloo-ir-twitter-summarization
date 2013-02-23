@@ -87,7 +87,7 @@ lookupIxs <- function(comps, lkp){
 
 # This focuses on the meaning that the event is appearance of first preceeding second, against appearance of first
 # preceeding anything else.. or appearnce of second preceeded by anything else
-agreementTable <- function(comps,cooccurs, 
+agreementTable <- function(comps,cooccurs, uniqueUgrams,
     totalIx, #notoccurs,
     compsIx, volume) {
   
@@ -101,14 +101,14 @@ agreementTable <- function(comps,cooccurs,
   secAfterNotFirst <- cooccurs[compsIx[2],totalIx] - cooccurs[compsIx[1],compsIx[2]] # THIS WAS WRONG notoccurs[compsIx[2],compsIx[1]],
   
   if(secAfterNotFirst < 0){
-    try(stop(paste("WARNING: a0b1 was negative: ",secAfterNotFirst,". bCnt =",cooccurs[compsIx[2],totalIx],", compsIx:", paste(compsIx,collapse="|"))))
+    try(stop(paste("WARNING: a0b1 was negative: ",secAfterNotFirst,". bCnt =",cooccurs[compsIx[2],totalIx],", comps:", paste(uniqueUgrams[compsIx],collapse="|"))))
     secAfterNotFirst <- 0
   }
   
   firstBeforeNotSec <- cooccurs[compsIx[1],totalIx] - cooccurs[compsIx[1],compsIx[2]] # notoccurs[compsIx[1], compsIx[2]]
   
   if(secAfterNotFirst < 0){
-    try(stop(paste("WARNING: a1b0 was negative: ",firstBeforeNotSec,". aCnt =",cooccurs[compsIx[1],totalIx],", compsIx:", paste(compsIx,collapse="|"))))
+    try(stop(paste("WARNING: a1b0 was negative: ",firstBeforeNotSec,". aCnt =",cooccurs[compsIx[1],totalIx],", comps:", paste(uniqueUgrams[compsIx],collapse="|"))))
     firstBeforeNotSec <- 0
   }
   
@@ -187,7 +187,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
       }# else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
       }
       
-      agreet <- agreementTable(comps, cooccurs, 
+      agreet <- agreementTable(comps, cooccurs, uniqueUgrams,
         totalIx, #notoccurs,
         compsIx,epochvolume)
       
