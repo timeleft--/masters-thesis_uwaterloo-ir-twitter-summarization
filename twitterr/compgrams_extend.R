@@ -156,7 +156,7 @@ extendCompgramOfDay <- function(day,
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Read original compound unigrams - nrows:", nrow(cgOcc)), sep=" - ")))
   
   #### Find extinsible occurrences
-  cgOcc <- arrange(cgOcc, c(id,pos))
+  cgOcc <- arrange(cgOcc, id,pos)
      
   # An occurrence is extensibe backwards if there is at least one position not occupied by a compgram before it (hence the diff)
   # An occurrence should be considered extinsible backwards if it is the first selected occ in a doc (hence the !duplicated(id)) 
