@@ -426,15 +426,16 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
         startPos <- occ$pos + 1 # pos is 0 based
         endPos <- startPos + ngramlen2 - 1
         
-        
-        if(!any(occupiedPos1[occ$id,startPos:endPos]>0)){
-          occupiedPos1[occ$id,startPos:endPos] <- occupiedPos1[occ$id,startPos:endPos] + 1
+        occPosId <- occupiedPos1[occ$id,]
+        if(!any(occPosId[startPos:endPos]>0)){
+          occPosId[startPos:endPos] <- occPosId[startPos:endPos] + 1
           selOccsMask1[ngramIxes[ix1]] <<- TRUE
         }
         
         ix1 <<- ix1 + 1
         
-        occupiedPos1 <<- occupiedPos1
+        occupiedPos1[occ$id,] <<- occPosId
+#        occupiedPos1 <<- occupiedPos1
         
         return(occ)
       }
