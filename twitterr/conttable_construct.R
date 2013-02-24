@@ -387,17 +387,16 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
         }
         
         if(withTotal){
-          # start the total by the "alone/with other unigrams of low suppoer" count, 
-          cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"]
           if(ngramlen2 > 2) {
+            # start the total by the "alone/with other unigrams of low suppoer" count, then
             # add to it the sum of each row: the number of times it comes first in a unigram-compgram bigram
-            cooccurs[,ixTOTAL] <- cooccurs[,ixTOTAL] + rowSums(cooccurs[,-ixTOTAL]) +
-                # and the sum of each column: the number of times it comes second in a compgram-unigram bigram
-                colSums(cooccurs[,-ixTOTAL]) -
-                # the diagonal which was added twice
-                diag(cooccurs)
+            # and the sum of each column: the number of times it comes second in a compgram-unigram bigram
+            # and subtract the diagonal which was added twice
+            cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"] + rowSums(cooccurs[,-ixTOTAL]) + colSums(cooccurs[,-ixTOTAL]) - diag(cooccurs)
+          } else {
+            # start the total by the "alone/with other unigrams of low suppoer" count, 
+            cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"]
           }
-           
         }
         
         cooccurs <<- cooccurs
