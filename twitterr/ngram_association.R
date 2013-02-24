@@ -595,9 +595,8 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
         try(dbDisconnect(con))
         try(dbUnloadDriver(drv))
         
-        workingRoot<-G.workingRoot
         dataRoot<-G.dataRoot
-        stagingDir <- workingRoot
+        stagingDir <- paste(G.workingRoot,ngramlen1,ngramlen2,sep="/")
         if(!file.exists(stagingDir))
           dir.create(stagingDir,recursive = T)
         

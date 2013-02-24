@@ -75,7 +75,7 @@ source("compgrams_utils.R")
 extendCompgramOfDay <- function(day, 
 #    epoch2=CGX.epoch2, support=CGX.support,
     ngramlen1=CGX.ngramlen1,db=CGX.db,maxPos=70,startPos=0,
-    dataPath = "~/r_output/",workingRoot = "~/r_output/occ_extended_working/"){
+    dataPath = CGX.dataPath,workingRoot = CGX.workingRoot){
   
   # those can't change
 #  epoch1 <- epoch2
@@ -107,7 +107,7 @@ extendCompgramOfDay <- function(day,
     }
   }
   
-  stagingDir <- paste(workingRoot,lenDir,sep="")  
+  stagingDir <- paste(workingRoot,lenDir,sep="/")  
   
   if(!file.exists(stagingDir))
     dir.create(stagingDir,recursive = TRUE)
@@ -115,7 +115,7 @@ extendCompgramOfDay <- function(day,
   
   # create file to make sure this will be possible 
   # AND ALSO TO TRUNCATE ANY PARTIAL OUTPUT FROM EARLIER
-  stagingPath <- paste(workingRoot,dayFile,sep="")
+  stagingPath <- paste(stagingDir,dayFile,sep="/")
   file.create(stagingPath)
   
   drv <- dbDriver("PostgreSQL")
