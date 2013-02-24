@@ -372,10 +372,9 @@ try(dbUnloadDriver(drv))
 #      ngramOccCopyMask <<- c(ngramOccCopyMask, ngramOccs)
 #      
       ###### Reduce counts
-      # FIXME: A7eeeh... leeh tefdal tedranb fel unigrams.. er7amha we na2as men el compgrams.. tab3an dah yatatallab 
-      # enn table occ lazem yekon feeh el compgrams mesh flattened, we shof ba2a beyosta7`dam feen
-#      ugramsInNgram <- splitNgramToCompgrams(ng[1,"ngram"],ngramlen2) 
-      ugramsInNgram <- unlist(strsplit(stripEndChars(ng[1,"ngram"]), ",",fixed = TRUE))
+      # The compgrams will be written as {unigram,"{compgram1,compgram2...}"}
+      ugramsInNgram <- splitNgramToCompgrams(ng[1,"ngram"],ngramlen2) 
+#      ugramsInNgram <- unlist(strsplit(stripEndChars(ng[1,"ngram"]), ",",fixed = TRUE))
       #TODO Pure?
       for(u in 1:length(ugramsInNgram)){
         ugram <- ugramsInNgram[u]
