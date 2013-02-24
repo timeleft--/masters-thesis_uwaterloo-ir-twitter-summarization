@@ -421,8 +421,11 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
           # add to it the sum of each row: the number of times it comes first in a unigram-compgram bigram
           # and the sum of each column: the number of times it comes second in a compgram-unigram bigram
           
-          cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"] + rowSums(cooccurs[-ixTOTAL,-ixTOTAL])
-          cooccurs[ixTOTAL,] <- ugramDf[epochUgramMask,"unigramcnt"] + colSums(cooccurs[-ixTOTAL,-ixTOTAL]) 
+          cooccurs[-ixTOTAL,ixTOTAL] <-  rowSums(cooccurs[-ixTOTAL,-ixTOTAL])
+          cooccurs[ixTOTAL,-ixTOTAL] <-  colSums(cooccurs[-ixTOTAL,-ixTOTAL])
+          #Nobody needs this, so don't waste your time
+#          cooccurs[ixTOTAL,ixTOTAL] <- sum(cooccurs[ixTOTAL,]) + sum(cooccurs[,ixTOTAL])
+    
           #When we were adding up both the appears before (row) and appears after something (cols), we had to
           # subtract the diagonal which was added twice: - diag(cooccurs)
         } else {
