@@ -400,14 +400,15 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
                cooccursUgram[ixugram2] <- cooccursUgram[ixugram2] + cnt
             }
           }
+          cooccurs[ixugram,] <<- cooccursUgram
         }
         
-        cooccurs[ixugram,] <<- cooccursUgram
+        
 #        cooccurs <<- cooccurs
         return("ignrored")
       }
    
-     # debug(countCooccurNooccurNgram)
+      debug(countCooccurNooccurNgram)
 #      setBreakpoint("conttable_construct.R#249")
       d_ply(idata.frame(eg), c("ngram"), countCooccurNooccurNgram)
 
