@@ -214,7 +214,8 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
       rownames(ixLookup) <- dnames
       
       cooccurs <- Matrix(0, #intially zeros
-          nrow=nUnique, #no total because ther grand total isn't really useful
+#          nrow=nUnique, #no total because ther grand total isn't really useful
+          nrow=maxIx,
           ncol=maxIx,  # Will either contain +1 for total or not
           # The byrow has no effect on how the matrix is stored.. only how it is constructed
         #byrow=TRUE, # because I will add each row up, so I suspect that storing by row will be faster in that
@@ -419,11 +420,15 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
           # start the total by the "alone/with other unigrams of low suppoer" count, then
           # add to it the sum of each row: the number of times it comes first in a unigram-compgram bigram
           # and the sum of each column: the number of times it comes second in a compgram-unigram bigram
-          # and subtract the diagonal which was added twice
-          cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"] + rowSums(cooccurs[,-ixTOTAL]) + colSums(cooccurs[,-ixTOTAL]) - diag(cooccurs)
+          
+          cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"] + rowSums(cooccurs[-ixTOTAL,-ixTOTAL])
+          cooccurs[ixTOTAL,] <- ugramDf[epochUgramMask,"unigramcnt"] + colSums(cooccurs[-ixTOTAL,-ixTOTAL]) 
+          #When we were adding up both the appears before (row) and appears after something (cols), we had to
+          # subtract the diagonal which was added twice: - diag(cooccurs)
         } else {
-          # start the total by the "alone/with other unigrams of low suppoer" count, 
+          # the unigramcnt will really be its total occs when ngramlen2 is 2 
           cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"]
+          cooccurs[ixTOTAL,] <- ugramDf[epochUgramMask,"unigramcnt"]
         }
       }
       

@@ -2,7 +2,7 @@
 # 
 # Author: yia
 ###############################################################################
-ONLY_SEL <- TRUE
+ONLY_SEL <- FALSE
 
 SKIP_DAYS_FOR_WHICH_OUTPUT_EXISTS<-FALSE
 
@@ -155,33 +155,42 @@ extendCompgramOfDay <- function(day,
   
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Read original compound unigrams - nrows:", nrow(cgOcc)), sep=" - ")))
   
-  #### Find extinsible occurrences
-  cgOcc <- arrange(cgOcc, id,pos)
-     
-  # An occurrence is extensibe backwards if there is at least one position not occupied by a compgram before it (hence the diff)
-  # An occurrence should be considered extinsible backwards if it is the first selected occ in a doc (hence the !duplicated(id)) 
-  cgOccExtensibleBackIx <- union(which(diff(cgOcc$pos) > ngramlen1),  which(!duplicated(cgOcc$id))) # cgOccFirstInDocIx)
+  if(ONLY_SEL){
+      # FIXME: THIS ACTUALLY DOESN't really work in all cases, for example:
+  # 265755413205639168 | 1352196002662 | 121106 | share,"{raspberry,ketone}"                          |        3 |       16 |   0
+  # 265755413205639168 | 1352196002662 | 121106 | "{with,all}",your                                   |        3 |       16 |   3
+  # 265755413205639168 | 1352196002662 | 121106 | all,"{your,friends}"                                |        3 |       16 |   4
+  # 265755413205639168 | 1352196002662 | 121106 | "{let,them}",know                                   |        3 |       16 |   8
+  # 265755413205639168 | 1352196002662 | 121106 | them,"{know,how}"                                   |        3 |       16 |   9
+  # 265755413205639168 | 1352196002662 | 121106 | "{lose,weight}",URL                                 |        3 |       16 |  13
   
-  # The preceeding occurrence to any one that is extensible backwards is extensible forward.. if it is because of space
-  # available, then it should contend for occupying it.. and if it is because the backward extensibility is due to being 
-  # the first occ in a document, then the one before it is the last occurrence in a document, and should also be considered
-  # However, the first occurrence of all should be extensible backwards, so the index 1 is always among the extensible bac 
-  # it sure is because its id isn't duplicated, no need for if(cgOccExtensibleBackIx[1] == 1){, so we subscript from 2
-  # ALSO, the last occurrence we selected should  be considered for extensibility forwards, hence the legnth(cgOcc)
-  cgOccExtensibleForIx <- union(cgOccExtensibleBackIx[2:length(cgOccExtensibleBackIx)] - 1, length(cgOcc))
-  
-  cgOccExtensibleBack <- cgOcc[cgOccExtensibleBackIx,]
-  rm(cgOccExtensibleBackIx)
-  
-  try(stop(paste(Sys.time(), CGX.loglabel, paste("Created extensible backwards compgrams subset - nrows:", nrow(cgOccExtensibleBack)), sep=" - ")))
-  
-  cgOccExtensibleFor <- cgOcc[cgOccExtensibleForIx,]
-  rm(cgOccExtensibleForIx)
-  
-  try(stop(paste(Sys.time(), CGX.loglabel, paste("Created extensible forwards compgrams subset - nrows:", nrow(cgOccExtensibleFor)), sep=" - ")))
-  
-  rm(cgOcc)
-  
+    #### Find extinsible occurrences
+    cgOcc <- arrange(cgOcc, id,pos)
+       
+    # An occurrence is extensibe backwards if there is at least one position not occupied by a compgram before it (hence the diff)
+    # An occurrence should be considered extinsible backwards if it is the first selected occ in a doc (hence the !duplicated(id)) 
+    cgOccExtensibleBackIx <- union(which(diff(cgOcc$pos) > ngramlen1),  which(!duplicated(cgOcc$id))) # cgOccFirstInDocIx)
+    
+    # The preceeding occurrence to any one that is extensible backwards is extensible forward.. if it is because of space
+    # available, then it should contend for occupying it.. and if it is because the backward extensibility is due to being 
+    # the first occ in a document, then the one before it is the last occurrence in a document, and should also be considered
+    # However, the first occurrence of all should be extensible backwards, so the index 1 is always among the extensible bac 
+    # it sure is because its id isn't duplicated, no need for if(cgOccExtensibleBackIx[1] == 1){, so we subscript from 2
+    # ALSO, the last occurrence we selected should  be considered for extensibility forwards, hence the legnth(cgOcc)
+    cgOccExtensibleForIx <- union(cgOccExtensibleBackIx[2:length(cgOccExtensibleBackIx)] - 1, length(cgOcc))
+    
+    cgOccExtensibleBack <- cgOcc[cgOccExtensibleBackIx,]
+    rm(cgOccExtensibleBackIx)
+    
+    try(stop(paste(Sys.time(), CGX.loglabel, paste("Created extensible backwards compgrams subset - nrows:", nrow(cgOccExtensibleBack)), sep=" - ")))
+    
+    cgOccExtensibleFor <- cgOcc[cgOccExtensibleForIx,]
+    rm(cgOccExtensibleForIx)
+    
+    try(stop(paste(Sys.time(), CGX.loglabel, paste("Created extensible forwards compgrams subset - nrows:", nrow(cgOccExtensibleFor)), sep=" - ")))
+    
+    rm(cgOcc)
+  } 
   #TODONOT: stripEndChars from cgOcc
   
   # Distinct on id because the position can appear only once per tweet!
@@ -201,7 +210,9 @@ extendCompgramOfDay <- function(day,
   
 #  ugDfCache <- vector("list",(maxPos-startPos+1))
   ugDfCache <- new.env()
-#  cgOccMaskForBeforePrevIter<-NULL      
+  if(!ONLY_SEL)
+    cgOccMaskForBeforePrevIter<-NULL
+  
   for(p in c(startPos:(maxPos - ngramlen1))) { # ( c( startPos : floor((maxPos+1)/2)) * 2 ) ){
   
     try(stop(paste(Sys.time(), CGX.loglabel,
@@ -211,7 +222,11 @@ extendCompgramOfDay <- function(day,
 
   
     ##### Join the unigram before the compgram
-    cgOccMaskForBefore <- which(cgOccExtensibleBack$pos==(p+1))
+    if(ONLY_SEL){
+      cgOccMaskForBefore <- which(cgOccExtensibleBack$pos==(p+1))
+    } else {
+      cgOccMaskForBefore <- which(cgOcc$pos==(p+1))
+    }
 #    idsForBefore<-paste(cgOcc[cgOccMaskForBefore,"id"],collapse=",")
     if(length(cgOccMaskForBefore)>0){
       
@@ -252,9 +267,13 @@ extendCompgramOfDay <- function(day,
       }else
       if(nrow(ugStartPosDf)>0){
       # This merge results in multiple rows for each id.. the mask already selects one pos, so how are there 
-    # multiple records with the same id after selecting one pos!!!! Check the by pos tables!
-#        beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
-      beforeJoin <- merge(ugStartPosDf, cgOccExtensibleBack[cgOccMaskForBefore,], by="id", sort=F, suffixes=c("",""))
+    # multiple records with the same id after selecting one pos!!!! Check the by pos tables!        
+        if(ONLY_SEL){
+          beforeJoin <- merge(ugStartPosDf, cgOccExtensibleBack[cgOccMaskForBefore,], by="id", sort=F, suffixes=c("",""))
+        } else {
+#          beforeJoin <- join(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", type="inner", match="all")
+          beforeJoin <- merge(ugStartPosDf, cgOcc[cgOccMaskForBefore,], by="id", sort=F, suffixes=c("",""))
+        }
         if(nrow(beforeJoin) > 0){
           beforeJoin$ngram = paste(beforeJoin$unigram,paste(compgramLeft,beforeJoin$ngram,compgramRight,sep=""),sep=",")# ,sep="+")
           beforeJoin$unigram <- NULL
@@ -278,11 +297,16 @@ extendCompgramOfDay <- function(day,
       error=function(e) NULL
     )
     ###### join the unigram after the compgram  
-#    if(!is.null(cgOccMaskForBeforePrevIter)) {
-#      cgOccMaskForAfter <- cgOccMaskForBeforePrevIter 
-#    } else {
-     cgOccMaskForAfter <- which(cgOccExtensibleFor$pos==p)
       
+    if(ONLY_SEL){
+       cgOccMaskForAfter <- which(cgOccExtensibleFor$pos==p)
+     } else {
+        if(!is.null(cgOccMaskForBeforePrevIter)) {
+          cgOccMaskForAfter <- cgOccMaskForBeforePrevIter 
+        } else {
+          cgOccMaskForAfter <- which(cgOcc$pos==p)
+        }
+     }    
 #    idsForAfter<-paste(cgOcc[cgOccMaskForAfter,"id"],collapse=",")
 #    if(length(cgOccMaskForAfter)){
 #      sql <- paste(sprintf(sqlTemplate, p+ngramlen1),
@@ -310,8 +334,13 @@ extendCompgramOfDay <- function(day,
         
         ugEndPosDf <- within(ugEndPosDf,{unigram=stripEndChars(unigram)})
         
-#        afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
-        afterJoin <- merge(ugEndPosDf, cgOccExtensibleFor[cgOccMaskForAfter,], by="id", sort=F,suffixes=c("",""))
+              
+        if(ONLY_SEL){      
+          afterJoin <- merge(ugEndPosDf, cgOccExtensibleFor[cgOccMaskForAfter,], by="id", sort=F,suffixes=c("",""))
+        } else {
+#          afterJoin <- join(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", type="inner", match="all")
+          afterJoin <- merge(ugEndPosDf, cgOcc[cgOccMaskForAfter,], by="id", sort=F,suffixes=c("","")) 
+        }
         if(nrow(afterJoin)>0){
           afterJoin$ngram = paste(paste(compgramLeft,afterJoin$ngram,compgramRight,sep=""),afterJoin$unigram,sep=",") #sep="+")
           afterJoin$unigram <- NULL
