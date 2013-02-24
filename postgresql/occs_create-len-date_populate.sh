@@ -24,8 +24,8 @@ echo "${psql} 'CREATE TABLE occ_${len}_${day} (CHECK (compgramlen = ${len} and d
 
 fpath=${root}/occ_yuleq_${len}/sel_${day}.csv
 
-echo "cut -d '	' -f 1 ${fpath} | nl -s '{' | cut -c7- > ${fpath}_fix1_tmp"
-echo "cut -d '	' -f 2- ${fpath} | nl -s '	' | cut -c7- > ${fpath}_fix2_tmp"
+echo "cut -d '	' -f 1 ${fpath} | nl -w 18 -s '{' | cut -c19- > ${fpath}_fix1_tmp"
+echo "cut -d '	' -f 2- ${fpath} | nl -w 18 -s '	' | cut -c19- > ${fpath}_fix2_tmp"
 echo "mv ${fpath} ${fpath}_fix_${runid}.bak"
 echo "paste -d '}' ${fpath}_fix1_tmp ${fpath}_fix2_tmp > ${fpath}"
 echo "rm ${fpath}_fix1_tmp"
