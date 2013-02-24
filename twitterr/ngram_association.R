@@ -97,11 +97,15 @@ agreementTable <- function(comps,cooccurs, uniqueUgrams, day, epochstarux,
 #  sec\fst| fst1 | fst0 |
 #  sec2   |      |      |
 #  sec0   |      |      |
-     
-  secAfterNotFirst <- cooccurs[compsIx[2],totalIx] - cooccurs[compsIx[1],compsIx[2]] # THIS WAS WRONG notoccurs[compsIx[2],compsIx[1]],
+  
+  # The event actually is b appearing after something, not all of its appearances.. I think this makes
+  # a difference specially in case of extending only compgrams that has space around them.  
+#  secAfterNotFirst <- cooccurs[compsIx[2],totalIx] - cooccurs[compsIx[1],compsIx[2]] # THIS WAS WRONG notoccurs[compsIx[2],compsIx[1]],
+  secAfterNotFirst <- cooccurs[totalIx,compsIx[2]] - cooccurs[compsIx[1],compsIx[2]] 
   
   if(secAfterNotFirst < 0){
-    try(stop(paste(Sys.time(), "ngram_assoc#agreementTable() for day/time:", day, epochstarux, " - WARNING: a0b1 was negative: ",secAfterNotFirst,". bCnt =",cooccurs[compsIx[2],totalIx],", comps:", paste(uniqueUgrams[compsIx],collapse="|"))))
+    #cooccurs[compsIx[2],totalIx]
+    try(stop(paste(Sys.time(), "ngram_assoc#agreementTable() for day/time:", day, epochstarux, " - WARNING: a0b1 was negative: ",secAfterNotFirst,". bCnt =",cooccurs[totalIx,compsIx[2]],", comps:", paste(uniqueUgrams[compsIx],collapse="|"))))
     secAfterNotFirst <- 0
   }
   
@@ -596,7 +600,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
         try(dbUnloadDriver(drv))
         
         dataRoot<-G.dataRoot
-        stagingDir <- paste(G.workingRoot,ngramlen1,ngramlen2,sep="/")
+        stagingDir <- paste(G.workingRoot,G.ngramlen1,G.ngramlen2,sep="/")
         if(!file.exists(stagingDir))
           dir.create(stagingDir,recursive = T)
         
