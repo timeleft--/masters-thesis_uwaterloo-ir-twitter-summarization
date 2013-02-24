@@ -12,6 +12,9 @@ stripEndChars <- function(ngram) {
 
 
 splitNgramToCompgrams <- function(ngram,compgramlen){
+  if(ngram[1]=='{'||ngram[1]=='('){
+    ngram <- stripEndChars(ngram)
+  }
   if(compgramlen == 2){
     ugramsInNgram <- unlist(strsplit(ngram, ",",fixed = TRUE))
   } else {
