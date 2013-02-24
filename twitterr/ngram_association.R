@@ -610,7 +610,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
 #        cntStaging <- paste(stagingDir,"cnt_",day,".csv",sep="")
 #        file.create(cntStaging)
         
-        selStaging <- paste(stagingDir,"sel_",day,".csv",sep="")
+        selStaging <- paste(stagingDir,"/sel_",day,".csv",sep="")
         file.create(selStaging)
         
         
