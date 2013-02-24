@@ -216,7 +216,8 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
       cooccurs <- Matrix(0, #intially zeros
           nrow=nUnique, #no total because ther grand total isn't really useful
           ncol=maxIx,  # Will either contain +1 for total or not
-          byrow=TRUE, # because I will add each row up, so I suspect that storing by row will be faster in that
+          # The byrow has no effect on how the matrix is stored.. only how it is constructed
+        #byrow=TRUE, # because I will add each row up, so I suspect that storing by row will be faster in that
 #          byrow=FALSE, # I don't care. But since they prefer to store by column, I add the Totals
 #          # as a column because there will always be numbers in the total and this
 #          # will disrupt the sparsity.. if it can span more than one columne
@@ -387,15 +388,16 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
         
         if(withTotal){
           # start the total by the "alone/with other unigrams of low suppoer" count, 
-          cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"] +
-          ifelse(ngramlen2 > 2,
+          cooccurs[,ixTOTAL] <- ugramDf[epochUgramMask,"unigramcnt"]
+          if(ngramlen2 > 2) {
             # add to it the sum of each row: the number of times it comes first in a unigram-compgram bigram
-            rowSums(cooccurs[,-ixTOTAL]) +
+            cooccurs[,ixTOTAL] <- cooccurs[,ixTOTAL] + rowSums(cooccurs[,-ixTOTAL]) +
                 # and the sum of each column: the number of times it comes second in a compgram-unigram bigram
-                colSums(cooccurs) -
+                colSums(cooccurs[,-ixTOTAL]) -
                 # the diagonal which was added twice
-                diag(cooccurs),
-          0) 
+                diag(cooccurs)
+          }
+           
         }
         
         cooccurs <<- cooccurs
