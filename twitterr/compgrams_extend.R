@@ -90,8 +90,8 @@ extendCompgramOfDay <- function(day,
       ngramlen1 + 1, sep="")
   outDir <- paste(dataPath,lenDir,sep="")
   
-  dayFile <- paste(lenDir,"/",day,".csv",sep="")
-  outPath <- paste(dataPath,dayFile,sep="")
+  dayFile <- paste("/",day,".csv",sep="")
+  outPath <- paste(dataPath,lenDir,dayFile,sep="/")
 
   # if(!file.exists(dataPath)) will fail when trying to find the input file
   if(file.exists(outPath)){
