@@ -39,7 +39,8 @@ splitNgramToCompgrams <- function(ngram,compgramlen){
 
 initOccupiedEnv <- function(docLen) {
   occupiedPos <- new.env()
-  for(id in row.names(docLen)){
+  distinctId <- unique(row.names(docLen))
+  for(id in distinctId){
     len <- docLen[id]
     if(is.na(len)){
       try(stop(paste("compgrams_utils#initOccupiedEnv - WARNING! Encountered an NA/NAN length. Setting to 71:",id)))
