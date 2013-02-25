@@ -10,6 +10,10 @@ FIM.TRACE <- FALSE
 FIM.argv <- commandArgs(trailingOnly = TRUE)
 FIM.compgramlenm<-as.integer(FIM.argv[1])
 
+FIM.gramColName <- "ngram" #"compgram"
+FIM.lenColName <- "ngramlen" #"compgramlen"
+FIM.occsTableName <- "bak_alloccs"  # "occurrences"
+
 FIM.epoch <- '1hr'
 FIM.support <- 5
 
@@ -19,13 +23,14 @@ if(FIM.DEBUG){
   FIM.db <- "sample-0.01"
   FIM.dataRoot <- "~/r_output_debug/"
   if(FIM.TRACE){
-    compgramlenm<-2
+    compgramlenm <- 4
     
     epoch=FIM.epoch
     db=FIM.db
     support=FIM.support
     dataRoot=FIM.dataRoot
-    windowDays=2
+    windowDays=0
+    queryTime=1352206800
   }
 } else {
   FIM.db <- "full"
@@ -91,18 +96,27 @@ occurrencesToTrans <- function(day, compgramlenm, querytime, windowDays=2, epoch
   if(is.null(querytime)){
     querytime <- sec0CurrDay + 60*60*24 - 1
   }              
-                
-  sec0WindowDays <- sec0CurrDay - ((60*60*24) * (1:windowDays))
-  windowDays <- as.POSIXct(sec0WindowDays,origin="1970-01-01",tz="UTC")
-  windowDays <- format(windowDays, format="%y%m%d", tz="Pacific/Honolulu") #, usetz=TRUE)
-  windowDays <- c(day,windowDays)
+              
+  if(windowDays>0){
+    sec0WindowDays <- sec0CurrDay - ((60*60*24) * (1:windowDays))
+    windowDays <- as.POSIXct(sec0WindowDays,origin="1970-01-01",tz="UTC")
+    windowDays <- format(windowDays, format="%y%m%d", tz="Pacific/Honolulu") #, usetz=TRUE)
+    windowDays <- c(day,windowDays)
+  } else {
+    windowDays <- c(day)  
+  }
   dateSQL <- paste(paste("date",windowDays,sep="="),collapse=" or ")
+  
   # DISTINCT because the fim algorithms in arules work with binary occurrence (that's ok I guess.. for query expansion)
-  sql <- sprintf("select DISTINCT ON (id,compgram) compgram,CAST(id as varchar),floor(timemillis/%d)*%d as epochstartux,compgramlen,pos 
-from occurrences 
-where %s and compgramlen<=%d and timemillis <= %d order by compgramlen desc;",
-      MILLIS_IN_EPOCH[[paste("X",epoch,sep="")]],SEC_IN_EPOCH[[paste("X",epoch,sep="")]],dateSQL,compgramlenm,querytime)
- 
+  sqlTemplate <- sprintf("select DISTINCT ON (id,%%s) %%s as compgram,CAST(id as varchar),floor(timemillis/%d)*%d as epochstartux, %%s as compgramlen,pos 
+        from %%s where %s and %%s<=%d and timemillis <= (%d * 1000::INT8) ",
+    MILLIS_IN_EPOCH[[paste("X",epoch,sep="")]],SEC_IN_EPOCH[[paste("X",epoch,sep="")]],dateSQL,compgramlenm,querytime)
+  
+  compgramsSql <- sprintf(sqlTemplate,FIM.gramColName,FIM.gramColName, FIM.lenColName, FIM.occsTableName, FIM.lenColName)
+#  compgramsSql <- paste(compgramsSql,"order by",FIM.lenColName,"desc")
+  unigramSql <- sprintf(sqlTemplate,"ngram","ngram","ngramlen","ngrams1","ngramlen")
+  sql <- sprintf("(%s) UNION ALL (%s) %s",compgramsSql, unigramSql, "order by compgramlen desc")
+  
   try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Fetching day's occurrences using sql:\n", sql)))
   
   occsRs <- dbSendQuery(con,sql)
