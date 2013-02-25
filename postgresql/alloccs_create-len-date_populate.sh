@@ -36,7 +36,7 @@ fpath=${root}/occ_yuleq_${len}/${day}.csv
 #echo "${psql} \"COPY ngrams_${len}_${day} FROM '${fpath}' WITH NULL AS 'NA';\
 #ALTER TABLE ngrams_${len}_${day} ALTER COLUMN id TYPE int8, ALTER COLUMN timemillis TYPE int8, INHERIT bak_alloccs;\"&"
 echo "${psql} \"CREATE INDEX ngrams_${len}_${day}_date ON ngrams_${len}_${day}(date); \
-    CREATE INDEX ngrams_${len}_${day}_len ON ngrams_${len}_${day}(compgramlen); \
+    CREATE INDEX ngrams_${len}_${day}_len ON ngrams_${len}_${day}(ngramlen); \
     CREATE INDEX ngrams_${len}_${day}_timem ON ngrams_${len}_${day}(timemillis);\"&"
 done
 
