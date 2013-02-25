@@ -10,6 +10,9 @@ source("compgrams_utils.R")
 require(plyr)
 FSO.db<-"full"
 
+require(RPostgreSQL)
+
+
 FSO.drv <- dbDriver("PostgreSQL")
 FSO.con <- dbConnect(FSO.drv, dbname=FSO.db, user="yaboulna", password="5#afraPG",
     host="hops.cs.uwaterloo.ca", port="5433")
@@ -30,9 +33,7 @@ for(day in FSO.days){
 #      col.names = c("id","timemillis","date","ngram","ngramlen","tweetlen","pos"), #,"yq","dl","cnt"),
 #      colClasses = c("character","numeric","integer","character","integer","integer","integer"), #,"NULL","NULL","NULL"),
 #      fileEncoding = "UTF-8-MAC")
-  require(RPostgreSQL)
-
-  
+   
   allOccRs <- dbSendQuery(FSO.con,"select * from debug_allocc2_130104")
   allOcc <- fetch(allOccRs, n=-1)
   
