@@ -390,7 +390,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
     
     #    epochNgramVol <- ngramVolDf[ngramVolDf$epochstartux == (epochstartux), "totalcnt"]
 #    
-#    epochNgramOccs <- fetch(ngramOccRs, n=epochNgramVol) # if ordered we can fetch them in chuncks
+#    epochOccs <- fetch(ngramOccRs, n=epochNgramVol) # if ordered we can fetch them in chuncks
     
     sql <- sprintf(sqlTemplate,
         epochstartux, (epochstartux + SEC_IN_EPOCH[[paste("X",epoch,sep="")]]))
@@ -402,7 +402,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
         host="hops.cs.uwaterloo.ca", port="5433")
     
     epochNgramOccRs <- dbSendQuery(con,sql)
-    epochNgramOccs <- fetch(epochNgramOccRs, n=-1)
+    epochOccs <- fetch(epochNgramOccRs, n=-1)
     try(dbClearResult(epochNgramOccRs))
     
     # dbDisconnect(con, ...) closes the connection. Eg.
@@ -410,11 +410,11 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
     # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
     try(dbUnloadDriver(drv))
     
-    try(stop(paste(Sys.time(), NGA.logLabel, "for day:", day, " - Fetched ngram occurrences for epoch",epochstartux,". Num Rows: ", nrow(epochNgramOccs))))
+    try(stop(paste(Sys.time(), NGA.logLabel, "for day:", day, " - Fetched ngram occurrences for epoch",epochstartux,". Num Rows: ", nrow(epochOccs))))
     
-#    # epochNgramOccs will be in the uni+(ngA,ngB,..) remove the paranthesis and convert plus to ,
+#    # epochOccs will be in the uni+(ngA,ngB,..) remove the paranthesis and convert plus to ,
 #    if(ngramlen2>3){
-#      epochNgramOccs <- within(epochNgramOccs,{
+#      epochOccs <- within(epochOccs,{
 #            # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
 #            #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
 #            ngram <-  sub('{','"{',ngram,fixed=TRUE)
@@ -422,7 +422,7 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
 #            ngram <-  sub('+',',',ngram,fixed=TRUE)
 #          })
 #    } else if(ngramlen2==3){
-#      epochNgramOccs <- within(epochNgramOccs,{
+#      epochOccs <- within(epochOccs,{
 #            # This doesn't have any effect... the encoding remains "unkown" Encoding(ngram) <- "UTF-8"
 #            #FIXME: Any non-latin character gets messed up here.. that's a big bummer for R; the second!
 #            ngram <-  sub('(','"(',ngram,fixed=TRUE)
@@ -431,20 +431,20 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
 #          })
 #    } else {
     if(ngramlen2<3){
-      epochNgramOccs <- within(epochNgramOccs,{
+      epochOccs <- within(epochOccs,{
             ngram <- stripEndChars(ngram)
           })
     }
 
 # Won't work now that the time is cast as a varchar    
 #    if(DEBUG_NGA){
-#      earlierEpochCheck <- which(epochNgramOccs$timemillis < (epochstartux * 1000))
+#      earlierEpochCheck <- which(epochOccs$timemillis < (epochstartux * 1000))
 #      if(any(earlierEpochCheck)){
 #        warning("Some ngrams we are fetching are of an earlier epoch", paste(earlierEpochCheck,collapse = "|"))
 #      }
 #      rm(earlierEpochCheck)
 #      
-#      laterEpochCheck <- which(epochNgramOccs$timemillis >= ((3600 + epochstartux) * 1000)) # THIS IS for 1hr epoch only
+#      laterEpochCheck <- which(epochOccs$timemillis >= ((3600 + epochstartux) * 1000)) # THIS IS for 1hr epoch only
 #      if(any(laterEpochCheck)){
 #        warning("Some ngrams we are fetching are of a later epoch", paste(laterEpochCheck,collapse = "|"))
 #      }
@@ -455,69 +455,94 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
     
     ngAssoc <- arrange(ngAssoc,desc(yuleQ),desc(a1b1))
     
-    epochDocId <- unique(epochNgramOccs$id)
-   
-    occupiedPos1 <- Matrix(0,
-        nrow=length(epochDocId),
-        ncol=71,
-        byrow=FALSE,
-        sparse=TRUE,
-        dimnames=list(epochDocId,NULL))
+#    epochDocId <- unique(epochOccs$id)
+#    occupiedPos1 <- Matrix(0,
+#        nrow=length(epochDocId),
+#        ncol=71,
+#        byrow=FALSE,
+#        sparse=TRUE,
+#        dimnames=list(epochDocId,NULL))
+#    
+#    selOccsMask1 <- rep(FALSE, nrow(epochOccs))
+#    
+#    ix1 <-1
+#    ngramSelect <- function(nga) { 
+#      
+#      ngramMask <- (epochOccs$ngram == nga$ngram)
+#      ngramIxes <- which(ngramMask) 
+#          
+#      occSelect <- function(occ) { 
+#        startPos <- occ$pos + 1 # pos is 0 based
+#        endPos <- startPos + ngramlen2 - 1
+#        
+##        occPosId <- occupiedPos1[occ$id,]
+#        if(!any(occupiedPos1[occ$id,startPos:endPos]>0)){
+#          occupiedPos1[occ$id,startPos:endPos] <<- occupiedPos1[occ$id,startPos:endPos] + 1
+##          occPosId[startPos:endPos] <- occPosId[startPos:endPos] + 1
+#          selOccsMask1[ngramIxes[ix1]] <<- TRUE
+#        }
+#        
+#        ix1 <<- ix1 + 1
+#        
+##        occupiedPos1[occ$id,] <<- occPosId
+##        occupiedPos1 <<- occupiedPos1
+#        
+#        return(occ)
+#      }
+##      debug(occSelect)
+#      
+#      ngramOccsDf <- adply(epochOccs[ngramMask,],1,occSelect,.expand=F)
+#      
+#      return(ngramOccsDf)
+#    }
+##    debug(ngramSelect)
+#    
+#    yuleOccs <- adply(idata.frame(ngAssoc),1,ngramSelect, .expand=F)
+#    yuleOccs$X1 <- NULL
+#    
+#    write.table(yuleOccs, file = alloccStaging, append = TRUE, quote = FALSE, sep = "\t",
+#        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+#        col.names = FALSE, # qmethod = c("escape", "double"),
+#        fileEncoding = "UTF-8")
+#
+#    selOccs <- subset(epochOccs,selOccsMask1,select=c("ngram","id","timemillis","date","ngramlen","tweetlen","pos"))
+#   
+  
+    docLenById <- array(allOcc$tweetlen)
+    rownames(docLenById) <- allOcc$id
+    occupiedEnv <- initOccupiedEnv(docLenById)
+    rm(docLenById)
     
-    selOccsMask1 <- rep(FALSE, nrow(epochNgramOccs))
+    selectNgramOccs <- function(nga){
+      ngramOccs <- epochOccs[which(epochOccs$ngram == nga$ngram),]
+      
+      write.table(ngramOccs, file = alloccStaging, append = TRUE, quote = FALSE, sep = "\t",
+        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+        col.names = FALSE, # qmethod = c("escape", "double"),
+        fileEncoding = "UTF-8")
     
-    ix1 <-1
-    ngramSelect <- function(nga) { 
+      selOccs <- adply(ngramOccs,1,
+          selectOccurrences,ngramlen2 = ngramlen2,occupiedEnv = occupiedEnv,allowOverlap = FALSE,
+          colsToReturn=c("ngram","id","timemillis","date","ngramlen","tweetlen","pos"),
+          .expand=F)
+      selOccs$X1 <- NULL
       
-      ngramMask <- (epochNgramOccs$ngram == nga$ngram)
-      ngramIxes <- which(ngramMask) 
-          
-      occSelect <- function(occ) { 
-        startPos <- occ$pos + 1 # pos is 0 based
-        endPos <- startPos + ngramlen2 - 1
-        
-#        occPosId <- occupiedPos1[occ$id,]
-        if(!any(occupiedPos1[occ$id,startPos:endPos]>0)){
-          occupiedPos1[occ$id,startPos:endPos] <<- occupiedPos1[occ$id,startPos:endPos] + 1
-#          occPosId[startPos:endPos] <- occPosId[startPos:endPos] + 1
-          selOccsMask1[ngramIxes[ix1]] <<- TRUE
-        }
-        
-        ix1 <<- ix1 + 1
-        
-#        occupiedPos1[occ$id,] <<- occPosId
-#        occupiedPos1 <<- occupiedPos1
-        
-        return(occ)
-      }
-#      debug(occSelect)
       
-      ngramOccsDf <- adply(epochNgramOccs[ngramMask,],1,occSelect,.expand=F)
+      write.table(selOccs, file = selStaging, append = TRUE, quote = FALSE, sep = "\t",
+          eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+          col.names = FALSE, # qmethod = c("escape", "double"),
+          fileEncoding = "UTF-8")
       
-      return(ngramOccsDf)
     }
-#    debug(ngramSelect)
     
-    yuleOccs <- adply(idata.frame(ngAssoc),1,ngramSelect, .expand=F)
-    yuleOccs$X1 <- NULL
-    
-    write.table(yuleOccs, file = alloccStaging, append = TRUE, quote = FALSE, sep = "\t",
-        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-        col.names = FALSE, # qmethod = c("escape", "double"),
-        fileEncoding = "UTF-8")
-
-    selOccs <- subset(epochNgramOccs,selOccsMask1,select=c("ngram","id","timemillis","date","ngramlen","tweetlen","pos"))
-    write.table(selOccs, file = selStaging, append = TRUE, quote = FALSE, sep = "\t",
-        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-        col.names = FALSE, # qmethod = c("escape", "double"),
-        fileEncoding = "UTF-8")
-    
+    a_ply(ngAssoc,1,selectNgramOccs, .expand=F)
+    rm(occupiedEnv)
 ##    # If there are duplicates then assignment problem solution will not work.. we don't want to risk that
-##    epochNgramOccs <- epochNgramOccs[!duplicated(epochNgramOccs["id","ngram","pos"]),]
+##    epochOccs <- epochOccs[!duplicated(epochOccs["id","ngram","pos"]),]
 #    
 #    positiveYuleQ <- which(ngAssoc$yuleQ > 0)
 #    
-#    occAssoc <- merge(epochNgramOccs, subset(ngAssoc,yuleQ > 0,select=c(ngram,yuleQ,a1b1,dunningLambda)), by="ngram", sort=F, suffixes=c("",""))
+#    occAssoc <- merge(epochOccs, subset(ngAssoc,yuleQ > 0,select=c(ngram,yuleQ,a1b1,dunningLambda)), by="ngram", sort=F, suffixes=c("",""))
 #    
 #    #### Copy Ngram Occs
 #    if(ngramlen2>2){

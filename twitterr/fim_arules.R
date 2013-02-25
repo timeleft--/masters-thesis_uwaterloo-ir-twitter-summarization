@@ -20,7 +20,7 @@ FIM.support <- 5
 FIM.fislenm <- 15
 
 if(FIM.DEBUG){
-  FIM.db <- "sample-0.01"
+  FIM.db <- "full"#"sample-0.01"
   FIM.dataRoot <- "~/r_output_debug/"
   if(FIM.TRACE){
     compgramlenm <- 4
@@ -30,7 +30,7 @@ if(FIM.DEBUG){
     support=FIM.support
     dataRoot=FIM.dataRoot
     windowDays=0
-    queryTime=1352206800
+    querytime=1352206800
   }
 } else {
   FIM.db <- "full"
@@ -134,7 +134,53 @@ occurrencesToTrans <- function(day, compgramlenm, querytime, windowDays=2, epoch
   
   ############# Remove overlapping occurrences
   
-  nonovOcc <- occsDf
+ 
+  
+  epochDocId <- unique(occsDf$id)
+  
+  occupiedPos1 <- Matrix(0,
+      nrow=length(epochDocId),
+      ncol=71,
+      byrow=FALSE,
+      sparse=TRUE,
+      dimnames=list(epochDocId,NULL))
+  
+  selOccsMask1 <- rep(FALSE, nrow(epochNgramOccs))
+  
+  ix1 <-1
+  ngramSelect <- function(nga) { 
+    
+    ngramMask <- (epochNgramOccs$ngram == nga$ngram)
+    ngramIxes <- which(ngramMask) 
+    
+    occSelect <- function(occ) { 
+      startPos <- occ$pos + 1 # pos is 0 based
+      endPos <- startPos + ngramlen2 - 1
+      
+#        occPosId <- occupiedPos1[occ$id,]
+      if(!any(occupiedPos1[occ$id,startPos:endPos]>0)){
+        occupiedPos1[occ$id,startPos:endPos] <<- occupiedPos1[occ$id,startPos:endPos] + 1
+#          occPosId[startPos:endPos] <- occPosId[startPos:endPos] + 1
+        selOccsMask1[ngramIxes[ix1]] <<- TRUE
+      }
+      
+      ix1 <<- ix1 + 1
+      
+#        occupiedPos1[occ$id,] <<- occPosId
+#        occupiedPos1 <<- occupiedPos1
+      
+      return(occ)
+    }
+#      debug(occSelect)
+    
+    ngramOccsDf <- adply(epochNgramOccs[ngramMask,],1,occSelect,.expand=F)
+    
+    return(ngramOccsDf)
+  }
+#    debug(ngramSelect)
+  
+  nonovOcc <- adply(idata.frame(occsDf),1,ngramSelect, .expand=F)
+  nonovOcc$X1 <- NULL
   
   
   ############# Do the FIM for the whole day
