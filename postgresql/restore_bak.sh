@@ -1,10 +1,10 @@
 #!/bin/bash
 
 root=${1}
-bak=`ls -1 *.bak`
+bak=`ls -1 | grep .*csv_.*bak`
 for b in bak
 do
-n=`cut -d '_' -f 1 | echo "${b}"`
+n=`echo "${b}" | cut -d '_' -f 1`
 mv ${n} ${n}_reverted_${ts}
 mv ${b} ${n}
 done
