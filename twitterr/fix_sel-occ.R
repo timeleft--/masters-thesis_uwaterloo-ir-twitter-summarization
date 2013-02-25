@@ -3,15 +3,17 @@
 # Author: yia
 ###############################################################################
 FSO.ngramlen2=2
-FSO.days <- c(120925,130104)
-FSO.root <- paste("~/r_output/occ_yuleq_full_",FSO.ngramlen2,"/",sep="")
+FSO.days <- c(130104)
+FSO.root <- paste("~/r_output/occ_yuleq_fix_",FSO.ngramlen2,"/",sep="")
 #day<-130104
 source("compgrams_utils.R")
 require(plyr)
 FSO.db<-"full"
 
 for(day in FSO.days){
-  
+  if(!file.exists(FSO.root)){
+    dir.create(FSO.root,recursive=TRUE)
+  }
   alloccFile <- paste(FSO.root,day,".csv",sep="")
   seloccFile <-  paste(FSO.root,"sel_",day,".csv",sep="")
   try(file.rename(seloccFile,paste(seloccFile,"_fix_sel-occ_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="") ))
