@@ -182,11 +182,57 @@ calcEpochAssoc <- function(eg,ngramlen2,day,alloccStaging,
       if(length(naIx) > 0){
         if(length(naIx) > 1 || any(comps[naIx[1]]==',') ){ 
           #this is the compgram in the unigram-compgram bigram  
-          
-        tryCatch(
-            stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ERROR: compsIx not positive:",paste(compsIx,collapse="|"),
-                    eg$epochstartux[1],paste(comps,collapse="|")))
-            ,error=NGA.handleErrors)
+        
+        # After looking at many of such messages, I have decied that those are bigrams made of a unigram that no longer has 
+        # enough support, with a compgram that was never picked when selecting occurrences. Just decided! But I will act
+        # upon my intuition and I will stop wasting time in I/O.. no reporting of such event.. but the dust under the rug!
+        # examples (notice how they are always both NA):
+#        013-02-24 18:54:58 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 kazandõran|site,oldu
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:54:58 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 30,dakika|konuXma
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:54:58 ngram_assoc() for day: 121027  - ERROR: compsIx not positive: NA|NA 1351339200 favorited|a,@youtube
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:54:59 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 misalnya|kamu,ikutan
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:54:59 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 tayang|perdana,the
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:54:59 ngram_assoc() for day: 121027  - ERROR: compsIx not positive: NA|NA 1351339200 pessoas,nas|œltimas
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:00 ngram_assoc() for day: 121027  - ERROR: compsIx not positive: NA|NA 1351339200 arsenal,tak|kompetitif
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:00 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 groessten|deutschsprachigem,laendernetz
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:00 ngram_assoc() for day: 121027  - ERROR: compsIx not positive: NA|NA 1351339200 specialist|receive,free
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:00 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 satõn|aldõm,istersen
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:01 ngram_assoc() for day: 121027  - ERROR: compsIx not positive: NA|NA 1351339200 rt,@poconggg|berhubung
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:01 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 hukuman|mati,URL
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:01 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 android,gameinsight|androidgames
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:01 ngram_assoc() for day: 121027  - ERROR: compsIx not positive: NA|NA 1351339200 omspiking,lo|pengengantihape
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:01 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 dakika|konuSma,akillimcebimde
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:02 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 reliable|data,today
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:02 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 flash,drive|dt101g2
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:02 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 waves|of,unrestrained
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:02 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 badge,on|@foursquare
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:02 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 acabo|de,comprar
+#        Error in try(stop(e)) : 
+#            2013-02-24 18:55:02 ngram_assoc() for day: 121016  - ERROR: compsIx not positive: NA|NA 1350381600 deni,yang|diampuni
+#        tryCatch(
+#            stop(paste(Sys.time(), "ngram_assoc() for day:", day, " - ERROR: compsIx not positive:",paste(compsIx,collapse="|"),
+#                    eg$epochstartux[1],paste(comps,collapse="|")))
+#            ,error=NGA.handleErrors)
+      
         }# else: it's a unigram that used to have enough support, but now it doesn't after moving some of it to compgrams in which it participates
         
         return(NULL)
