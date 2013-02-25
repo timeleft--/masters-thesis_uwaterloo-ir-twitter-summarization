@@ -10,11 +10,16 @@ source("compgrams_utils.R")
 require(plyr)
 FSO.db<-"full"
 
+FSO.drv <- dbDriver("PostgreSQL")
+FSO.con <- dbConnect(FSO.drv, dbname=FSO.db, user="yaboulna", password="5#afraPG",
+    host="hops.cs.uwaterloo.ca", port="5433")
+
+
 for(day in FSO.days){
   if(!file.exists(FSO.root)){
     dir.create(FSO.root,recursive=TRUE)
   }
-  alloccFile <- paste(FSO.root,day,".csv",sep="")
+#  alloccFile <- paste(FSO.root,day,".csv",sep="")
   seloccFile <-  paste(FSO.root,"sel_",day,".csv",sep="")
   try(file.rename(seloccFile,paste(seloccFile,"_fix_sel-occ_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="") ))
   selStaging <- paste(seloccFile,"staging",sep=".")
@@ -27,12 +32,14 @@ for(day in FSO.days){
 #      fileEncoding = "UTF-8-MAC")
   require(RPostgreSQL)
 
-  drv <- dbDriver("PostgreSQL")
-  con <- dbConnect(drv, dbname=FSO.db, user="yaboulna", password="5#afraPG",
-      host="hops.cs.uwaterloo.ca", port="5433")
   
-  allOcc <- dbSendQuery(con,"select * from debug_allocc2_130104")
-      
+  allOccRs <- dbSendQuery(FSO.con,"select * from debug_allocc2_130104")
+  allOcc <- fetch(allOccRs, n=-1)
+  
+  try(stop(paste(Sys.time()," - Fetched all occs. Num Rows: ", nrow(allOcc))))
+  
+  try(dbClearResult(allOccRs))
+  
   
 #  docLenById <- array(allOcc$tweetlen, row.names=allOcc$id)
   docLenById <- array(allOcc$tweetlen)
@@ -47,6 +54,8 @@ for(day in FSO.days){
   
   fixEpoch <- function(epochOccs){
     uniqueNgrams <- unique(epochOccs$ngram)
+    
+    try(stop(paste(Sys.time()," - Fixing epoch:", epochOccs$epoch, "num occs:",nrow(epochOccs), "unique Ngrams: ", length(uniqueNgrams))))
     
     for(ngram in uniqueNgrams){
       ngramOccs <- epochOccs[which(epochOccs$ngram == ngram),]
@@ -74,3 +83,9 @@ for(day in FSO.days){
   
   
 }
+
+
+# dbDisFSO.connect(FSO.con, ...) closes the FSO.connection. Eg.
+try(dbDisconnect(FSO.con))
+# dbUnloadDriver(FSO.drv,...) frees all the resources used by the driver. Eg.
+try(dbUnloadDriver(FSO.drv))
