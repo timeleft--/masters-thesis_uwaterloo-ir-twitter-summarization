@@ -1,6 +1,10 @@
 #!/bin/bash
-
+if [ $# -ne 2 ]; then
+echo "usage"
+exit(1)
+fi
 root=${1}
+ts=${2}
 bak=`ls -1 ${root} | grep .*csv_.*bak`
 for b in ${bak}
 do
