@@ -1,7 +1,7 @@
 #!/bin/bash
 if [ $# -ne 2 ]; then
 echo "usage"
-exit(1)
+exit 1
 fi
 root=${1}
 ts=${2}
