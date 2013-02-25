@@ -88,14 +88,19 @@ occurrencesToTrans <- function(day, compgramlenm, querytime, windowDays=2, epoch
   
   sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
                             "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
+  if(is.null(querytime)){
+    querytime <- sec0CurrDay + 60*60*24 - 1
+  }              
+                
   sec0WindowDays <- sec0CurrDay - ((60*60*24) * (1:windowDays))
   windowDays <- as.POSIXct(sec0WindowDays,origin="1970-01-01",tz="UTC")
   windowDays <- format(windowDays, format="%y%m%d", tz="Pacific/Honolulu") #, usetz=TRUE)
   windowDays <- c(day,windowDays)
   dateSQL <- paste(paste("date",windowDays,sep="="),collapse=" or ")
   # DISTINCT because the fim algorithms in arules work with binary occurrence (that's ok I guess.. for query expansion)
-  sql <- sprintf("select DISTINCT ON (id,compgram) compgram,CAST(id as varchar),floor(timemillis/%d)*%d as epochstartux,compgramlen,pos from occurrences 
-where %s and compgramlen<=%d and timemillis <= %d;",
+  sql <- sprintf("select DISTINCT ON (id,compgram) compgram,CAST(id as varchar),floor(timemillis/%d)*%d as epochstartux,compgramlen,pos 
+from occurrences 
+where %s and compgramlen<=%d and timemillis <= %d order by compgramlen desc;",
       MILLIS_IN_EPOCH[[paste("X",epoch,sep="")]],SEC_IN_EPOCH[[paste("X",epoch,sep="")]],dateSQL,compgramlenm,querytime)
  
   try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Fetching day's occurrences using sql:\n", sql)))
