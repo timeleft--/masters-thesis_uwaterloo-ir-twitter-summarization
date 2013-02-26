@@ -139,7 +139,7 @@ MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
   dateSQL <- paste(paste("date",historyDays,sep="="),collapse=" or ")
   
   # DISTINCT because the fim algorithms in arules work with binary occurrence (that's ok I guess.. for query expansion)
-  sqlTemplate <- sprintf("select DISTINCT ON (id,%%s) %%s as compgram,CAST(id as varchar),floor(timemillis/%d)*%d as epochstartux, %%s as compgramlen,pos 
+  sqlTemplate <- sprintf("select DISTINCT ON (id,%%s) CAST(%%s as text) as compgram,CAST(id as varchar),floor(timemillis/%d)*%d as epochstartux, %%s as compgramlen,pos 
         from %%s where %s and %%s<=%d and timemillis >= (%d * 1000::INT8) and timemillis < (%d * 1000::INT8) ",
     MILLIS_IN_EPOCH[[paste("X",epoch,sep="")]],SEC_IN_EPOCH[[paste("X",epoch,sep="")]],dateSQL,compgramlenm,sec0Window,queryEpochEndUx)
   
