@@ -16,6 +16,7 @@ FIM.occsTableName <- "bak_alloccs"  # "occurrences"
 
 FIM.epoch <- '1hr'
 FIM.support <- 5
+FIM.windowLenSec <- 60*60*1
 
 FIM.fislenm <- 15
 
@@ -29,8 +30,9 @@ if(FIM.DEBUG){
     db=FIM.db
     support=FIM.support
     dataRoot=FIM.dataRoot
-    windowDays=0
-    querytime=1352206800
+#    historyDays=0
+    queryTimeUx=1352206800
+    windowLenSec=FIM.windowLenSec
   }
 } else {
   FIM.db <- "full"
@@ -38,23 +40,43 @@ if(FIM.DEBUG){
 
 }
 
+FIM.nCores<-24
+
 ########################################################
 
+require(plyr)
 
-require(arules)
+require(foreach)
+
+require(doMC)
+
+registerDoMC(cores=FIM.nCores)
 
 require(RPostgreSQL)
 
-source("compgrams_utils.R")
+require(arules)
 
 ########################################################
 
 source("compgrams_utils.R")
 
 ########################################################
+SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
+MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
 
 
-occurrencesToTransactions <- function(day, compgramlenm, querytime, windowDays=2, epoch=FIM.epoch,db=FIM.db, support=FIM.support, dataRoot=FIM.dataRoot){
+occurrencesToTransactions <- function(day, compgramlenm, queryTimeUx, windowLenSec=FIM.windowLenSec, epoch=FIM.epoch,db=FIM.db, support=FIM.support, dataRoot=FIM.dataRoot){
+  
+  if(is.null(queryTimeUx)){
+    queryTimeUx <- sec0CurrDay + 60*60*24 - 1
+  } else if (is.null(day)) {
+    day <- as.POSIXct(queryTimeUx,origin="1970-01-01",tz="UTC")
+    day <- as.integer(format(day, format="%y%m%d", tz="Pacific/Honolulu")) #, usetz=TRUE)
+  } else {
+    stop("Must specify either query time or at least the day")
+  }             
+  
+  queryEpochEndUx <- floor(queryTimeUx/SEC_IN_EPOCH[[paste("X",epoch,sep="")]]) * SEC_IN_EPOCH[[paste("X",epoch,sep="")]]
   
   ############ 
   
@@ -89,29 +111,27 @@ occurrencesToTransactions <- function(day, compgramlenm, querytime, windowDays=2
   
   ########### Read the occurrences
   
-  SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60)) 
-  MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
-  
+ 
   sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
                             "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
-  if(is.null(querytime)){
-    querytime <- sec0CurrDay + 60*60*24 - 1
-  }              
-              
-  if(windowDays>0){
-    sec0WindowDays <- sec0CurrDay - ((60*60*24) * (1:windowDays))
-    windowDays <- as.POSIXct(sec0WindowDays,origin="1970-01-01",tz="UTC")
-    windowDays <- format(windowDays, format="%y%m%d", tz="Pacific/Honolulu") #, usetz=TRUE)
-    windowDays <- c(day,windowDays)
+  
+  sec0Window <- queryEpochEndUx - windowLenSec
+  historyDays <- ceiling((sec0CurrDay - sec0Window)/3600*24)  
+  
+  if(historyDays>0){
+    sec0historyDays <- sec0CurrDay - ((60*60*24) * (1:historyDays))
+    historyDays <- as.POSIXct(sec0historyDays,origin="1970-01-01",tz="UTC")
+    historyDays <- format(historyDays, format="%y%m%d", tz="Pacific/Honolulu") #, usetz=TRUE)
+    historyDays <- c(day,historyDays)
   } else {
-    windowDays <- c(day)  
+    historyDays <- c(day)  
   }
-  dateSQL <- paste(paste("date",windowDays,sep="="),collapse=" or ")
+  dateSQL <- paste(paste("date",historyDays,sep="="),collapse=" or ")
   
   # DISTINCT because the fim algorithms in arules work with binary occurrence (that's ok I guess.. for query expansion)
   sqlTemplate <- sprintf("select DISTINCT ON (id,%%s) %%s as compgram,CAST(id as varchar),floor(timemillis/%d)*%d as epochstartux, %%s as compgramlen,pos 
-        from %%s where %s and %%s<=%d and timemillis <= (%d * 1000::INT8) ",
-    MILLIS_IN_EPOCH[[paste("X",epoch,sep="")]],SEC_IN_EPOCH[[paste("X",epoch,sep="")]],dateSQL,compgramlenm,querytime)
+        from %%s where %s and %%s<=%d and timemillis >= (%d * 1000::INT8) and timemillis < (%d * 1000::INT8) ",
+    MILLIS_IN_EPOCH[[paste("X",epoch,sep="")]],SEC_IN_EPOCH[[paste("X",epoch,sep="")]],dateSQL,compgramlenm,sec0Window,queryEpochEndUx)
   
   compgramsSql <- sprintf(sqlTemplate,FIM.gramColName,FIM.gramColName, FIM.lenColName, FIM.occsTableName, FIM.lenColName)
 #  compgramsSql <- paste(compgramsSql,"order by",FIM.lenColName,"desc")
@@ -134,16 +154,54 @@ occurrencesToTransactions <- function(day, compgramlenm, querytime, windowDays=2
   try(dbUnloadDriver(drv))
   
   ############# Remove overlapping occurrences
+  epochCutSec <- seq(from=sec0Window,to=queryEpochEndUx,by=SEC_IN_EPOCH[[paste("X",epoch,sep="")]])  
+  epochCutMillis <- epochCutSec * 1000
   
+#  epochMillis <- data.frame(start=epochCutMillis[1:24],end=epochCutMillis[2:25])
+# WRONG: allOcc <- adply(allOcc,1,transform, epochNum=which(((timemillis >= epochMillis$start) & (timemillis < epochMillis$end))),.expand = TRUE)
+# Right, but is it actually better in terms of performance.. 48 comparisons for each time stamp instad of 2 + 24 ands
+# isntead of 1.. so after all I was chasing a mirage.. so stupid of me to waste such time "enhancing"
+#allOcc <- adply(allOcc,1,function(occ){return(data.frame(epochN=which(((occ$timemillis >= epochMillis$start) & (occ$timemillis < epochMillis$end)))))},.expand = TRUE)
+  
+  nullCombine <- function(a,b) NULL
+  foreach(epochMillisStart=epochCutMillis[1:(length(epochCutMillis)-1)],epochMillisEnd=epochCutMillis[2:length(epochCutMillis)],
+          .inorder=FALSE, .combine='rbind', .multicombine=TRUE,.maxcombine=FIM.nCores) %dopar%
+#  fixEpoch <- function(epochOccs)    
+      {
+        
+        # The millis version should require the least calculations when comparing timemillise
+        epochOccs <- occsDf[((occsDf$timemillis >= epochMillisStart) & (occsDf$timemillis < epochMillisEnd)), ]
+        
+        docLenById <- array(epochOccs$tweetlen)
+        rownames(docLenById) <- epochOccs$id
+        occupiedEnv <- initOccupiedEnv(docLenById)
+        rm(docLenById)
+        
+        uniquecompgrams <- unique(epochOccs$compgram)
+        
+        try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Removing complete overlap from epoch:", epochMillisStart,"-",epochMillisEnd, "num occs:",nrow(epochOccs), "unique compgrams: ", length(uniquecompgrams))))
+        
+        for(compgram in uniquecompgrams){
+          compgramOccs <- epochOccs[which(epochOccs$compgram == compgram),]
+          
+          selOccs <- adply(compgramOccs,1,
+              selectOccurrences,ngramlen2 = FIM.compgramlenm,occupiedEnv = occupiedEnv,allowOverlap = TRUE,
+              .expand=F)
+          selOccs$X1 <- NULL
+          
+          try(stop(paste(Sys.time()," - Writing file:", epochFile, "selected occs:",nrow(selOccs))))
+          
+          write.table(selOccs, file = epochFile, append = TRUE, quote = FALSE, sep = "\t",
+              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+              col.names = FALSE, # qmethod = c("escape", "double"),
+              fileEncoding = "UTF-8")
+          
+        }
+        
+        rm(occupiedEnv)
+      }
  
-  FIM.docLenById <- array(occsDf$tweetlen)
-  rownames(FIM.docLenById) <- occsDf$id
-  occupiedEnv <- initOccupiedEnv(FIM.docLenById)
-  rm(FIM.docLenById)
   
-  
-  nonovOcc <- adply(idata.frame(occsDf),1,ngramSelect, .expand=F)
-  nonovOcc$X1 <- NULL
   
   
   ############# Do the FIM for the whole day

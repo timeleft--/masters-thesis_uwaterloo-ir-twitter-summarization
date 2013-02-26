@@ -4,8 +4,10 @@
 ###############################################################################
 AUTO_REMOVE_STAGING <- FALSE
 READ_ALLOCCS_FROM_FILE <- FALSE
+
 FSO.ngramlen2=2
 FSO.days <- c(130104)
+
 FSO.root <- paste("~/r_output/occ_yuleq_full_",FSO.ngramlen2,"/",sep="")
 #day<-130104
 FSO.db<-"full"
@@ -104,17 +106,33 @@ for(day in FSO.days){
   epochCutMillis <- epochCutSec * 1000
   
 #  epochMillis <- data.frame(start=epochCutMillis[1:24],end=epochCutMillis[2:25])
-#  allOcc <- adply(allOcc,1,transform,epoch=which(((timemillis >= epochMillisStart) & (allOcc$timemillis < epochMillisEnd))),.expand = TRUE)
+# WRONG: allOcc <- adply(allOcc,1,transform, epochNum=which(((timemillis >= epochMillis$start) & (timemillis < epochMillis$end))),.expand = TRUE)
+# Right, but is it actually better in terms of performance.. 48 comparisons for each time stamp instad of 2 + 24 ands
+# isntead of 1.. so after all I was chasing a mirage.. so stupid of me to waste such time "enhancing"
+#allOcc <- adply(allOcc,1,function(occ){return(data.frame(epochN=which(((occ$timemillis >= epochMillis$start) & (occ$timemillis < epochMillis$end)))))},.expand = TRUE)
+
+  # The millis version is ugly when it comes to naming files
+  epochFiles <- paste(seloccFile,"_",epochCutSec[2:25],".staging",sep="") #epoch
+  
+  if(AUTO_REMOVE_STAGING){
+    rmCmd <- paste("rm",paste(epochFiles,collapse=" "))
+    try(stop(paste(Sys.time()," - Removing files using command:", rmCmd)))
+    system(rmCmd,intern = FALSE)
+  }
+  
+  names(epochFiles) <- epochCutSec[2:25]
+  #        file.create(epochFile)
+  missingEpochIx <- which(!file.exists(epochFiles))
   
   nullCombine <- function(a,b) NULL
-  foreach(epochMillisStart=epochCutMillis[1:24],epochMillisEnd=epochCutMillis[2:25],
+  foreach(epochMillisStart=epochCutMillis[missingEpochIx],epochMillisEnd=epochCutMillis[missingEpochIx+1],
           .inorder=FALSE, .combine='nullCombine') %dopar%
-#  fixEpoch <- function(epochOccs)    
-  {
-        
+  #  fixEpoch <- function(epochOccs)    
+    {
+      
         # The millis version is ugly when it comes to naming files
         epochFile <- paste(seloccFile,"_",(epochMillisEnd/1000),".staging",sep="")
-        file.create(epochFile)
+#        file.create(epochFile)
         
         try(stop(paste(Sys.time()," - Num Rows in allOcc: ", nrow(allOcc))))
         
@@ -155,18 +173,12 @@ for(day in FSO.days){
 #  }
 
 
-  epochFiles <- paste(seloccFile,"_",epochCutSec[2:25],".staging",sep="")
-  
   catCmd <- paste("cat",paste(epochFiles,collapse=" "),">",seloccFile)
   try(stop(paste(Sys.time()," - Concatinating files using command:", catCmd)))
   
   system(catCmd,intern = FALSE)
   
-  if(AUTO_REMOVE_STAGING){
-    rmCmd <- paste("rm",paste(epochFiles,collapse=" "))
-    try(stop(paste(Sys.time()," - Removing files using command:", rmCmd)))
-    system(rmCmd,intern = FALSE)
-  }
+  
 }
 
 
