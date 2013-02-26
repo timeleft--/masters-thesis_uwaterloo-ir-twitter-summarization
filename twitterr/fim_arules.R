@@ -258,5 +258,5 @@ nonovOcc <- occsDf
   }
 #  debug(fimForEpoch)
   
-  d_ply(nonovOcc,c("epochstartux"),fimForEpoch,.parallel=TRUE)
+  d_ply(idata.frame(nonovOcc),c("epochstartux"),fimForEpoch,.parallel=TRUE)
 #}
