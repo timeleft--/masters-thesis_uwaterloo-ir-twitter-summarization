@@ -137,16 +137,17 @@ MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
     historyDays <- c(day)  
   }
   dateSQL <- paste(paste("date",historyDays,sep="="),collapse=" or ")
+  dateSQL <- paste(dateSQL,sprintf('and timemillis >= (%d * 1000::INT8) and timemillis < (%d * 1000::INT8)',sec0Window,queryEpochEndUx))
   
   # DISTINCT because the fim algorithms in arules work with binary occurrence (that's ok I guess.. for query expansion)
   sqlTemplate <- sprintf("select DISTINCT ON (id,%%s) CAST(%%s as text) as compgram,CAST(id as varchar),floor(timemillis/%d)*%d as epochstartux, %%s as compgramlen,pos 
-        from %%s where %s and %%s<=%d and timemillis >= (%d * 1000::INT8) and timemillis < (%d * 1000::INT8) ",
-    MILLIS_IN_EPOCH[[paste("X",epoch,sep="")]],SEC_IN_EPOCH[[paste("X",epoch,sep="")]],dateSQL,compgramlenm,sec0Window,queryEpochEndUx)
+        from %%s where %s  and %%s<=%d  ",
+    MILLIS_IN_EPOCH[[paste("X",epoch,sep="")]],SEC_IN_EPOCH[[paste("X",epoch,sep="")]],dateSQL,compgramlenm)
   
   compgramsSql <- sprintf(sqlTemplate,FIM.gramColName,FIM.gramColName, FIM.lenColName, FIM.occsTableName, FIM.lenColName)
 #  compgramsSql <- paste(compgramsSql,"order by",FIM.lenColName,"desc")
   unigramSql <- sprintf(sqlTemplate,"ngram","ngram","ngramlen","ngrams1","ngramlen")
-  sql <- sprintf("(%s) UNION ALL (%s) %s",compgramsSql, unigramSql, "order by compgramlen desc")
+  sql <- sprintf("(%s) UNION ALL (%s) %s",compgramsSql, unigramSql, "") # No need for ordering unless we will get rid f overlap: "order by compgramlen desc")
   
   try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Fetching day's occurrences using sql:\n", sql)))
   
