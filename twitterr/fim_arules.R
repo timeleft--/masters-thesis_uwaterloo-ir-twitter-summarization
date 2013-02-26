@@ -4,22 +4,22 @@
 ###############################################################################
 
 FIM.label <- "FIM"
-FIM.DEBUG <- FALSE
+FIM.DEBUG <- TRUE
 FIM.TRACE <- TRUE
 
 FIM.argv <- commandArgs(trailingOnly = TRUE)
-FIM.compgramlenm<-as.integer(FIM.argv[1]) #2
+FIM.compgramlenm<-as.integer(FIM.argv[1])
 
-FIM.gramColName <- "ngram" #"compgram"
-FIM.lenColName <- "ngramlen" #"compgramlen"
-FIM.occsTableName <-   "bak_alloccs" #"occurrences" 
+FIM.gramColName <- "compgram" #"ngram" #"compgram"
+FIM.lenColName <- "compgramlen" # "ngramlen" #"compgramlen"
+FIM.occsTableName <-  "occurrences"  # "bak_alloccs"
 
 FIM.epoch <- '1hr'
 FIM.support <- 5
-FIM.windowLenSec <- 60*60*72
+FIM.windowLenSec <- 60*60*1
 
 FIM.fislenm <- 15
-
+FIM.compgramlenm <- 2
 
 if(FIM.DEBUG){
   FIM.db <- "sample-0.01"
@@ -258,5 +258,5 @@ nonovOcc <- occsDf
   }
 #  debug(fimForEpoch)
   
-  d_ply(nonovOcc,c("epochstartux"),fimForEpoch,.parallel=TRUE)
+  d_ply(idata.frame(nonovOcc),c("epochstartux"),fimForEpoch,.parallel=TRUE)
 #}
