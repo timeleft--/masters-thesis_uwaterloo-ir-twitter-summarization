@@ -52,12 +52,7 @@ for(day in FSO.days){
   
   try(dbClearResult(allOccRs))
   
-  
-#  docLenById <- array(allOcc$tweetlen, row.names=allOcc$id)
-  docLenById <- array(allOcc$tweetlen)
-  rownames(docLenById) <- allOcc$id
-  occupiedEnv <- initOccupiedEnv(docLenById)
-  rm(docLenById)
+
   
   # Divide by epochs beacuse the ngrams are ordered in descending order of desirability per epoch
   # since this is how the all occurrences file was written out.. 
@@ -66,7 +61,14 @@ for(day in FSO.days){
   epochCutSec <- (sec0CurrDay + (c(0:24) * 3600))   
   
 #  allOcc$epoch <- cut(allOcc$timemillis/1000,breaks=epochCutSec-1) #-1 because the intervals are closed to the right (0,1]
-#  
+# 
+ 
+#  docLenById <- array(allOcc$tweetlen, row.names=allOcc$id)
+#  docLenById <- array(allOcc$tweetlen)
+#  rownames(docLenById) <- allOcc$id
+#  occupiedEnv <- initOccupiedEnv(docLenById)
+#  rm(docLenById)
+  
 #  fixEpoch <- function(epochOccs){
 #    uniqueNgrams <- unique(epochOccs$ngram)
 #    
@@ -101,12 +103,21 @@ for(day in FSO.days){
   foreach(epochMillis=cbind(start=epochCutMillis[1:24],end=epochCutMillis[2:25]),
           .inorder=FALSE, .combine='nullCombine') %dopar%
       {
+        
         # The millis version is ugly when it comes to naming files
         epochFile <- paste(seloccFile,"_",(epochMillis$end/1000),".staging",sep="")
         file.create(epochFile)
         
         # The millis version should require the least calculations when comparing timemillise
         epochOccs <- allOcc[((allOcc$timemillis >= epochMillis$start) && (allOcc$timemillis < epochMillis$end)), ]
+        
+        
+        docLenById <- array(epochOccs$tweetlen, row.names=epochOccs$id)
+        docLenById <- array(epochOccs$tweetlen)
+        rownames(docLenById) <- epochOccs$id
+        occupiedEnv <- initOccupiedEnv(docLenById)
+        rm(docLenById)
+        
         uniqueNgrams <- unique(epochOccs$ngram)
     
         try(stop(paste(Sys.time()," - Fixing epoch:", paste(epochMillis,collapse="-"), "num occs:",nrow(epochOccs), "unique Ngrams: ", length(uniqueNgrams))))
