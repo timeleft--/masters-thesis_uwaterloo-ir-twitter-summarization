@@ -28,11 +28,12 @@ require(RPostgreSQL)
 FSO.drv <- dbDriver("PostgreSQL")
 FSO.con <- dbConnect(FSO.drv, dbname=FSO.db, user="yaboulna", password="5#afraPG",
     host="hops.cs.uwaterloo.ca", port="5433")
+if(!file.exists(FSO.root)){
+  dir.create(FSO.root,recursive=TRUE)
+}
 
 for(day in FSO.days){
-  if(!file.exists(FSO.root)){
-    dir.create(FSO.root,recursive=TRUE)
-  }
+  
 #  alloccFile <- paste(FSO.root,day,".csv",sep="")
   seloccFile <-  paste(FSO.root,"sel_",day,".csv",sep="")
   try(file.rename(seloccFile,paste(seloccFile,"_fix_sel-occ_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="") ))
@@ -100,7 +101,7 @@ for(day in FSO.days){
 
   epochCutMillis <- epochCutSec * 1000
   nullCombine <- function(a,b) NULL
-  foreach(epochMillis=cbind(start=epochCutMillis[1:24],end=epochCutMillis[2:25]),
+  foreach(epochMillis=data.frame(start=epochCutMillis[1:24],end=epochCutMillis[2:25]),
           .inorder=FALSE, .combine='nullCombine') %dopar%
       {
         
