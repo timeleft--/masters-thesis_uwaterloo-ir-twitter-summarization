@@ -111,6 +111,8 @@ for(day in FSO.days){
         epochFile <- paste(seloccFile,"_",(epochMillisEnd/1000),".staging",sep="")
         file.create(epochFile)
         
+        try(stop(paste(Sys.time()," - Num Rows in allOcc: ", nrow(allOcc))))
+        
         # The millis version should require the least calculations when comparing timemillise
         epochOccs <- allOcc[((allOcc$timemillis >= epochMillisStart) && (allOcc$timemillis < epochMillisEnd)), ]
         
