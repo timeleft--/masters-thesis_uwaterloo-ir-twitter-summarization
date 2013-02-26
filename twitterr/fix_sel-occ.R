@@ -8,7 +8,7 @@ READ_ALLOCCS_FROM_FILE <- FALSE
 FSO.ngramlen2=2
 FSO.days <- c(130104)
 
-FSO.root <- paste("~/r_output/occ_yuleq_full_",FSO.ngramlen2,"/",sep="")
+FSO.root <- paste("/u2/yaboulnaga/r_output/occ_yuleq_full_",FSO.ngramlen2,"/",sep="")
 #day<-130104
 FSO.db<-"full"
 FSO.nCores<-24
@@ -50,7 +50,7 @@ for(day in FSO.days){
         colClasses = c("character","numeric","integer","character","integer","integer","integer"), #,"NULL","NULL","NULL"),
         fileEncoding = "UTF-8-MAC")
   } else {
-    allOccRs <- dbSendQuery(FSO.con,"select * from debug_allocc2_130104")
+    allOccRs <- dbSendQuery(FSO.con,"select CAST(id as VARCHAR),timemillis,date,ngram,ngramlen,tweetlen,pos from debug_allocc2_130104")
     allOcc <- fetch(allOccRs, n=-1)
     
     try(dbClearResult(allOccRs))
@@ -178,7 +178,10 @@ for(day in FSO.days){
   
   system(catCmd,intern = FALSE)
   
-  
+  selOccTable <- paste("selocc",FSO.ngramlen2,day,sep="_")
+  copyCmd <- sprintf("psql -h hops.cs.uwaterloo.ca -p 5433 -U yaboulna -W -d full -c \"CREATE TABLE %s () INHERITS(seloccs); COPY %s from '%s' WITH NULL 'NA';\"",
+      selOccTable, selOccTable, seloccFile)
+  system(copyCmd,intern = FALSE,input = "5#afraPG")
 }
 
 

@@ -12,35 +12,40 @@ FIM.compgramlenm<-as.integer(FIM.argv[1])
 
 FIM.gramColName <- "ngram" #"compgram"
 FIM.lenColName <- "ngramlen" #"compgramlen"
-FIM.occsTableName <- "bak_alloccs"  # "occurrences"
+FIM.occsTableName <-  "occurrences"  # "occurrences"
 
 FIM.epoch <- '1hr'
 FIM.support <- 5
 FIM.windowLenSec <- 60*60*1
 
 FIM.fislenm <- 15
+FIM.compgramlenm <- 2
 
 if(FIM.DEBUG){
-  FIM.db <- "full"#"sample-0.01"
+  FIM.db <- "sample-0.01"
   FIM.dataRoot <- "~/r_output_debug/"
-  if(FIM.TRACE){
-    compgramlenm <- 4
-    
-    epoch=FIM.epoch
-    db=FIM.db
-    support=FIM.support
-    dataRoot=FIM.dataRoot
-#    historyDays=0
-    queryTimeUx=1352206800
-    windowLenSec=FIM.windowLenSec
-  }
+  FIM.nCores<-2
+  
 } else {
   FIM.db <- "full"
   FIM.dataRoot <- "~/r_output/"
-
+  FIM.nCores<-24
+  
 }
 
-FIM.nCores<-24
+if(FIM.TRACE){
+  compgramlenm <- FIM.compgramlenm
+  
+  epoch=FIM.epoch
+  db=FIM.db
+  support=FIM.support
+  dataRoot=FIM.dataRoot
+#    historyDays=0
+#  queryTimeUx=1352206800
+  day=121106
+  windowLenSec=FIM.windowLenSec
+}
+
 
 ########################################################
 
@@ -65,18 +70,8 @@ SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60))
 MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
 
 
-occurrencesToTransactions <- function(day, compgramlenm, queryTimeUx, windowLenSec=FIM.windowLenSec, epoch=FIM.epoch,db=FIM.db, support=FIM.support, dataRoot=FIM.dataRoot){
+#occurrencesToTransactions <- function(day, compgramlenm, queryTimeUx, windowLenSec=FIM.windowLenSec, epoch=FIM.epoch,db=FIM.db, support=FIM.support, dataRoot=FIM.dataRoot){
   
-  if(is.null(queryTimeUx)){
-    queryTimeUx <- sec0CurrDay + 60*60*24 - 1
-  } else if (is.null(day)) {
-    day <- as.POSIXct(queryTimeUx,origin="1970-01-01",tz="UTC")
-    day <- as.integer(format(day, format="%y%m%d", tz="Pacific/Honolulu")) #, usetz=TRUE)
-  } else {
-    stop("Must specify either query time or at least the day")
-  }             
-  
-  queryEpochEndUx <- floor(queryTimeUx/SEC_IN_EPOCH[[paste("X",epoch,sep="")]]) * SEC_IN_EPOCH[[paste("X",epoch,sep="")]]
   
   ############ 
   
@@ -111,12 +106,28 @@ occurrencesToTransactions <- function(day, compgramlenm, queryTimeUx, windowLenS
   
   ########### Read the occurrences
   
+  if (!exists("day") || is.null(day)) { 
+    if(exists("queryTimeUx") && !is.null(queryTimeUx)){
+      day <- as.POSIXct(queryTimeUx,origin="1970-01-01",tz="UTC")
+      day <- as.integer(format(day, format="%y%m%d", tz="Pacific/Honolulu")) #, usetz=TRUE)
+    } else {
+      stop("Must specify either query time or at least the day")
+    }             
+  } 
+  
+  queryEpochEndUx <- floor(queryTimeUx/SEC_IN_EPOCH[[paste("X",epoch,sep="")]]) * SEC_IN_EPOCH[[paste("X",epoch,sep="")]]
+  
  
   sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
                             "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
   
+                
+  if(!exists("queryTimeUx") || is.null(queryTimeUx)){
+    queryTimeUx <- sec0CurrDay + 60*60*24 - 1
+  }
+  
   sec0Window <- queryEpochEndUx - windowLenSec
-  historyDays <- ceiling((sec0CurrDay - sec0Window)/3600*24)  
+  historyDays <- ceiling((sec0CurrDay - sec0Window)/(3600*24))  
   
   if(historyDays>0){
     sec0historyDays <- sec0CurrDay - ((60*60*24) * (1:historyDays))
@@ -153,75 +164,97 @@ occurrencesToTransactions <- function(day, compgramlenm, queryTimeUx, windowLenS
   # dbUnloadDriver(drv,...) frees all the resources used by the driver. Eg.
   try(dbUnloadDriver(drv))
   
-  ############# Remove overlapping occurrences
-  epochCutSec <- seq(from=sec0Window,to=queryEpochEndUx,by=SEC_IN_EPOCH[[paste("X",epoch,sep="")]])  
-  epochCutMillis <- epochCutSec * 1000
-  
-#  epochMillis <- data.frame(start=epochCutMillis[1:24],end=epochCutMillis[2:25])
-# WRONG: allOcc <- adply(allOcc,1,transform, epochNum=which(((timemillis >= epochMillis$start) & (timemillis < epochMillis$end))),.expand = TRUE)
-# Right, but is it actually better in terms of performance.. 48 comparisons for each time stamp instad of 2 + 24 ands
-# isntead of 1.. so after all I was chasing a mirage.. so stupid of me to waste such time "enhancing"
-#allOcc <- adply(allOcc,1,function(occ){return(data.frame(epochN=which(((occ$timemillis >= epochMillis$start) & (occ$timemillis < epochMillis$end)))))},.expand = TRUE)
-  
-  nullCombine <- function(a,b) NULL
-  foreach(epochMillisStart=epochCutMillis[1:(length(epochCutMillis)-1)],epochMillisEnd=epochCutMillis[2:length(epochCutMillis)],
-          .inorder=FALSE, .combine='rbind', .multicombine=TRUE,.maxcombine=FIM.nCores) %dopar%
-#  fixEpoch <- function(epochOccs)    
-      {
-        
-        # The millis version should require the least calculations when comparing timemillise
-        epochOccs <- occsDf[((occsDf$timemillis >= epochMillisStart) & (occsDf$timemillis < epochMillisEnd)), ]
-        
-        docLenById <- array(epochOccs$tweetlen)
-        rownames(docLenById) <- epochOccs$id
-        occupiedEnv <- initOccupiedEnv(docLenById)
-        rm(docLenById)
-        
-        uniquecompgrams <- unique(epochOccs$compgram)
-        
-        try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Removing complete overlap from epoch:", epochMillisStart,"-",epochMillisEnd, "num occs:",nrow(epochOccs), "unique compgrams: ", length(uniquecompgrams))))
-        
-        for(compgram in uniquecompgrams){
-          compgramOccs <- epochOccs[which(epochOccs$compgram == compgram),]
-          
-          selOccs <- adply(compgramOccs,1,
-              selectOccurrences,ngramlen2 = FIM.compgramlenm,occupiedEnv = occupiedEnv,allowOverlap = TRUE,
-              .expand=F)
-          selOccs$X1 <- NULL
-          
-          try(stop(paste(Sys.time()," - Writing file:", epochFile, "selected occs:",nrow(selOccs))))
-          
-          write.table(selOccs, file = epochFile, append = TRUE, quote = FALSE, sep = "\t",
-              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-              col.names = FALSE, # qmethod = c("escape", "double"),
-              fileEncoding = "UTF-8")
-          
-        }
-        
-        rm(occupiedEnv)
-      }
- 
-  
-  
+# FIXME : I dunno why I can't get this done :( 
+nonovOcc <- occsDf
+#  ############# Remove overlapping occurrences
+#  epochCutSec <- seq(from=sec0Window,to=queryEpochEndUx,by=SEC_IN_EPOCH[[paste("X",epoch,sep="")]])  
+#  epochCutMillis <- epochCutSec * 1000
+#  
+##  epochMillis <- data.frame(start=epochCutMillis[1:24],end=epochCutMillis[2:25])
+## WRONG: allOcc <- adply(allOcc,1,transform, epochNum=which(((timemillis >= epochMillis$start) & (timemillis < epochMillis$end))),.expand = TRUE)
+## Right, but is it actually better in terms of performance.. 48 comparisons for each time stamp instad of 2 + 24 ands
+## isntead of 1.. so after all I was chasing a mirage.. so stupid of me to waste such time "enhancing"
+##allOcc <- adply(allOcc,1,function(occ){return(data.frame(epochN=which(((occ$timemillis >= epochMillis$start) & (occ$timemillis < epochMillis$end)))))},.expand = TRUE)
+#  
+#  nullCombine <- function(a,b) NULL
+#  foreach(epochMillisStart=epochCutMillis[1:(length(epochCutMillis)-1)],epochMillisEnd=epochCutMillis[2:length(epochCutMillis)],
+#          .inorder=FALSE, .combine='rbind', .multicombine=TRUE,.maxcombine=FIM.nCores) %dopar%
+##  fixEpoch <- function(epochOccs)    
+#      {
+#        
+#        # The millis version should require the least calculations when comparing timemillise
+#        epochOccs <- occsDf[((occsDf$timemillis >= epochMillisStart) & (occsDf$timemillis < epochMillisEnd)), ]
+#        
+#        docLenById <- array(epochOccs$tweetlen)
+#        rownames(docLenById) <- epochOccs$id
+#        occupiedEnv <- initOccupiedEnv(docLenById)
+#        rm(docLenById)
+#        
+#        uniquecompgrams <- unique(epochOccs$compgram)
+#        
+#        try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Removing complete overlap from epoch:", epochMillisStart,"-",epochMillisEnd, "num occs:",nrow(epochOccs), "unique compgrams: ", length(uniquecompgrams))))
+#        
+#        for(compgram in uniquecompgrams){
+#          compgramOccs <- epochOccs[which(epochOccs$compgram == compgram),]
+#          
+#          selOccs <- adply(compgramOccs,1,
+#              selectOccurrences,ngramlen2 = FIM.compgramlenm,occupiedEnv = occupiedEnv,allowOverlap = TRUE,
+#              .expand=F)
+#          selOccs$X1 <- NULL
+#          
+#          try(stop(paste(Sys.time()," - Writing file:", epochFile, "selected occs:",nrow(selOccs))))
+#          
+#          write.table(selOccs, file = epochFile, append = TRUE, quote = FALSE, sep = "\t",
+#              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+#              col.names = FALSE, # qmethod = c("escape", "double"),
+#              fileEncoding = "UTF-8")
+#          
+#        }
+#        
+#        rm(occupiedEnv)
+#      }
+# 
+#  
+#  # TODO read the files written out by the parallel job and go on
+#  
   
   ############# Do the FIM for the whole day
-  dayTrans <- as(split(nonovOcc[,"compgram"],nonovOcc[,"id"]),"transactions")
-  dayFIS <- eclat(dayTrans, parameter = list(supp = support/length(dayTrans), minlen=2, maxlen = FIM.fislenm))
-  interest=interestMeasure(dayFIS, c("lift","allConfidence","crossSupportRatio"),transactions = dayTrans)
-  quality(dayFIS) <- cbind(quality(dayFIS),
-      interest)
-  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
-
-  ############# Do the FIM for epochs
+#  dayTrans <- as(split(nonovOcc[,"compgram"],nonovOcc[,"id"]),"transactions")
+#  dayFIS <- eclat(dayTrans, parameter = list(supp = support/length(dayTrans), minlen=2, maxlen = FIM.fislenm))
+#  interest=interestMeasure(dayFIS, c("lift","allConfidence","crossSupportRatio"),transactions = dayTrans)
+#  quality(dayFIS) <- cbind(quality(dayFIS),
+#      interest)
+#  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
+#  write()
+#  ############# Do the FIM for epochs
+#  
+  outDir <- paste(FIM.dataRoot,"fim",sep="/");
+  if(!file.exists(outDir)){
+    dir.create(outDir,recursive = T)
+  }
   
   fimForEpoch <- function(epcg) {
-    epochstart <- epcg$epochstartux[1]
-    epochOccs <- occsDf[which(epochOccs$epochstartux == epochstart)]
-    
+    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - FIM for epoch:", epcg$epochstartux[1], "num occs:",nrow(epcg))))
     # trans4 <- as(split(a_df3[,"item"], a_df3[,"TID"]), "transactions") 
     epochTrans <- as(split(epcg[,"compgram"], epcg[,"id"]), "transactions") 
+    
+    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - num transactions:",length(epochTrans))))
+    
+    epochFIS <- eclat(epochTrans,parameter = list(supp = support/length(epochTrans),minlen=2, maxlen=FIM.fislenm))
+    epochFile<-paste(outDir,"/fis_",day,"-",epcg$epochstartux[1],".csv",sep="")
+    write(epochFIS,file=epochFile,sep="\t",
+        col.names=NA) #TODO: colnames
+    
+    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Interest for epoch:", epcg$epochstartux[1], "num FIS:",length(epochFIS))))
+    
+    interest=interestMeasure(epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = epochTrans)
+    quality(epochFIS) <- cbind(quality(epochFIS), interest)
+#  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
+    write(epochFIS,file=epochFile,sep="\t",
+        col.names=NA) #TODO: colnames
+    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Interest for epoch:", epcg$epochstartux[1], "file:",length(epochFIS))))
   }
-  debug(fimForEpoch)
+  #debug(fimForEpoch)
   
-  d_ply(nonovOcc,c("epochstartux"),fimForEpoch)
-}
+  d_ply(nonovOcc,c("epochstartux"),fimForEpoch,.parallel=TRUE)
+#}
