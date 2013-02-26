@@ -5,7 +5,7 @@
 
 FIM.label <- "FIM"
 FIM.DEBUG <- TRUE
-FIM.TRACE <- FALSE
+FIM.TRACE <- TRUE
 
 FIM.argv <- commandArgs(trailingOnly = TRUE)
 FIM.compgramlenm<-as.integer(FIM.argv[1])
