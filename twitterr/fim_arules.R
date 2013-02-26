@@ -233,9 +233,12 @@ nonovOcc <- occsDf
   }
   
   fimForEpoch <- function(epcg) {
+    
+    require(arules)
+    
     try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - FIM for epoch:", epcg$epochstartux[1], "num occs:",nrow(epcg))))
     # trans4 <- as(split(a_df3[,"item"], a_df3[,"TID"]), "transactions") 
-    epochTrans <- as(split(epcg[,"compgram"], epcg[,"id"]), "transactions") 
+    epochTrans <- as(split(epcg$compgram, epcg$id), "transactions") 
     
     try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - num transactions:",length(epochTrans))))
     
@@ -253,7 +256,7 @@ nonovOcc <- occsDf
         col.names=NA) #TODO: colnames
     try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Interest for epoch:", epcg$epochstartux[1], "file:",length(epochFIS))))
   }
-  #debug(fimForEpoch)
+  debug(fimForEpoch)
   
   d_ply(nonovOcc,c("epochstartux"),fimForEpoch,.parallel=TRUE)
 #}
