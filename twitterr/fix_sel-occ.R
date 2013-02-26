@@ -103,16 +103,16 @@ for(day in FSO.days){
 
   epochCutMillis <- epochCutSec * 1000
   nullCombine <- function(a,b) NULL
-  foreach(epochMillis=data.frame(start=epochCutMillis[1:24],end=epochCutMillis[2:25]),
+  foreach(epochMillisStart=epochCutMillis[1:24],epochMillisEnd=epochCutMillis[2:25],
           .inorder=FALSE, .combine='nullCombine') %dopar%
       {
         
         # The millis version is ugly when it comes to naming files
-        epochFile <- paste(seloccFile,"_",(epochMillis$end/1000),".staging",sep="")
+        epochFile <- paste(seloccFile,"_",(epochMillisEnd/1000),".staging",sep="")
         file.create(epochFile)
         
         # The millis version should require the least calculations when comparing timemillise
-        epochOccs <- allOcc[((allOcc$timemillis >= epochMillis$start) && (allOcc$timemillis < epochMillis$end)), ]
+        epochOccs <- allOcc[((allOcc$timemillis >= epochMillisStart) && (allOcc$timemillis < epochMillisEnd)), ]
         
         docLenById <- array(epochOccs$tweetlen)
         rownames(docLenById) <- epochOccs$id
@@ -121,7 +121,7 @@ for(day in FSO.days){
         
         uniqueNgrams <- unique(epochOccs$ngram)
     
-        try(stop(paste(Sys.time()," - Fixing epoch:", paste(epochMillis,collapse="-"), "num occs:",nrow(epochOccs), "unique Ngrams: ", length(uniqueNgrams))))
+        try(stop(paste(Sys.time()," - Fixing epoch:", epochMillisStart,"-",epochMillisEnd, "num occs:",nrow(epochOccs), "unique Ngrams: ", length(uniqueNgrams))))
         
         for(ngram in uniqueNgrams){
           ngramOccs <- epochOccs[which(epochOccs$ngram == ngram),]
