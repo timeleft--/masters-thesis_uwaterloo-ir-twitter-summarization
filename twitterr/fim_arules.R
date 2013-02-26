@@ -10,9 +10,9 @@ FIM.TRACE <- TRUE
 FIM.argv <- commandArgs(trailingOnly = TRUE)
 FIM.compgramlenm<-as.integer(FIM.argv[1])
 
-FIM.gramColName <- "ngram" #"compgram"
-FIM.lenColName <- "ngramlen" #"compgramlen"
-FIM.occsTableName <-  "occurrences"  # "occurrences"
+FIM.gramColName <- "compgram" #"ngram" #"compgram"
+FIM.lenColName <- "compgramlen" # "ngramlen" #"compgramlen"
+FIM.occsTableName <-  "occurrences"  # "bak_alloccs"
 
 FIM.epoch <- '1hr'
 FIM.support <- 5
