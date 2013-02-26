@@ -29,7 +29,7 @@ if(FIM.DEBUG){
 } else {
   FIM.db <- "full"
   FIM.dataRoot <- "~/r_output/"
-  FIM.nCores<-24
+  FIM.nCores<-2
   
 }
 
