@@ -153,7 +153,7 @@ MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
   occsRs <- dbSendQuery(con,sql)
   occsDf <- fetch(occsRs,n=-1)
   
-  try(dbClearResult(occRs))
+  try(dbClearResult(occsRs))
   try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Fetched day's occurrences. nrow:", nrow(occsDf))))
   
   
