@@ -4,22 +4,22 @@
 ###############################################################################
 
 FIM.label <- "FIM"
-FIM.DEBUG <- TRUE
+FIM.DEBUG <- FALSE
 FIM.TRACE <- TRUE
 
 FIM.argv <- commandArgs(trailingOnly = TRUE)
-FIM.compgramlenm<-as.integer(FIM.argv[1])
+FIM.compgramlenm<-as.integer(FIM.argv[1]) #2
 
-FIM.gramColName <- "compgram" #"ngram" #"compgram"
-FIM.lenColName <- "compgramlen" # "ngramlen" #"compgramlen"
-FIM.occsTableName <-  "occurrences"  # "bak_alloccs"
+FIM.gramColName <- "ngram" #"compgram"
+FIM.lenColName <- "ngramlen" #"compgramlen"
+FIM.occsTableName <-   "bak_alloccs" #"occurrences" 
 
 FIM.epoch <- '1hr'
 FIM.support <- 5
-FIM.windowLenSec <- 60*60*1
+FIM.windowLenSec <- 60*60*72
 
 FIM.fislenm <- 15
-FIM.compgramlenm <- 2
+
 
 if(FIM.DEBUG){
   FIM.db <- "sample-0.01"
@@ -254,9 +254,9 @@ nonovOcc <- occsDf
 #  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
     write(epochFIS,file=epochFile,sep="\t",
         col.names=NA) #TODO: colnames
-    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Interest for epoch:", epcg$epochstartux[1], "file:",length(epochFIS))))
+    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Done for epoch:", epcg$epochstartux[1], "file:",epochFile)))
   }
-  debug(fimForEpoch)
+#  debug(fimForEpoch)
   
   d_ply(nonovOcc,c("epochstartux"),fimForEpoch,.parallel=TRUE)
 #}
