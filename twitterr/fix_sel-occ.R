@@ -2,10 +2,11 @@
 # 
 # Author: yia
 ###############################################################################
-
+AUTO_REMOVE_STAGING <- FALSE
+READ_ALLOCCS_FROM_FILE <- FALSE
 FSO.ngramlen2=2
 FSO.days <- c(130104)
-FSO.root <- paste("~/r_output/occ_yuleq_fix_",FSO.ngramlen2,"/",sep="")
+FSO.root <- paste("~/r_output/occ_yuleq_full_",FSO.ngramlen2,"/",sep="")
 #day<-130104
 FSO.db<-"full"
 FSO.nCores<-24
@@ -34,26 +35,27 @@ if(!file.exists(FSO.root)){
 
 for(day in FSO.days){
   
-#  alloccFile <- paste(FSO.root,day,".csv",sep="")
   seloccFile <-  paste(FSO.root,"sel_",day,".csv",sep="")
   try(file.rename(seloccFile,paste(seloccFile,"_fix_sel-occ_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="") ))
   selStaging <- paste(seloccFile,"staging",sep=".")
   file.create(selStaging)
-  
-#  allOcc <- read.table(alloccFile, header = FALSE, quote = "", comment.char="", 
-#      sep = "\t", na = "NA", dec = ".", row.names = NULL, fill=TRUE,
-#      col.names = c("id","timemillis","date","ngram","ngramlen","tweetlen","pos"), #,"yq","dl","cnt"),
-#      colClasses = c("character","numeric","integer","character","integer","integer","integer"), #,"NULL","NULL","NULL"),
-#      fileEncoding = "UTF-8-MAC")
-   
-  allOccRs <- dbSendQuery(FSO.con,"select * from debug_allocc2_130104")
-  allOcc <- fetch(allOccRs, n=-1)
-  
-  try(stop(paste(Sys.time()," - Fetched all occs. Num Rows: ", nrow(allOcc))))
-  
-  try(dbClearResult(allOccRs))
-  
 
+  if(READ_ALLOCCS_FROM_FILE){
+    alloccFile <- paste(FSO.root,day,".csv",sep="")
+    allOcc <- read.table(alloccFile, header = FALSE, quote = "", comment.char="", 
+        sep = "\t", na = "NA", dec = ".", row.names = NULL, fill=TRUE,
+        col.names = c("id","timemillis","date","ngram","ngramlen","tweetlen","pos"), #,"yq","dl","cnt"),
+        colClasses = c("character","numeric","integer","character","integer","integer","integer"), #,"NULL","NULL","NULL"),
+        fileEncoding = "UTF-8-MAC")
+  } else {
+    allOccRs <- dbSendQuery(FSO.con,"select * from debug_allocc2_130104")
+    allOcc <- fetch(allOccRs, n=-1)
+    
+    try(dbClearResult(allOccRs))
+  }  
+  
+  try(stop(paste(Sys.time()," - Read all occs. Num Rows: ", nrow(allOcc))))
+  
   
   # Divide by epochs beacuse the ngrams are ordered in descending order of desirability per epoch
   # since this is how the all occurrences file was written out.. 
@@ -112,8 +114,6 @@ for(day in FSO.days){
         # The millis version should require the least calculations when comparing timemillise
         epochOccs <- allOcc[((allOcc$timemillis >= epochMillis$start) && (allOcc$timemillis < epochMillis$end)), ]
         
-        
-        docLenById <- array(epochOccs$tweetlen, row.names=epochOccs$id)
         docLenById <- array(epochOccs$tweetlen)
         rownames(docLenById) <- epochOccs$id
         occupiedEnv <- initOccupiedEnv(docLenById)
@@ -138,7 +138,10 @@ for(day in FSO.days){
               eol = "\n", na = "NA", dec = ".", row.names = FALSE,
               col.names = FALSE, # qmethod = c("escape", "double"),
               fileEncoding = "UTF-8")
+        
         }
+        
+        rm(occupiedEnv)
       }
 #  spillMerge <- function(toWrite) {
 #  requires .inorder=FALSE,.multicombine=TRUE,.maxcombine=1 and I don't know if =1 makes any sense  
@@ -152,13 +155,11 @@ for(day in FSO.days){
   
   system(catCmd,intern = FALSE)
   
-#  rmCmd <- paste("rm",paste(epochFiles,collapse=" "))
-#try(stop(paste(Sys.time()," - Removing files using command:", rmCmd)))
-#  system(rmCmd,intern = FALSE)
-  
-  rm(occupiedEnv)
-  
-  
+  if(AUTO_REMOVE_STAGING){
+    rmCmd <- paste("rm",paste(epochFiles,collapse=" "))
+    try(stop(paste(Sys.time()," - Removing files using command:", rmCmd)))
+    system(rmCmd,intern = FALSE)
+  }
 }
 
 
