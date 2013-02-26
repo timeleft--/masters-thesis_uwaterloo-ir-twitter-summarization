@@ -102,10 +102,15 @@ for(day in FSO.days){
 ########## Parallel alternative
 
   epochCutMillis <- epochCutSec * 1000
+  
+#  epochMillis <- data.frame(start=epochCutMillis[1:24],end=epochCutMillis[2:25])
+#  allOcc <- adply(allOcc,1,transform,epoch=which(((timemillis >= epochMillisStart) & (allOcc$timemillis < epochMillisEnd))),.expand = TRUE)
+  
   nullCombine <- function(a,b) NULL
   foreach(epochMillisStart=epochCutMillis[1:24],epochMillisEnd=epochCutMillis[2:25],
           .inorder=FALSE, .combine='nullCombine') %dopar%
-      {
+#  fixEpoch <- function(epochOccs)    
+  {
         
         # The millis version is ugly when it comes to naming files
         epochFile <- paste(seloccFile,"_",(epochMillisEnd/1000),".staging",sep="")
@@ -114,7 +119,7 @@ for(day in FSO.days){
         try(stop(paste(Sys.time()," - Num Rows in allOcc: ", nrow(allOcc))))
         
         # The millis version should require the least calculations when comparing timemillise
-        epochOccs <- allOcc[((allOcc$timemillis >= epochMillisStart) && (allOcc$timemillis < epochMillisEnd)), ]
+        epochOccs <- allOcc[((allOcc$timemillis >= epochMillisStart) & (allOcc$timemillis < epochMillisEnd)), ]
         
         docLenById <- array(epochOccs$tweetlen)
         rownames(docLenById) <- epochOccs$id
