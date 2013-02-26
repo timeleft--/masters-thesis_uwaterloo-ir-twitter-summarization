@@ -115,16 +115,15 @@ MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
     }             
   } 
   
-  queryEpochEndUx <- floor(queryTimeUx/SEC_IN_EPOCH[[paste("X",epoch,sep="")]]) * SEC_IN_EPOCH[[paste("X",epoch,sep="")]]
-  
- 
   sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
-                            "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
+              "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
   
-                
+  
   if(!exists("queryTimeUx") || is.null(queryTimeUx)){
     queryTimeUx <- sec0CurrDay + 60*60*24 - 1
   }
+  
+  queryEpochEndUx <- floor(queryTimeUx/SEC_IN_EPOCH[[paste("X",epoch,sep="")]]) * SEC_IN_EPOCH[[paste("X",epoch,sep="")]]
   
   sec0Window <- queryEpochEndUx - windowLenSec
   historyDays <- ceiling((sec0CurrDay - sec0Window)/(3600*24))  
