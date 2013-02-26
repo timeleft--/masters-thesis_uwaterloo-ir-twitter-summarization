@@ -45,6 +45,7 @@ require(arules)
 
 require(RPostgreSQL)
 
+source("compgrams_utils.R")
 
 ########################################################
 
@@ -53,7 +54,7 @@ source("compgrams_utils.R")
 ########################################################
 
 
-occurrencesToTrans <- function(day, compgramlenm, querytime, windowDays=2, epoch=FIM.epoch,db=FIM.db, support=FIM.support, dataRoot=FIM.dataRoot){
+occurrencesToTransactions <- function(day, compgramlenm, querytime, windowDays=2, epoch=FIM.epoch,db=FIM.db, support=FIM.support, dataRoot=FIM.dataRoot){
   
   ############ 
   
@@ -135,49 +136,11 @@ occurrencesToTrans <- function(day, compgramlenm, querytime, windowDays=2, epoch
   ############# Remove overlapping occurrences
   
  
+  FIM.docLenById <- array(occsDf$tweetlen)
+  rownames(FIM.docLenById) <- occsDf$id
+  occupiedEnv <- initOccupiedEnv(FIM.docLenById)
+  rm(FIM.docLenById)
   
-  epochDocId <- unique(occsDf$id)
-  
-  occupiedPos1 <- Matrix(0,
-      nrow=length(epochDocId),
-      ncol=71,
-      byrow=FALSE,
-      sparse=TRUE,
-      dimnames=list(epochDocId,NULL))
-  
-  selOccsMask1 <- rep(FALSE, nrow(epochNgramOccs))
-  
-  ix1 <-1
-  ngramSelect <- function(nga) { 
-    
-    ngramMask <- (epochNgramOccs$ngram == nga$ngram)
-    ngramIxes <- which(ngramMask) 
-    
-    occSelect <- function(occ) { 
-      startPos <- occ$pos + 1 # pos is 0 based
-      endPos <- startPos + ngramlen2 - 1
-      
-#        occPosId <- occupiedPos1[occ$id,]
-      if(!any(occupiedPos1[occ$id,startPos:endPos]>0)){
-        occupiedPos1[occ$id,startPos:endPos] <<- occupiedPos1[occ$id,startPos:endPos] + 1
-#          occPosId[startPos:endPos] <- occPosId[startPos:endPos] + 1
-        selOccsMask1[ngramIxes[ix1]] <<- TRUE
-      }
-      
-      ix1 <<- ix1 + 1
-      
-#        occupiedPos1[occ$id,] <<- occPosId
-#        occupiedPos1 <<- occupiedPos1
-      
-      return(occ)
-    }
-#      debug(occSelect)
-    
-    ngramOccsDf <- adply(epochNgramOccs[ngramMask,],1,occSelect,.expand=F)
-    
-    return(ngramOccsDf)
-  }
-#    debug(ngramSelect)
   
   nonovOcc <- adply(idata.frame(occsDf),1,ngramSelect, .expand=F)
   nonovOcc$X1 <- NULL

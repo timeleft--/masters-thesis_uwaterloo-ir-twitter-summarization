@@ -2,21 +2,32 @@
 # 
 # Author: yia
 ###############################################################################
+
 FSO.ngramlen2=2
 FSO.days <- c(130104)
 FSO.root <- paste("~/r_output/occ_yuleq_fix_",FSO.ngramlen2,"/",sep="")
 #day<-130104
-source("compgrams_utils.R")
-require(plyr)
 FSO.db<-"full"
+FSO.nCores<-24
+########################################################
+
+source("compgrams_utils.R")
+
+require(plyr)
+
+require(foreach)
+
+require(doMC)
+
+registerDoMC(cores=FSO.nCores)
 
 require(RPostgreSQL)
 
+###########################
 
 FSO.drv <- dbDriver("PostgreSQL")
 FSO.con <- dbConnect(FSO.drv, dbname=FSO.db, user="yaboulna", password="5#afraPG",
     host="hops.cs.uwaterloo.ca", port="5433")
-
 
 for(day in FSO.days){
   if(!file.exists(FSO.root)){
@@ -48,37 +59,90 @@ for(day in FSO.days){
   occupiedEnv <- initOccupiedEnv(docLenById)
   rm(docLenById)
   
+  # Divide by epochs beacuse the ngrams are ordered in descending order of desirability per epoch
+  # since this is how the all occurrences file was written out.. 
   sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
               "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01")) 
-  epochCuts <- sec0CurrDay + (c(0:24) * 3600)  
-  allOcc$epoch <- cut(allOcc$timemillis/1000,breaks=epochCuts)
+  epochCutSec <- (sec0CurrDay + (c(0:24) * 3600))   
   
-  fixEpoch <- function(epochOccs){
-    uniqueNgrams <- unique(epochOccs$ngram)
+#  allOcc$epoch <- cut(allOcc$timemillis/1000,breaks=epochCutSec-1) #-1 because the intervals are closed to the right (0,1]
+#  
+#  fixEpoch <- function(epochOccs){
+#    uniqueNgrams <- unique(epochOccs$ngram)
+#    
+#    try(stop(paste(Sys.time()," - Fixing epoch:", epochOccs$epoch, "num occs:",nrow(epochOccs), "unique Ngrams: ", length(uniqueNgrams))))
+#    
+#    for(ngram in uniqueNgrams){
+#      ngramOccs <- epochOccs[which(epochOccs$ngram == ngram),]
+#      
+#      selOccs <- adply(ngramOccs,1,
+#          selectOccurrences,ngramlen2 = FSO.ngramlen2,occupiedEnv = occupiedEnv,allowOverlap = FALSE,
+#          colsToReturn=c("ngram","id","timemillis","date","ngramlen","tweetlen","pos"),
+#          .expand=F)
+#      selOccs$X1 <- NULL
+#      
+#      
+#      write.table(selOccs, file = selStaging, append = TRUE, quote = FALSE, sep = "\t",
+#          eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+#          col.names = FALSE, # qmethod = c("escape", "double"),
+#          fileEncoding = "UTF-8")
+#    }
+#  }
+## debug(fixEpoch)
+#  
+#  d_ply(allOcc,c("epoch"),fixEpoch)
+#file.rename(selStaging,seloccFile)
+
+
+########## Parallel alternative
+
+  epochCutMillis <- epochCutSec * 1000
+  nullCombine <- function(a,b) NULL
+  foreach(epochMillis=cbind(start=epochCutMillis[1:24],end=epochCutMillis[2:25]),
+          .inorder=FALSE, .combine='nullCombine') %dopar%
+      {
+        # The millis version is ugly when it comes to naming files
+        epochFile <- paste(seloccFile,"_",(epochMillis$end/1000),".staging",sep="")
+        file.create(epochFile)
+        
+        # The millis version should require the least calculations when comparing timemillise
+        epochOccs <- allOcc[((allOcc$timemillis >= epochMillis$start) && (allOcc$timemillis < epochMillis$end)), ]
+        uniqueNgrams <- unique(epochOccs$ngram)
     
-    try(stop(paste(Sys.time()," - Fixing epoch:", epochOccs$epoch, "num occs:",nrow(epochOccs), "unique Ngrams: ", length(uniqueNgrams))))
-    
-    for(ngram in uniqueNgrams){
-      ngramOccs <- epochOccs[which(epochOccs$ngram == ngram),]
-      
-      selOccs <- adply(ngramOccs,1,
-          selectOccurrences,ngramlen2 = FSO.ngramlen2,occupiedEnv = occupiedEnv,allowOverlap = FALSE,
-          colsToReturn=c("ngram","id","timemillis","date","ngramlen","tweetlen","pos"),
-          .expand=F)
-      selOccs$X1 <- NULL
-      
-      
-      write.table(selOccs, file = selStaging, append = TRUE, quote = FALSE, sep = "\t",
-          eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-          col.names = FALSE, # qmethod = c("escape", "double"),
-          fileEncoding = "UTF-8")
-    }
-  }
-# debug(fixEpoch)
+        try(stop(paste(Sys.time()," - Fixing epoch:", paste(epochMillis,collapse="-"), "num occs:",nrow(epochOccs), "unique Ngrams: ", length(uniqueNgrams))))
+        
+        for(ngram in uniqueNgrams){
+          ngramOccs <- epochOccs[which(epochOccs$ngram == ngram),]
+          
+          selOccs <- adply(ngramOccs,1,
+              selectOccurrences,ngramlen2 = FSO.ngramlen2,occupiedEnv = occupiedEnv,allowOverlap = FALSE,
+              colsToReturn=c("ngram","id","timemillis","date","ngramlen","tweetlen","pos"),
+              .expand=F)
+          selOccs$X1 <- NULL
+          
+          try(stop(paste(Sys.time()," - Writing file:", epochFile, "selected occs:",nrow(selOccs))))
+          
+          write.table(selOccs, file = epochFile, append = TRUE, quote = FALSE, sep = "\t",
+              eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+              col.names = FALSE, # qmethod = c("escape", "double"),
+              fileEncoding = "UTF-8")
+        }
+      }
+#  spillMerge <- function(toWrite) {
+#  requires .inorder=FALSE,.multicombine=TRUE,.maxcombine=1 and I don't know if =1 makes any sense  
+#  }
+
+
+  epochFiles <- paste(seloccFile,"_",epochCutSec[2:25],".staging",sep="")
   
-  d_ply(allOcc,c("epoch"),fixEpoch)
+  catCmd <- paste("cat",paste(epochFiles,collapse=" "),">",seloccFile)
+  try(stop(paste(Sys.time()," - Concatinating files using command:", catCmd)))
   
-  file.rename(selStaging,seloccFile)
+  system(catCmd,intern = FALSE)
+  
+#  rmCmd <- paste("rm",paste(epochFiles,collapse=" "))
+#try(stop(paste(Sys.time()," - Removing files using command:", rmCmd)))
+#  system(rmCmd,intern = FALSE)
   
   rm(occupiedEnv)
   
