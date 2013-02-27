@@ -289,7 +289,7 @@ nonovOcc <- occsDf
 
 
 if(USE_SOURCE_TRICK){
-options(warn=2)
+#options(warn=2)
 options(show.error.locations=5)
 options(error = quote(dump.frames(paste("~/r_logs/fim-arules_",format(Sys.time(),format="%y%m%d%H%M%S"),".dump",sep=""), TRUE)))
 
@@ -309,6 +309,7 @@ for(day in FIM.days) {
       	FLO.day <- day
 	source("fim_doepoch.R",local = TRUE,echo = TRUE)
         rm(FIME.compgramOccs)
+        return(NULL) #just in case
       },.parallel=TRUE)
   
   try(rm(FIMW.epochFIS)) 

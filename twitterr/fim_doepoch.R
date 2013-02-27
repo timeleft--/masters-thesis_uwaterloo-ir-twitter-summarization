@@ -70,7 +70,7 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
   FIME.midFreq <- FIME.compgramOccs
 }
 
-print(paste(Sys.time(),FIM.label, " - FIM for epoch:",FIME.epochstartux, "num occs after pruning:",nrow(FIME.midFreq)))
+print(paste(Sys.time(),FIM.label, " - FIM for epoch:",FIME.epochstartux, "num occs after pruning:",nrow(FIME.midFreq),"before pruning:",nrow(FIME.compgramOccs)))
 
 # trans4 <- as(split(a_df3[,"item"], a_df3[,"TID"]), "transactions") 
 FIME.transacts <- as(split(FIME.midFreq$compgram, FIME.midFreq$id), "transactions")
