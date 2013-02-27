@@ -1,5 +1,6 @@
-FLO.DEBUG <- TRUE
-FIME.SKIP_IF_OUTFILE_EXISTS <- TRUE
+FIME.DEBUG <- TRUE
+FIME.SKIP_IF_OUTFILE_EXISTS <- FALSE
+FIME.calcInterest <- TRUE
 
 FIME.epochstartux<-FIME.compgramOccs$epochstartux[1]
 
@@ -70,7 +71,7 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
 #  rm(FIME.compgramOccs)
   rm(FLO.compgramsDf)
 
-  if(FLO.DEBUG){
+  if(FIME.DEBUG){
     midFreqFile <- paste(FIME.outDir,"/occ-less-than-obama_",FIME.epochstartux,".csv",sep="")
     write.table(FIME.midFreq , file = midFreqFile, append = FALSE, quote = FALSE, sep = "\t",
         eol = "\n", na = "NA", dec = ".", row.names = FALSE,
@@ -109,17 +110,19 @@ if(length(FIMW.epochFIS) > 0){
       fileEncoding = "UTF-8")
   unlink(FIME.epochFile)
   
-  interest<-interestMeasure(FIMW.epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = FIME.transacts)
-  quality(FIMW.epochFIS) <- cbind(quality(FIMW.epochFIS), interest)
-  # rewrite with interest
-  ry(stop(paste(Sys.time(),FIM.label, " - Rewriting FIS for epoch:", FIME.epochstartux, "with interest")))
-  
-  write(FIMW.epochFIS,file=FIME.epochFile,append = FALSE, quote = FALSE, sep = "\t",
-      eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-      col.names = FALSE, # qmethod = c("escape", "double"),
-      fileEncoding = "UTF-8")
-  unlink(FIME.epochFile)
-  rm(interest)
+  if(FIME.calcInterest){
+    interest<-interestMeasure(FIMW.epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = FIME.transacts)
+    quality(FIMW.epochFIS) <- cbind(quality(FIMW.epochFIS), interest)
+    # rewrite with interest
+    print(paste(Sys.time(),FIM.label, " - Rewriting FIS for epoch:", FIME.epochstartux, "with interest"))
+    
+    write(FIMW.epochFIS,file=FIME.epochFile,append = FALSE, quote = FALSE, sep = "\t",
+        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+        col.names = FALSE, # qmethod = c("escape", "double"),
+        fileEncoding = "UTF-8")
+    unlink(FIME.epochFile)
+    rm(interest)
+  }
 } else {
   file.create(paste(FIME.epochFile,"empty",sep="."))
 }
