@@ -57,7 +57,7 @@ try(stop(paste(Sys.time(), FLO.label, "Connected to DB", FLO.db)))
 
 #######################################################
 
-sqlTemplate <- sprintf('(select %%s as compgramlen, CAST (%%s as text) as compgram, date, %%s as epochstartux, cnt  from %%s_%s%%d where date=%d and cnt <= %d and %%s=(%d * %%d::INT8) and %%s=%%d )',
+sqlTemplate <- sprintf('(select DISTINCT ON (compgram) %%s as compgramlen, CAST (%%s as text) as compgram, date, %%s as epochstartux, cnt  from %%s_%s%%d where date=%d and cnt <= %d and %%s=(%d * %%d::INT8) and %%s=%%d )',
     FLO.epoch,FLO.day,FLO.threshold,FLO.epochstartux)
 
 sqlLen <- c()

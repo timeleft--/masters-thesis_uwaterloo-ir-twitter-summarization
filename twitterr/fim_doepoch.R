@@ -2,7 +2,7 @@ FLO.DEBUG <- TRUE
 
 FIME.epochstartux<-FIME.compgramOccs$epochstartux[1]
 
-try(stop(paste(Sys.time(),FIM.label, " - FIM for epoch:",FIME.epochstartux, "num occs before pruning:",nrow(FIME.compgramOccs))))
+print(paste(Sys.time(),FIM.label, " - FIM for epoch:",FIME.epochstartux, "num occs before pruning:",nrow(FIME.compgramOccs)))
 
 if(FIM.PRUNE_HIGHER_THAN_OBAMA){
   
@@ -12,20 +12,20 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
   #FLO.compgramsDf should appear in the current environment after sourcing
 
   # Fails because 'by' must specify uniquely valid column(s) --> that is one row cannot be matched to many
-#  # Note that FLO.compgramDf is for one epoch only
-#  FIME.midFreq <- merge(FIME.compgramOccs,FLO.compgramsDf,by="compgram",sort=F, suffixes=c("","FLO"))
+  # Note that FLO.compgramDf is for one epoch only
+  FIME.midFreq <- merge(FIME.compgramOccs,FLO.compgramsDf,by="compgram",sort=F, suffixes=c("","FLO"))
   
-      cntFLO <- array(FLO.compgramsDf$cnt)
-      names(cntFLO) <-FLO.compgramsDf$compgram
+#      cntFLO <- array(FLO.compgramsDf$cnt)
+#      names(cntFLO) <-FLO.compgramsDf$compgram
+#      
+#      FIME.midFreq <- a_ply(FIME.compgramOccs,1,function(occ) {
+#            if(is.na(cntFLO[occ$compgram])) 
+#                return(NULL)
+#            else
+#               return(occ)
+#            } ,.expand = FALSE)
+#       rm(cntFLO)
       
-      FIME.midFreq <- a_ply(FIME.compgramOccs,1,function(occ) {
-            if(is.na(cntFLO[occ$compgram])) 
-                return(NULL)
-            else
-               return(occ)
-            } ,.expand = FALSE)
-       rm(cntFLO)
-       
    # Be polite and don't delete your caller's stuff
 #  rm(FIME.compgramOccs)
   rm(FLO.compgramsDf)
@@ -46,19 +46,19 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
   FIME.midFreq <- FIME.compgramOccs
 }
 
-try(stop(paste(Sys.time(),FIM.label, " - FIM for epoch:",FIME.epochstartux, "num occs after pruning:",nrow(FIME.midFreq))))
+print(paste(Sys.time(),FIM.label, " - FIM for epoch:",FIME.epochstartux, "num occs after pruning:",nrow(FIME.midFreq)))
 
 # trans4 <- as(split(a_df3[,"item"], a_df3[,"TID"]), "transactions") 
 FIME.transacts <- as(split(FIME.midFreq$compgram, FIME.midFreq$id), "transactions")
 
 rm(FIME.midFreq)
 
-try(stop(paste(Sys.time(),FIM.label, " - num transactions:",length(FIME.transacts))))
+print(paste(Sys.time(),FIM.label, " - num transactions:",length(FIME.transacts)))
 
 FIMW.epochFIS <- eclat(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
 
 #  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
-try(stop(paste(Sys.time(),FIM.label, " - Done mining for epoch:", FIME.epochstartux, "num FIS:",length(FIMW.epochFIS))))
+print(paste(Sys.time(),FIM.label, " - Done mining for epoch:", FIME.epochstartux, "num FIS:",length(FIMW.epochFIS)))
 
 epochFile<-paste(FIME.outDir,"/fis_",FIME.epochstartux,".csv",sep="")
 
@@ -82,4 +82,4 @@ rm(FIME.transacts)
 
 
 
-try(stop(paste(Sys.time(),FIM.label, " - Done for epoch:", FIME.epochstartux, "file:",epochFile)))
+print(paste(Sys.time(),FIM.label, " - Done for epoch:", FIME.epochstartux, "file:",epochFile))
