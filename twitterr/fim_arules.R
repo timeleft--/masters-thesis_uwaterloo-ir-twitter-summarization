@@ -20,7 +20,7 @@ FIM.epoch <- '1hr'
 FIM.support <- 5
 FIM.windowLenSec <- 60*60*24
 
-FIM.fislenm <- 5
+FIM.fislenm <- 10
 
 
 if(FIM.DEBUG){

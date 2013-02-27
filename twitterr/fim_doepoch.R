@@ -108,6 +108,14 @@ print(paste(Sys.time(),FIME.label,FIME.day, " - Done mining for epoch:", FIME.ep
 
 tryCatch({
 if(length(FIME.epochFIS) > 0){
+  write(FIME.epochFIS,file=paste(FIME.epochFile,"all",sep="."),append = FALSE, quote = FALSE, sep = "\t",
+      eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+      col.names = FALSE, # qmethod = c("escape", "double"),
+      fileEncoding = "UTF-8")
+  unlink(FIME.epochFile)
+  
+  FIME.epochFIS <- FIME.epochFIS[which(is.closed(FIME.epochFIS)),]
+  
   write(FIME.epochFIS,file=FIME.epochFile,append = FALSE, quote = FALSE, sep = "\t",
       eol = "\n", na = "NA", dec = ".", row.names = FALSE,
       col.names = FALSE, # qmethod = c("escape", "double"),
