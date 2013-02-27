@@ -15,9 +15,9 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
 #  # Note that FLO.compgramDf is for one epoch only
 #  FIME.midFreq <- merge(FIME.compgramOccs,FLO.compgramsDf,by="compgram",sort=F, suffixes=c("","FLO"))
   
-      cntFLO <- array(FLO.compgramsDf$cnt)
-      names(cntFLO) <-FLO.compgramsDf$compgram
-      
+#      cntFLO <- array(FLO.compgramsDf$cnt)
+#      names(cntFLO) <-FLO.compgramsDf$compgram
+#      
 ##      filterFunc <- function(occ) {
 ##        if(is.na(cntFLO[occ$compgram])) 
 ##          if(FLO.more){return(occ)} else {return(NULL)}
