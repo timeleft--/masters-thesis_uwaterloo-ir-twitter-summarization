@@ -313,6 +313,6 @@ for(day in FIM.days) {
   
   try(rm(FIMW.epochFIS)) 
   try(rm(FIMW.nonovOcc))
-  },error=function(e) print(paste("Error for day",day,e,sep="-")), finally=print(paste("Day done:",day))
+  },error=function(e) print(paste("Error for day",day,e,sep="-")), finally=print(paste("Day done:",day)))
 }
 }
