@@ -2,8 +2,23 @@ FLO.DEBUG <- TRUE
 
 FIME.epochstartux<-FIME.compgramOccs$epochstartux[1]
 
+FIME.skipThisEpoch <- FALSE
+FIME.epochFile<-paste(FIME.outDir,"/fis_",FIME.epochstartux,".csv",sep="")
+if(file.exists(FIME.epochFile)) {
+  if(FIME.SKIP_IF_OUTFILE_EXISTS){
+    FIME.SKIP_IF_OUTFILE_EXISTS <- TRUE
+  } 
+  FIME.bakFile <- paste(FIME.epochFile,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
+  warning(paste("Renaming existing output file",FIME.epochFile,FIME.bakFile))
+  file.rename(FIME.epochFile, #from
+      FIME.bakFile)
+}
+
 print(paste(Sys.time(),FIM.label, " - FIM for epoch:",FIME.epochstartux, "num occs before pruning:",nrow(FIME.compgramOccs)))
 
+if(FIME.SKIP_IF_OUTFILE_EXISTS){
+  print(paste(Sys.time(),FIM.label, " - Skipping epoch:", FIME.epochstartux, "file:",FIME.epochFile))
+} else {
 if(FIM.PRUNE_HIGHER_THAN_OBAMA){
   
   ########Read the compgram vocabulary
@@ -84,10 +99,10 @@ FIMW.epochFIS <- eclat(FIME.transacts,parameter = list(supp = FIM.support/length
 #  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
 print(paste(Sys.time(),FIM.label, " - Done mining for epoch:", FIME.epochstartux, "num FIS:",length(FIMW.epochFIS)))
 
-epochFile<-paste(FIME.outDir,"/fis_",FIME.epochstartux,".csv",sep="")
 
+tryCatch({
 if(length(FIMW.epochFIS) > 0){
-  write(FIMW.epochFIS,file=epochFile,sep="\t",
+  write(FIMW.epochFIS,file=FIME.epochFile,sep="\t",
       col.names=NA) #TODO: colnames
   
   interest<-interestMeasure(FIMW.epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = FIME.transacts)
@@ -95,15 +110,17 @@ if(length(FIMW.epochFIS) > 0){
   # rewrite with interest
   ry(stop(paste(Sys.time(),FIM.label, " - Rewriting FIS for epoch:", FIME.epochstartux, "with interest")))
   
-  write(FIMW.epochFIS,file=epochFile,sep="\t",
+  write(FIMW.epochFIS,file=FIME.epochFile,sep="\t",
       col.names=NA) #TODO: colnames
   rm(interest)
 } else {
-  file.create(paste(epochFile,"empty",sep="."))
+  file.create(paste(FIME.epochFile,"empty",sep="."))
 }
+},finally=
 rm(FIME.transacts)
+)
 
 
 
-
-print(paste(Sys.time(),FIM.label, " - Done for epoch:", FIME.epochstartux, "file:",epochFile))
+print(paste(Sys.time(),FIM.label, " - Done for epoch:", FIME.epochstartux, "file:",FIME.epochFile))
+}
