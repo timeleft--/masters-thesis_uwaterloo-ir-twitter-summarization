@@ -307,12 +307,14 @@ for(day in FIM.days) {
   d_ply(idata.frame(FIMW.nonovOcc),c("epochstartux"),function(FIME.compgramOccs){
         FLO.epochstartux <- FIME.compgramOccs$epochstartux[1]
       	FLO.day <- day
-	source("fim_doepoch.R",local = TRUE,echo = TRUE)
+	
+        source("fim_doepoch.R",local = TRUE,echo = TRUE)
+        try(rm(FIMW.epochFIS)) 
+  
         rm(FIME.compgramOccs)
         return(NULL) #just in case
       },.parallel=TRUE)
   
-  try(rm(FIMW.epochFIS)) 
   try(rm(FIMW.nonovOcc))
   },error=function(e) print(paste("Error for day",day,e,sep="-")), finally=print(paste("Day done:",day)))
 }
