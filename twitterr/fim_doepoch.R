@@ -11,20 +11,20 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
   source("fim_less-than-obama.R", local = TRUE, echo = TRUE)
   #FLO.compgramsDf should appear in the current environment after sourcing
 
-  # Fails because 'by' must specify uniquely valid column(s) --> that is one row cannot be matched to many
-  # Note that FLO.compgramDf is for one epoch only
-  FIME.midFreq <- merge(FIME.compgramOccs,FLO.compgramsDf,by="compgram",sort=F, suffixes=c("","FLO"))
+#  # Fails because 'by' must specify uniquely valid column(s) --> that is one row cannot be matched to many
+#  # Note that FLO.compgramDf is for one epoch only
+#  FIME.midFreq <- merge(FIME.compgramOccs,FLO.compgramsDf,by="compgram",sort=F, suffixes=c("","FLO"))
   
-#      cntFLO <- array(FLO.compgramsDf$cnt)
-#      names(cntFLO) <-FLO.compgramsDf$compgram
-#      
-#      FIME.midFreq <- a_ply(FIME.compgramOccs,1,function(occ) {
-#            if(is.na(cntFLO[occ$compgram])) 
-#                return(NULL)
-#            else
-#               return(occ)
-#            } ,.expand = FALSE)
-#       rm(cntFLO)
+      cntFLO <- array(FLO.compgramsDf$cnt)
+      names(cntFLO) <-FLO.compgramsDf$compgram
+      
+      FIME.midFreq <- a_ply(FIME.compgramOccs,1,function(occ) {
+            if(is.na(cntFLO[occ$compgram])) 
+                return(NULL)
+            else
+               return(occ)
+            } ,.expand = FALSE)
+       rm(cntFLO)
       
    # Be polite and don't delete your caller's stuff
 #  rm(FIME.compgramOccs)
