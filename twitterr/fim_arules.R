@@ -124,7 +124,7 @@ occurrencesToTransactions <- function(day, compgramlenm, queryTimeUx, windowLenS
     historyDays <- c(day)  
   }
   dateSQL <- paste(paste("date",historyDays,sep="="),collapse=" or ")
-  dateSQL <- paste(dateSQL,sprintf('and timemillis >= (%d * 1000::INT8) and timemillis < (%d * 1000::INT8)',sec0Window,queryEpochEndUx))
+  dateSQL <- paste('(',dateSQL,')',sprintf('and timemillis >= (%d * 1000::INT8) and timemillis < (%d * 1000::INT8)',sec0Window,queryEpochEndUx))
   
   # DISTINCT because the fim algorithms in arules work with binary occurrence (that's ok I guess.. for query expansion)
   sqlTemplate <- sprintf("select DISTINCT ON (id,%%s) CAST(%%s as text) as compgram,CAST(id as varchar),floor(timemillis/%d)*%d as epochstartux, %%s as compgramlen,pos 

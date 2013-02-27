@@ -6,21 +6,26 @@ FIME.label <- "FIME"
 
 FIME.epochstartux<-FIME.compgramOccs$epochstartux[1]
 
+print(paste(Sys.time(),FIME.label,FIME.day, " - FIM for epoch:",FIME.epochstartux, "num occs before pruning:",nrow(FIME.compgramOccs)))
+
+##############
+
 FIME.skipThisEpoch <- FALSE
 FIME.epochFile<-paste(FIME.outDir,"/fis_",FIME.epochstartux,".csv",sep="")
 if(file.exists(FIME.epochFile)) {
   if(FIME.SKIP_IF_OUTFILE_EXISTS){
     FIME.skipThisEpoch <- TRUE
-  } 
-  FIME.bakFile <- paste(FIME.epochFile,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
-  print(paste(Sys.time(),FIME.label,FIME.day, " - Renaming existing output file",FIME.epochFile,FIME.bakFile))
-  file.rename(FIME.epochFile, #from
-      FIME.bakFile)
+  } else {
+    FIME.bakFile <- paste(FIME.epochFile,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
+    print(paste(Sys.time(),FIME.label,FIME.day, " - Renaming existing output file",FIME.epochFile,FIME.bakFile))
+    file.rename(FIME.epochFile, #from
+        FIME.bakFile)
+  }
 }
 
-print(paste(Sys.time(),FIME.label,FIME.day, " - FIM for epoch:",FIME.epochstartux, "num occs before pruning:",nrow(FIME.compgramOccs)))
+##############
 
-if(FIME.SKIP_IF_OUTFILE_EXISTS){
+if(FIME.skipThisEpoch){
   print(paste(Sys.time(),FIME.label,FIME.day, " - Skipping epoch:", FIME.epochstartux, "file:",FIME.epochFile))
 } else {
 if(FIM.PRUNE_HIGHER_THAN_OBAMA){
