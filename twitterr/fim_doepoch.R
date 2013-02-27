@@ -18,14 +18,38 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
       cntFLO <- array(FLO.compgramsDf$cnt)
       names(cntFLO) <-FLO.compgramsDf$compgram
       
-      FIME.midFreq <- a_ply(FIME.compgramOccs,1,function(occ) {
-            if(is.na(cntFLO[occ$compgram])) 
-                return(NULL)
-            else
-               return(occ)
-            } ,.expand = FALSE)
-       rm(cntFLO)
-      
+##      filterFunc <- function(occ) {
+##        if(is.na(cntFLO[occ$compgram])) 
+##          if(FLO.more){return(occ)} else {return(NULL)}
+##        else
+##        if(FLO.more){return(NULL)} else {return(occ)}
+##      }
+#      if(FLO.more){
+#        filterFunc <- function(occ) {
+#          if(is.na(cntFLO[occ$compgram])) 
+#            return(occ)
+#          else
+#            return(NULL)
+#        }
+#      } else {
+#        filterFunc <- function(occ) {
+#          if(is.na(cntFLO[occ$compgram])) 
+#            return(NULL)
+#          else
+#            return(occ)
+#        }
+#      }
+#      
+#      FIME.midFreq <- a_ply(FIME.compgramOccs,1, filterFunc,.expand = FALSE)
+#       rm(cntFLO)
+  
+  FIME.midFreqIx <- match(FIME.compgramOccs$compgram,FLO.compgramsDf$compgram,nomatch=0)
+  if(FLO.more){
+    FIME.midFreq <- FIME.compgramOccs[which(FIME.midFreqIx==0),]
+  } else {
+    FIME.midFreq <- FIME.compgramOccs[which(FIME.midFreqIx>0),]
+  }
+  
    # Be polite and don't delete your caller's stuff
 #  rm(FIME.compgramOccs)
   rm(FLO.compgramsDf)

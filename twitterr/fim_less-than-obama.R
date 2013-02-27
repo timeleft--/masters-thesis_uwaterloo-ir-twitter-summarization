@@ -3,6 +3,7 @@
 # Author: yaboulna
 ###############################################################################
 
+FLO.more<-TRUE
 
 FLO.label <- "FLO"
 FLO.DEBUG <- FALSE
@@ -57,15 +58,13 @@ try(stop(paste(Sys.time(), FLO.label, "Connected to DB", FLO.db)))
 
 #######################################################
 
-sqlTemplate <- sprintf('(select DISTINCT ON (compgram) %%s as compgramlen, CAST (%%s as text) as compgram, date, %%s as epochstartux, cnt  from %%s_%s%%d where date=%d and cnt <= %d and %%s=(%d * %%d::INT8) and %%s=%%d )',
-    FLO.epoch,FLO.day,FLO.threshold,FLO.epochstartux)
+sqlTemplate <- sprintf('(select DISTINCT ON (compgram) %%s as compgramlen, CAST (%%s as text) as compgram, date, %%s as epochstartux, cnt  from %%s_%s%%d where date=%d and cnt %s %d and %%s=(%d * %%d::INT8) and %%s=%%d )',
+    FLO.epoch,FLO.day,ifelse(FLO.more,'>','<='),FLO.threshold,FLO.epochstartux)
 
 sqlLen <- c()
 for(len in 1:2){
   sqlLen <- c(sqlLen, sprintf(sqlTemplate,"ngramlen","ngramarr","(epochstartmillis/1000)","cnt",len,"epochstartmillis",1000,"ngramlen",len))
 }
-#sqlUnigram <- sprintf('(select ngramlen as compgramlen, CAST (ngramarr as text) as compgram, date, (epochstartmillis/1000) as epochstartux, cnt  from cnt_%s1 where date=%d and cnt <= %d)', 
-#sqlLen <- c(sqlUnigram)
 
 for(len in 3:FLO.compgramlenm) {
   sqlLen <- c(sqlLen, sprintf(sqlTemplate,FLO.lenColName, FLO.gramColName, FLO.timeSelect, FLO.cntTablePrefix,len, FLO.timeSelect,FLO.uxTimeToColTimeMultiplier,FLO.lenColName,len))
