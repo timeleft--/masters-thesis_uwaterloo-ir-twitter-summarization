@@ -1,4 +1,5 @@
 FLO.DEBUG <- TRUE
+FIME.SKIP_IF_OUTFILE_EXISTS <- TRUE
 
 FIME.epochstartux<-FIME.compgramOccs$epochstartux[1]
 
@@ -6,7 +7,7 @@ FIME.skipThisEpoch <- FALSE
 FIME.epochFile<-paste(FIME.outDir,"/fis_",FIME.epochstartux,".csv",sep="")
 if(file.exists(FIME.epochFile)) {
   if(FIME.SKIP_IF_OUTFILE_EXISTS){
-    FIME.SKIP_IF_OUTFILE_EXISTS <- TRUE
+    FIME.skipThisEpoch <- TRUE
   } 
   FIME.bakFile <- paste(FIME.epochFile,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
   warning(paste("Renaming existing output file",FIME.epochFile,FIME.bakFile))
