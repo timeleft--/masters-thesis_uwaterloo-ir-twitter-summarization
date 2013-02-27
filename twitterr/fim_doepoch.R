@@ -116,6 +116,8 @@ if(length(FIME.epochFIS) > 0){
   
   FIME.epochFIS <- FIME.epochFIS[which(is.closed(FIME.epochFIS)),]
   
+  print(paste(Sys.time(),FIME.label,FIME.day, " - Chose only closed itemsets for epoch:", FIME.epochstartux, "num closed FIS:",length(FIME.epochFIS)))
+  
   write(FIME.epochFIS,file=FIME.epochFile,append = FALSE, quote = FALSE, sep = "\t",
       eol = "\n", na = "NA", dec = ".", row.names = FALSE,
       col.names = FALSE, # qmethod = c("escape", "double"),
