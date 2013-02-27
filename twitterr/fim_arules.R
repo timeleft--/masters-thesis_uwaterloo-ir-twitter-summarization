@@ -6,7 +6,7 @@ FIM.PRUNE_HIGHER_THAN_OBAMA <- TRUE
 USE_SOURCE_TRICK <- TRUE
 
 FIM.label <- "FIM"
-FIM.DEBUG <-  FALSE
+FIM.DEBUG <- FALSE
 FIM.TRACE <- FALSE
 
 FIM.argv <- commandArgs(trailingOnly = TRUE)
@@ -36,7 +36,7 @@ if(FIM.DEBUG){
 } else {
   FIM.db <- "full"
   FIM.dataRoot <- "~/r_output/"
-  FIM.nCores<-24
+  FIM.nCores<-8 #24 each epoch needs lots of memory.. I'm not sure if 8 is too much!
   FIM.days <- unique(c( 120925,  120926,  120930,  121008,  121013,  121016,  121026,  121027,  121028,  121029,  121030,  121103,  121104,  121105,  121106,  121108,  121110,  121116,  121119,  121120,  121122,  121123,  121125,  121205,  121206,  121210,  121214,  121215,  121231,  130103,  130104)) #missing data: 120914,121222,  121223,
 }
 
