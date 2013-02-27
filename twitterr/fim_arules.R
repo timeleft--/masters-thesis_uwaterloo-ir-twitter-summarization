@@ -2,9 +2,10 @@
 # 
 # Author: yia
 ###############################################################################
+FIM.PRUNE_HIGHER_THAN_OBAMA <- TRUE
 
 FIM.label <- "FIM"
-FIM.DEBUG <- FALSE
+FIM.DEBUG <- TRUE
 FIM.TRACE <- TRUE
 
 FIM.argv <- commandArgs(trailingOnly = TRUE)
@@ -16,25 +17,30 @@ FIM.occsTableName <-   "bak_alloccs" #"occurrences"
 
 FIM.epoch <- '1hr'
 FIM.support <- 5
-FIM.windowLenSec <- 60*60*72
+FIM.windowLenSec <- 60*60*1
 
 FIM.fislenm <- 15
 
 
 if(FIM.DEBUG){
   FIM.db <- "sample-0.01"
+  FIM.gramColName <- "compgram"
+  FIM.lenColName <- "compgramlen"
+  FIM.occsTableName <-   "occurrences" 
+  
+  
   FIM.dataRoot <- "~/r_output_debug/"
   FIM.nCores<-2
   
 } else {
   FIM.db <- "full"
   FIM.dataRoot <- "~/r_output/"
-  FIM.nCores<-2
+  FIM.nCores<-24
   
 }
 
 if(FIM.TRACE){
-  compgramlenm <- FIM.compgramlenm
+  compgramlenm <- 2 #FIM.compgramlenm
   
   epoch=FIM.epoch
   db=FIM.db
@@ -235,27 +241,59 @@ nonovOcc <- occsDf
   
   fimForEpoch <- function(epcg) {
     
-    require(arules)
+    epochstartux<-epcg$epochstartux[1]
     
-    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - FIM for epoch:", epcg$epochstartux[1], "num occs:",nrow(epcg))))
+    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - FIM for epoch:",epochstartux, "num occs before pruning:",nrow(epcg))))
+    
+    if(FIM.PRUNE_HIGHER_THAN_OBAMA){
+     
+      #day alread set
+      source("fim_less-than-obama.R", local = TRUE, echo = TRUE)
+      #FLO.compgramsDf should appear in the current environment after sourcing
+    
+      # Note that FLO.compgramDf is for one epoch only
+      midFreq <- merge(epcg,FLO.compgramsDf,by="compgram",sort=F, suffixes=c("","FLO"))
+    
+#      cntFLO <- array(FLO.compgramsDf$cnt)
+#      names(cntFLO) <-FLO.compgramsDf$compgram
+#      
+#      midFreq <- a_ply(epcg,1,function(occ) {
+#            if(is.na(cntFLO[occ$compgram])) 
+#                return(NULL)
+#            else
+#               return(occ)
+#            } ,.expand = FALSE)
+      
+      rm(FLO.compgramsDf)
+    } else {
+      # renaming will cost us a copy in case we don't want to do anything, right? NO:
+      # From http://cran.r-project.org/doc/manuals/R-ints.html
+      # The named field is set and accessed by the SET_NAMED and NAMED macros, and take values 0, 1 and 2. R has a ‘call by value’ illusion, so an assignment like
+      #     b <- a
+      #appears to make a copy of a and refer to it as b. However, if neither a nor b are subsequently altered there is no need to copy. What really happens is that a new symbol b is bound to the same value as a and the named field on the value object is set (in this case to 2). When an object is about to be altered, the named field is consulted. A value of 2 means that the object must be duplicated before being changed. (Note that this does not say that it is necessary to duplicate, only that it should be duplicated whether necessary or not.)
+      midFreq <- epcg
+    }
+    
+    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - FIM for epoch:",epochstartux, "num occs after pruning:",nrow(midFreq))))
+    
     # trans4 <- as(split(a_df3[,"item"], a_df3[,"TID"]), "transactions") 
-    epochTrans <- as(split(epcg$compgram, epcg$id), "transactions") 
+    epochTrans <- as(split(midFreq$compgram, midFreq$id), "transactions") 
     
     try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - num transactions:",length(epochTrans))))
     
     epochFIS <- eclat(epochTrans,parameter = list(supp = support/length(epochTrans),minlen=2, maxlen=FIM.fislenm))
-    epochFile<-paste(outDir,"/fis_",day,"-",epcg$epochstartux[1],".csv",sep="")
+    epochFile<-paste(outDir,"/fis_",day,"-",epochstartux,".csv",sep="")
     write(epochFIS,file=epochFile,sep="\t",
         col.names=NA) #TODO: colnames
     
-    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Interest for epoch:", epcg$epochstartux[1], "num FIS:",length(epochFIS))))
+    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Interest for epoch:", epochstartux, "num FIS:",length(epochFIS))))
     
     interest=interestMeasure(epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = epochTrans)
     quality(epochFIS) <- cbind(quality(epochFIS), interest)
 #  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
     write(epochFIS,file=epochFile,sep="\t",
         col.names=NA) #TODO: colnames
-    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Done for epoch:", epcg$epochstartux[1], "file:",epochFile)))
+    try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - Done for epoch:", epochstartux, "file:",epochFile)))
   }
 #  debug(fimForEpoch)
   
