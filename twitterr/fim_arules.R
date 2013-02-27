@@ -3,6 +3,7 @@
 # Author: yia
 ###############################################################################
 FIM.PRUNE_HIGHER_THAN_OBAMA <- TRUE
+USE_SOURCE_TRICK <- TRUE
 
 FIM.label <- "FIM"
 FIM.DEBUG <- FALSE
@@ -285,7 +286,7 @@ nonovOcc <- occsDf
 }
 
 
-
+if(USE_SOURCE_TRICK){
 for(day in FIM.days) {
   FIME.outDir <- paste(FIM.dataRoot,"fim",day,sep="/");
   if(!file.exists(FIME.outDir)){
@@ -300,4 +301,7 @@ for(day in FIM.days) {
         source("fim_doepoch.R",local = TRUE,echo = TRUE)
         rm(FIME.compgramOccs)
       },.parallel=TRUE)
+  
+  rm(FIMW.nonovOcc)
+}
 }
