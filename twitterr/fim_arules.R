@@ -5,11 +5,11 @@
 FIM.PRUNE_HIGHER_THAN_OBAMA <- TRUE
 
 FIM.label <- "FIM"
-FIM.DEBUG <- TRUE
-FIM.TRACE <- TRUE
+FIM.DEBUG <- FALSE
+FIM.TRACE <- FALSE
 
 FIM.argv <- commandArgs(trailingOnly = TRUE)
-FIM.compgramlenm<-as.integer(FIM.argv[1]) #2
+FIM.compgramlenm<-as.integer(FIM.argv[1]) #4
 
 FIM.gramColName <- "ngram" #"compgram"
 FIM.lenColName <- "ngramlen" #"compgramlen"
@@ -17,7 +17,7 @@ FIM.occsTableName <-   "bak_alloccs" #"occurrences"
 
 FIM.epoch <- '1hr'
 FIM.support <- 5
-FIM.windowLenSec <- 60*60*1
+FIM.windowLenSec <- 60*60*24
 
 FIM.fislenm <- 15
 
@@ -27,7 +27,7 @@ if(FIM.DEBUG){
   FIM.gramColName <- "compgram"
   FIM.lenColName <- "compgramlen"
   FIM.occsTableName <-   "occurrences" 
-  
+  FIM.days <- c(130104)
   
   FIM.dataRoot <- "~/r_output_debug/"
   FIM.nCores<-2
@@ -36,7 +36,7 @@ if(FIM.DEBUG){
   FIM.db <- "full"
   FIM.dataRoot <- "~/r_output/"
   FIM.nCores<-24
-  
+  FIM.days <- c(130104) #TODO complete list 
 }
 
 if(FIM.TRACE){
@@ -76,8 +76,9 @@ SEC_IN_EPOCH <- c(X5min=(60*5), X1hr=(60*60), X1day=(24*60*60))
 MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
 
 
-#occurrencesToTransactions <- function(day, compgramlenm, queryTimeUx, windowLenSec=FIM.windowLenSec, epoch=FIM.epoch,db=FIM.db, support=FIM.support, dataRoot=FIM.dataRoot){
+occurrencesToTransactions <- function(day, compgramlenm, queryTimeUx, windowLenSec=FIM.windowLenSec, epoch=FIM.epoch,db=FIM.db, support=FIM.support, dataRoot=FIM.dataRoot){
   
+
   
   ############ 
   
@@ -88,27 +89,6 @@ MILLIS_IN_EPOCH <- SEC_IN_EPOCH * 1000
   try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Connected to DB", db)))
   
   
-  ########Read the compgram vocabulary
-#  if(compgramlenm==1){
-#    sql <- printf("select distinct ngramarr[1] as compgram
-#            from cnt_%s%d where date=%d and cnt > %d order by cnt desc;", epoch1, ngramlen1, day, support)
-#  } else {
-#    # compgrams with no enough "support were not originally stored, but that was for item support not itemset  
-#    sql <- sprintf("select distinct ngramarr as compgram
-#            from compcnt_%s%d_%d where cnt > %d order by cnt desc;",epoch1, ngramlen1, day, support)
-#  }
-#  
-#  try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Fetching day's compgrams using sql:\n", sql)))
-#  
-#  compgramRs <- dbSendQuery(con,sql)
-#  compgramDf <- fetch(compgramRs,n=-1)
-#  try(dbClearResult(compgramRs))
-#  
-#  try(stop(paste(Sys.time(), FIM.label, "for day:", day, " - Fetched day's compgrams. nrow:", nrow(compgramDf))))
-#  
-#  if(compgramlenm!=1){
-#    compgramDf <- within(compgramDf, {compgram=stripEndChars(compgram)})
-#  }
   
   ########### Read the occurrences
   
@@ -234,19 +214,23 @@ nonovOcc <- occsDf
 #  write()
 #  ############# Do the FIM for epochs
 #  
-  outDir <- paste(FIM.dataRoot,"fim",sep="/");
-  if(!file.exists(outDir)){
-    dir.create(outDir,recursive = T)
-  }
   
+  FIM.outDir <- paste(FIM.dataRoot,"fim",sep="/");
+  if(!file.exists(FIM.outDir)){
+    dir.create(FIM.outDir,recursive = T)
+  }  
+
   fimForEpoch <- function(epcg) {
     
     epochstartux<-epcg$epochstartux[1]
+    
+    
     
     try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - FIM for epoch:",epochstartux, "num occs before pruning:",nrow(epcg))))
     
     if(FIM.PRUNE_HIGHER_THAN_OBAMA){
      
+      ########Read the compgram vocabulary
       #day alread set
       source("fim_less-than-obama.R", local = TRUE, echo = TRUE)
       #FLO.compgramsDf should appear in the current environment after sourcing
@@ -282,7 +266,7 @@ nonovOcc <- occsDf
     try(stop(paste(Sys.time(),FIM.label, "for day:", day, " - num transactions:",length(epochTrans))))
     
     epochFIS <- eclat(epochTrans,parameter = list(supp = support/length(epochTrans),minlen=2, maxlen=FIM.fislenm))
-    epochFile<-paste(outDir,"/fis_",day,"-",epochstartux,".csv",sep="")
+    epochFile<-paste(FIM.outDir,"/fis_",day,"-",epochstartux,".csv",sep="")
     write(epochFIS,file=epochFile,sep="\t",
         col.names=NA) #TODO: colnames
     
@@ -298,4 +282,22 @@ nonovOcc <- occsDf
 #  debug(fimForEpoch)
   
   d_ply(idata.frame(nonovOcc),c("epochstartux"),fimForEpoch,.parallel=TRUE)
-#}
+}
+
+
+
+for(day in FIM.days) {
+  FIME.outDir <- paste(FIM.dataRoot,"fim",day,sep="/");
+  if(!file.exists(FIME.outDir)){
+    dir.create(FIME.outDir,recursive = T)
+  }
+  FIMW.day <- day
+  source("fim_forwindow.R",local = TRUE,echo = TRUE)
+  #FIMW.nonovOcc will appear in envinronment
+  
+  
+  d_ply(idata.frame(FIMW.nonovOcc),c("epochstartux"),function(FIME.compgramOccs){
+        source("fim_doepoch.R",local = TRUE,echo = TRUE)
+        rm(FIME.compgramOccs)
+      },.parallel=TRUE)
+}
