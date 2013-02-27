@@ -10,7 +10,7 @@ if(file.exists(FIME.epochFile)) {
     FIME.skipThisEpoch <- TRUE
   } 
   FIME.bakFile <- paste(FIME.epochFile,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
-  warning(paste("Renaming existing output file",FIME.epochFile,FIME.bakFile))
+  print(paste(Sys.time(),FIM.label, " - Renaming existing output file",FIME.epochFile,FIME.bakFile))
   file.rename(FIME.epochFile, #from
       FIME.bakFile)
 }
@@ -103,16 +103,22 @@ print(paste(Sys.time(),FIM.label, " - Done mining for epoch:", FIME.epochstartux
 
 tryCatch({
 if(length(FIMW.epochFIS) > 0){
-  write(FIMW.epochFIS,file=FIME.epochFile,sep="\t",
-      col.names=NA) #TODO: colnames
+  write(FIMW.epochFIS,file=FIME.epochFile,append = FALSE, quote = FALSE, sep = "\t",
+      eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+      col.names = FALSE, # qmethod = c("escape", "double"),
+      fileEncoding = "UTF-8")
+  unlink(FIME.epochFile)
   
   interest<-interestMeasure(FIMW.epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = FIME.transacts)
   quality(FIMW.epochFIS) <- cbind(quality(FIMW.epochFIS), interest)
   # rewrite with interest
   ry(stop(paste(Sys.time(),FIM.label, " - Rewriting FIS for epoch:", FIME.epochstartux, "with interest")))
   
-  write(FIMW.epochFIS,file=FIME.epochFile,sep="\t",
-      col.names=NA) #TODO: colnames
+  write(FIMW.epochFIS,file=FIME.epochFile,append = FALSE, quote = FALSE, sep = "\t",
+      eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+      col.names = FALSE, # qmethod = c("escape", "double"),
+      fileEncoding = "UTF-8")
+  unlink(FIME.epochFile)
   rm(interest)
 } else {
   file.create(paste(FIME.epochFile,"empty",sep="."))
