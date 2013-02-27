@@ -43,7 +43,6 @@ try(stop(paste(Sys.time(),FIM.label, " - num transactions:",length(FIME.transact
 
 FIMW.epochFIS <- eclat(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
 
-rm(FIME.transacts)
 
 epochFile<-paste(FIME.outDir,"/fis_",FIME.epochstartux,".csv",sep="")
 write(FIMW.epochFIS,file=epochFile,sep="\t",
@@ -53,6 +52,7 @@ try(stop(paste(Sys.time(),FIM.label, " - Interest for epoch:", FIME.epochstartux
 
 interest=interestMeasure(FIMW.epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = FIME.transacts)
 quality(FIMW.epochFIS) <- cbind(quality(FIMW.epochFIS), interest)
+rm(FIME.transacts)
 #  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
 rm(interest)
 

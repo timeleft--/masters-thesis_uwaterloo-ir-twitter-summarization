@@ -6,7 +6,7 @@ FIM.PRUNE_HIGHER_THAN_OBAMA <- TRUE
 USE_SOURCE_TRICK <- TRUE
 
 FIM.label <- "FIM"
-FIM.DEBUG <- FALSE
+FIM.DEBUG <- TRUE #FALSE
 FIM.TRACE <- FALSE
 
 FIM.argv <- commandArgs(trailingOnly = TRUE)
@@ -29,7 +29,7 @@ if(FIM.DEBUG){
   FIM.lenColName <- "compgramlen"
   FIM.occsTableName <-   "occurrences" 
   FIM.days <- c(130104)
-  
+  FIM.compgramlenm <- 2  
   FIM.dataRoot <- "~/r_output_debug/"
   FIM.nCores<-2
   
@@ -233,6 +233,8 @@ nonovOcc <- occsDf
      
       ########Read the compgram vocabulary
       #day alread set
+      FLO.epochstartux <- epochstartux
+      FLO.day <- day
       source("fim_less-than-obama.R", local = TRUE, echo = TRUE)
       #FLO.compgramsDf should appear in the current environment after sourcing
     
@@ -287,7 +289,12 @@ nonovOcc <- occsDf
 
 
 if(USE_SOURCE_TRICK){
+options(warn=2)
+options(show.error.locations=5)
+options(error = quote(dump.frames(paste("~/r_logs/fim-arules_",format(Sys.time(),format="%y%m%d%H%M%S"),".dump",sep=""), TRUE)))
+
 for(day in FIM.days) {
+  tryCatch({
   FIME.outDir <- paste(FIM.dataRoot,"fim",day,sep="/");
   if(!file.exists(FIME.outDir)){
     dir.create(FIME.outDir,recursive = T)
@@ -298,10 +305,14 @@ for(day in FIM.days) {
   
   
   d_ply(idata.frame(FIMW.nonovOcc),c("epochstartux"),function(FIME.compgramOccs){
-        source("fim_doepoch.R",local = TRUE,echo = TRUE)
+        FLO.epochstartux <- FIME.compgramOccs$epochstartux[1]
+      	FLO.day <- day
+	source("fim_doepoch.R",local = TRUE,echo = TRUE)
         rm(FIME.compgramOccs)
       },.parallel=TRUE)
   
-  rm(FIMW.nonovOcc)
+  try(rm(FIMW.epochFIS)) 
+  try(rm(FIMW.nonovOcc))
+  },error=function(e) print(paste("Error for day",day,e,sep="-")), finally=print(paste("Day done:",day))
 }
 }

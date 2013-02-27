@@ -34,14 +34,10 @@ if(FLO.DEBUG){
 
 if(FLO.TRACE){
   
-  epoch=FLO.epoch
-  db=FLO.db
-  dataRoot=FLO.dataRoot
   
-  epochstartux=1352206800
-  day=121106
+  FLO.epochstartux=1352206800
+  FLO.day=121106
   
-  windowLenSec=FLO.windowLenSec
 }
 
 
@@ -62,7 +58,7 @@ try(stop(paste(Sys.time(), FLO.label, "Connected to DB", FLO.db)))
 #######################################################
 
 sqlTemplate <- sprintf('(select %%s as compgramlen, CAST (%%s as text) as compgram, date, %%s as epochstartux, cnt  from %%s_%s%%d where date=%d and cnt <= %d and %%s=(%d * %%d::INT8) and %%s=%%d )',
-    FLO.epoch,day,FLO.threshold,epochstartux)
+    FLO.epoch,FLO.day,FLO.threshold,FLO.epochstartux)
 
 sqlLen <- c()
 for(len in 1:2){
