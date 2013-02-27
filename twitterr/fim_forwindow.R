@@ -37,7 +37,7 @@ sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(FIMW.day,"0000",sep=""),
 
 
 if(!exists("queryTimeUx") || is.null(queryTimeUx)){
-  queryTimeUx <- sec0CurrDay + 60*60*24 - 1
+  queryTimeUx <- sec0CurrDay + 60*60*24 # - 1
 }
 
 queryEpochEndUx <- floor(queryTimeUx/SEC_IN_EPOCH[[paste("X",FIM.epoch,sep="")]]) * SEC_IN_EPOCH[[paste("X",FIM.epoch,sep="")]]
