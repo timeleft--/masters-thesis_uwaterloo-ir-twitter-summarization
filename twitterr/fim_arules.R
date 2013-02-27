@@ -305,11 +305,11 @@ for(day in FIM.days) {
   
   
   d_ply(idata.frame(FIMW.nonovOcc),c("epochstartux"),function(FIME.compgramOccs){
-        FLO.epochstartux <- FIME.compgramOccs$epochstartux[1]
-      	FLO.day <- day
+#        FIME.epochstartux <- FIME.compgramOccs$epochstartux[1]
+      	FIME.day <- day
 	
         source("fim_doepoch.R",local = TRUE,echo = TRUE)
-        try(rm(FIMW.epochFIS)) 
+        try(rm(FIME.epochFIS)) 
   
         rm(FIME.compgramOccs)
         return(NULL) #just in case

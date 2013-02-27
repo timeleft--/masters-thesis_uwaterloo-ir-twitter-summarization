@@ -2,6 +2,8 @@ FIME.DEBUG <- TRUE
 FIME.SKIP_IF_OUTFILE_EXISTS <- FALSE
 FIME.calcInterest <- TRUE
 
+FIME.label <- "FIME"
+
 FIME.epochstartux<-FIME.compgramOccs$epochstartux[1]
 
 FIME.skipThisEpoch <- FALSE
@@ -11,20 +13,22 @@ if(file.exists(FIME.epochFile)) {
     FIME.skipThisEpoch <- TRUE
   } 
   FIME.bakFile <- paste(FIME.epochFile,"_",format(Sys.time(),format="%y%m%d%H%M%S"),".bak",sep="")
-  print(paste(Sys.time(),FIM.label, " - Renaming existing output file",FIME.epochFile,FIME.bakFile))
+  print(paste(Sys.time(),FIME.label,FIME.day, " - Renaming existing output file",FIME.epochFile,FIME.bakFile))
   file.rename(FIME.epochFile, #from
       FIME.bakFile)
 }
 
-print(paste(Sys.time(),FIM.label, " - FIM for epoch:",FIME.epochstartux, "num occs before pruning:",nrow(FIME.compgramOccs)))
+print(paste(Sys.time(),FIME.label,FIME.day, " - FIM for epoch:",FIME.epochstartux, "num occs before pruning:",nrow(FIME.compgramOccs)))
 
 if(FIME.SKIP_IF_OUTFILE_EXISTS){
-  print(paste(Sys.time(),FIM.label, " - Skipping epoch:", FIME.epochstartux, "file:",FIME.epochFile))
+  print(paste(Sys.time(),FIME.label,FIME.day, " - Skipping epoch:", FIME.epochstartux, "file:",FIME.epochFile))
 } else {
 if(FIM.PRUNE_HIGHER_THAN_OBAMA){
   
   ########Read the compgram vocabulary
-  #day alread set
+  FLO.epochstartux <- FIME.epochstartux
+  FLO.day <- FIME.day
+  
   source("fim_less-than-obama.R", local = TRUE, echo = TRUE)
   #FLO.compgramsDf should appear in the current environment after sourcing
 
@@ -87,36 +91,36 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
   FIME.midFreq <- FIME.compgramOccs
 }
 
-print(paste(Sys.time(),FIM.label, " - FIM for epoch:",FIME.epochstartux, "num occs after pruning:",nrow(FIME.midFreq),"before pruning:",nrow(FIME.compgramOccs)))
+print(paste(Sys.time(),FIME.label,FIME.day, " - FIM for epoch:",FIME.epochstartux, "num occs after pruning:",nrow(FIME.midFreq),"before pruning:",nrow(FIME.compgramOccs)))
 
 # trans4 <- as(split(a_df3[,"item"], a_df3[,"TID"]), "transactions") 
 FIME.transacts <- as(split(FIME.midFreq$compgram, FIME.midFreq$id), "transactions")
 
 rm(FIME.midFreq)
 
-print(paste(Sys.time(),FIM.label, " - num transactions:",length(FIME.transacts)))
+print(paste(Sys.time(),FIME.label,FIME.day, " - num transactions:",length(FIME.transacts)))
 
-FIMW.epochFIS <- eclat(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
+FIME.epochFIS <- eclat(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
 
 #  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
-print(paste(Sys.time(),FIM.label, " - Done mining for epoch:", FIME.epochstartux, "num FIS:",length(FIMW.epochFIS)))
+print(paste(Sys.time(),FIME.label,FIME.day, " - Done mining for epoch:", FIME.epochstartux, "num FIS:",length(FIME.epochFIS)))
 
 
 tryCatch({
-if(length(FIMW.epochFIS) > 0){
-  write(FIMW.epochFIS,file=FIME.epochFile,append = FALSE, quote = FALSE, sep = "\t",
+if(length(FIME.epochFIS) > 0){
+  write(FIME.epochFIS,file=FIME.epochFile,append = FALSE, quote = FALSE, sep = "\t",
       eol = "\n", na = "NA", dec = ".", row.names = FALSE,
       col.names = FALSE, # qmethod = c("escape", "double"),
       fileEncoding = "UTF-8")
   unlink(FIME.epochFile)
   
   if(FIME.calcInterest){
-    interest<-interestMeasure(FIMW.epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = FIME.transacts)
-    quality(FIMW.epochFIS) <- cbind(quality(FIMW.epochFIS), interest)
+    interest<-interestMeasure(FIME.epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = FIME.transacts)
+    quality(FIME.epochFIS) <- cbind(quality(FIME.epochFIS), interest)
     # rewrite with interest
-    print(paste(Sys.time(),FIM.label, " - Rewriting FIS for epoch:", FIME.epochstartux, "with interest"))
+    print(paste(Sys.time(),FIME.label,FIME.day, " - Rewriting FIS for epoch:", FIME.epochstartux, "with interest"))
     
-    write(FIMW.epochFIS,file=FIME.epochFile,append = FALSE, quote = FALSE, sep = "\t",
+    write(FIME.epochFIS,file=FIME.epochFile,append = FALSE, quote = FALSE, sep = "\t",
         eol = "\n", na = "NA", dec = ".", row.names = FALSE,
         col.names = FALSE, # qmethod = c("escape", "double"),
         fileEncoding = "UTF-8")
@@ -132,5 +136,5 @@ rm(FIME.transacts)
 
 
 
-print(paste(Sys.time(),FIM.label, " - Done for epoch:", FIME.epochstartux, "file:",FIME.epochFile))
+print(paste(Sys.time(),FIME.label,FIME.day, " - Done for epoch:", FIME.epochstartux, "file:",FIME.epochFile))
 }
