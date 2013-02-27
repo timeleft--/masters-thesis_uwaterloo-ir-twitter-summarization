@@ -316,6 +316,6 @@ for(day in FIM.days) {
       },.parallel=TRUE)
   
   try(rm(FIMW.nonovOcc))
-  },error=function(e) print(paste("Error for day",day,e,sep="-")), finally=print(paste("Day done:",day)))
+  },error=function(e) print(paste(Sys.time(),FIM.label,"Error for day",day,e,sep=" - ")), finally=print(paste(Sys.time(),FIM.label,"Day done:",day,sep=" - ")))
 }
 }
