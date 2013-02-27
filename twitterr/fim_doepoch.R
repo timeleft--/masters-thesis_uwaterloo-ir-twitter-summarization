@@ -44,21 +44,28 @@ try(stop(paste(Sys.time(),FIM.label, " - num transactions:",length(FIME.transact
 FIMW.epochFIS <- eclat(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
 
 #  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
+try(stop(paste(Sys.time(),FIM.label, " - Done mining for epoch:", FIME.epochstartux, "num FIS:",length(FIMW.epochFIS))))
 
 epochFile<-paste(FIME.outDir,"/fis_",FIME.epochstartux,".csv",sep="")
-write(FIMW.epochFIS,file=epochFile,sep="\t",
-    col.names=NA) #TODO: colnames
 
-#try(stop(paste(Sys.time(),FIM.label, " - Interest for epoch:", FIME.epochstartux, "num FIS:",length(FIMW.epochFIS))))
-#interest<-interestMeasure(FIMW.epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = FIME.transacts)
-#quality(FIMW.epochFIS) <- cbind(quality(FIMW.epochFIS), interest)
-# rewrite with interest
-#write(FIMW.epochFIS,file=epochFile,sep="\t",
-#    col.names=NA) #TODO: colnames
-
+if(length(FIMW.epochFIS) > 0){
+  write(FIMW.epochFIS,file=epochFile,sep="\t",
+      col.names=NA) #TODO: colnames
+  
+  interest<-interestMeasure(FIMW.epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = FIME.transacts)
+  quality(FIMW.epochFIS) <- cbind(quality(FIMW.epochFIS), interest)
+  # rewrite with interest
+  ry(stop(paste(Sys.time(),FIM.label, " - Rewriting FIS for epoch:", FIME.epochstartux, "with interest")))
+  
+  write(FIMW.epochFIS,file=epochFile,sep="\t",
+      col.names=NA) #TODO: colnames
+  rm(interest)
+} else {
+  file.create(paste(epochFile,"empty",sep="."))
+}
 rm(FIME.transacts)
 
-rm(interest)
+
 
 
 try(stop(paste(Sys.time(),FIM.label, " - Done for epoch:", FIME.epochstartux, "file:",epochFile)))
