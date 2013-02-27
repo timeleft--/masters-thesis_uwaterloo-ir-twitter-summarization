@@ -1,3 +1,5 @@
+FLO.DEBUG <- TRUE
+
 FIME.epochstartux<-FIME.compgramOccs$epochstartux[1]
 
 try(stop(paste(Sys.time(),FIM.label, " - FIM for epoch:",FIME.epochstartux, "num occs before pruning:",nrow(FIME.compgramOccs))))
@@ -23,6 +25,14 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
 #            } ,.expand = FALSE)
 #  rm(FIME.compgramOccs)
   rm(FLO.compgramsDf)
+
+  if(FLO.DEBUG){
+    midFreqFile <- paste(FIME.outDir,"/occ-less-than-obama_",FIME.epochstartux,".csv",sep="")
+    write.table(FIME.midFreq , file = midFreqFile, append = FALSE, quote = FALSE, sep = "\t",
+        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+        col.names = FALSE, # qmethod = c("escape", "double"),
+        fileEncoding = "UTF-8") 
+  }
 } else {
   # renaming will cost us a copy in case we don't want to do anything, right? NO:
   # From http://cran.r-project.org/doc/manuals/R-ints.html
