@@ -2,8 +2,8 @@ FIME.DEBUG <- TRUE
 FIME.SKIP_IF_OUTFILE_EXISTS <- TRUE
 FIME.calcInterest <- FALSE
 
-FIME.compgramOccs <- 0.33
 FIME.DOWNSAMPLE <- TRUE
+FIME.downSampleProportion <- 0.33
 
 FIME.label <- "FIME"
 
