@@ -313,10 +313,11 @@ for(day in FIM.days) {
         try(rm(FIME.epochFIS)) 
   
         rm(FIME.compgramOccs)
-        return(NULL) #just in case
+#        return(NULL) #just in case
       },.parallel=TRUE)
   
   try(rm(FIMW.nonovOcc))
-  },error=function(e) print(paste(Sys.time(),FIM.label,"Error for day",day,e,sep=" - ")), finally=print(paste(Sys.time(),FIM.label,"Day done:",day,sep=" - ")))
+  },error=function(e) print(paste(Sys.time(),FIM.label,"Error for day",day,e,sep=" - ")), 
+  finally=print(paste(Sys.time(),FIM.label,"Day done:",day,sep=" - ")))
 }
 }

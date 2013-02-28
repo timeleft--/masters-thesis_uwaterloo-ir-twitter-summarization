@@ -1,6 +1,6 @@
 FIME.DEBUG <- TRUE
 FIME.SKIP_IF_OUTFILE_EXISTS <- FALSE
-FIME.calcInterest <- FALSE
+FIME.calcInterest <- TRUE
 
 FIME.miningFunc <- eclat #apriori
 
