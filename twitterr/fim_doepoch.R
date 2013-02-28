@@ -1,6 +1,8 @@
 FIME.DEBUG <- TRUE
-FIME.SKIP_IF_OUTFILE_EXISTS <- TRUE
+FIME.SKIP_IF_OUTFILE_EXISTS <- FALSE
 FIME.calcInterest <- FALSE
+
+FIME.miningFunc <- eclat #apriori
 
 FIME.DOWNSAMPLE <- TRUE
 FIME.downSampleProportion <- 0.33
@@ -34,7 +36,8 @@ if(FIME.skipThisEpoch){
 
   if(FIME.DOWNSAMPLE){
      # sample must be without replacement because picking up the same item twice will cause error when coercing to transactions
-     sampleIx <- sample(nrow(FIME.compgramOccs),size=FIME.downSampleProportion * nrow(FIME.compgramOccs),replace = FALSE)
+     sampleIx <- sample(nrow(FIME.compgramOccs),size=FIME.downSampleProportion * nrow(FIME.compgramOccs),replace = FALSE,
+         prob = (FIME.compgramOccs$compgramlen/sum(FIME.compgramOccs$compgramlen)))
      FIME.sampleOccs <- FIME.compgramOccs[sampleIx,]
      rm(sampleIx)
   } else {
@@ -88,7 +91,7 @@ rm(FIME.midFreq)
 print(paste(Sys.time(),FIME.label,FIME.day, " - num transactions:",length(FIME.transacts)))
 
 #FIME.epochFIS <- eclat(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
-FIME.epochFIS <- apriori(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
+FIME.epochFIS <- FIME.miningFunc(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
 
 
 #  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
@@ -101,7 +104,7 @@ if(length(FIME.epochFIS) > 0){
       eol = "\n", na = "NA", dec = ".", row.names = FALSE,
       col.names = FALSE, # qmethod = c("escape", "double"),
       fileEncoding = "UTF-8")
-  unlink(FIME.epochFile)
+#  unlink(FIME.epochFile)
   
   FIME.epochFIS <- FIME.epochFIS[which(is.closed(FIME.epochFIS)),]
   
@@ -111,7 +114,7 @@ if(length(FIME.epochFIS) > 0){
       eol = "\n", na = "NA", dec = ".", row.names = FALSE,
       col.names = FALSE, # qmethod = c("escape", "double"),
       fileEncoding = "UTF-8")
-  unlink(FIME.epochFile)
+#  unlink(FIME.epochFile)
   
   if(FIME.calcInterest){
     interest<-interestMeasure(FIME.epochFIS, c("lift","allConfidence","crossSupportRatio"),transactions = FIME.transacts)
