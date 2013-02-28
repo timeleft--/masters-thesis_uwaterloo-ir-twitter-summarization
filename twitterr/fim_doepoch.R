@@ -33,7 +33,8 @@ if(FIME.skipThisEpoch){
 } else {
 
   if(FIME.DOWNSAMPLE){
-     sampleIx <- sample(nrow(FIME.compgramOccs),size=FIME.downSampleProportion * nrow(FIME.compgramOccs),replace = TRUE)
+     # sample must be without replacement because picking up the same item twice will cause error when coercing to transactions
+     sampleIx <- sample(nrow(FIME.compgramOccs),size=FIME.downSampleProportion * nrow(FIME.compgramOccs),replace = FALSE)
      FIME.sampleOccs <- FIME.compgramOccs[sampleIx,]
      rm(sampleIx)
   } else {
