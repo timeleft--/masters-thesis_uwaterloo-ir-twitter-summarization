@@ -33,7 +33,9 @@ if(FIME.skipThisEpoch){
 } else {
 
   if(FIME.DOWNSAMPLE){
-    FIME.sampleOccs <- sample(FIME.compgramOccs,size=FIME.downSampleProportion * nrow(FIME.compgramOccs),replace = TRUE)
+     sampleIx <- sample(nrow(FIME.compgramOccs),size=FIME.downSampleProportion * nrow(FIME.compgramOccs),replace = TRUE)
+     FIME.sampleOccs <- FIME.compgramOccs[sampleIx,]
+     rm(sampleIx)
   } else {
     FIME.sampleOccs <- FIME.compgramOccs
   }
