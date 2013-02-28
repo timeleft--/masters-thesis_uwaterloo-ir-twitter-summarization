@@ -6,8 +6,8 @@ FIM.PRUNE_HIGHER_THAN_OBAMA <- TRUE
 USE_SOURCE_TRICK <- TRUE
 
 FIM.label <- "FIM"
-FIM.DEBUG <- T
-FIM.TRACE <- T
+FIM.DEBUG <- FALSE
+FIM.TRACE <- FALSE
 
 FIM.argv <- commandArgs(trailingOnly = TRUE)
 FIM.compgramlenm<-as.integer(FIM.argv[1]) #4
