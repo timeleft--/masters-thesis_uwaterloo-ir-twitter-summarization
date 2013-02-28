@@ -2,6 +2,9 @@ FIME.DEBUG <- TRUE
 FIME.SKIP_IF_OUTFILE_EXISTS <- TRUE
 FIME.calcInterest <- FALSE
 
+FIME.compgramOccs <- 0.33
+FIME.DOWNSAMPLE <- TRUE
+
 FIME.label <- "FIME"
 
 FIME.epochstartux<-FIME.compgramOccs$epochstartux[1]
@@ -28,6 +31,14 @@ if(file.exists(FIME.epochFile)) {
 if(FIME.skipThisEpoch){
   print(paste(Sys.time(),FIME.label,FIME.day, " - Skipping epoch:", FIME.epochstartux, "file:",FIME.epochFile))
 } else {
+
+  if(FIME.DOWNSAMPLE){
+    FIME.sampleOccs <- sample(FIME.compgramOccs,size=FIME.downSampleProportion * nrow(FIME.compgramOccs),replace = TRUE)
+  } else {
+    FIME.sampleOccs <- FIME.compgramOccs
+  }
+  FIME.sampleSize <- nrow(FIME.sampleOccs)
+  
 if(FIM.PRUNE_HIGHER_THAN_OBAMA){
   
   ########Read the compgram vocabulary
@@ -37,47 +48,14 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
   source("fim_less-than-obama.R", local = TRUE, echo = TRUE)
   #FLO.compgramsDf should appear in the current environment after sourcing
 
-#  # Fails because 'by' must specify uniquely valid column(s) --> that is one row cannot be matched to many
-#  # Note that FLO.compgramDf is for one epoch only
-#  FIME.midFreq <- merge(FIME.compgramOccs,FLO.compgramsDf,by="compgram",sort=F, suffixes=c("","FLO"))
-  
-#      cntFLO <- array(FLO.compgramsDf$cnt)
-#      names(cntFLO) <-FLO.compgramsDf$compgram
-#      
-##      filterFunc <- function(occ) {
-##        if(is.na(cntFLO[occ$compgram])) 
-##          if(FLO.more){return(occ)} else {return(NULL)}
-##        else
-##        if(FLO.more){return(NULL)} else {return(occ)}
-##      }
-#      if(FLO.more){
-#        filterFunc <- function(occ) {
-#          if(is.na(cntFLO[occ$compgram])) 
-#            return(occ)
-#          else
-#            return(NULL)
-#        }
-#      } else {
-#        filterFunc <- function(occ) {
-#          if(is.na(cntFLO[occ$compgram])) 
-#            return(NULL)
-#          else
-#            return(occ)
-#        }
-#      }
-#      
-#      FIME.midFreq <- a_ply(FIME.compgramOccs,1, filterFunc,.expand = FALSE)
-#       rm(cntFLO)
-  
-  FIME.midFreqIx <- match(FIME.compgramOccs$compgram,FLO.compgramsDf$compgram,nomatch=0)
+  FIME.midFreqIx <- match(FIME.sampleOccs$compgram,FLO.compgramsDf$compgram,nomatch=0)
   if(FLO.more){
-    FIME.midFreq <- FIME.compgramOccs[which(FIME.midFreqIx==0),]
+    FIME.midFreq <- FIME.sampleOccs[which(FIME.midFreqIx==0),]
   } else {
-    FIME.midFreq <- FIME.compgramOccs[which(FIME.midFreqIx>0),]
+    FIME.midFreq <- FIME.sampleOccs[which(FIME.midFreqIx>0),]
   }
   
-   # Be polite and don't delete your caller's stuff
-#  rm(FIME.compgramOccs)
+  rm(FIME.sampleOccs)
   rm(FLO.compgramsDf)
 
   if(FIME.DEBUG){
@@ -93,10 +71,10 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
   # The named field is set and accessed by the SET_NAMED and NAMED macros, and take values 0, 1 and 2. R has a ‘call by value’ illusion, so an assignment like
   #     b <- a
   #appears to make a copy of a and refer to it as b. However, if neither a nor b are subsequently altered there is no need to copy. What really happens is that a new symbol b is bound to the same value as a and the named field on the value object is set (in this case to 2). When an object is about to be altered, the named field is consulted. A value of 2 means that the object must be duplicated before being changed. (Note that this does not say that it is necessary to duplicate, only that it should be duplicated whether necessary or not.)
-  FIME.midFreq <- FIME.compgramOccs
+  FIME.midFreq <- FIME.sampleOccs
 }
 
-print(paste(Sys.time(),FIME.label,FIME.day, " - FIM for epoch:",FIME.epochstartux, "num occs after pruning:",nrow(FIME.midFreq),"before pruning:",nrow(FIME.compgramOccs)))
+print(paste(Sys.time(),FIME.label,FIME.day, " - FIM for epoch:",FIME.epochstartux, "num occs after pruning:",nrow(FIME.midFreq),"before pruning:",FIME.sampleSize))
 
 # trans4 <- as(split(a_df3[,"item"], a_df3[,"TID"]), "transactions") 
 FIME.transacts <- as(split(FIME.midFreq$compgram, FIME.midFreq$id), "transactions")

@@ -10,7 +10,7 @@ FLO.DEBUG <- FALSE
 FLO.TRACE <- FALSE
 
 FLO.argv <- commandArgs(trailingOnly = TRUE)
-FLO.compgramlenm<- 4 #as.integer(FLO.argv[1]) 
+FLO.compgramlenm<- as.integer(FLO.argv[1]) 
 #FLO.thresholdWord <- FLO.argv[2] 
 FLO.threshold <- 150
 
