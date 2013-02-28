@@ -5,7 +5,7 @@ FIME.calcInterest <- TRUE
 FIME.miningFunc <- eclat #apriori
 
 FIME.DOWNSAMPLE <- TRUE
-FIME.downSampleProportion <- 0.33
+FIME.downSampleProportion <- 0.77
 
 FIME.label <- "FIME"
 
