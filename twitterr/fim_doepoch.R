@@ -55,6 +55,7 @@ if(FIM.PRUNE_HIGHER_THAN_OBAMA){
     FIME.midFreq <- FIME.sampleOccs[which(FIME.midFreqIx>0),]
   }
   
+  rm(FIME.midFreqIx)
   rm(FIME.sampleOccs)
   rm(FLO.compgramsDf)
 
