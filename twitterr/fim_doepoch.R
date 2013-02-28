@@ -87,7 +87,9 @@ rm(FIME.midFreq)
 
 print(paste(Sys.time(),FIME.label,FIME.day, " - num transactions:",length(FIME.transacts)))
 
-FIME.epochFIS <- eclat(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
+#FIME.epochFIS <- eclat(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
+FIME.epochFIS <- apriori(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
+
 
 #  # inspect(head(sort(dayFIS,by="crossSupportRatio")))
 print(paste(Sys.time(),FIME.label,FIME.day, " - Done mining for epoch:", FIME.epochstartux, "num FIS:",length(FIME.epochFIS)))
