@@ -13,8 +13,6 @@ EPOCH_GRPS_COUNT_NUM_U2_AFTER_U1 <- TRUE
 
 DEBUG_CTC <- FALSE
 CTC.TRACE <- FALSE
-
-#CC.windowLenSec <- (3600*24*30)
 #options(error=utils::recover) 
 #For debug
 if(DEBUG_CTC){
@@ -78,7 +76,6 @@ toPosixTime <- function(timestamp){
 
 ############################################
 conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngramlen1=1, support=5,
-    candidateThreshold=146, #146.8455795677799607 is the average of obama in all of the collection (not taking into account missing data.. 2 types)
   db="sample-0.01", alignEpochs=FALSE, appendPosixTime=FALSE,
   withTotal=TRUE) { #, parallel=FALSE, parOpts="cores=24", progress="none") {
   
@@ -99,39 +96,6 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
   
   try(stop(paste(Sys.time(), "conttable_construct() for day:", day, " - Connected to DB", db)))
   
-#  if(!is.numeric(support)){
-#    sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
-#                "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
-#    
-#    sec0Window <- sec0CurrDay - CC.windowLenSec
-#    historyDays <- ceiling((sec0CurrDay - sec0Window)/(3600*24))  
-#    
-#    if(historyDays>0){
-#      sec0historyDays <- sec0CurrDay - ((60*60*24) * (1:historyDays))
-#      historyDays <- as.POSIXct(sec0historyDays,origin="1970-01-01",tz="UTC")
-#      historyDays <- format(historyDays, format="%y%m%d", tz="Pacific/Honolulu") #, usetz=TRUE)
-#      historyDays <- c(day,historyDays)
-#    } else {
-#      historyDays <- c(day)  
-#    }
-#    dateSQL <- paste(paste("date",historyDays,sep="="),collapse=" or ")
-#    dateSQL <- paste('(',dateSQL,')',sprintf('and epochstartmillis >= (%d * 1000::INT8) and epochstartmillis < (%d * 1000::INT8)',sec0Window,sec0CurrDay))
-#   
-#    
-#    "select aggr.compgram, min(aggr.avgcnt) as avgcnt, 
-#      |/( ( (min(aggr.age) - count(*)) * ((0 - min(aggr.avgcnt))^2) + sum((aggr.cnt - aggr.avgcnt)^2))  /  min(aggr.age)) as stdevcnt,
-#      min(aggr.avgcnt) +
-#      |/( ( (min(aggr.age) - count(*)) * ((0 - min(aggr.avgcnt))^2) + sum((aggr.cnt - aggr.avgcnt)^2))  /  min(aggr.age)) as threshold
-#   from (select ngramarr as compgram, cnt, min(epochstartmillis) over w as firstepoch,
-#	sum(cnt) over w as sumcnt, min(cnt) over w as mincnt, max(cnt) over w as maxcnt,
-#	 (1352109600000 - min(epochstartmillis) over w )/3600000 AS age,
-#	sum(cnt) over w /((1352109600000 - min(epochstartmillis) over w )/3600000) as avgcnt
-#      from cnt_1hr1
-#      where ngramarr[1] = 'obama' and ( date=121105 or date=121104 or date=121103 or date=121102 or date=121101 or date=121031 or date=121030 or date=121029 ) and epochstartmillis >= (1351504800 * 1000::INT8) and epochstartmillis < (1352109600 * 1000::INT8)
-#      window w AS (partition by ngramarr)) aggr
-#   group by aggr.compgram"
-#  }
-  
   # b.date as date, b.ngramlen as ngramlen,
   sql <- sprintf("select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, 
           b.ngramarr as ngram, b.cnt as togethercnt
@@ -139,7 +103,7 @@ conttable_construct <- function(day, epoch1='1hr', ngramlen2=2, epoch2=NULL, ngr
           join volume_%s%d%s v on v.epochstartmillis = b.epochstartmillis
           where b.date=%d and b.cnt > %d;", epoch2, ngramlen2, ifelse(ngramlen2<3,'',paste("_",day, sep="")), 
       epoch1, ngramlen1, ifelse(ngramlen1<2,'',paste("_",day,sep="")), 
-      day, candidateThreshold) #support)
+      day, support)
   # order by b.epochstartmillis asc <- necessary for the index shifting idea
   ngramRs <- dbSendQuery(con,sql)
 # Test SQL: select b.epochstartmillis/1000 as epochstartux, v.totalcnt as epochvol, b.ngramarr as ngram, b.cnt as togethercnt from cnt_1hr2 b join volume_1hr1 v on v.epochstartmillis = b.epochstartmillis where b.date=121106 and b.cnt > 5;
