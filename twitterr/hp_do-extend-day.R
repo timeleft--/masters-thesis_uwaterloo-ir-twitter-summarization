@@ -5,12 +5,12 @@ if(HPD.DEBUG){
   HPD.nCores <- 2
   HPD.days <- c(121105)
   HPD.db <- "sample-0.01"
-  HPD.dataRoot <- "/home/yaboulna/r_march_debug/"
+#  HPD.dataRoot <- "/home/yaboulna/r_march_debug/"
 } else {
   HPD.nCores <- 24
   HPD.days <- c(121105)
   HPD.db<-"full"
-  HPD.dataRoot <- "/home/yaboulna/r_march/"
+#  HPD.dataRoot <- "/home/yaboulna/r_march/"
 }
 HPD.secsInEpoch <- 3600 # could be window
 
@@ -19,7 +19,7 @@ if(HPD.TRACE){
   epochstartux <-  1352109600 + (3600 * 10)
   len1 <- 1
   
-  HPD.dataRoot <- "~/r_march_debug/" #avoid /home/yaboulna(ga)
+#  HPD.dataRoot <- "~/r_march_debug/" #avoid /home/yaboulna(ga)
 }
 ###################################
 
@@ -35,16 +35,25 @@ while(!require(plyr)){
   install.packages("plyr")
 }
 
+source("yaboulna_utils.R")
+##################################
+
+createRes <- execSql("CREATE TABLE hgram_occ 
+(id int8, timemillis int8, date int4, ngram text, ngramlen int2, tweetlen int2, pos int2)", HPD.db)
+
 ###################################
 nullCombine <- function(a,b) NULL
-
-for(len1 in c(1:4)){
-  HPD.lenDir <- paste(HPD.dataRoot,"/ngram_occ_",len1,"-",len1 + 1, sep="")
+for(day in HPD.days){   
+#    HPD.dayDir <- paste(HPD.dataRoot,"hgram_occ",day, sep="/")
+  dayHgramTable <- paste("hgram_occ",day,sep="_")
+  execSql(sprintf("CREATE TABLE %s () INHERITS(hgram_occ)",dayHgramTable),HPD.db)
+	for(len1 in c(1:4)){
+#  HPD.lenDir <- paste(HPD.dayDir,"/",len1,"-",len1 + 1, sep="")
   
-  for(day in HPD.days){
-    HPD.label <- paste("HPD",len1,day)
+    HPD.label <- paste("HPD",len1,day,sep="_")
     
-    HPD.dayDir <- paste(HPD.lenDir,day, sep="/")
+    FTX.parentHgramsTable <- paste("hgram_occ",day,len1+1, sep="_")
+    execSql(sprintf("CREATE TABLE %s () INHERITS (%s)",FTX.parentHgramsTable, dayHgramTable),HPD.db)
     
     tryCatch({
        

@@ -28,5 +28,13 @@ execCmd <- function(cmd, local=TRUE, asynch=FALSE){
     stop("We will need to supply the pass phrase.. so this can't be done, and I won't make a key without a passphrase")
     cmd <- "ssh yaboulna@hops.cs.uwaterloo.ca"
   }
-  system(cmd,intern=FALSE,wait=!asynch)
+  return(system(cmd,intern=TRUE,wait=!asynch))
+}
+
+#Make sure that ~/.pgpass contains hops.cs.uwaterloo.ca:5433:*:yaboulna:5#afraPG
+execSql <- function (sql,db, asynch=FALSE){ 
+  psql <- sprintf("psql -p 5433 -h hops.cs.uwaterloo.ca -U yaboulna  %s -c \"%%s\"",db)
+  cmd <- sprintf(psql,sql)
+  annotPrint("execSql",cmd)
+  return(execCmd(cmd,asynch = asynch))
 }

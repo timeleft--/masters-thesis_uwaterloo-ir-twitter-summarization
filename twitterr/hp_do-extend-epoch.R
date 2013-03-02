@@ -12,6 +12,7 @@ FTX.candidateThreshold <- 0.000126097580224557
 # Didn't use the average of the counts because this doesn't take into account the seasonal part
 #146.8455795677799607 is the average of obama in all of the collection (not taking into account missing data.. 2 types)
 
+FTX.db <- HPD.db
 if(FTX.DEBUG){
 #  FTX.dataRoot <- "~/r_march_debug/"
 #  FTX.db <- "sample-0.01"
@@ -23,11 +24,23 @@ if(FTX.DEBUG){
 if(FTX.TRACE) {
   FTX.day <- 121105
   FTX.epochstartux <- 1352109600 + (3600 * 10)
-  FTX.len1 <- 1  
+  FTX.len1 <- 1
+  FTX.parentHgramsTable <- paste("hgram_occ",FTX.day,FTX.len1+1, sep="_")
+  
 }
 
 FTX.startPos <- 0
 FTX.maxPos <- 70
+
+FTX.alterTableInheritTemplate <- paste("ALTER TABLE %s 
+    ALTER COLUMN id TYPE int8 USING CAST(id AS int8), 
+    ALTER COLUMN timemillis TYPE int8 USING CAST(timemillis AS int8), 
+    ALTER COLUMN ngramlen TYPE int2, ALTER tweetlen TYPE int2, 
+    ALTER pos TYPE int2, INHERIT ", FTX.parentHgramsTable)
+FTX.createIndexesTemplate <- "CREATE INDEX ${TNAME}_timemillis ON ${TNAME}(timemillis);
+CREATE INDEX ${TNAME}_date ON ${TNAME}(date);
+CREATE INDEX ${TNAME}_ngramlen ON ${TNAME}(ngramlen);
+CREATE INDEX ${TNAME}_pos ON ${TNAME}(pos);"
 ###############################################
 
 
@@ -42,13 +55,13 @@ source("compgrams_utils.R")
 
 FTX.label <- paste("FTX", FTX.day, FTX.epochstartux, sep="_")
 
-FTX.epochFile <- paste(FTX.dayDir,"/hgram_",FTX.epochstartux,".csv",sep="")
+#FTX.epochFile <- paste(FTX.dayDir,"/hgram_",FTX.epochstartux,".csv",sep="")
 
 # TODO if(FTX.SKIP_EXISTING_OUT && file.exists()) 
 
-FTX.stagingFile <- createOutFile(FTX.dayDir,FTX.epochFile)
+#FTX.stagingFile <- createOutFile(FTX.dayDir,FTX.epochFile)
 
-annotPrint(FTX.label, "Prepared outfile", FTX.epochFile)
+#annotPrint(FTX.label, "Prepared outfile", FTX.epochFile)
 
 FTX.drv <- dbDriver("PostgreSQL")
 FTX.con <- dbConnect(FTX.drv, dbname=HPD.db, user="yaboulna", password="5#afraPG",
@@ -82,7 +95,7 @@ annotPrint(FTX.label, "Fetched:", nrow(FTX.len1GramsDf))
 # Get epoch occurrences
 FTX.len1OccsSql <- sprintf("SELECT CAST(id AS varchar), timemillis, date, ngram, ngramlen, tweetlen, pos from %s 
  where date=%d and timemillis >= (%d * 1000::INT8) and timemillis < (%d * 1000::INT8) order by id,pos",
-ifelse(FTX.len1==1,"ngrams1",paste("hgrams_occ",FTX.len1, sep="_")),
+ifelse(FTX.len1==1,"ngrams1",paste("hgram_occ",FTX.day,FTX.len1, sep="_")),
 FTX.day, FTX.epochstartux, FTX.epochstartux + FTX.secsInEpoch)
 
 annotPrint(FTX.label, "Fetching epoch occurrences:\n", FTX.len1OccsSql)
@@ -125,7 +138,7 @@ rm(FTX.len1GramsDf)
 #        join volume_%s%d%s v on v.epochstartmillis = b.epochstartmillis
 #        where b.date=%d and b.epochstartmillis = (%d * 1000::INT8) 
 #				and CAST(b.cnt AS float8)/CAST(v.totalcnt AS float8) > %g);",
-#    ifelse(FTX.len1==1,"ngrams1",paste("hgrams",FTX.len1, sep="_")),
+#    ifelse(FTX.len1==1,"ngrams1",paste("hgram",FTX.len1, sep="_")),
 #		 FTX.day, FTX.epochstartux, FTX.epochstartux + FTX.secsInEpoch,
 #    ifelse(FTX.len1==1,"'(' || ngramarr[1] || ')'","ngram"),
 #    FTX.epoch1, FTX.len1, ifelse(FTX.len1==1,"",paste("_",FTX.day, sep="")), 
@@ -210,12 +223,12 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
         beforeJoin$ngramlen <- FTX.len1 + 1
         beforeJoin$pos <- p
         
-        write.table(beforeJoin, file = FTX.stagingFile, append = TRUE, quote = FALSE, sep = "\t",
-            eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-            col.names = FALSE, # qmethod = c("escape", "double"),
-            fileEncoding = "UTF-8")
-        
-        rm(beforeJoin)
+#        write.table(beforeJoin, file = FTX.stagingFile, append = TRUE, quote = FALSE, sep = "\t",
+#            eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+#            col.names = FALSE, # qmethod = c("escape", "double"),
+#            fileEncoding = "UTF-8")
+#        
+#        rm(beforeJoin)
       }
     } else {
       annotPrint(FTX.label,"WARNING nrow(ugStartPosDf)=",nrow(ugStartPosDf))
@@ -266,12 +279,12 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
       afterJoin$ngramlen <- FTX.len1 + 1
       #already afterJoin$pos <- p
     
-      write.table(afterJoin, file = FTX.stagingFile, append = TRUE, quote = FALSE, sep = "\t",
-        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-        col.names = FALSE, # qmethod = c("escape", "double"),
-        fileEncoding = "UTF-8")
-    
-      rm(afterJoin)
+#      write.table(afterJoin, file = FTX.stagingFile, append = TRUE, quote = FALSE, sep = "\t",
+#        eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+#        col.names = FALSE, # qmethod = c("escape", "double"),
+#        fileEncoding = "UTF-8")
+#    
+#      rm(afterJoin)
     }
   }
   
@@ -279,16 +292,59 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   
   FTX.cgOccMaskForBeforePrevIter <<- cgMaskForBefore
   FTX.label <- FTX.labelOrig
+  
+  if(exists(beforeJoin) && exists(afterJoin)){
+    toWrite <- rbind(beforeJoin,afterJoin)  
+    toWrite <- toWrite[!duplicated(toWrite$id),]
+  } else if(exists(afterJoin)){
+    toWrite <- afterJoin
+  }else if(exists(beforeJoin)){
+    toWrite <- beforeJoin
+  } else {
+    next
+  }
+  
+  try(rm(beforeJoin))
+  try(rm(afterJoin))
+  
+  pospartitionName <- paste("hgram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,p, sep="_")
+  if(dbExistsTable(FTX.con,pospartitionName)){
+    dbRemoveTable(FTX.con,pospartitionName)
+  }
+  dbWriteTable(FTX.con,pospartitionName,toWrite)
+
+  rm(toWrite)
+  
+  alterTableSQL <- sprintf(FTX.alterTableInheritTemplate, pospartitionName)
+  execSql(alterTableSQL,FTX.db)
+  
+  createIndexSQL <- gsub("${TNAME}",pospartitionName,FTX.createIndexesTemplate,fixed=TRUE)
+  execSql(createIndexSQL,FTX.db,asynch = TRUE)
 }
 
 if(FTX.len1==1){
-  write.table(FTX.len1OccsDf[!FTX.dontCopyUgrams,], file = FTX.stagingFile, append = TRUE, quote = FALSE, sep = "\t",
-      eol = "\n", na = "NA", dec = ".", row.names = FALSE,
-      col.names = FALSE, # qmethod = c("escape", "double"),
-      fileEncoding = "UTF-8")
+  unigramsPartitionName <- paste("hgram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,"unextended", sep="_")
+  
+  if(dbExistsTable(FTX.con,unigramsPartitionName)){
+    dbRemoveTable(FTX.con,unigramsPartitionName)
+  }
+  
+  dbWriteTable(FTX.con,unigramsPartitionName,FTX.len1OccsDf[!FTX.dontCopyUgrams,])
+  
+  alterTableSQL <- sprintf(FTX.alterTableInheritTemplate, unigramsPartitionName)
+  execSql(alterTableSQL,FTX.db)
+  
+  createIndexSQL <- gsub("${TNAME}",unigramsPartitionName,FTX.createIndexesTemplate,fixed=TRUE)
+  execSql(createIndexSQL,FTX.db,asynch = TRUE)
+  
+#  write.table(FTX.len1OccsDf[!FTX.dontCopyUgrams,], file = FTX.stagingFile, append = TRUE, quote = FALSE, sep = "\t",
+#      eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+#      col.names = FALSE, # qmethod = c("escape", "double"),
+#      fileEncoding = "UTF-8")
+  rm(FTX.dontCopyUgrams)
 }
 
-file.rename(FTX.stagingFile,FTX.epochFile)
+#file.rename(FTX.stagingFile,FTX.epochFile)
 
 try(dbDisconnect(FTX.con))
 try(dbUnloadDriver(FTX.drv))
