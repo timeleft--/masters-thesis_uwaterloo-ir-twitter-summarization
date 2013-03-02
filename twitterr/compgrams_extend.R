@@ -156,7 +156,8 @@ extendCompgramOfDay <- function(day,
   try(stop(paste(Sys.time(), CGX.loglabel, paste("Read original compound unigrams - nrows:", nrow(cgOcc)), sep=" - ")))
   
   if(ONLY_SEL){
-      # FIXME: THIS ACTUALLY DOESN't really work in all cases, for example:
+    #This is because I forgot to add 1 after calculating which(diff), so all extinsible back ixes are 1 behind
+      # FIXME(done?? not tested): THIS ACTUALLY DOESN't really work in all cases, for example:
   # 265755413205639168 | 1352196002662 | 121106 | share,"{raspberry,ketone}"                          |        3 |       16 |   0
   # 265755413205639168 | 1352196002662 | 121106 | "{with,all}",your                                   |        3 |       16 |   3
   # 265755413205639168 | 1352196002662 | 121106 | all,"{your,friends}"                                |        3 |       16 |   4
@@ -169,7 +170,7 @@ extendCompgramOfDay <- function(day,
        
     # An occurrence is extensibe backwards if there is at least one position not occupied by a compgram before it (hence the diff)
     # An occurrence should be considered extinsible backwards if it is the first selected occ in a doc (hence the !duplicated(id)) 
-    cgOccExtensibleBackIx <- union(which(diff(cgOcc$pos) > ngramlen1),  which(!duplicated(cgOcc$id))) # cgOccFirstInDocIx)
+    cgOccExtensibleBackIx <- union(which(diff(cgOcc$pos) > ngramlen1)+1,  which(!duplicated(cgOcc$id))) # cgOccFirstInDocIx)
     
     # The preceeding occurrence to any one that is extensible backwards is extensible forward.. if it is because of space
     # available, then it should contend for occupying it.. and if it is because the backward extensibility is due to being 

@@ -1,5 +1,5 @@
 annotPrint <- function(label,...){
-  print(paste(Sys.time(), label, ..., sep=" | "))
+  print(paste(Sys.time(), label, paste(...), sep=" | "))
 } 
 
 
