@@ -1,5 +1,6 @@
 annotPrint <- function(label,...){
-  print(paste(Sys.time(), label, paste(...), sep=" | "))
+  cat(paste(Sys.time(), label, paste(...), sep=" | "))
+  cat('\n')
 } 
 
 
@@ -20,4 +21,12 @@ createOutFile <- function(outDir, outFile){
   file.create(retVal)
   
   return(retVal)
+}
+
+execCmd <- function(cmd, local=TRUE, asynch=FALSE){
+  if(!local){
+    stop("We will need to supply the pass phrase.. so this can't be done, and I won't make a key without a passphrase")
+    cmd <- "ssh yaboulna@hops.cs.uwaterloo.ca"
+  }
+  system(cmd,intern=FALSE,wait=!asynch)
 }

@@ -4,13 +4,23 @@ HPD.TRACE <- TRUE
 if(HPD.DEBUG){
   HPD.nCores <- 2
   HPD.days <- c(121105)
-  HPD.
+  HPD.db <- "sample-0.01"
+  HPD.dataRoot <- "/home/yaboulna/r_march_debug/"
 } else {
   HPD.nCores <- 24
   HPD.days <- c(121105)
+  HPD.db<-"full"
+  HPD.dataRoot <- "/home/yaboulna/r_march/"
 }
 HPD.secsInEpoch <- 3600 # could be window
 
+if(HPD.TRACE){
+  day <- 121105
+  epochstartux <-  1352109600 + (3600 * 10)
+  len1 <- 1
+  
+  HPD.dataRoot <- "~/r_march_debug/" #avoid /home/yaboulna(ga)
+}
 ###################################
 
 while(!require(foreach)){
@@ -32,14 +42,17 @@ for(len1 in c(1:4)){
   HPD.lenDir <- paste(HPD.dataRoot,"/ngram_occ_",len1,"-",len1 + 1, sep="")
   
   for(day in HPD.days){
+    HPD.label <- paste("HPD",len1,day)
     
     HPD.dayDir <- paste(HPD.lenDir,day, sep="/")
     
     tryCatch({
+       
         sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
                     "%y%m%d%H%M", tz="Pacific/Honolulu"),origin="1970-01-01"))
-        foreach(epochstartux=seq(sec0CurrDay,sec0CurrDay+(3600*24),by=HPD.secsInEpoch),
-                .inorder = FALSE, .combine = 'nullCombine') %dopar% #TODO: check last iteration
+        
+        foreach(epochstartux=seq(sec0CurrDay,sec0CurrDay+(3600*23),by=HPD.secsInEpoch),
+                .inorder = FALSE, .combine = 'nullCombine') %dopar% 
             {
               FTX.day <- day
               FTX.epochstartux <-epochstartux
@@ -61,13 +74,38 @@ for(len1 in c(1:4)){
       )
   
     # write to DB
-    sprintf("cat %s/*.csv > %s.csv", HPD.dayDir, HPD.dayDir)
-    sprintf("CREATE TABLE hgram_%d_%d_staging () inherits hgram_%d", len,day,len)
-    sprtinf("COPY hgram_%d_%d_staging FROM '%s.csv'",len,day,len,HPD.dayDir)
-    sprintf("CREATE TABLE hgram_occ_%d_%d AS SELECT DISTINCT (ON id,pos) * FROM hgram_%d_%d_staging",len,day,len)
-    sprintf("CREATE TABLE hgram_cnt_%d_%d AS SELECT floor(timemillis/(%d * 1000::INT8))*(%d * 1000::INT8) as epochstartux, ngram, count(*) as cnt 
+    cmd <- sprintf("cat %s/*.csv > %s.csv", HPD.dayDir, HPD.dayDir)
+    annotPrint(HPD.label,cmd)
+    execCmd(cmd)
+    
+    psql <- sptintf("psql -p 5433 -d %s -c \"%%s\"",HPD.db)
+    
+    sql <- sprintf("CREATE TABLE hgram_%d_%d_staging () inherits hgram_%d", len,day,len)
+    cmd <- sprintf(psql,sql)
+    annotPrint(HPD.label,cmd)
+    execCmd(cmd)
+    
+    
+    sql <- sprintf("COPY hgram_%d_%d_staging FROM '%s.csv'",len,day,len,HPD.dayDir)
+    cmd <- sprintf(psq,sql)
+    annotPrint(HPD.label,cmd)
+    execCmd(cmd)
+    
+    sql <- sprintf("CREATE TABLE hgram_occ_%d_%d AS SELECT DISTINCT (ON id,pos) * FROM hgram_%d_%d_staging",len,day,len)
+    cmd <- sprintf(psq,sql)
+    annotPrint(HPD.label,cmd)
+    execCmd(cmd)
+    
+    sql <- sprintf("CREATE TABLE hgram_cnt_%d_%d AS SELECT floor(timemillis/(%d * 1000::INT8))*(%d * 1000::INT8) as epochstartux, ngram, count(*) as cnt 
 from hgram_occ_%d_%d group by ngram",len,day,HPD.secsInEpoch,HPD.secsInEpoch)
-    sprintf("CREATE TABLE hgram_vol_%d_%d AS SELECT epochstartux,sum(cnt) as totalcnt from hgram_cnt_%d_%d group by epochstartux",
+cmd <- sprintf(psq,sql)
+annotPrint(HPD.label,cmd)
+execCmd(cmd)
+
+    sql <- sprintf("CREATE TABLE hgram_vol_%d_%d AS SELECT epochstartux,sum(cnt) as totalcnt from hgram_cnt_%d_%d group by epochstartux",
         len,day,len,day)
+    cmd <- sprintf(psq,sql)
+    annotPrint(HPD.label,cmd)
+    execCmd(cmd)
   }
 }
