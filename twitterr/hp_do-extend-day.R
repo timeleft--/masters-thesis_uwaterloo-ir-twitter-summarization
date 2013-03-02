@@ -12,6 +12,8 @@ if(HPD.DEBUG){
   HPD.db<-"full"
 #  HPD.dataRoot <- "/home/yaboulna/r_march/"
 }
+
+HPD.epoch <- '1hr'
 HPD.secsInEpoch <- 3600 # could be window
 
 if(HPD.TRACE){
@@ -83,38 +85,21 @@ for(day in HPD.days){
       )
   
     # write to DB
-    cmd <- sprintf("cat %s/*.csv > %s.csv", HPD.dayDir, HPD.dayDir)
-    annotPrint(HPD.label,cmd)
-    execCmd(cmd)
     
-    psql <- sptintf("psql -p 5433 -d %s -c \"%%s\"",HPD.db)
-    
-    sql <- sprintf("CREATE TABLE hgram_%d_%d_staging () inherits hgram_%d", len,day,len)
-    cmd <- sprintf(psql,sql)
-    annotPrint(HPD.label,cmd)
-    execCmd(cmd)
-    
-    
-    sql <- sprintf("COPY hgram_%d_%d_staging FROM '%s.csv'",len,day,len,HPD.dayDir)
-    cmd <- sprintf(psq,sql)
-    annotPrint(HPD.label,cmd)
-    execCmd(cmd)
-    
-    sql <- sprintf("CREATE TABLE hgram_occ_%d_%d AS SELECT DISTINCT (ON id,pos) * FROM hgram_%d_%d_staging",len,day,len)
-    cmd <- sprintf(psq,sql)
-    annotPrint(HPD.label,cmd)
-    execCmd(cmd)
-    
-    sql <- sprintf("CREATE TABLE hgram_cnt_%d_%d AS SELECT floor(timemillis/(%d * 1000::INT8))*(%d * 1000::INT8) as epochstartux, ngram, count(*) as cnt 
-from hgram_occ_%d_%d group by ngram",len,day,HPD.secsInEpoch,HPD.secsInEpoch)
-cmd <- sprintf(psq,sql)
-annotPrint(HPD.label,cmd)
-execCmd(cmd)
+    cntTableName <- sprintf("hgram_cnt_%s%d_%d",HPD.epoch,len1+1,day)
+    sql <- sprintf("DROP TABLE IF EXISTS %s; CREATE TABLE %s AS 
+SELECT %d as ngramlen, %d as date, CAST(floor(timemillis/(%d * 1000::INT8))*(%d * 1000::INT8) AS INT8) as epochstartux, 
+ngram, CAST(count(*) AS INT4) as cnt 
+from %s group by ngram,timemillis;",cntTableName,cntTableName,len1+1,day,
+HPD.secsInEpoch,HPD.secsInEpoch,FTX.parentHgramsTable)
 
-    sql <- sprintf("CREATE TABLE hgram_vol_%d_%d AS SELECT epochstartux,sum(cnt) as totalcnt from hgram_cnt_%d_%d group by epochstartux",
-        len,day,len,day)
-    cmd <- sprintf(psq,sql)
-    annotPrint(HPD.label,cmd)
-    execCmd(cmd)
+    execSql(sql,HPD.db)
+
+    volTableName <- sprintf("hgram_vol_%s%d_%d",HPD.epoch,len1+1,day)
+    sql <- sprintf("DROP TABLE IF EXISTS %s; CREATE TABLE %s AS 
+SELECT %d as ngramlen, %d as date, epochstartux,sum(cnt) as totalcnt from %s group by epochstartux;",
+volTableName,volTableName,len1+1,day,cntTableName)
+
+    execSql(sql,HPD.db)
   }
 }

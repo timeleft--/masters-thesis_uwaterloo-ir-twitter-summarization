@@ -267,7 +267,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   
   if(nrow(ugEndPosDf) > 0){
     
-    ugEndPosDf <- within(ugEndPosDf,{unigram=stripEndChars(unigram)})
+#    ugEndPosDf <- within(ugEndPosDf,{unigram=stripEndChars(unigram)})
     
     afterJoin <- merge(ugEndPosDf,  FTX.len1OccsDf[cgOccMaskForAfter,], by="id", sort=F,suffixes=c("",""))
     
