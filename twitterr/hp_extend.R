@@ -68,7 +68,7 @@ for(day in HPD.days){
               FTX.day <- day
               FTX.epochstartux <-epochstartux
               FTX.len1 <- len1  
-              FTX.dayDir <- HPD.dayDir
+#              FTX.dayDir <- HPD.dayDir
               
               source("hp_do-extend-epoch.R")
               
