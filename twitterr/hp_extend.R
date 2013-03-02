@@ -70,7 +70,7 @@ for(day in HPD.days){
               FTX.len1 <- len1  
 #              FTX.dayDir <- HPD.dayDir
               
-              source("hp_do-extend-epoch.R")
+              source("hp_do-extend-epoch.R",local = TRUE,echo = TRUE)
               
               #FTX.extensible
               #FTX.len1OccsDf
