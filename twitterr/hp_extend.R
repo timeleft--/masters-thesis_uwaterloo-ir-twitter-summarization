@@ -1,5 +1,5 @@
 HPD.DEBUG <- TRUE
-HPD.TRACE <- TRUE
+HPD.TRACE <- FALSE
 
 if(HPD.DEBUG){
   HPD.nCores <- 2
@@ -81,7 +81,7 @@ for(day in HPD.days){
         
         
       },error=function(e) print(paste(Sys.time(),"HPD","Error for day",day,e,sep=" - ")), 
-      finally=print(paste("HPD",FIM.label,"Day done:",day,sep=" - "))
+      finally=print(paste("HPD","Day done:",day,sep=" - "))
       )
   
     # write to DB
