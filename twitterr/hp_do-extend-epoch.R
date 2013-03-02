@@ -1,6 +1,6 @@
 ## "Output" FTX.extensible FTX.len1OccsDf
 
-FTX.DEBUG <- TRUE
+FTX.DEBUG <- FALSE
 FTX.TRACE <- FALSE
 
 FTX.epoch2 <- '1hr'
