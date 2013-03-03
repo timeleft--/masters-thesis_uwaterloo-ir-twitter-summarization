@@ -25,6 +25,8 @@ if(FTX.TRACE) {
   FTX.epochstartux <- 1352109600 + (3600 * 10)
   FTX.len1 <- 1
   FTX.parentHgramsTable <- paste("hgram_occ",FTX.day,FTX.len1+1, sep="_")
+#              FTX.dayDir <- HPD.dayDir
+  FTX.db <- "sample-0.01"      
   
 }
 
