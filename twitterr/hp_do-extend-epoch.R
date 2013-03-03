@@ -32,6 +32,8 @@ FTX.startPos <- 0
 FTX.maxPos <- 70
 
 FTX.alterTableInheritTemplate <- paste("ALTER TABLE %s ALTER COLUMN id TYPE int8 USING CAST(id AS int8), ALTER COLUMN timemillis TYPE int8 USING CAST(timemillis AS int8), ALTER COLUMN ngramlen TYPE int2, ALTER tweetlen TYPE int2, ALTER pos TYPE int2, INHERIT ", FTX.parentHgramsTable)
+if(FTX.DEBUG) annotPrint(FTX.alterTableInheritTemplate)
+
 FTX.createIndexesTemplate <- "CREATE INDEX ${TNAME}_timemillis ON ${TNAME}(timemillis); CREATE INDEX ${TNAME}_date ON ${TNAME}(date); CREATE INDEX ${TNAME}_ngramlen ON ${TNAME}(ngramlen); CREATE INDEX ${TNAME}_pos ON ${TNAME}(pos);"
 ###############################################
 

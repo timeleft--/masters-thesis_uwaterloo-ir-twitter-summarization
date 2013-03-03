@@ -79,7 +79,7 @@ for(day in HPD.days){
               FTX.epochstartux <-epochstartux
               FTX.len1 <- len1  
 #              FTX.dayDir <- HPD.dayDir
-                      
+              FTX.db <- HPD.db      
               
               FTX.parentHgramsTable <- daylenHgramsTable
               
