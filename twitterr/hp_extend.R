@@ -37,6 +37,10 @@ while(!require(plyr)){
   install.packages("plyr")
 }
 
+while(!require(RPostgreSQL)){
+  install.packages("RPostgreSQL")
+} 
+
 source("yaboulna_utils.R")
 ##################################
 
