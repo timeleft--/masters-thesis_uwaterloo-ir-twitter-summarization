@@ -111,7 +111,7 @@ HPD.secsInEpoch,HPD.secsInEpoch,FTX.parentHgramsTable)
 
     volTableName <- sprintf("hgram_vol_%s%d_%d",HPD.epoch,len1+1,day)
     sql <- sprintf("DROP TABLE IF EXISTS %s; CREATE TABLE %s AS 
-SELECT %d as ngramlen, %d as date, epochstartux,sum(cnt) as totalcnt from %s group by epochstartux;",
+SELECT %d as ngramlen, %d as date, (epochstartux * 1000::INT8) as epochstartmillis,sum(cnt) as totalcnt from %s group by epochstartux;",
 volTableName,volTableName,len1+1,day,cntTableName)
 
     execSql(sql,HPD.db)

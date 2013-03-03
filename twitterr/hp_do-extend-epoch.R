@@ -68,11 +68,13 @@ annotPrint(FTX.label, "Connected to DB", HPD.db)
 FTX.len1GramsSql <- sprintf("select b.epochstartmillis/1000 as epochstartux, 
         %s as ngram, b.cnt as cnt, CAST(b.cnt AS float8)/CAST(v.totalcnt AS float8) as prop
         from %s_%s%d%s b 
-        join volume_%s%d%s v on v.epochstartmillis = b.epochstartmillis
+        join %s_%s%d%s v on v.epochstartmillis = b.epochstartmillis
         where b.date=%d and b.epochstartmillis = (%d * 1000::INT8) 
 				and CAST(b.cnt AS float8)/CAST(v.totalcnt AS float8) > %g;",
-    ifelse(FTX.len1==1," ngramarr[1] ","ngram"),ifelse(FTX.len1==1,"cnt","hgram_cnt"),
+    ifelse(FTX.len1==1," ngramarr[1] ","ngram"),
+    ifelse(FTX.len1==1,"cnt","hgram_cnt"),
     FTX.epoch1, FTX.len1, ifelse(FTX.len1==1,'',paste("_",FTX.day, sep="")), 
+    ifelse(FTX.len1==1,"volume","hgram_vol"),
     FTX.epoch1, FTX.len1, ifelse(FTX.len1==1,'',paste("_",FTX.day,sep="")), 
     FTX.day, FTX.epochstartux, FTX.candidateThreshold) 
 
