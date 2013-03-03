@@ -31,10 +31,11 @@ execCmd <- function(cmd, local=TRUE, asynch=FALSE){
   return(system(cmd,intern=FALSE,wait=!asynch)) #intern=TRUE causes cannot popen too many open files
 }
 
+execSql.DEBUG <- FALSE
 #Make sure that ~/.pgpass contains hops.cs.uwaterloo.ca:5433:*:yaboulna:5#afraPG
 execSql <- function (sql,db, asynch=FALSE){ 
   psql <- sprintf("psql -p 5433 -h hops.cs.uwaterloo.ca -U yaboulna  %s -c \"%%s\"",db)
   cmd <- sprintf(psql,sql)
-  annotPrint("execSql",cmd)
+  if(execSql.DEBUG) annotPrint("execSql",cmd)
   return(execCmd(cmd,asynch = asynch))
 }

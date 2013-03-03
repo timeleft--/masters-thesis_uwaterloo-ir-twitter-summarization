@@ -49,7 +49,7 @@ source("compgrams_utils.R")
 
 ###############################################
 
-FTX.label <- paste("FTX", FTX.day, FTX.epochstartux, sep="_")
+FTX.label <- paste("FTX", FTX.day,FTX.len1, FTX.epochstartux, sep="_")
 
 #FTX.epochFile <- paste(FTX.dayDir,"/hgram_",FTX.epochstartux,".csv",sep="")
 
@@ -332,6 +332,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   pospartitionName <- paste("hgram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,p, sep="_")
   
   annotPrint(FTX.label,"Writing table",pospartitionName)
+  annotPrint(FTX.label,"nrow after dedup: ", nrow(toWrite))
   
   if(dbExistsTable(FTX.con,pospartitionName)){
     annotPrint(FTX.label,"Removing existing table",pospartitionName)
