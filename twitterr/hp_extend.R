@@ -92,12 +92,12 @@ for(day in HPD.days){
               try(rm(FTX.extensible))
               try(rm(FTX.len1OccsDf))
             },
-            error=function(e) print(paste(Sys.time(),HPD.label,"Error for day-epoch",day,epoch,e,sep=" - ")), 
+            error=function(e) print(paste(Sys.time(),HPD.label,"Error for day-epoch",day,epochstartux,e,sep=" - ")), 
             finally={
               try(dbDisconnect(FTX.con))
               try(dbUnloadDriver(FTX.drv))
               
-              print(paste("HPD","Day-epoch done:",day,epoch,sep=" - "))
+              print(paste("HPD","Day-epoch done:",day,epochstartux,sep=" - "))
               })
             
          }
