@@ -297,7 +297,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   
   if(FTX.DEBUG) annotPrint(FTX.label,"Seeing what's there to be written")
   
-  if(exists(beforeJoin) && exists(afterJoin)){
+  if(exists("beforeJoin") && exists("afterJoin")){
     
     if(FTX.DEBUG) annotPrint(FTX.label,"rbind(beforeJoin,afterJoin)",str(beforeJoin),str(afterJoin))
     toWrite <- rbind(beforeJoin,afterJoin)  
@@ -307,12 +307,12 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
     
     if(FTX.DEBUG) annotPrint(FTX.label,"nrow after dedup: ", nrow(toWrite))
     
-  } else if(exists(afterJoin)){
+  } else if(exists("afterJoin")){
     
     if(FTX.DEBUG) annotPrint(FTX.label,"only afterJoin")
     toWrite <- afterJoin
     
-  }  else if(exists(beforeJoin)){
+  }  else if(exists("beforeJoin")){
     
     if(FTX.DEBUG) annotPrint(FTX.label,"only beforeJoin")
     toWrite <- beforeJoin
