@@ -303,7 +303,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
     toWrite <- rbind(beforeJoin,afterJoin)  
     
     if(FTX.DEBUG) annotPrint(FTX.label,"Total nrow: ", nrow(toWrite))
-    toWrite <- toWrite[!duplicated(toWrite$id),]
+    toWrite <- toWrite[!duplicated(toWrite[,c("id","pos")]),]
     
     if(FTX.DEBUG) annotPrint(FTX.label,"nrow after dedup: ", nrow(toWrite))
     
