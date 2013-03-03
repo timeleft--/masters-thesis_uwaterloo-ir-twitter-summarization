@@ -112,7 +112,7 @@ for(day in HPD.days){
     
     cntTableName <- sprintf("hgram_cnt_%s%d_%d",HPD.epoch,len1+1,day)
     sql <- sprintf("DROP TABLE IF EXISTS %s; CREATE TABLE %s AS 
-SELECT %d as ngramlen, %d as date, CAST(floor(timemillis/(%d * 1000::INT8))*(%d * 1000::INT8) AS INT8) as epochstartux, 
+SELECT %d as ngramlen, %d as date, CAST(floor(timemillis/(%d * 1000::INT8))*(%d) AS INT8) as epochstartux, 
 ngram, CAST(count(*) AS INT4) as cnt 
 from %s group by ngram,timemillis;",cntTableName,cntTableName,len1+1,day,
 HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable)
