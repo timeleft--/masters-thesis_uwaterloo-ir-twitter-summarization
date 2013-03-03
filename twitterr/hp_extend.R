@@ -115,7 +115,7 @@ for(day in HPD.days){
 SELECT %d as ngramlen, %d as date, CAST(floor(timemillis/(%d * 1000::INT8))*(%d * 1000::INT8) AS INT8) as epochstartux, 
 ngram, CAST(count(*) AS INT4) as cnt 
 from %s group by ngram,timemillis;",cntTableName,cntTableName,len1+1,day,
-HPD.secsInEpoch,HPD.secsInEpoch,FTX.parentHgramsTable)
+HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable)
 
     execSql(sql,HPD.db)
 
