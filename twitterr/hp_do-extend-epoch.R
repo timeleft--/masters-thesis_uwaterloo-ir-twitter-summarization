@@ -1,6 +1,6 @@
 ## "Output" FTX.extensible FTX.len1OccsDf
 
-FTX.DEBUG <- FALSE
+FTX.DEBUG <- TRUE
 FTX.TRACE <- FALSE
 
 FTX.epoch2 <- '1hr'
@@ -195,7 +195,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
 
       ugStartPosDf <- get(paste("u",p,sep=""),envir=FTX.ugDfCache,inherits = FALSE)
       
-      annotPrint(FTX.label,"Loaded cached unigrams of start position")
+      annotPrint(FTX.label,"Loaded cached unigrams of start position by sql:\n",sql)
       
     }
     if(is.null(ugStartPosDf)){
@@ -251,7 +251,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   
   sql <- sprintf(sqlTemplate,p+FTX.len1)
   
-  annotPrint(FTX.label, "Fetching unigrams of end position")
+  annotPrint(FTX.label, "Fetching unigrams of end position by sql:\n",sql)
   
   ugEndPosRs <- dbSendQuery(FTX.con,sql)
   ugEndPosDf <- fetch(ugEndPosRs,n=-1)
@@ -263,8 +263,11 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   if(nrow(ugEndPosDf) > 0){
     
 #    ugEndPosDf <- within(ugEndPosDf,{unigram=stripEndChars(unigram)})
-    
+    if(FTX.DEBUG) annotPrint(FTX.label,"Will merge ugEndPos and FTX.len1OccsDf")
+      
     afterJoin <- merge(ugEndPosDf,  FTX.len1OccsDf[cgOccMaskForAfter,], by="id", sort=F,suffixes=c("",""))
+    
+    if(FTX.DEBUG) annotPrint(FTX.label,"Merged ugEndPos and FTX.len1OccsDf")
     
     if(nrow(afterJoin) > 0){
       
