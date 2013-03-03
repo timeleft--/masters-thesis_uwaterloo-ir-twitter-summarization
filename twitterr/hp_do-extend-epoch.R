@@ -260,7 +260,9 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   
   dbClearResult(ugEndPosRs)
   
-  if(nrow(ugEndPosDf) > 0){
+  if(is.null(ugEndPosDf)){
+    annotPrint(FTX.label,"ERROR failed to load unigrams of end position")
+  } else if(nrow(ugEndPosDf) > 0){
     
 #    ugEndPosDf <- within(ugEndPosDf,{unigram=stripEndChars(unigram)})
     if(FTX.DEBUG) annotPrint(FTX.label,"Will merge ugEndPos and FTX.len1OccsDf")
@@ -284,6 +286,8 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
 #    
 #      rm(afterJoin)
     }
+  } else {
+    annotPrint(FTX.label,"WARNING nrow(ugEndPosDf)=",nrow(ugEndPosDf))
   }
   
   assign(paste("u",p+FTX.len1,sep=""),ugEndPosDf,envir=FTX.ugDfCache)
