@@ -1,8 +1,8 @@
-HPD.DEBUG <- FALSE
+HPD.DEBUG <- TRUE
 HPD.TRACE <- FALSE
 
 if(HPD.DEBUG){
-  HPD.nCores <- 2
+  HPD.nCores <- 1
   HPD.days <- c(121105,121106)
   HPD.db <- "sample-0.01"
 #  HPD.dataRoot <- "/home/yaboulna/r_march_debug/"
