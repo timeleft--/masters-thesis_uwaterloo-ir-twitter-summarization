@@ -295,6 +295,8 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   FTX.cgOccMaskForBeforePrevIter <<- cgMaskForBefore
   FTX.label <- FTX.labelOrig
   
+  if(FTX.DEBUG) annotPrint(FTX.label,"Seeing what's there to be written")
+  
   if(exists(beforeJoin) && exists(afterJoin)){
     toWrite <- rbind(beforeJoin,afterJoin)  
     toWrite <- toWrite[!duplicated(toWrite$id),]
@@ -303,6 +305,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   }else if(exists(beforeJoin)){
     toWrite <- beforeJoin
   } else {
+    annotPrint(FTX.label,"Nothing to be written")
     next
   }
   
@@ -310,28 +313,45 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   try(rm(afterJoin))
   
   pospartitionName <- paste("hgram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,p, sep="_")
+  
+  annotPrint(FTX.label,"Writing table",pospartitionName)
+  
   if(dbExistsTable(FTX.con,pospartitionName)){
+    annotPrint(FTX.label,"Removing existing table",pospartitionName)
     dbRemoveTable(FTX.con,pospartitionName)
   }
   dbWriteTable(FTX.con,pospartitionName,toWrite)
 
+  annotPrint(FTX.label,"Wrote table",pospartitionName)
+  
   rm(toWrite)
   
   alterTableSQL <- sprintf(FTX.alterTableInheritTemplate, pospartitionName)
   execSql(alterTableSQL,FTX.db)
   
+  annotPrint(FTX.label,"Creating indexes",pospartitionName)
+  
   createIndexSQL <- gsub("${TNAME}",pospartitionName,FTX.createIndexesTemplate,fixed=TRUE)
   execSql(createIndexSQL,FTX.db,asynch = TRUE)
+
+  if(FTX.DEBUG) annotPrint(FTX.label,"Moving on leaving indexes",pospartitionName)
 }
 
 if(FTX.len1==1){
   unigramsPartitionName <- paste("hgram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,"unextended", sep="_")
   
+  annotPrint(FTX.label,"Writing table",unigramsPartitionName)
+  
   if(dbExistsTable(FTX.con,unigramsPartitionName)){
+    annotPrint(FTX.label,"Removing exiting table",unigramsPartitionName)
+    
     dbRemoveTable(FTX.con,unigramsPartitionName)
   }
   
   dbWriteTable(FTX.con,unigramsPartitionName,FTX.len1OccsDf[!FTX.dontCopyUgrams,])
+  
+  annotPrint(FTX.label,"Wrote table",unigramsPartitionName)
+  
   
   alterTableSQL <- sprintf(FTX.alterTableInheritTemplate, unigramsPartitionName)
   execSql(alterTableSQL,FTX.db)
