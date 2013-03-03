@@ -57,6 +57,10 @@ for(day in HPD.days){
     FTX.parentHgramsTable <- paste("hgram_occ",day,len1+1, sep="_")
     execSql(sprintf("CREATE TABLE %s () INHERITS (%s)",FTX.parentHgramsTable, dayHgramTable),HPD.db)
     
+    FTX.drv <- dbDriver("PostgreSQL")
+    FTX.con <- dbConnect(FTX.drv, dbname=HPD.db, user="yaboulna", password="5#afraPG",
+        host="hops.cs.uwaterloo.ca", port="5433")
+    
     tryCatch({
        
         sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
@@ -81,7 +85,12 @@ for(day in HPD.days){
         
         
       },error=function(e) print(paste(Sys.time(),"HPD","Error for day",day,e,sep=" - ")), 
-      finally=print(paste("HPD","Day done:",day,sep=" - "))
+      finally={
+        
+        try(dbDisconnect(FTX.con))
+        try(dbUnloadDriver(FTX.drv))
+        print(paste("HPD","Day done:",day,sep=" - "))
+      }
       )
   
     # write to DB

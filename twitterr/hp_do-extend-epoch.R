@@ -12,7 +12,6 @@ FTX.candidateThreshold <- 0.000126097580224557
 # Didn't use the average of the counts because this doesn't take into account the seasonal part
 #146.8455795677799607 is the average of obama in all of the collection (not taking into account missing data.. 2 types)
 
-FTX.db <- HPD.db
 if(FTX.DEBUG){
 #  FTX.dataRoot <- "~/r_march_debug/"
 #  FTX.db <- "sample-0.01"
@@ -62,10 +61,6 @@ FTX.label <- paste("FTX", FTX.day, FTX.epochstartux, sep="_")
 #FTX.stagingFile <- createOutFile(FTX.dayDir,FTX.epochFile)
 
 #annotPrint(FTX.label, "Prepared outfile", FTX.epochFile)
-
-FTX.drv <- dbDriver("PostgreSQL")
-FTX.con <- dbConnect(FTX.drv, dbname=HPD.db, user="yaboulna", password="5#afraPG",
-    host="hops.cs.uwaterloo.ca", port="5433")
 
 annotPrint(FTX.label, "Connected to DB", HPD.db)
 
@@ -346,5 +341,3 @@ if(FTX.len1==1){
 
 #file.rename(FTX.stagingFile,FTX.epochFile)
 
-try(dbDisconnect(FTX.con))
-try(dbUnloadDriver(FTX.drv))
