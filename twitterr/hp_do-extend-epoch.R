@@ -106,9 +106,11 @@ dbClearResult(FTX.len1OccsRs)
 
 annotPrint(FTX.label, "Fetched epoch occs: ", nrow(FTX.len1OccsDf))
 
-
+if(nrow(FTX.len1OccsDf)>0){
+  annotPrint(FTX.label,"Epoch is missing in data, skipping")
+} else {
 if(FTX.len1 == 1){
-  FTX.len1OccsDf <- within(FTX.len1OccsDf,{ngram=stripEndChars(ngram)})
+    FTX.len1OccsDf <- within(FTX.len1OccsDf,{ngram=stripEndChars(ngram)})
 }
 
 
@@ -388,4 +390,4 @@ if(FTX.len1==1){
 }
 
 #file.rename(FTX.stagingFile,FTX.epochFile)
-
+} 
