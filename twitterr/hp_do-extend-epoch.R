@@ -106,7 +106,7 @@ dbClearResult(FTX.len1OccsRs)
 
 annotPrint(FTX.label, "Fetched epoch occs: ", nrow(FTX.len1OccsDf))
 
-if(nrow(FTX.len1OccsDf)>0){
+if(nrow(FTX.len1OccsDf)==0){
   annotPrint(FTX.label,"Epoch is missing in data, skipping")
 } else {
 if(FTX.len1 == 1){
