@@ -343,6 +343,8 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   
   rm(toWrite)
   
+  annotPrint(FTX.label,"Alter table",pospartitionName)
+  
   alterTableSQL <- sprintf(FTX.alterTableInheritTemplate, pospartitionName)
   execSql(alterTableSQL,FTX.db)
   
@@ -351,7 +353,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   createIndexSQL <- gsub("${TNAME}",pospartitionName,FTX.createIndexesTemplate,fixed=TRUE)
   execSql(createIndexSQL,FTX.db,asynch = TRUE)
 
-  if(FTX.DEBUG) annotPrint(FTX.label,"Moving on leaving indexes",pospartitionName)
+  annotPrint(FTX.label,"Moving on leaving indexes to be created",pospartitionName)
 }
 
 if(FTX.len1==1){
@@ -369,10 +371,11 @@ if(FTX.len1==1){
   
   annotPrint(FTX.label,"Wrote table",unigramsPartitionName)
   
-  
+  annotPrint(FTX.label,"Altering table",unigramsPartitionName)
   alterTableSQL <- sprintf(FTX.alterTableInheritTemplate, unigramsPartitionName)
   execSql(alterTableSQL,FTX.db)
   
+  annotPrint(FTX.label,"Creating index",unigramsPartitionName)
   createIndexSQL <- gsub("${TNAME}",unigramsPartitionName,FTX.createIndexesTemplate,fixed=TRUE)
   execSql(createIndexSQL,FTX.db,asynch = TRUE)
   

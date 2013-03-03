@@ -59,12 +59,8 @@ for(day in HPD.days){
   
     HPD.label <- paste("HPD",len1,day,sep="_")
     
-    FTX.parentHgramsTable <- paste("hgram_occ",day,len1+1, sep="_")
-    execSql(sprintf("CREATE TABLE %s () INHERITS (%s)",FTX.parentHgramsTable, dayHgramTable),HPD.db)
-    
-    FTX.drv <- dbDriver("PostgreSQL")
-    FTX.con <- dbConnect(FTX.drv, dbname=HPD.db, user="yaboulna", password="5#afraPG",
-        host="hops.cs.uwaterloo.ca", port="5433")
+    daylenHgramsTable <- paste("hgram_occ",day,len1+1, sep="_")
+    execSql(sprintf("CREATE TABLE %s () INHERITS (%s)",daylenHgramsTable, dayHgramTable),HPD.db)
     
     tryCatch({
        
@@ -73,29 +69,43 @@ for(day in HPD.days){
         
         foreach(epochstartux=seq(sec0CurrDay,sec0CurrDay+(3600*23),by=HPD.secsInEpoch),
                 .inorder = FALSE, .combine = 'nullCombine') %dopar% 
-            {
+         {
+            FTX.drv <- dbDriver("PostgreSQL")
+            FTX.con <- dbConnect(FTX.drv, dbname=HPD.db, user="yaboulna", password="5#afraPG",
+               host="hops.cs.uwaterloo.ca", port="5433")
+            
+           tryCatch({
               FTX.day <- day
               FTX.epochstartux <-epochstartux
               FTX.len1 <- len1  
 #              FTX.dayDir <- HPD.dayDir
+                      
+              
+              FTX.parentHgramsTable <- daylenHgramsTable
               
               source("hp_do-extend-epoch.R",local = TRUE,echo = TRUE)
+              
               
               #FTX.extensible
               #FTX.len1OccsDf
               
-              rm(FTX.extensible)
-              rm(FTX.len1OccsDf)
-            }
+              try(rm(FTX.extensible))
+              try(rm(FTX.len1OccsDf))
+            },
+            error=function(e) print(paste(Sys.time(),HPD.label,"Error for day-epoch",day,epoch,e,sep=" - ")), 
+            finally={
+              try(dbDisconnect(FTX.con))
+              try(dbUnloadDriver(FTX.drv))
+              
+              print(paste("HPD","Day-epoch done:",day,epoch,sep=" - "))
+              })
+            
+         }
         
         
-      },error=function(e) print(paste(Sys.time(),"HPD","Error for day",day,e,sep=" - ")), 
-      finally={
-        
-        try(dbDisconnect(FTX.con))
-        try(dbUnloadDriver(FTX.drv))
-        print(paste("HPD","Day done:",day,sep=" - "))
-      }
+      },error=function(e) print(paste(Sys.time(),HPD.label,"Error for day",day,e,sep=" - ")), 
+      finally=print(paste(HPD.label,"Day done:",day,sep=" - "))
+      
       )
   
     # write to DB
