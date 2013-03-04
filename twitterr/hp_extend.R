@@ -118,7 +118,7 @@ for(day in HPD.days){
 SELECT %d as ngramlen, %d as date, CAST(floor(timemillis/(%d * 1000::INT8))*(%d) AS INT8) as epochstartux, 
 ngram, CAST(count(*) AS INT4) as cnt 
 from %s group by ngram,timemillis; CREATE INDEX %s_time ON %s(epochstartux);",cntTableName,cntTableName,len1+1,day,
-HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable)
+HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableName,cntTableName)
 # TODONE add create index to above SQL
     execSql(sql,HPD.db)
 
