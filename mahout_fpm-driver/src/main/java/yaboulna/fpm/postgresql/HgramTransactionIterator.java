@@ -2,9 +2,9 @@ package yaboulna.fpm.postgresql;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -20,35 +20,47 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   private static final Long ONE = 1L;
 
-  private static final String TOKEN_DELIMETER = "|"; // must be a char
-
   private static final Set<String> RETWEET_TOKENS = Sets.newHashSet("rt"); // ,"via");
 
   protected static final String DEFAULT_DRIVER = "org.postgresql.Driver";
   protected static final String DEFAULT_CONNECTION_URL = "jdbc:postgresql://hops.cs.uwaterloo.ca:5433/";
   protected static final String DEFAULT_USER = "yaboulna";
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
+  protected static final String DEFAULT_DBNAME = "full";
 
   final String url;
   final Properties props;
   private Connection conn = null;
-  private PreparedStatement stmt = null;
+  private Statement stmt = null;
 
   final boolean excludeRetweets;
-  final String timeSql;
   final int maxHgramLen;
-
+  final List<String> days;
+  final long windowStartUx;
+  final long windowEndUx;
+  
   ResultSet transactions = null;
   Pair<List<String>, Long> nextKeyVal = null;
-  StringBuilder strBld = new StringBuilder();
 
-  public HgramTransactionIterator(List<String> dates, long windowStartUx, long windowEndUx,
+  public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
+      int maxLen) throws ClassNotFoundException {
+    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_DBNAME, true,
+        DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
+  }
+
+  public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen, String dbname, boolean excludeRetweets, String driverName, String urlPrefix,
       String username, String password) throws ClassNotFoundException {
-    this.timeSql = "date in ('" + Joiner.on("', '").join(dates) + "')"
-        + " and timemillis >= (" + windowStartUx + " * 1000::INT8)"
-        + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
-
+    this.days = days;
+    // I don't care about the sequence of tweets and thus there's no point of sorting days  
+    //Collections.sort(this.days);
+    
+    this.windowStartUx = windowStartUx;
+    this.windowEndUx = windowEndUx;
+    
+    if(maxLen < 2 || maxLen > 2){
+      throw new UnsupportedOperationException("Joining multiple tables and selecting only occurrences that aren't included in larger hgrams is too much work.. later when it proves really necessary! Right now there are usually nothing in the hgram tables of lengthes more than 2.. I don't know if it is caused by a bug or there really isn't any bigram with high enough propotion of the stream. Maybe what we need to do is to recalculate the proportion of 'Obama' after each len");
+    }
     this.maxHgramLen = maxLen;
 
     this.excludeRetweets = excludeRetweets;
@@ -66,7 +78,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   public void init() throws SQLException {
     if (transactions != null) {
-      throw new UnsupportedOperationException("Alread initialized");
+      throw new UnsupportedOperationException("Already initialized");
     }
 
     if (stmt != null) {
@@ -79,16 +91,24 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
     conn = DriverManager.getConnection(url, props);
 
-    // TODO union all 
-    // example sql: "select id,string_agg(ngram,'+') from hgram_occ_120917_2_1347904800_unextended group by id;"
-    String tablename = "hgram_occ_" + maxHgramLen;
-    String sql = "select string_agg(ngram,?) from " + tablename + " where " + timeSql
-        + " and ngramlen=" + maxHgramLen
-        + " group by id";
-    stmt = conn.prepareStatement(sql);
-    stmt.setString(1, TOKEN_DELIMETER);
 
-    transactions = stmt.executeQuery();
+    StringBuilder joinBld = new StringBuilder("hgram_occ_2");
+    //TODO select from different lengthes, and also select positions and prevent total inclusion of shorter in the longer
+//    for(int l=maxHgramLen; l>2; --l){
+//      String tablename = "hgram_occ_DAY_" + l; 
+//      joinBld.append(tablename).append( " right outer join ")
+//    }
+
+    String timeSql = "date in ('" + Joiner.on("', '").join(days) + "')"
+        + " and timemillis >= (" + windowStartUx + " * 1000::INT8)"
+        + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
+    
+    String sql = "select array_agg(ngram) from " + joinBld.toString() + " where " + timeSql  + " group by id;";
+     
+    // example sql: "select id,string_agg(ngram,'+') from hgram_occ_120917_2_1347904800_unextended group by id;"
+    stmt = conn.createStatement();
+
+    transactions = stmt.executeQuery(sql);
   }
 
   public void uninit() {
