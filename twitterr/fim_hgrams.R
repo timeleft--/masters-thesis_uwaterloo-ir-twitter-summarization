@@ -94,7 +94,8 @@ options(error = quote(dump.frames(paste("~/r_logs/fim-arules_",format(Sys.time()
 for(day in FIM.days) {
   tryCatch({
   
-        FIME.outDir <- paste(FIM.dataRoot,"fim_hgrams-2",FIME.miningFuncName,day,sep="/");
+        baseDirName <- ifelse(FIM.NORETWEET,"fim_hgrams-2_no-retweets","fim_hgrams-2")
+        FIME.outDir <- paste(FIM.dataRoot,baseDirName,FIME.miningFuncName,day,sep="/");
         if(!file.exists(FIME.outDir)){
           dir.create(FIME.outDir,recursive = T)
         }
