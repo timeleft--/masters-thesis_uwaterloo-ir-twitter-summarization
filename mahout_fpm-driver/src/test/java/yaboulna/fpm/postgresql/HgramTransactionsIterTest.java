@@ -34,10 +34,9 @@ public class HgramTransactionsIterTest {
     con = DriverManager.getConnection(target.url, target.props);
     stmt = con.createStatement();
     expected = stmt
-        .executeQuery("select string_agg(ngram,'|') from hgram_occ_121105_2 "
-            
+        .executeQuery("select string_agg(ngram,'|') as tokenized from hgram_occ_121105_2 "
             + " where timemillis >= (1352152800 * 1000::INT8) and timemillis < ((1352152800 + 7200) * 1000::INT8) "
-            + " group by id; ");
+            + " group by id having string_agg(ngram,'|') !~ '(^|[\\|\\,])rt([\\|\\,]|$)'; ");
     
   }
 
