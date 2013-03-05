@@ -12,7 +12,6 @@ import java.util.Set;
 
 import org.apache.mahout.common.Pair;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -47,7 +46,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   ResultSet transactions = null;
   Pair<List<String>, Long> nextKeyVal = null;
   StringBuilder strBld = new StringBuilder();
-  long nRowsRead; 
+  long nRowsRead;
+
+  private int currDayIx = 0; 
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen) throws ClassNotFoundException {
@@ -107,23 +108,6 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
     conn = DriverManager.getConnection(url, props);
 
-    String timeSql = "date in ('" + Joiner.on("', '").join(days) + "')"
-        + " and timemillis >= (" + windowStartUx + " * 1000::INT8)"
-        + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
-
-    // TODO union all on date tables: I already have an index on the date column in all data bearing tables.. but
-    // checking 24*70 tables for each day that is not within the range is a bit too much
-
-    // TODO hgram_occ_" + maxHgramLen.. using the multiple inheritance capabilities of PostgreSQL
-    String tablename = "hgram_occ";
-    String sql = "select string_agg(ngram,?) from " + tablename + " where " + timeSql
-        + " and ngramlen<=" + maxHgramLen
-        + " group by id";
-    stmt = conn.prepareStatement(sql);
-    stmt.setString(1, "" + TOKEN_DELIMETER);
-
-    // example sql: "select id,string_agg(ngram,'|') from hgram_occ_120917_2_1347904800_unextended group by id;"
-    transactions = stmt.executeQuery();
     nRowsRead = 0;
   }
 
@@ -144,6 +128,22 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   public boolean hasNext() {
     try {
+      if(transactions==null){
+        String timeSql = "date = '" + days.get(currDayIx) + "' "
+            + " and timemillis >= (" + windowStartUx + " * 1000::INT8)"
+            + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
+
+        String tablename = "hgram_occ_" + days.get(currDayIx) + "_" +  maxHgramLen;
+        String sql = "select string_agg(ngram,?) from " + tablename + " where " + timeSql
+            + " and ngramlen<=" + maxHgramLen
+            + " group by id";
+        stmt = conn.prepareStatement(sql);
+        stmt.setString(1, "" + TOKEN_DELIMETER);
+
+        // example sql: "select id,string_agg(ngram,'|') from hgram_occ_120917_2_1347904800_unextended group by id;"
+        transactions = stmt.executeQuery();
+        
+      }
       while (transactions.next()) {
         ++nRowsRead;
         
@@ -194,6 +194,11 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         
         nextKeyVal = new Pair<List<String>, Long>(hgramList, ONE);
         return true;
+      }
+      if(currDayIx < days.size()-1){
+        transactions = null;
+        ++currDayIx;
+        return hasNext();
       }
       return false;
     } catch (SQLException e) {
