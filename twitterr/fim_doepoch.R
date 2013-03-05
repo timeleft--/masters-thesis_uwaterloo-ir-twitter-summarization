@@ -2,7 +2,7 @@ FIME.DEBUG <- TRUE
 FIME.SKIP_IF_OUTFILE_EXISTS <- FALSE
 FIME.calcInterest <- TRUE
 
-FIME.miningFunc <- apriori #eclat #apriori
+FIME.miningFunc <- eclat #apriori
 
 FIME.DOWNSAMPLE <- FALSE
 FIME.downSampleProportion <- 0.33
