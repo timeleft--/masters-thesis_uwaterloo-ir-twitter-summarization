@@ -157,7 +157,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
           if (excludeRetweets &&
               (transChars[i] == UNIGRAM_DELIMETER ||
-              transChars[i] == TOKEN_DELIMETER)) {
+              transChars[i] == TOKEN_DELIMETER ||
+              i == transChars.length - 1)) {
 
             String uni = strBld.substring(currUnigramStart);
             if (RETWEET_TOKENS.contains(uni)) {

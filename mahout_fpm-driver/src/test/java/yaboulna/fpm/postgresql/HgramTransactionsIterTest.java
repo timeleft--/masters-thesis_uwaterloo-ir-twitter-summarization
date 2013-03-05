@@ -27,7 +27,7 @@ public class HgramTransactionsIterTest {
 
   @Before
   public void setup() throws ClassNotFoundException, SQLException {
-    target = new HgramTransactionIterator(Arrays.asList("121105"), 1352152800L, 1352152800L + 3600,
+    target = new HgramTransactionIterator(Arrays.asList("121105"), 1352152800L, 1352152800L + 7200,
         2, "sample-0.01");
     target.init();
     
@@ -36,7 +36,7 @@ public class HgramTransactionsIterTest {
     expected = stmt
         .executeQuery("select string_agg(ngram,'|') from hgram_occ_121105_2 "
             
-            + " where timemillis >= (1352152800 * 1000::INT8) and timemillis < ((1352152800 + 3600) * 1000::INT8) "
+            + " where timemillis >= (1352152800 * 1000::INT8) and timemillis < ((1352152800 + 7200) * 1000::INT8) "
             + " group by id; ");
     
   }
