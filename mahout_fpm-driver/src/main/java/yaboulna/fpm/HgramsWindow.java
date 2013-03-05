@@ -31,6 +31,7 @@ public class HgramsWindow {
  
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
   
+ 
   public static void main(String[] args) throws IOException, SQLException, ClassNotFoundException{
     
     long windowStartUx = Long.parseLong(args[0]);
