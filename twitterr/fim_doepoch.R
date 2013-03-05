@@ -38,7 +38,7 @@ if(FIME.skipThisEpoch){
   print(paste(Sys.time(),FIME.label,FIME.day, " - Skipping epoch:", FIME.epochstartux, "file:",FIME.epochFile))
 } else {
 if(ncol(FIME.compgramOccs) == 2){
-  FIME.transacts <- as(dlply(FIME.compgramOccs,function(t) {unlist(strsplit(t$noretweet,'|',fixed = TRUE))}), "transactions")
+  FIME.transacts <- as(alply(FIME.compgramOccs,1,function(t) {unique(unlist(strsplit(t$noretweet,'|',fixed = TRUE)))}), "transactions")
 } else {
   if(FIME.DOWNSAMPLE){
      # sample must be without replacement because picking up the same item twice will cause error when coercing to transactions

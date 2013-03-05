@@ -2,7 +2,10 @@
 # 
 # Author: yia
 ###############################################################################
+#The following two are currently mutually exclusive
+FIM.NORETWEET <- TRUE
 FIM.PRUNE_HIGHER_THAN_OBAMA <- FALSE
+
 USE_SOURCE_TRICK <- TRUE
 
 FIM.label <- "HFP"
@@ -14,6 +17,7 @@ FIM.argv <- commandArgs(trailingOnly = TRUE)
 FIME.miningFuncName <- FIM.argv[1]
 # for now we only do the  hgram_occ_DAY_2 tables
 #FIM.compgramlenm<-as.integer(FIM.argv[1]) #4
+source("yaboulna_utils.R")
 annotPrint(FIM.label,"Command line arguments read: FIME.miningFuncName=",FIME.miningFuncName)
 
 FIM.gramColName <- "ngram" #"compgram"
@@ -103,10 +107,11 @@ for(day in FIM.days) {
   try(stop(paste(Sys.time(), FIM.label, "for day:", FIMW.day, " - Connected to DB", FIM.db)))
   
   if(FIM.NORETWEET){
-  sql <- sprintf("select DISTINCT ON (id,ngram) CAST(ngram as text) as compgram,CAST(id as varchar),floor(timemillis/3600000)*3600 as epochstartux, ngramlen as compgramlen,pos 
-          from  hgram_occ_%s_2",FIMW.day);
+    sql <- sprintf("select string_agg(ngram,'|') as noretweet,floor(timemillis/3600000)*3600 as epochstartux from hgram_occ_%s_2 group by id,timemillis having string_agg(ngram,'|') !~ '(^|[\\|\\,])rt([\\|\\,]|$)'; ", FIMW.day )
+  
   } else {
-    sql <- sprintf("select string_agg(ngram,'|') as noretweet,floor(timemillis/3600000)*3600 as epochstartux from hgram_occ_%s_2 group by id,timemillis having having string_agg(ngram,'|') !~ '(^|[\\|\\,])rt([\\|\\,]|$)'; ", FIMW.day )
+    sql <- sprintf("select DISTINCT ON (id,ngram) CAST(ngram as text) as compgram,CAST(id as varchar),floor(timemillis/3600000)*3600 as epochstartux, ngramlen as compgramlen,pos 
+            from  hgram_occ_%s_2",FIMW.day);  
   } 
   
   try(stop(paste(Sys.time(), FIM.label, "for day:", FIMW.day, " - Fetching day's occurrences using sql:\n", sql)))
