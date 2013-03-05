@@ -31,10 +31,10 @@ if(FIM.DEBUG){
   FIM.gramColName <- "compgram"
   FIM.lenColName <- "compgramlen"
   FIM.occsTableName <-   "occurrences" 
-  FIM.days <- c(130104)
+  FIM.days <- c(121106)
   FIM.compgramlenm <- 2  
   FIM.dataRoot <- "~/r_output_debug/"
-  FIM.nCores<-2
+  FIM.nCores<-1
   
 } else {
   FIM.db <- "full"
