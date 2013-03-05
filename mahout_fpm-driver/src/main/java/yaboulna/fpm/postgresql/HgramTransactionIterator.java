@@ -47,6 +47,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   ResultSet transactions = null;
   Pair<List<String>, Long> nextKeyVal = null;
   StringBuilder strBld = new StringBuilder();
+  long nRowsRead; 
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen) throws ClassNotFoundException {
@@ -123,6 +124,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
     // example sql: "select id,string_agg(ngram,'|') from hgram_occ_120917_2_1347904800_unextended group by id;"
     transactions = stmt.executeQuery();
+    nRowsRead = 0;
   }
 
   public void uninit() {
@@ -143,6 +145,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   public boolean hasNext() {
     try {
       while (transactions.next()) {
+        ++nRowsRead;
+        
         char[] transChars = transactions.getString(1).toCharArray();
 
         List<String> hgramList = Lists.newLinkedList();
@@ -160,7 +164,12 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
               skipTransaction = true;
               break;
             }
-            currUnigramStart = i + 1;
+            
+            if(transChars[i] == UNIGRAM_DELIMETER) {
+              currUnigramStart = strBld.length()+1;
+            } else if(transChars[i] == TOKEN_DELIMETER) {
+              currUnigramStart = 0;
+            }
           }
 
           if (transChars[i] == TOKEN_DELIMETER) {
@@ -173,10 +182,15 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
         }
 
+        // last token  (makes sure strBld.setLength is called always)
+        String hgram = strBld.toString();
+        strBld.setLength(0);
+        hgramList.add(hgram);
+        
         if (skipTransaction) {
           continue;
         }
-
+        
         nextKeyVal = new Pair<List<String>, Long>(hgramList, ONE);
         return true;
       }
@@ -197,6 +211,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   public void remove() {
     throw new UnsupportedOperationException();
+  }
+
+  public long getRowsRead() {
+    return nRowsRead;
   }
 
 }
