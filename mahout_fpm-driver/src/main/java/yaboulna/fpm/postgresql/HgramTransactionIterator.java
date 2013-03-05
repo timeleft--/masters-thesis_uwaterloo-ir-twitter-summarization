@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -39,7 +40,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   final boolean excludeRetweets;
 
   final int maxHgramLen;
-
+  final String epochLen;
+  
   final List<String> days;
   final long windowStartUx;
   final long windowEndUx;
@@ -47,21 +49,21 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   ResultSet transactions = null;
   Pair<List<String>, Long> nextKeyVal = null;
   StringBuilder strBld = new StringBuilder();
-  long nRowsRead; 
+  long nRowsRead;
 
-  public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
+  public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,String epochLen,
       int maxLen) throws ClassNotFoundException {
-    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_DBNAME, true,
+    this(days, windowStartUx, windowEndUx, epochLen, maxLen, DEFAULT_DBNAME, true,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
 
-  public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
+  public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,String epochLen,
       int maxLen, String dbName) throws ClassNotFoundException {
-    this(days, windowStartUx, windowEndUx, maxLen, dbName, true,
+    this(days, windowStartUx, windowEndUx,epochLen, maxLen, dbName, true,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
 
-  public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
+  public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx, String epochLen,
       int maxLen, String dbname, boolean excludeRetweets, String driverName, String urlPrefix,
       String username, String password) throws ClassNotFoundException {
 
@@ -72,6 +74,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     this.windowStartUx = windowStartUx;
     this.windowEndUx = windowEndUx;
 
+    this.epochLen = epochLen;
+    
     if (maxLen < 2 || maxLen > 2) {
       throw new UnsupportedOperationException(
           "Joining multiple tables and selecting only occurrences that aren't included in larger hgrams is too much work.. later when it proves really necessary! Right now there are usually nothing in the hgram tables of lengthes more than 2.. I don't know if it is caused by a bug or there really isn't any bigram with high enough propotion of the stream. Maybe what we need to do is to recalculate the proportion of 'Obama' after each len");
@@ -107,10 +111,11 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
     conn = DriverManager.getConnection(url, props);
 
-    String timeSql = "date in ('" + Joiner.on("', '").join(days) + "')"
+    
+    String timeSql = " date in ('" + Joiner.on("', '").join(days) + "')"
         + " and timemillis >= (" + windowStartUx + " * 1000::INT8)"
         + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
-
+    
     // TODO union all on date tables: I already have an index on the date column in all data bearing tables.. but
     // checking 24*70 tables for each day that is not within the range is a bit too much
 
@@ -127,6 +132,24 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     nRowsRead = 0;
   }
 
+// The counts will contain occurences in retweets, so I'd rather use the generateFlist 
+//  public List<Pair<String,Long>> windowFList() throws SQLException{
+//    Statement flistStmt = conn.createStatement();
+//    
+//    // TODO make sure that the windowEndUx is set so that the epochstartux of the last epoch is less than it
+//    String timeSql = " epochstartux >= " +  windowStartUx +  " and epochstartux < " + windowEndUx;
+//    
+//    String sql = "select ngram,sum(cnt) from hgram_cnt_" + epochLen + maxHgramLen +" where " + timeSql 
+//        + " group by ngram order by sum(cnt) desc; ";
+//    ResultSet flistRs = flistStmt.executeQuery(sql);
+//    
+//    List<Pair<String,Long>> retVal = Lists.newLinkedList();
+//    while(flistRs.next()){
+//      retVal.add(new Pair<String, Long>(flistRs.getString(1),flistRs.getLong(2)));
+//    }
+//    return retVal;
+//  }
+  
   public void uninit() {
     try {
       if (transactions != null) {
@@ -217,4 +240,5 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     return nRowsRead;
   }
 
+  
 }
