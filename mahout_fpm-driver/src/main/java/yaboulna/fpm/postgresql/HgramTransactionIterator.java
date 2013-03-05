@@ -2,9 +2,9 @@ package yaboulna.fpm.postgresql;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -20,7 +20,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   private static final Long ONE = 1L;
 
-  private static final Set<String> RETWEET_TOKENS = Sets.newHashSet("rt"); // ,"via");
+  static final char TOKEN_DELIMETER = '|'; // must be a char
+  static final char UNIGRAM_DELIMETER = ','; // must be a char
+
+  static final Set<String> RETWEET_TOKENS = Sets.newHashSet("rt"); // ,"via");
 
   protected static final String DEFAULT_DRIVER = "org.postgresql.Driver";
   protected static final String DEFAULT_CONNECTION_URL = "jdbc:postgresql://hops.cs.uwaterloo.ca:5433/";
@@ -31,16 +34,19 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   final String url;
   final Properties props;
   private Connection conn = null;
-  private Statement stmt = null;
+  private PreparedStatement stmt = null;
 
   final boolean excludeRetweets;
+
   final int maxHgramLen;
+
   final List<String> days;
   final long windowStartUx;
   final long windowEndUx;
-  
+
   ResultSet transactions = null;
   Pair<List<String>, Long> nextKeyVal = null;
+  StringBuilder strBld = new StringBuilder();
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen) throws ClassNotFoundException {
@@ -49,18 +55,27 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   }
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
+      int maxLen, String dbName) throws ClassNotFoundException {
+    this(days, windowStartUx, windowEndUx, maxLen, dbName, true,
+        DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
+  }
+
+  public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen, String dbname, boolean excludeRetweets, String driverName, String urlPrefix,
       String username, String password) throws ClassNotFoundException {
+
     this.days = days;
-    // I don't care about the sequence of tweets and thus there's no point of sorting days  
-    //Collections.sort(this.days);
-    
+    // I don't care about the sequence of tweets and thus there's no point of sorting days
+    // Collections.sort(this.days);
+
     this.windowStartUx = windowStartUx;
     this.windowEndUx = windowEndUx;
-    
-    if(maxLen < 2 || maxLen > 2){
-      throw new UnsupportedOperationException("Joining multiple tables and selecting only occurrences that aren't included in larger hgrams is too much work.. later when it proves really necessary! Right now there are usually nothing in the hgram tables of lengthes more than 2.. I don't know if it is caused by a bug or there really isn't any bigram with high enough propotion of the stream. Maybe what we need to do is to recalculate the proportion of 'Obama' after each len");
+
+    if (maxLen < 2 || maxLen > 2) {
+      throw new UnsupportedOperationException(
+          "Joining multiple tables and selecting only occurrences that aren't included in larger hgrams is too much work.. later when it proves really necessary! Right now there are usually nothing in the hgram tables of lengthes more than 2.. I don't know if it is caused by a bug or there really isn't any bigram with high enough propotion of the stream. Maybe what we need to do is to recalculate the proportion of 'Obama' after each len");
     }
+
     this.maxHgramLen = maxLen;
 
     this.excludeRetweets = excludeRetweets;
@@ -91,24 +106,23 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
     conn = DriverManager.getConnection(url, props);
 
-
-    StringBuilder joinBld = new StringBuilder("hgram_occ_2");
-    //TODO select from different lengthes, and also select positions and prevent total inclusion of shorter in the longer
-//    for(int l=maxHgramLen; l>2; --l){
-//      String tablename = "hgram_occ_DAY_" + l; 
-//      joinBld.append(tablename).append( " right outer join ")
-//    }
-
     String timeSql = "date in ('" + Joiner.on("', '").join(days) + "')"
         + " and timemillis >= (" + windowStartUx + " * 1000::INT8)"
         + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
-    
-    String sql = "select array_agg(ngram) from " + joinBld.toString() + " where " + timeSql  + " group by id;";
-     
-    // example sql: "select id,string_agg(ngram,'+') from hgram_occ_120917_2_1347904800_unextended group by id;"
-    stmt = conn.createStatement();
 
-    transactions = stmt.executeQuery(sql);
+    // TODO union all on date tables: I already have an index on the date column in all data bearing tables.. but
+    // checking 24*70 tables for each day that is not within the range is a bit too much
+
+    // TODO hgram_occ_" + maxHgramLen.. using the multiple inheritance capabilities of PostgreSQL
+    String tablename = "hgram_occ";
+    String sql = "select string_agg(ngram,?) from " + tablename + " where " + timeSql
+        + " and ngramlen<=" + maxHgramLen
+        + " group by id";
+    stmt = conn.prepareStatement(sql);
+    stmt.setString(1, "" + TOKEN_DELIMETER);
+
+    // example sql: "select id,string_agg(ngram,'|') from hgram_occ_120917_2_1347904800_unextended group by id;"
+    transactions = stmt.executeQuery();
   }
 
   public void uninit() {
@@ -134,20 +148,29 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         List<String> hgramList = Lists.newLinkedList();
 
         boolean skipTransaction = false;
+        int currUnigramStart = 0;
         for (int i = 0; i < transChars.length; ++i) {
+
+          if (excludeRetweets &&
+              (transChars[i] == UNIGRAM_DELIMETER ||
+              transChars[i] == TOKEN_DELIMETER)) {
+
+            String uni = strBld.substring(currUnigramStart);
+            if (RETWEET_TOKENS.contains(uni)) {
+              skipTransaction = true;
+              break;
+            }
+            currUnigramStart = i + 1;
+          }
+
           if (transChars[i] == TOKEN_DELIMETER) {
             String hgram = strBld.toString();
             strBld.setLength(0);
-
-            if (excludeRetweets && RETWEET_TOKENS.contains(hgram)) {
-              skipTransaction = true;
-              break;
-            } else {
-              hgramList.add(hgram);
-            }
+            hgramList.add(hgram);
           } else {
             strBld.append(transChars[i]);
           }
+
         }
 
         if (skipTransaction) {
@@ -164,7 +187,12 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   }
 
   public Pair<List<String>, Long> next() {
-    return nextKeyVal;
+    if (nextKeyVal == null) {
+      hasNext();
+    }
+    Pair<List<String>, Long> retVal = nextKeyVal;
+    nextKeyVal = null;
+    return retVal;
   }
 
   public void remove() {
