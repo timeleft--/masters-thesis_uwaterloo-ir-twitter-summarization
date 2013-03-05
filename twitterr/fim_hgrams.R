@@ -102,8 +102,12 @@ for(day in FIM.days) {
   
   try(stop(paste(Sys.time(), FIM.label, "for day:", FIMW.day, " - Connected to DB", FIM.db)))
   
+  if(FIM.NORETWEET){
   sql <- sprintf("select DISTINCT ON (id,ngram) CAST(ngram as text) as compgram,CAST(id as varchar),floor(timemillis/3600000)*3600 as epochstartux, ngramlen as compgramlen,pos 
           from  hgram_occ_%s_2",FIMW.day);
+  } else {
+    sql <- sprintf("select string_agg(ngram,'|') as noretweet,floor(timemillis/3600000)*3600 as epochstartux from hgram_occ_%s_2 group by id,timemillis having having string_agg(ngram,'|') !~ '(^|[\\|\\,])rt([\\|\\,]|$)'; ", FIMW.day )
+  } 
   
   try(stop(paste(Sys.time(), FIM.label, "for day:", FIMW.day, " - Fetching day's occurrences using sql:\n", sql)))
   

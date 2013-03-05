@@ -37,7 +37,9 @@ if(file.exists(FIME.epochFile)) {
 if(FIME.skipThisEpoch){
   print(paste(Sys.time(),FIME.label,FIME.day, " - Skipping epoch:", FIME.epochstartux, "file:",FIME.epochFile))
 } else {
-
+if(ncol(FIME.compgramOccs) == 2){
+  FIME.transacts <- as(dlply(FIME.compgramOccs,function(t) {unlist(strsplit(t$noretweet,'|',fixed = TRUE))}), "transactions")
+} else {
   if(FIME.DOWNSAMPLE){
      # sample must be without replacement because picking up the same item twice will cause error when coercing to transactions
      sampleIx <- sample(nrow(FIME.compgramOccs),size=FIME.downSampleProportion * nrow(FIME.compgramOccs),replace = FALSE,
@@ -91,7 +93,7 @@ print(paste(Sys.time(),FIME.label,FIME.day, " - FIM for epoch:",FIME.epochstartu
 FIME.transacts <- as(split(FIME.midFreq$compgram, FIME.midFreq$id), "transactions")
 
 rm(FIME.midFreq)
-
+}
 print(paste(Sys.time(),FIME.label,FIME.day, " - num transactions:",length(FIME.transacts)))
 
 #FIME.epochFIS <- eclat(FIME.transacts,parameter = list(supp = FIM.support/length(FIME.transacts),minlen=2, maxlen=FIM.fislenm))
