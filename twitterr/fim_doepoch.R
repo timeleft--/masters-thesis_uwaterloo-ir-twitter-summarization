@@ -2,7 +2,7 @@ FIME.DEBUG <- TRUE
 FIME.SKIP_IF_OUTFILE_EXISTS <- FALSE
 FIME.calcInterest <- TRUE
 
-if(!exists("FIME.miningFuncName") || is.null(FIME.miningFuncName) || FIME.miningFuncName == "eclat"){
+if(!exists("FIME.miningFuncName") || is.na(FIME.miningFuncName) || FIME.miningFuncName == "eclat"){
   FIME.miningFunc <- eclat #apriori
 } else { #anything means apriori  if(FIME.miningFuncName == "apriori") {
   FIME.miningFunc <- apriori
