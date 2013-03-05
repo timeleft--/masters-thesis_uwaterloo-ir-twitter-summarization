@@ -50,6 +50,11 @@ public class HgramsWindow {
     Path path = new Path(args[2]);
     Configuration conf = new Configuration();
     FileSystem fs = FileSystem.get(path.toUri(), conf);
+    
+    if(fs.exists(path)){
+      throw new IllegalArgumentException("Output path already exists.. remove it yourself: " + path.toUri());
+    }
+    
     SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, path, Text.class, TopKStringPatterns.class);
     
     int minSupport = 5;
