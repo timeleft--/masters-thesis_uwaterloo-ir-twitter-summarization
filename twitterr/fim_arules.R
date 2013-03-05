@@ -36,8 +36,8 @@ if(FIM.DEBUG){
 } else {
   FIM.db <- "full"
   FIM.dataRoot <- "~/r_output/"
-  FIM.nCores<-8 # each epoch needs lots of memory.. I've seen 60 GB being consumed by one epoch!
-  FIM.days <- unique(c( 121105, 121106, 121104, 121103, 120925,  120926,  120930,  121008,  121013,  121016,  121026,  121027,  121028,  121029,  121030,
+  FIM.nCores<-1 # each epoch needs lots of memory.. I've seen 60 GB being consumed by one epoch!
+  FIM.days <- unique(c(121106, 121105, 121104, 121103, 120925,  120926,  120930,  121008,  121013,  121016,  121026,  121027,  121028,  121029,  121030,
           121108,  121110,  121116,  121119,  121120,  121122,  121123,  121125,  121205,  121206,  121210,  121214,  121215,  121231,  130103,  130104)) #missing data: 120914,121222,  121223,
 }
 
@@ -296,7 +296,7 @@ options(error = quote(dump.frames(paste("~/r_logs/fim-arules_",format(Sys.time()
 
 for(day in FIM.days) {
   tryCatch({
-  FIME.outDir <- paste(FIM.dataRoot,"fim_sampled",day,sep="/");
+  FIME.outDir <- paste(FIM.dataRoot,"fim_eclat",day,sep="/");
   if(!file.exists(FIME.outDir)){
     dir.create(FIME.outDir,recursive = T)
   }
