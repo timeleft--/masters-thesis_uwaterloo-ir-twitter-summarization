@@ -2,6 +2,7 @@ FIME.DEBUG <- TRUE
 FIME.SKIP_IF_OUTFILE_EXISTS <- FALSE
 FIME.calcInterest <- TRUE
 
+if(!exists("FIME.miningFunc") || is.null(FIME.miningFunc))
 FIME.miningFunc <- eclat #apriori
 
 FIME.DOWNSAMPLE <- FALSE

@@ -2,7 +2,7 @@
 # 
 # Author: yia
 ###############################################################################
-FIM.PRUNE_HIGHER_THAN_OBAMA <- TRUE
+FIM.PRUNE_HIGHER_THAN_OBAMA <- FALSE
 USE_SOURCE_TRICK <- TRUE
 
 FIM.label <- "HFP"
@@ -10,7 +10,7 @@ FIM.DEBUG <- FALSE
 FIM.TRACE <- FALSE
 
 # for now we only do the  hgram_occ_DAY_2 tables
-#FIM.argv <- commandArgs(trailingOnly = TRUE)
+FIM.argv <- commandArgs(trailingOnly = TRUE)
 #FIM.compgramlenm<-as.integer(FIM.argv[1]) #4
 
 FIM.gramColName <- "ngram" #"compgram"
@@ -86,10 +86,7 @@ options(error = quote(dump.frames(paste("~/r_logs/fim-arules_",format(Sys.time()
 
 for(day in FIM.days) {
   tryCatch({
-  FIME.outDir <- paste(FIM.dataRoot,"fim-eclat_hgrams",day,sep="/");
-  if(!file.exists(FIME.outDir)){
-    dir.create(FIME.outDir,recursive = T)
-  }
+  
   FIMW.day <- day
   FIMW.drv <- dbDriver("PostgreSQL")
   FIMW.con <- dbConnect(FIMW.drv, dbname=FIM.db, user="yaboulna", password="5#afraPG",
@@ -115,6 +112,12 @@ for(day in FIM.days) {
 # dbUnloadDriver(FIMW.drv,...) frees all the resources used by the driver. Eg.
   try(dbUnloadDriver(FIMW.drv))
   
+  FIME.miningFunc <- FIM.argv[1]
+  
+  FIME.outDir <- paste(FIM.dataRoot,"fim_hgrams-2",FIME.miningFunc,day,sep="/");
+  if(!file.exists(FIME.outDir)){
+    dir.create(FIME.outDir,recursive = T)
+  }
   
   d_ply(idata.frame(FIMW.nonovOcc),c("epochstartux"),function(FIME.compgramOccs){
 #        FIME.epochstartux <- FIME.compgramOccs$epochstartux[1]
