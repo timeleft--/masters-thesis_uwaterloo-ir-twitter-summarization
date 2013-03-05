@@ -14,6 +14,7 @@ FIM.argv <- commandArgs(trailingOnly = TRUE)
 FIME.miningFuncName <- FIM.argv[1]
 # for now we only do the  hgram_occ_DAY_2 tables
 #FIM.compgramlenm<-as.integer(FIM.argv[1]) #4
+annotPrint(FIM.label,"Command line arguments read: FIME.miningFuncName=",FIME.miningFuncName)
 
 FIM.gramColName <- "ngram" #"compgram"
 FIM.lenColName <- "ngramlen" #"compgramlen"
