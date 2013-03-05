@@ -27,12 +27,17 @@ public class HgramTransactionsIterTest {
 
   @Before
   public void setup() throws ClassNotFoundException, SQLException {
-    target = new HgramTransactionIterator(Arrays.asList("121105"), 1352152800L, 1352152800L + 7200, "1hr",
+    target = new HgramTransactionIterator(Arrays.asList("121105"), 1352152800L, 1352152800L + 3600,
         2, "sample-0.01");
     target.init();
     
     con = DriverManager.getConnection(target.url, target.props);
     stmt = con.createStatement();
+    expected = stmt
+        .executeQuery("select string_agg(ngram,'|') from hgram_occ_121105_2 "
+            
+            + " where timemillis >= (1352152800 * 1000::INT8) and timemillis < ((1352152800 + 3600) * 1000::INT8) "
+            + " group by id; ");
     
   }
 
@@ -60,13 +65,7 @@ public class HgramTransactionsIterTest {
       + "rt" + "($|" + delimClass + ")");
   
   @Test
-  public void testIterNoHasNextCallExcludeRetweets() throws SQLException{
-    expected = stmt
-        .executeQuery("select string_agg(ngram,'|') from hgram_occ_121105_2 "
-            
-            + " where timemillis >= (1352152800 * 1000::INT8) and timemillis < ((1352152800 + 7200) * 1000::INT8) "
-            + " group by id; ");
-    
+  public void testNoHasNextCallExlcludeRetweets() throws SQLException{
     int nrow = 0;
     while(expected.next()){
       ++nrow;
@@ -84,11 +83,4 @@ public class HgramTransactionsIterTest {
     assertEquals(nrow, target.getRowsRead());
     assertFalse("More rows in actual than expected",target.hasNext());
   }
-  
-//  public void testFlist() throws SQLException{
-//    // two hours window
-//    expected = stmt.executeQuery("select ngram,sum(cnt) from hgram_cnt_1hr2_121105 where epochstartux >= 1352152800" +
-//    		" and epochstartux < (1352152800 + 7200) group by ngram order by sum(cnt) desc;");
-//    while(expected.)
-//  }
 }
