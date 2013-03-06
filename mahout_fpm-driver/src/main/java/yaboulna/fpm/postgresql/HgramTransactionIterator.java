@@ -60,7 +60,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
 
-  private static final boolean DEBUG_SQL = true;
+  private static final boolean DEBUG_SQL = false;
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen) throws ClassNotFoundException {
