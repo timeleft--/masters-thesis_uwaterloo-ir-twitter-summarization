@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.mahout.common.Pair;
@@ -35,12 +36,7 @@ public class HgramTransactionsIterTest {
     
     con = DriverManager.getConnection(target.url, target.props);
     stmt = con.createStatement();
-    String sqlTemplate = "(select string_agg(ngram,'|') as tokenized from hgram_occ_DAY_2 "
-            + " where timemillis >= (1352192400 * 1000::INT8) and timemillis < (1352199600 * 1000::INT8) "
-            + " group by id) "; // having string_agg(ngram,'|') !~ '(^|[\\|\\,])rt([\\|\\,]|$)'; ");
-    expected = stmt
-        .executeQuery(sqlTemplate.replace("DAY","121105") + " UNION ALL " + sqlTemplate.replace("DAY","121106")); 
-    
+   
   }
 
   @After
@@ -67,8 +63,14 @@ public class HgramTransactionsIterTest {
       + "rt" +delimClass );
 //FIXME  when the "rt" can be caught even if the last unigram:    "($|" + delimClass + ")");
   
-  @Test
+//  @Test
   public void testNoHasNextCallExlcludeRetweets() throws SQLException{
+    String sqlTemplate = "(select string_agg(ngram,'|') as tokenized from hgram_occ_DAY_2 "
+        + " where timemillis >= (1352192400 * 1000::INT8) and timemillis < (1352199600 * 1000::INT8) "
+        + " group by id) "; // having string_agg(ngram,'|') !~ '(^|[\\|\\,])rt([\\|\\,]|$)'; ");
+    expected = stmt
+        .executeQuery(sqlTemplate.replace("DAY","121105") + " UNION ALL " + sqlTemplate.replace("DAY","121106")); 
+    
     int nrow = 0;
     while(expected.next()){
       ++nrow;
@@ -85,5 +87,11 @@ public class HgramTransactionsIterTest {
     }
 //    assertEquals(nrow, target.getRowsRead());
     assertFalse("More rows in actual than expected",target.hasNext());
+  }
+  
+//  @Test
+  public void testTopicWords() throws SQLException{
+    Set<String> features = target.getTopicWords(2000);
+    assertEquals(10000, features.size());
   }
 }

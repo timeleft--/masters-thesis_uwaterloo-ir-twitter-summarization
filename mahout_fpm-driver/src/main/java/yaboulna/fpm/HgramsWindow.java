@@ -31,6 +31,7 @@ public class HgramsWindow {
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
   private static final boolean REMOVE_OUTPUT_AUTOMATICALLY = true;
+  private static final int TOPIC_WORDS_DAILY_LIMIT = 1000;
 
   public static void main(String[] args) throws IOException, SQLException, ClassNotFoundException {
 
@@ -77,8 +78,10 @@ public class HgramsWindow {
       transIter.init();
       transIter2.init();
 
+      Set<String> features = transIter.getTopicWords(TOPIC_WORDS_DAILY_LIMIT * days.size());
+      
       FPGrowth<String> fp = new FPGrowth<String>();
-      Set<String> features = new HashSet<String>();
+      
       fp.generateTopKFrequentPatterns(
           transIter,
           fp.generateFList(transIter2, minSupport),
