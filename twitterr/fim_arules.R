@@ -296,7 +296,7 @@ options(error = quote(dump.frames(paste("~/r_logs/fim-arules_",format(Sys.time()
 
 for(day in FIM.days) {
   tryCatch({
-  FIME.outDir <- paste(FIM.dataRoot,"fim_eclat",day,sep="/");
+  FIME.outDir <- paste(FIM.dataRoot,"fim_ARULES_OLDCODE",day,sep="/");
   if(!file.exists(FIME.outDir)){
     dir.create(FIME.outDir,recursive = T)
   }
