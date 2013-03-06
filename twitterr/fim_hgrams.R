@@ -9,7 +9,7 @@ FIM.PRUNE_HIGHER_THAN_OBAMA <- FALSE
 USE_SOURCE_TRICK <- TRUE
 
 FIM.label <- "HFP"
-FIM.DEBUG <- FALSE
+FIM.DEBUG <- T # FALSE
 FIM.TRACE <- FALSE
 
 
@@ -133,7 +133,7 @@ for(day in FIM.days) {
   d_ply(idata.frame(FIMW.nonovOcc),c("epochstartux"),function(FIME.compgramOccs){
 #        FIME.epochstartux <- FIME.compgramOccs$epochstartux[1]
       	FIME.day <- day
-	
+if(FIME.compgramOccs[1,"epochstartux"] < 1352203200) return(NULL)	
         source("fim_doepoch.R",local = TRUE,echo = TRUE)
         try(rm(FIME.epochFIS)) 
   
