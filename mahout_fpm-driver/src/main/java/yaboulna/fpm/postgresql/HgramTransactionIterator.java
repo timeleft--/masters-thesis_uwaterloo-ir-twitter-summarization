@@ -13,6 +13,8 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.mahout.common.Pair;
+import org.joda.time.DateMidnight;
+import org.joda.time.DateTimeZone;
 import org.joda.time.MutableDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -124,7 +126,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   }
 
   public Set<String> getTopicWords(int limit) throws SQLException {
-    MutableDateTime windowDay1 = dateFmt.parseMutableDateTime(days.get(0));
+	DateMidnight windowDay1Temp = new DateMidnight(windowStartUx*1000, DateTimeZone.forID("HST"));
+	MutableDateTime windowDay1 = new MutableDateTime(windowDay1Temp);
+    
     windowDay1.addDays(-HISTORY_DAYS_COUNT);
 
     Statement hiStmt = conn.createStatement();
