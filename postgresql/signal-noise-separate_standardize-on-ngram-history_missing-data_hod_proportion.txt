@@ -1,0 +1,23 @@
+﻿with hist as 
+(select ngramarr, min(mean.avgprop) as avgprop, count(*) as appearances,
+  |/( ( (min(mean.age) - count(*)) * ((0 - min(mean.avgprop))^2) + sum((mean.prop - mean.avgprop)^2))  /  min(mean.age)) as dvprop
+  from 
+    (select ngramarr, sum(CAST(c.cnt as float8)/CAST(v.totalcnt as float8)) over w /((1352260800000 - min(c.epochstartmillis) over w )/CAST(3600000 AS float8)) as avgprop,
+    (1352260800000 - min(c.epochstartmillis) over w ) as age, CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop
+    from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis
+    where date >= 121025 and date < 121106 and c.epochstartmillis < 1352260800000
+   and (c.epochstartmillis%(24*3600000))/3600000 = (1352260800000%(24*3600000))/3600000 -- hour of day
+    window w as (partition by ngramarr)) mean
+  group by ngramarr),
+
+curr as  
+(select c.*, v.totalcnt,  CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop
+  from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis 
+  where date=121106 and c.epochstartmillis = 1352260800000)
+  
+select curr.ngramarr, curr.epochstartmillis, hist.avgprop, hist.dvprop, hist.appearances,
+  (curr.prop - hist.avgprop) / hist.dvprop as stdprop
+from hist join curr on curr.ngramarr = hist.ngramarr
+where appearances>1
+order by stdprop desc limit 1000;
+  

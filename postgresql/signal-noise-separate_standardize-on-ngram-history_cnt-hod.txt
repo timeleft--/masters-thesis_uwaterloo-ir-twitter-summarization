@@ -1,0 +1,16 @@
+﻿with hist as (select c.ngramarr, avg(c.cnt) as meanprop, stddev_pop(c.cnt) as dvprop, --CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop
+    count(*) as appearances
+	from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis 
+	where date >= 121025 and date <= 121106 and c.epochstartmillis < 1352260800000
+	and (c.epochstartmillis%(24*3600000))/3600000 = (1352260800000%(24*3600000))/3600000 -- hour of day
+	group by c.ngramarr
+	having count(*) > 3 and stddev_pop(c.cnt) > 0),
+	
+ curr as (select c.*,v.totalcnt,CAST(c.cnt as float8)/CAST(v.totalcnt as float8)  as prop 
+	from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis 
+	where date = 121106 and c.epochstartmillis = 1352260800000)
+	
+select curr.ngramarr, curr.epochstartmillis, hist.meanprop histmeanprop, hist.dvprop histdvprop, hist.appearances, 
+case when hist.dvprop <> 0 then (curr.cnt - hist.meanprop)/hist.dvprop else NULL end as stdprop, curr.cnt
+from hist join curr on curr.ngramarr = hist.ngramarr 
+  order by stdprop desc limit 1000;
