@@ -1,0 +1,22 @@
+﻿with hist as 
+(select ngramarr, min(mean.avgcnt) as avgcnt, count(*) as appearances,
+  |/( ( (min(mean.age) - count(*)) * ((0 - min(mean.avgcnt))^2) + sum((mean.cnt - mean.avgcnt)^2))  /  min(mean.age)) as dvcnt
+  from 
+    (select ngramarr, sum(cnt) over w /((1352260800000 - min(epochstartmillis) over w )/CAST(3600000 AS float8)) as avgcnt,
+    (1352260800000 - min(epochstartmillis) over w ) as age, cnt
+    from cnt_1hr1 where date >= 121025 and date < 121106 and epochstartmillis < 1352260800000
+    --and (epochstartmillis%(24*3600000))/3600000 = (1352260800000%(24*3600000))/3600000 -- hour of day
+    window w as (partition by ngramarr)) mean
+  group by ngramarr),
+
+curr as  
+(select c.*, v.totalcnt
+  from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis 
+  where date=121106 and c.epochstartmillis = 1352260800000)
+  
+select curr.ngramarr, curr.epochstartmillis, hist.avgcnt, hist.dvcnt, hist.appearances,
+  (curr.cnt - hist.avgcnt) / hist.dvcnt as stdcnt
+from hist join curr on curr.ngramarr = hist.ngramarr
+where appearances>3
+order by stdcnt desc limit 1000;
+  
