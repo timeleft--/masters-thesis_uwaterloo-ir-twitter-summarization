@@ -151,7 +151,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         + "\n        v.totalcnt,CAST(c.cnt as float8)/CAST(v.totalcnt as float8)  as prop "
         + "\n   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
         + "\n   where cnt >= 5 and" 
-        + "\n     date in ('" + Joiner.on("','").join(days) + "') "
+        + "\n     date in (" + Joiner.on(",").join(days) + ") "
         + "\n     and c.epochstartmillis >= (" + windowStartUx + " * 1000::INT8)"
         + "\n     and c.epochstartmillis < (" + windowEndUx + " * 1000::INT8) ) "
         + "\n select curr.ngramarr,curr.epochstartmillis, " 
@@ -199,7 +199,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   public boolean hasNext() {
     try {
       if (transactions == null) {
-        String timeSql = "date = '" + days.get(currDayIx) + "' "
+        String timeSql = "date = " + days.get(currDayIx) + " "
             + " and timemillis >= (" + windowStartUx + " * 1000::INT8)"
             + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
 
