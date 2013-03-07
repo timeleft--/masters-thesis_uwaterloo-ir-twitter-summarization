@@ -1,10 +1,10 @@
 ﻿with hist as (select c.*,CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop
     from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis
-        where cnt >= 33 and
+        where cnt >= 7 and
 		date >= 121030 and date <= 121107 and c.epochstartmillis < 1352286000000 ),
  curr as (select c.*,v.totalcnt,CAST(c.cnt as float8)/CAST(v.totalcnt as float8)  as prop
      from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis
-         where cnt >= 7 and
+         where cnt >= 5 and
 		date in (121106,121107) and c.epochstartmillis >= (1352199600 * 1000::INT8) and c.epochstartmillis < (1352286000 * 1000::INT8) )
   select curr.ngramarr, curr.epochstartmillis, min(curr.cnt),
         (min(curr.prop) - avg(hist.prop))/stddev_pop(hist.prop) as stdprop, --min(curr.prop) * min(curr.totalcnt) as cnt, 
