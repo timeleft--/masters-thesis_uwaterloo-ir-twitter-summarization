@@ -33,6 +33,15 @@ public class HgramsWindow {
   private static final boolean REMOVE_OUTPUT_AUTOMATICALLY = true;
   private static final int TOPIC_WORDS_DAILY_LIMIT = 1000;
 
+  /**
+   * 
+   * @param args epochstartux (1352260800 for wining hour 1352199600 for elections day)
+   *              epochendux (1352264400 for end of winning hour 1352286000 for end of elections day)
+   *              path of output
+   * @throws IOException
+   * @throws SQLException
+   * @throws ClassNotFoundException
+   */
   public static void main(String[] args) throws IOException, SQLException, ClassNotFoundException {
 
     long windowStartUx = Long.parseLong(args[0]);
