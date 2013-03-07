@@ -30,14 +30,16 @@ import com.google.common.io.Closeables;
 public class HgramsWindow {
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
-  private static final boolean REMOVE_OUTPUT_AUTOMATICALLY = true;
-  private static final int TOPIC_WORDS_DAILY_LIMIT = 1000;
+  private static final boolean REMOVE_OUTPUT_AUTOMATICALLY = false;
+  private static final int TOPIC_WORDS_PER_MINUTE = 100;
+  private static final int FREQUENT_PATTERNS_PER_MINUTE = 1;
 
   /**
    * 
-   * @param args epochstartux (1352260800 for wining hour 1352199600 for elections day)
-   *              epochendux (1352264400 for end of winning hour 1352286000 for end of elections day)
+   * @param args windowStartUx (1352260800 for wining hour 1352199600 for elections day)
+   *              windowEndUx (1352264400 for end of winning hour 1352286000 for end of elections day)
    *              path of output
+   *              epochName
    * @throws IOException
    * @throws SQLException
    * @throws ClassNotFoundException
@@ -57,55 +59,69 @@ public class HgramsWindow {
       currDay.addDays(1);
     }
 
-    Path path = new Path(args[2]);
+    Path outRoot = new Path(args[2]);
     Configuration conf = new Configuration();
-    FileSystem fs = FileSystem.get(path.toUri(), conf);
+    FileSystem fs = FileSystem.get(outRoot.toUri(), conf);
 
-    if (fs.exists(path)) {
+    if (fs.exists(outRoot)) {
       if (REMOVE_OUTPUT_AUTOMATICALLY) {
-        fs.delete(path, true);
+        fs.delete(outRoot, true);
       } else {
         throw new IllegalArgumentException("Output path already exists.. remove it yourself: "
-            + path.toUri());
+            + outRoot.toUri());
       }
     }
 
-    SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, path, Text.class,
-        TopKStringPatterns.class);
-
+    int epochLen = 3600;
+    if(args.length > 3) {
+      if(args[3].equals("1day")){
+        epochLen = 3600 * 24;
+      } else if(args[3].equals("1hr")){
+        epochLen = 3600;
+      } else if(args[3].equals("5min")){
+        epochLen = 300;
+      }  
+    }
+    
     int minSupport = 5;
-    if (args.length > 3) {
-      minSupport = Integer.parseInt(args[3]);
+    if (args.length > 4) {
+      minSupport = Integer.parseInt(args[4]);
     }
 
-    HgramTransactionIterator transIter = new HgramTransactionIterator(days, windowStartUx,
-        windowEndUx, 2);
-    HgramTransactionIterator transIter2 = new HgramTransactionIterator(days, windowStartUx,
-        windowEndUx, 2);
+    while (windowStartUx < windowEndUx) {
+      SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, new Path(outRoot,"fp_"+epochLen+"_"+windowStartUx), Text.class,
+          TopKStringPatterns.class);
 
-    try {
-      transIter.init();
-      transIter2.init();
+      // TODO: 2 should be replaced by the maximum hgram length
+      HgramTransactionIterator transIter = new HgramTransactionIterator(days, windowStartUx,
+          windowStartUx + epochLen, 2);
+      HgramTransactionIterator transIter2 = new HgramTransactionIterator(days, windowStartUx,
+          windowStartUx + epochLen, 2);
 
-      Set<String> features = transIter.getTopicWords(TOPIC_WORDS_DAILY_LIMIT * days.size());
-      
-      FPGrowth<String> fp = new FPGrowth<String>();
-      
-      fp.generateTopKFrequentPatterns(
-          transIter,
-          fp.generateFList(transIter2, minSupport),
-          minSupport,
-          days.size() * 120, // 5 per hour
-          features,
-          new StringOutputConverter(new SequenceFileOutputCollector<Text, TopKStringPatterns>(
-              writer)),
-          new ContextStatusUpdater(null));
+      try {
+        transIter.init();
+        transIter2.init();
 
-    } finally {
-      Closeables.closeQuietly(writer);
-      transIter.uninit();
-      transIter2.uninit();
+        Set<String> features = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60));
+
+        FPGrowth<String> fp = new FPGrowth<String>();
+
+        fp.generateTopKFrequentPatterns(
+            transIter,
+            fp.generateFList(transIter2, minSupport),
+            minSupport,
+            FREQUENT_PATTERNS_PER_MINUTE * (epochLen / 60), 
+            features,
+            new StringOutputConverter(new SequenceFileOutputCollector<Text, TopKStringPatterns>(
+                writer)),
+            new ContextStatusUpdater(null));
+
+      } finally {
+        Closeables.closeQuietly(writer);
+        transIter.uninit();
+        transIter2.uninit();
+      }
     }
+    windowStartUx += epochLen;
   }
-
 }
