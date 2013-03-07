@@ -37,6 +37,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   protected static final String DEFAULT_USER = "yaboulna";
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
   protected static final String DEFAULT_DBNAME = "full";
+  protected static final boolean DEBUG_SQL = false;
+  protected static final boolean DEFAULT_EXLUDE_RETWEETS = false;
+
 
   protected static final int HISTORY_DAYS_COUNT = 7;
 
@@ -62,8 +65,6 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
 
-  private static final boolean DEBUG_SQL = false;
-
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen) throws ClassNotFoundException {
     this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_DBNAME, true,
@@ -72,7 +73,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen, String dbName) throws ClassNotFoundException {
-    this(days, windowStartUx, windowEndUx, maxLen, dbName, true,
+    this(days, windowStartUx, windowEndUx, maxLen, dbName, DEFAULT_EXLUDE_RETWEETS,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
 
@@ -208,7 +209,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         int currUnigramStart = 0;
         for (int i = 0; i < transChars.length; ++i) {
 
-          if (excludeRetweets &&
+          if (excludeRetweets && // TODO if not find the rest of the tweet in the buffer and increase its support by 1
               (transChars[i] == UNIGRAM_DELIMETER ||
               transChars[i] == TOKEN_DELIMETER)) {
 // FIXME: The rt token will not be "caught" if it were the last unigram in the tweet.. || i == transChars.length - 1)) {

@@ -1,4 +1,5 @@
-﻿with hist as (select c.*,CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop
+﻿-- TODO: query the hist table from the sample-0.01 db
+with hist as (select c.*,CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop
     from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis
         where cnt >= 5 and
 		date >= 121030 and date <= 121107 and c.epochstartmillis < 1352286000000 ),
