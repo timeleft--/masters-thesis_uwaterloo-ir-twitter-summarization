@@ -13,6 +13,6 @@
             from hist join curr on curr.ngramarr = hist.ngramarr
                 group by curr.ngramarr, curr.epochstartmillis 
 having
-avg(hist.prop) >= 0.0001 and 
+avg(hist.prop) >= avg(hist.prop) - stddev_pop(hist.prop) and  
 count(*) >= 3 -- just to avoid the instability when stddev = 0 for things that appeared once.. we can always include them from another query (we should)
 order by laggedstdprop desc limit 1000;
