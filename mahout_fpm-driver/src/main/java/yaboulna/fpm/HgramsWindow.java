@@ -80,6 +80,7 @@ public class HgramsWindow {
     
     boolean stdUnigrams = true;
     if(args[4].equals("all")){
+      LOG.info("Generatint the frequent patterns associated with all hgrams");
       stdUnigrams =false;
     }
     

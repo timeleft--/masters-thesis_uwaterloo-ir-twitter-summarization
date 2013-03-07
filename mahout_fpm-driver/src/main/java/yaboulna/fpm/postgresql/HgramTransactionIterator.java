@@ -226,7 +226,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 //       (1450 ROWS) -> divide that number by 2 (at least) to get the number of faulty locations 
 // 750 out of 19 million, I don't think it's a big deal
 
-        String sql = "select string_agg(ngram,?) from " + tablename + " where " + timeSql
+        //DISTINCT FOR DEDUPE of spam tweets
+        String sql = "select DISTINCT string_agg(ngram,?) from " + tablename + " where " + timeSql
             + " and ngramlen <= " + maxHgramLen
             + " group by id";
         stmt = conn.prepareStatement(sql);
