@@ -134,21 +134,23 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     Statement hiStmt = conn.createStatement();
     try {
       //  @formatter:off
-    String hiSql =
-          " with hist as (select c.*,CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop "
-        + "   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
-        + "   where date >= " + dateFmt.print(windowDay1) + " and date <= " + days.get(days.size()-1)  
-        + "     and c.epochstartmillis < " + (windowEndUx * 1000) + " ),"
-        + " curr as (select c.*,v.totalcnt,CAST(c.cnt as float8)/CAST(v.totalcnt as float8)  as prop "
-        + "   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
-        + "   where date in ('" + Joiner.on("','").join(days) + "') "
-        + "     and c.epochstartmillis >= (" + windowStartUx + " * 1000::INT8)"
-        + "     and c.epochstartmillis < (" + windowEndUx + " * 1000::INT8) ) "
-        + " select curr.ngramarr, " 
+    String hiSql = ""
+        + "\n with hist as (select c.*,CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop "
+        + "\n   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
+        + "\n   where date >= " + dateFmt.print(windowDay1) + " and date <= " + days.get(days.size()-1)
+        + "\n     and c.epochstartmillis < " + (windowEndUx * 1000) + " ),"
+        + "\n curr as (select c.*,v.totalcnt,CAST(c.cnt as float8)/CAST(v.totalcnt as float8)  as prop "
+        + "\n   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
+        + "\n   where date in ('" + Joiner.on("','").join(days) + "') "
+        + "\n     and c.epochstartmillis >= (" + windowStartUx + " * 1000::INT8)"
+        + "\n     and c.epochstartmillis < (" + windowEndUx + " * 1000::INT8) ) "
+        + "\n select curr.ngramarr, " 
         + (DEBUG_SQL?" curr.epochstartmillis, avg(hist.prop) histmeanprop, stddev_pop(hist.prop) histdvprop, count(*) as appearances, ":"")
-        + "     (min(curr.prop) - avg(hist.prop))/stddev_pop(hist.prop) as stdprop, min(curr.prop) * min(curr.totalcnt) as cnt "
-        + "   from hist join curr on curr.ngramarr = hist.ngramarr " 
-        + "   group by curr.ngramarr, curr.epochstartmillis having count(*) > 3 order by stdprop desc limit " + limit;
+        + "\n     (min(curr.prop) - avg(hist.prop))/stddev_pop(hist.prop) as stdprop, min(curr.prop) * min(curr.totalcnt) as cnt "
+        + "\n   from hist join curr on curr.ngramarr = hist.ngramarr "
+// hour of day fashla:        + "\n    and (curr.epochstartmillis%(24*3600000))/3600000 = (hist.epochstartmillis%(24*3600000))/3600000 "
+        + "\n   group by curr.ngramarr, curr.epochstartmillis having count(*) > 3  limit " + limit;
+    //order will be lost in set anyway: order by stdprop desc
     //@formatter:on    
 
       ResultSet hiRs = hiStmt.executeQuery(hiSql);
