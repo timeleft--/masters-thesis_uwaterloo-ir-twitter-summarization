@@ -1,6 +1,6 @@
 ﻿with hist as (select c.*,CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop
     from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis
-        where cnt >= 7 and
+        where cnt >= 5 and
 		date >= 121030 and date <= 121107 and c.epochstartmillis < 1352286000000 ),
  curr as (select c.*,v.totalcnt,CAST(c.cnt as float8)/CAST(v.totalcnt as float8)  as prop
      from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis
@@ -13,7 +13,6 @@
             from hist join curr on curr.ngramarr = hist.ngramarr
                 group by curr.ngramarr, curr.epochstartmillis 
 having
--- hist.prop isn't part of the query, and it can't be.. we average it! Also, the cnts > X was important in the where clause to chop off the tail, thus 
--- this is not a good idea: hist.prop >= avg(hist.prop) + stddev_pop(hist.prop) and curr.prop >= avg(hist.prop) and
+avg(hist.prop) >= 0.0001 and 
 count(*) >= 3 -- just to avoid the instability when stddev = 0 for things that appeared once.. we can always include them from another query (we should)
 order by laggedstdprop desc limit 1000;
