@@ -89,9 +89,9 @@ public class HgramTransactionsIterTest {
     assertFalse("More rows in actual than expected",target.hasNext());
   }
   
-//  @Test
-  public void testTopicWords() throws SQLException{
-    Set<String> features = target.getTopicWords(2000);
-    assertEquals(10000, features.size());
-  }
+////  @Test
+//  public void testTopicWords() throws SQLException{
+//    Set<String> features = target.getTopicWords(2000);
+//    assertEquals(10000, features.size());
+//  }
 }

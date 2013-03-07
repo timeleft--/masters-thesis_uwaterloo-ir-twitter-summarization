@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import yaboulna.fpm.postgresql.HgramTransactionIterator;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 
 public class HgramsWindow {
@@ -49,18 +50,9 @@ public class HgramsWindow {
   public static void main(String[] args) throws IOException, SQLException, ClassNotFoundException {
 
     long windowStartUx = Long.parseLong(args[0]);
-    DateMidnight startDay = new DateMidnight(windowStartUx*1000, DateTimeZone.forID("HST"));
 
     long windowEndUx = Long.parseLong(args[1]);
-    DateMidnight endDay = new DateMidnight(windowEndUx * 1000, DateTimeZone.forID("HST"));
-
-    List<String> days = Lists.newLinkedList();
-    MutableDateTime currDay = new MutableDateTime(startDay);
-    while (!currDay.isAfter(endDay)) {
-      days.add(dateFmt.print(currDay));
-      currDay.addDays(1);
-    }
-
+    
     Path outRoot = new Path(args[2]);
     Configuration conf = new Configuration();
     FileSystem fs = FileSystem.get(outRoot.toUri(), conf);
@@ -75,23 +67,47 @@ public class HgramsWindow {
     }
 
     int epochLen = 3600;
-    if(args.length > 3) {
-      if(args[3].equals("1day")){
-        epochLen = 3600 * 24;
-      } else if(args[3].equals("1hr")){
-        epochLen = 3600;
-      } else if(args[3].equals("5min")){
-        epochLen = 300;
-      }  
+    
+    if (args[3].equals("1day")) {
+      epochLen = 3600 * 24;
+    } else if (args[3].equals("1hr")) {
+      epochLen = 3600;
+    } else if (args[3].equals("5min")) {
+      epochLen = 300;
+      LOG.info("I am always using the counts and history from 1hr tables, so " +
+      		" the counts of the whole hour will used if the window starts at a fraction of an hour");
+    }
+    
+    boolean stdUnigrams = true;
+    if(args[4].equals("all")){
+      stdUnigrams =false;
     }
     
     int minSupport = 5;
-    if (args.length > 4) {
-      minSupport = Integer.parseInt(args[4]);
+    if (args.length > 5) {
+      minSupport = Integer.parseInt(args[5]);
+    }
+    
+    int historyDaysCnt = 7;
+    if(args.length > 6){
+      historyDaysCnt = Integer.parseInt(args[6]);
     }
 
     while (windowStartUx < windowEndUx) {
       LOG.info("Strting Mining period from: {} to {}", windowStartUx ,windowStartUx + epochLen);
+      
+      DateMidnight startDay = new DateMidnight(windowStartUx*1000, DateTimeZone.forID("HST"));
+      DateMidnight endDay = new DateMidnight(windowEndUx * 1000, DateTimeZone.forID("HST"));
+      
+      List<String> days = Lists.newLinkedList();
+      MutableDateTime currDay = new MutableDateTime(startDay);
+      while (!currDay.isAfter(endDay)) {
+        days.add(dateFmt.print(currDay));
+        currDay.addDays(1);
+      }
+      
+      LOG.info("Days: "+ days);
+      
       SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, new Path(outRoot,"fp_"+epochLen+"_"+windowStartUx), Text.class,
           TopKStringPatterns.class);
 
@@ -105,8 +121,16 @@ public class HgramsWindow {
         transIter.init();
         transIter2.init();
 
-        Set<String> features = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60));
+        Set<String> features = Sets.newHashSet();
+        if(stdUnigrams){
+          
+          MutableDateTime histDay1 = new MutableDateTime(startDay);
 
+          histDay1.addDays(-historyDaysCnt);
+
+          features = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60),dateFmt.print(histDay1));
+        }
+        
         FPGrowth<String> fp = new FPGrowth<String>();
 
         fp.generateTopKFrequentPatterns(

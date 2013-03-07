@@ -40,9 +40,6 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   protected static final boolean DEBUG_SQL = false;
   protected static final boolean DEFAULT_EXLUDE_RETWEETS = false;
 
-
-  protected static final int HISTORY_DAYS_COUNT = 7;
-
   final String url;
   final Properties props;
   private Connection conn = null;
@@ -63,9 +60,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   private int currDayIx = 0;
 
-  protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
 
-  private static final String HGRAM_OPENING = "{"; //" <, ";
+  private static final String HGRAM_OPENING = "{"; // " <, ";
 
   private static final String HGRAM_CLOSING = "}"; // " ,>";
 
@@ -130,46 +126,55 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     nRowsRead = 0;
   }
 
-  public Set<String> getTopicWords(int limit) throws SQLException {
-	DateMidnight windowDay1Temp = new DateMidnight(windowStartUx*1000, DateTimeZone.forID("HST"));
-	MutableDateTime windowDay1 = new MutableDateTime(windowDay1Temp);
+  public Set<String> getTopicWords(int limit, String historyDay1) throws SQLException {
     
-    windowDay1.addDays(-HISTORY_DAYS_COUNT);
-
     Statement hiStmt = conn.createStatement();
     try {
       // TODO: 5 should be substituted by support variable, and 3 by something as min appearances
       //  @formatter:off
-    String hiSql = ""
-        + "\n with hist as (select c.ngramarr,c.epochstartmillis,CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop "
+    String hiSql = "("
+        + "\n with hist as (select c.ngramarr, " 
+        + "\n     min(c.epochstartmillis) as firstseen, max(c.epochstartmillis) as lastseen,count(*) as appearances, " 
+        + "\n     avg(CAST(c.cnt as float8)/CAST(v.totalcnt as float8)) as meanprop, "
+        + "\n     stddev_pop(CAST(c.cnt as float8)/CAST(v.totalcnt as float8)) as dvprop " 
         + "\n   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
         + "\n   where cnt >= 5 and " 
-        + "\n     date >= " + dateFmt.print(windowDay1) + " and date <= " + days.get(days.size()-1)
-        + "\n     and c.epochstartmillis < (" + windowStartUx + " * 1000::INT8)),"
-        + "\n curr as (select c.ngramarr, c.epochstartmillis," 
-        + (DEBUG_SQL?"  c.cnt, ":"")
-        + "\n        v.totalcnt,CAST(c.cnt as float8)/CAST(v.totalcnt as float8)  as prop "
+        + "\n     date >= " + historyDay1 + " and date <= " + days.get(0)
+        + "\n     and c.epochstartmillis < (floor(" + windowStartUx + "/3600)*3600 * 1000::INT8)" 
+        + "\n    group by c.ngramarr having count(*) >= 3),"
+        + "\n curr as (select c.ngramarr, " 
+        + "\n        CAST(sum(c.cnt) as float8)/CAST(sum(v.totalcnt) as float8)  as prop "
         + "\n   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
         + "\n   where cnt >= 5 and" 
         + "\n     date in (" + Joiner.on(",").join(days) + ") "
-        + "\n     and c.epochstartmillis >= (" + windowStartUx + " * 1000::INT8)"
-        + "\n     and c.epochstartmillis < (" + windowEndUx + " * 1000::INT8) ) "
-        + "\n select curr.ngramarr,curr.epochstartmillis, " 
-        + (DEBUG_SQL?" min(curr.cnt), avg(hist.prop) histmeanprop, stddev_pop(hist.prop) histdvprop, count(*) as appearances, "
-        + "\n     ((" + windowStartUx + " * 1000::INT8) - max(hist.epochstartmillis)) / 3600000 as lastseenlag, " 
-        +	"\n     ((" + windowStartUx + " * 1000::INT8) - min(hist.epochstartmillis)) / 3600000 as firstseenlag, "
-        + "\n     (min(curr.prop) - avg(hist.prop))/stddev_pop(hist.prop) as stdprop"
-        :"") // END OF DEBUG_SQL
-        + "\n     (min(curr.prop) - avg(hist.prop))/stddev_pop(hist.prop) * " 
-        + "\n              ( 1 - ((" + windowStartUx + " * 1000::INT8) - max(hist.epochstartmillis)) / ((" + windowStartUx + " * 1000::INT8) - min(hist.epochstartmillis)))"
+        + "\n     and c.epochstartmillis >= (floor(" + windowStartUx + "/3600)*3600 * 1000::INT8)"
+        + "\n     and (c.epochstartmillis < (floor(" + windowEndUx + "/3600)*3600 * 1000::INT8) or (" + (windowEndUx - windowStartUx) + " < 3600 ))" 
+        + "\n   group by c.ngramarr) "
+        + "\n select CAST(curr.ngramarr AS text)," 
+        + "\n     ( (curr.prop - hist.meanprop) /hist.dvprop) * " 
+        + "\n              ( 1 - (((" + windowStartUx + " * 1000::FLOAT8) - hist.lastseen) / ((" + windowStartUx + " * 1000::FLOAT8) - hist.firstseen)) )"
         + "\n           as durwtstdprop"
         + "\n   from hist join curr on curr.ngramarr = hist.ngramarr "
 // hour of day fashla:        + "\n    and (curr.epochstartmillis%(24*3600000))/3600000 = (hist.epochstartmillis%(24*3600000))/3600000 "
-        + "\n   group by curr.ngramarr, curr.epochstartmillis having count(*) >= 3  " 
         + "\n   order by durwtstdprop desc " 
-        + "\n   limit " + limit;
+        + "\n   limit " + limit 
+        + "\n)";
     //@formatter:on    
-    
+
+      for (String day : days) {
+        String timeSql = "date = " + day + " "
+            + " and epochstartux >= floor(" + windowStartUx + "/3600)*3600 "
+            + " and (epochstartux < floor(" + windowEndUx + "/3600)*3600 or (" + (windowEndUx - windowStartUx) + " < 3600 ))";
+
+        String tablename = "hgram_cnt_1hr" + maxHgramLen + "_" + day;
+        String novelSql = "select DISTINCT '{' || ngram || '}' as ngramarr, 0 as durwtstdprop from " + tablename + " where " + timeSql
+            + " and ngramlen = " + maxHgramLen;
+        
+        hiSql += "\n UNION ALL \n" // ALL because dupliactes will be elimated in the set anyway DUPLICATES?
+            + novelSql;
+      
+      }
+      
       ResultSet hiRs = hiStmt.executeQuery(hiSql);
       Set<String> retVal = Sets.newHashSet();
       while (hiRs.next()) {
@@ -204,8 +209,25 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
 
         String tablename = "hgram_occ_" + days.get(currDayIx) + "_" + maxHgramLen;
+        
+// The need for DISTINCT ON (id,pos).. we do need it but for a tiny fraction where
+// the data isn't "clean".. that is multiple occurrences appear in the same id,pos        
+//select count(*) from hgram_occ_121106_2 where ngramlen=2;
+//  count   
+//----------
+// 19766647
+//(1 row)
+//select * from hgram_occ_121106_2 where (id,pos) in (select id,pos from hgram_occ_121106_2
+//        group by id,pos having count(*) > 1) order by id,pos;
+//        266069533033394176 | 1352270894665 | 121106 | DEJAR,DE                    |        2 |       10 |   7
+//        266069533033394176 | 1352270894665 | 121106 | DEJAR                       |        1 |       10 |   7
+//        266069533033394176 | 1352270894665 | 121106 | SONREÍR                     |        1 |       10 |   9
+//        266069533033394176 | 1352270894665 | 121106 | SONREÍR                     |        1 |       10 |   9
+//       (1450 ROWS) -> divide that number by 2 (at least) to get the number of faulty locations 
+// 750 out of 19 million, I don't think it's a big deal
+
         String sql = "select string_agg(ngram,?) from " + tablename + " where " + timeSql
-            + " and ngramlen<=" + maxHgramLen
+            + " and ngramlen <= " + maxHgramLen
             + " group by id";
         stmt = conn.prepareStatement(sql);
         stmt.setString(1, "" + TOKEN_DELIMETER);
