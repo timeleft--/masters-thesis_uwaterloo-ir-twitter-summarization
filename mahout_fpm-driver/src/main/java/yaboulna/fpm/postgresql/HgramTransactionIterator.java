@@ -65,6 +65,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
 
+  private static final String HGRAM_OPENING = "{"; //" <, ";
+
+  private static final String HGRAM_CLOSING = "}"; // " ,>";
+
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen) throws ClassNotFoundException {
     this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_DBNAME, true,
@@ -242,7 +246,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           if (transChars[i] == TOKEN_DELIMETER) {
             String hgram = strBld.toString();
             strBld.setLength(0);
-            hgramList.add(hgram);
+            hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
           } else {
             strBld.append(transChars[i]);
           }
@@ -252,7 +256,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         // last token (makes sure strBld.setLength is called always)
         String hgram = strBld.toString();
         strBld.setLength(0);
-        hgramList.add(hgram);
+        hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
 
         if (skipTransaction) {
           continue;
