@@ -57,6 +57,7 @@ public class HgramsWindow {
     Configuration conf = new Configuration();
     FileSystem fs = FileSystem.get(outRoot.toUri(), conf);
 
+    LOG.info("outroot:" + outRoot.toUri());
     if (fs.exists(outRoot)) {
       if (REMOVE_OUTPUT_AUTOMATICALLY) {
         fs.delete(outRoot, true);
@@ -70,10 +71,13 @@ public class HgramsWindow {
     
     if (args[3].equals("1day")) {
       epochLen = 3600 * 24;
+      LOG.info("epoch: 1 day");
     } else if (args[3].equals("1hr")) {
       epochLen = 3600;
+      LOG.info("epoch: 1hr");
     } else if (args[3].equals("5min")) {
       epochLen = 300;
+      LOG.info("epoch: 5min");
       LOG.info("I am always using the counts and history from 1hr tables, so " +
       		" the counts of the whole hour will used if the window starts at a fraction of an hour");
     }
@@ -82,7 +86,7 @@ public class HgramsWindow {
     if(args[4].equals("all")){
       LOG.info("Generatint the frequent patterns associated with all hgrams");
       stdUnigrams =false;
-    }
+    } 
     
     int minSupport = 5;
     if (args.length > 5) {
