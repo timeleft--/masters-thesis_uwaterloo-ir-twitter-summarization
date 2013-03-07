@@ -13,6 +13,7 @@
             from hist join curr on curr.ngramarr = hist.ngramarr
                 group by curr.ngramarr, curr.epochstartmillis 
 having
-avg(hist.prop) >= avg(hist.prop) - stddev_pop(hist.prop) and  
+-- This introduces a lot of stop words in the list, maybe becuase everything else gets pruned out.. the threshold can get lower and lower, but
+-- then what's the point of having it.. actually, there was no point in all what I did the previous hour: avg(hist.prop) >= 0.0001 and 
 count(*) >= 3 -- just to avoid the instability when stddev = 0 for things that appeared once.. we can always include them from another query (we should)
 order by laggedstdprop desc limit 1000;
