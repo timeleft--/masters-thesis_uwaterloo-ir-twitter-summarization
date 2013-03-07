@@ -1,10 +1,10 @@
 ﻿with hist as (select c.*,CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop
     from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis
-        where cnt >= 7 and
+        where cnt >= 33 and
 		date >= 121030 and date <= 121107 and c.epochstartmillis < 1352286000000 ),
  curr as (select c.*,v.totalcnt,CAST(c.cnt as float8)/CAST(v.totalcnt as float8)  as prop
      from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis
-         where cnt >= 3 and
+         where cnt >= 7 and
 		date in (121106,121107) and c.epochstartmillis >= (1352199600 * 1000::INT8) and c.epochstartmillis < (1352286000 * 1000::INT8) )
   select curr.ngramarr, curr.epochstartmillis, min(curr.cnt),
         (min(curr.prop) - avg(hist.prop))/stddev_pop(hist.prop) as stdprop, --min(curr.prop) * min(curr.totalcnt) as cnt, 
@@ -15,5 +15,5 @@
 having
 -- hist.prop isn't part of the query, and it can't be.. we average it! Also, the cnts > X was important in the where clause to chop off the tail, thus 
 -- this is not a good idea: hist.prop >= avg(hist.prop) + stddev_pop(hist.prop) and curr.prop >= avg(hist.prop) and
-count(*) > 1 -- just to avoid the instability when stddev = 0 for things that appeared once.. we can always include them from another query (we should)
+count(*) >= 3 -- just to avoid the instability when stddev = 0 for things that appeared once.. we can always include them from another query (we should)
 order by laggedstdprop desc limit 1000;
