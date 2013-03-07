@@ -2,7 +2,6 @@ package yaboulna.fpm;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -21,6 +20,8 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.MutableDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import yaboulna.fpm.postgresql.HgramTransactionIterator;
 
@@ -28,6 +29,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 
 public class HgramsWindow {
+  private static Logger LOG =  LoggerFactory.getLogger(HgramsWindow.class);
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
   private static final boolean REMOVE_OUTPUT_AUTOMATICALLY = false;
@@ -89,6 +91,7 @@ public class HgramsWindow {
     }
 
     while (windowStartUx < windowEndUx) {
+      LOG.info("Strting Mining period from: {} to {}", windowStartUx ,windowStartUx + epochLen);
       SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, new Path(outRoot,"fp_"+epochLen+"_"+windowStartUx), Text.class,
           TopKStringPatterns.class);
 
@@ -121,7 +124,8 @@ public class HgramsWindow {
         transIter.uninit();
         transIter2.uninit();
       }
+      LOG.info("Done Mining period from: {} to {}", windowStartUx ,windowStartUx + epochLen);
+      windowStartUx += epochLen;
     }
-    windowStartUx += epochLen;
   }
 }
