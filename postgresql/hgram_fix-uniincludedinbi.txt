@@ -9,6 +9,16 @@ len=${2}
 epoch='1hr'
 psql="psql -h hops -U yaboulna -p 5433 -d ${db} -c "
 
+echo "${psql} \"CREATE OR REPLACE FUNCTION dropUnextended(day int4) RETURNS INTEGER AS $$ \
+DECLARE\
+t RECORD;\
+BEGIN\
+FOR t in select tablename from pg_tables where tablename like 'hgram_occ_'||day||'_2_%_unextended' LOOP\
+EXECUTE 'ALTER TABLE ' || quote_ident(t.tablename) || ' NO INHERIT hgram_occ_'||day||'_2';\ 
+END LOOP;\ 
+RETURN 0;\
+END; $$ LANGUAGE plpgsql;\""
+
 #ngramlen as ngramlen, <- can't be included in counts table
 
 # echo "${psql} 'DROP TABLLE hgram_cnt_${epoch}${len} CASCADE'"
@@ -29,7 +39,9 @@ echo "${psql} \"DROP TABLE IF EXISTS hgram_vol_${epoch}${len}_${day};\""
 
 #echo "${psql} \"create table hgram_occ_uniincludedinbi_${day} as ( with bi as (select id,pos from hgram_occ_${day} where ngramlen = 2) select uni.* from hgram_occ_${day} uni join bi on bi.id=uni.id and bi.pos=uni.pos-1 where uni.ngramlen = 1);\""
 
-echo "${psql} \"delete from hgram_occ_${day} where ngramlen = 1 and (id,pos) in (select id,(pos+1) from hgram_occ_${day} where ngramlen = 2);\
+echo "${psql} \"create table hgram_occ_${day}_1 () inherits (hgram_occ_${day}); \
+insert into hgram_occ_${day}_1 select * from hgram_occ_${day} where ngramlen = 1 and (id,pos) not in (select id,(pos+1) from hgram_occ_${day} where ngramlen = 2); \
+select dropUnextended(${day}); \
 CREATE TABLE hgram_cnt_${epoch}${len}_${day} AS SELECT ${day} as date, CAST(floor(timemillis/(3600 * 1000::INT8))*(3600) AS INT8) as epochstartux, ngram, CAST(count(*) AS INT4) as cnt from hgram_occ_${day} group by ngram,epochstartux;\
 CREATE INDEX hgram_cnt_${epoch}${len}_${day}_date ON hgram_cnt_${epoch}${len}_${day}(date);\
 CREATE INDEX hgram_cnt_${epoch}${len}_${day}_time ON hgram_cnt_${epoch}${len}_${day}(epochstartux);\
