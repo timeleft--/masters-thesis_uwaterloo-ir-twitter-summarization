@@ -34,8 +34,8 @@ for day in 121011 121012 121013 121014 121015 121016 121017 121018 121019 121020
 #121101 121102 121103 121104 121105 121106 121107 121108 121109 121110 121111 121112 121113 121114 121115 121116 121117 121118 121119 121120 121121 121122 121123 121124 121125 121126 121127 121128 121129 121130 
 #121201 121202 121203 121204 121205 121206 121207 121208 121209 121210 121211 121212 121213 121214 121215 121216 121217 121218 121219 121220 121221 121222 121223 121224 121225 121226 121227 121228 121229 121230 121231 
 do
-echo "${psql} \"DROP TABLE IF EXISTS hgram_cnt_${epoch}${len}_${day};\""
-echo "${psql} \"DROP TABLE IF EXISTS hgram_vol_${epoch}${len}_${day};\""
+#echo "${psql} \"DROP TABLE IF EXISTS hgram_cnt_${epoch}${len}_${day};\""
+#echo "${psql} \"DROP TABLE IF EXISTS hgram_vol_${epoch}${len}_${day};\""
 
 #echo "${psql} \"create table hgram_occ_uniincludedinbi_${day} as ( with bi as (select id,pos from hgram_occ_${day} where ngramlen = 2) select uni.* from hgram_occ_${day} uni join bi on bi.id=uni.id and bi.pos=uni.pos-1 where uni.ngramlen = 1);\""
 
