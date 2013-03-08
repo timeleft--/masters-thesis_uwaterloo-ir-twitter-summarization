@@ -9,7 +9,7 @@ len=${2}
 epoch='1hr'
 psql="psql -h hops -U yaboulna -p 5433 -d ${db} -c "
 
-echo "${psql} \"CREATE OR REPLACE FUNCTION dropUnextended(day int4) RETURNS INTEGER AS $$ \
+echo "${psql} \"CREATE OR REPLACE FUNCTION dropUnextended(day int4) RETURNS INTEGER AS \$\$ \
 DECLARE\
 t RECORD;\
 BEGIN\
@@ -17,7 +17,7 @@ FOR t in select tablename from pg_tables where tablename like 'hgram_occ_'||day|
 EXECUTE 'ALTER TABLE ' || quote_ident(t.tablename) || ' NO INHERIT hgram_occ_'||day||'_2';\ 
 END LOOP;\ 
 RETURN 0;\
-END; $$ LANGUAGE plpgsql;\""
+END; \$\$ LANGUAGE plpgsql;\""
 
 #ngramlen as ngramlen, <- can't be included in counts table
 

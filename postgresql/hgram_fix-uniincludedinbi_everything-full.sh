@@ -1,6 +1,6 @@
-psql -h hops -U yaboulna -p 5433 -d full -c  "CREATE OR REPLACE FUNCTION dropUnextended(day int4) RETURNS INTEGER AS 130 DECLAREt RECORD;BEGINFOR t in select tablename from pg_tables where tablename like 'hgram_occ_'||day||'_2_%_unextended' LOOPEXECUTE 'ALTER TABLE ' || quote_ident(t.tablename) || ' NO INHERIT hgram_occ_'||day||'_2';\ 
+psql -h hops -U yaboulna -p 5433 -d full -c  "CREATE OR REPLACE FUNCTION dropUnextended(day int4) RETURNS INTEGER AS $$ DECLAREt RECORD;BEGINFOR t in select tablename from pg_tables where tablename like 'hgram_occ_'||day||'_2_%_unextended' LOOPEXECUTE 'ALTER TABLE ' || quote_ident(t.tablename) || ' NO INHERIT hgram_occ_'||day||'_2';\ 
 END LOOP;\ 
-RETURN 0;END; 130 LANGUAGE plpgsql;"
+RETURN 0;END; $$ LANGUAGE plpgsql;"
 psql -h hops -U yaboulna -p 5433 -d full -c  'CREATE TABLE hgram_cnt_1hr2 ( date         integer,  epochstartux bigint,  ngram        text,  cnt          integer );'
 psql -h hops -U yaboulna -p 5433 -d full -c  "DROP TABLE IF EXISTS hgram_cnt_1hr2_121011;"
 psql -h hops -U yaboulna -p 5433 -d full -c  "DROP TABLE IF EXISTS hgram_vol_1hr2_121011;"
