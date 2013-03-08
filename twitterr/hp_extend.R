@@ -112,13 +112,20 @@ for(day in HPD.days){
       )
   
     # write to DB
-    
+
+# What the hell was I doing.. first there was this group by timemillis now fixed to epochstartux
+# and also there is an obvious bug below.. since the length is always len1+1 even though I don't 
+# have a where ngramlen= len1+1
+
+    # TODO: use the SQL in hgramcnt_fix-uniincludedinbi.txt to delete unis included in bi, and 
+    # to inherit and create more indeces are required by inheritence
     cntTableName <- sprintf("hgram_cnt_%s%d_%d",HPD.epoch,len1+1,day)
     sql <- sprintf("DROP TABLE IF EXISTS %s; CREATE TABLE %s AS 
 SELECT %d as ngramlen, %d as date, CAST(floor(timemillis/(%d * 1000::INT8))*(%d) AS INT8) as epochstartux, 
 ngram, CAST(count(*) AS INT4) as cnt 
-from %s group by ngram,timemillis; CREATE INDEX %s_time ON %s(epochstartux);",cntTableName,cntTableName,len1+1,day,
+from %s group by ngram,epochstartux; CREATE INDEX %s_time ON %s(epochstartux);",cntTableName,cntTableName,len1+1,day,
 HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableName,cntTableName)
+
 # TODONE add create index to above SQL
     execSql(sql,HPD.db)
 

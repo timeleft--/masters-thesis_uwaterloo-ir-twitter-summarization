@@ -211,7 +211,9 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
       if(nrow(beforeJoin) > 0){
         
         if(FTX.len1==1){
-          newlyOccupied <- cgMaskForBefore - 1
+          #FIXME: the newly occupied was mask - 1, make sure that the bug was that.. the mask is
+          # already for pos p + 1 so those are the unigrams that actually got extended
+          newlyOccupied <- cgMaskForBefore 
           FTX.dontCopyUgrams[newlyOccupied] <- TRUE
           rm(newlyOccupied)
         }

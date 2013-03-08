@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Set;
 import org.apache.mahout.common.Pair;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -33,7 +35,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
   protected static final String DEFAULT_DBNAME = "full";
   protected static final boolean DEBUG_SQL = false;
+  
   protected static final boolean DEFAULT_EXLUDE_RETWEETS = false;
+  protected static final boolean DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET = true;
   
   protected static final int DEFAULT_minPerHourFreq = 7;
   protected static final int DEFAULT_minHoursInHistory = 3;
@@ -62,28 +66,32 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   private int minHoursInHistory;
 
+  private boolean preventRepeatedHGramsInTweet;
+
 
   private static final String HGRAM_OPENING = "{"; // " <, ";
 
   private static final String HGRAM_CLOSING = "}"; // " ,>";
 
+
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen) throws ClassNotFoundException {
     this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_minPerHourFreq, DEFAULT_minHoursInHistory, 
-        DEFAULT_DBNAME, true,
+        DEFAULT_DBNAME, DEFAULT_EXLUDE_RETWEETS, DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen, String dbName) throws ClassNotFoundException {
     this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_minPerHourFreq, DEFAULT_minHoursInHistory, 
-        dbName, DEFAULT_EXLUDE_RETWEETS,
+        dbName, DEFAULT_EXLUDE_RETWEETS, DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen, int minPerHourFreq, int minHoursInHistory,
-      String dbname, boolean excludeRetweets, String driverName, String urlPrefix,
+      String dbname, boolean excludeRetweets, boolean preventRepeatedHGramsInTweet,
+      String driverName, String urlPrefix,
       String username, String password) throws ClassNotFoundException {
 
     this.days = days;
@@ -104,6 +112,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     this.minHoursInHistory = minHoursInHistory;
 
     this.excludeRetweets = excludeRetweets;
+    
+    this.preventRepeatedHGramsInTweet = preventRepeatedHGramsInTweet;
 
     Class.forName(driverName);
 
@@ -258,8 +268,13 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
         char[] transChars = transactions.getString(1).toCharArray();
 
-        List<String> hgramList = Lists.newLinkedList();
-
+        Collection<String> hgramList;
+        if(preventRepeatedHGramsInTweet) {
+          hgramList = Sets.newHashSet();
+        } else {
+          hgramList = Lists.newLinkedList();
+        }
+        
         boolean skipTransaction = false;
         int currUnigramStart = 0;
         for (int i = 0; i < transChars.length; ++i) {
@@ -300,8 +315,12 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         if (skipTransaction) {
           continue;
         }
-
-        nextKeyVal = new Pair<List<String>, Long>(hgramList, ONE);
+        
+        if(preventRepeatedHGramsInTweet){
+          hgramList = ImmutableList.copyOf(hgramList);
+        }
+        
+        nextKeyVal = new Pair<List<String>, Long>((List<String>) hgramList, ONE);
         return true;
       }
       if (currDayIx < days.size() - 1) {
