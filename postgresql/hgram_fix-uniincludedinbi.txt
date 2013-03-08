@@ -55,5 +55,5 @@ CREATE INDEX hgram_cnt_${epoch}${len}_${day}_time ON hgram_cnt_${epoch}${len}_${
 CREATE INDEX hgram_vol_${epoch}${len}_${day}_time ON hgram_vol_${epoch}${len}_${day}(epochstartux);\
 COMMIT;\
 \"&"
-echo "echo 'remember to run VACUUM ANALYZE' after this is done"
+echo "echo 'remember to run VACUUM ANALYZE after this is done'"
 done
