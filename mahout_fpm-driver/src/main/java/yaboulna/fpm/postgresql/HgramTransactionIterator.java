@@ -13,11 +13,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.mahout.common.Pair;
-import org.joda.time.DateMidnight;
-import org.joda.time.DateTimeZone;
-import org.joda.time.MutableDateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -39,6 +34,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   protected static final String DEFAULT_DBNAME = "full";
   protected static final boolean DEBUG_SQL = false;
   protected static final boolean DEFAULT_EXLUDE_RETWEETS = false;
+  
+  protected static final int DEFAULT_minPerHourFreq = 7;
+  protected static final int DEFAULT_minHoursInHistory = 3;
 
   final String url;
   final Properties props;
@@ -60,6 +58,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   private int currDayIx = 0;
 
+  private int minPerHourFreq;
+
+  private int minHoursInHistory;
+
 
   private static final String HGRAM_OPENING = "{"; // " <, ";
 
@@ -67,18 +69,21 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen) throws ClassNotFoundException {
-    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_DBNAME, true,
+    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_minPerHourFreq, DEFAULT_minHoursInHistory, 
+        DEFAULT_DBNAME, true,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen, String dbName) throws ClassNotFoundException {
-    this(days, windowStartUx, windowEndUx, maxLen, dbName, DEFAULT_EXLUDE_RETWEETS,
+    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_minPerHourFreq, DEFAULT_minHoursInHistory, 
+        dbName, DEFAULT_EXLUDE_RETWEETS,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
-      int maxLen, String dbname, boolean excludeRetweets, String driverName, String urlPrefix,
+      int maxLen, int minPerHourFreq, int minHoursInHistory,
+      String dbname, boolean excludeRetweets, String driverName, String urlPrefix,
       String username, String password) throws ClassNotFoundException {
 
     this.days = days;
@@ -94,6 +99,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     }
 
     this.maxHgramLen = maxLen;
+    
+    this.minPerHourFreq = minPerHourFreq;
+    this.minHoursInHistory = minHoursInHistory;
 
     this.excludeRetweets = excludeRetweets;
 
@@ -130,7 +138,6 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     
     Statement hiStmt = conn.createStatement();
     try {
-      // TODO: 5 should be substituted by support variable, and 3 by something as min appearances
       //  @formatter:off
     String hiSql = "("
         + "\n with hist as (select c.ngramarr, " 
@@ -138,14 +145,14 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         + "\n     avg(CAST(c.cnt as float8)/CAST(v.totalcnt as float8)) as meanprop, "
         + "\n     stddev_pop(CAST(c.cnt as float8)/CAST(v.totalcnt as float8)) as dvprop " 
         + "\n   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
-        + "\n   where cnt >= 5 and " 
+        + "\n   where cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx) +" / 3600.0) and " 
         + "\n     date >= " + historyDay1 + " and date <= " + days.get(0)
         + "\n     and c.epochstartmillis < (floor(" + windowStartUx + "/3600)*3600 * 1000::INT8)" 
-        + "\n    group by c.ngramarr having count(*) >= 3),"
+        + "\n    group by c.ngramarr having count(*) >= " + minHoursInHistory + " * (3600.0 / " + (windowEndUx - windowStartUx) +") ),"
         + "\n curr as (select c.ngramarr, " 
         + "\n        CAST(sum(c.cnt) as float8)/CAST(sum(v.totalcnt) as float8)  as prop "
         + "\n   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
-        + "\n   where cnt >= 5 and" 
+        + "\n   where cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx) +" / 3600.0) and" 
         + "\n     date in (" + Joiner.on(",").join(days) + ") "
         + "\n     and c.epochstartmillis >= (floor(" + windowStartUx + "/3600)*3600 * 1000::INT8)"
         + "\n     and (c.epochstartmillis < (floor(" + windowEndUx + "/3600)*3600 * 1000::INT8) or (" + (windowEndUx - windowStartUx) + " < 3600 ))" 
@@ -157,25 +164,34 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         + "\n   from hist join curr on curr.ngramarr = hist.ngramarr "
 // hour of day fashla:        + "\n    and (curr.epochstartmillis%(24*3600000))/3600000 = (hist.epochstartmillis%(24*3600000))/3600000 "
         + "\n   order by durwtstdprop desc " 
-        + "\n   limit " + limit 
+        + "\n   limit " + limit // Limit already set according to epoch length
         + "\n)";
     //@formatter:on    
 
-      for (String day : days) {
-        String timeSql = "date = " + day + " "
+      
+      String timeSql = "date in (" + Joiner.on(',').join(days) + ")"
             + " and epochstartux >= floor(" + windowStartUx + "/3600)*3600 "
             + " and (epochstartux < floor(" + windowEndUx + "/3600)*3600 or (" + (windowEndUx - windowStartUx) + " < 3600 ))";
 
-        String tablename = "hgram_cnt_1hr" + maxHgramLen + "_" + day;
-        String novelSql = "select DISTINCT '{' || ngram || '}' as ngramarr, 0 as durwtstdprop from " + tablename + " where " + timeSql
-            + " and ngramlen = " + maxHgramLen;
+      String tablename = "hgram_cnt_1hr" + maxHgramLen;
+      String novelSql = "("
+              + "\n with history as (select ngram, count(*) as appearances " 
+              + "\n   from " + tablename 
+              + "\n   where cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx) +"/ 3600.0) and " 
+              + "\n     date >= " + historyDay1 + " and date <= " + days.get(0)
+              + "\n     and epochstartux < (floor(" + windowStartUx + "/3600)*3600) " 
+              + "\n    group by ngram having count(*) >= " + minHoursInHistory + " * (3600.0 / " + (windowEndUx - windowStartUx) +"))"
+              + "\n select DISTINCT '{' || c.ngram || '}' as ngramarr, h.appearances as durwtstdprop "
+              + "\n from " + tablename + " c left join history h on c.ngram = h.ngram " 
+              +	"\n where h.ngram is null and " + timeSql
+//              + "\n       and ngramlen = " + maxHgramLen
+              + "\n       and c.cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx) +"/ 3600.0)"
+              + "\n )";
         
-        hiSql += "\n UNION ALL \n" // ALL because dupliactes will be elimated in the set anyway DUPLICATES?
-            + novelSql;
+      ResultSet hiRs = hiStmt.executeQuery(hiSql 
+          + "\n UNION ALL \n" // ALL because dupliactes will be elimated in the set anyway DUPLICATES?
+          + novelSql);
       
-      }
-      
-      ResultSet hiRs = hiStmt.executeQuery(hiSql);
       Set<String> retVal = Sets.newHashSet();
       while (hiRs.next()) {
         retVal.add(hiRs.getString(1));
