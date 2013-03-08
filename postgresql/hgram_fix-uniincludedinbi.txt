@@ -39,14 +39,20 @@ do
 
 #echo "${psql} \"create table hgram_occ_uniincludedinbi_${day} as ( with bi as (select id,pos from hgram_occ_${day} where ngramlen = 2) select uni.* from hgram_occ_${day} uni join bi on bi.id=uni.id and bi.pos=uni.pos-1 where uni.ngramlen = 1);\""
 
-echo "${psql} \"create table hgram_occ_${day}_1 () inherits (hgram_occ_${day}); \
-insert into hgram_occ_${day}_1 select * from hgram_occ_${day} where ngramlen = 1 and (id,pos) not in (select id,(pos+1) from hgram_occ_${day} where ngramlen = 2); \
+echo "${psql} \"BEGIN;\
+create table hgram_occ_${day}_1 as select * from hgram_occ_${day} where ngramlen = 1 and (id,pos) not in (select id,(pos+1) from hgram_occ_${day} where ngramlen = 2); \
 select dropUnextended(${day}); \
+ALTER TABLE hgram_occ_${day}_1 inherit hgram_occ_${day}; \
 CREATE TABLE hgram_cnt_${epoch}${len}_${day} AS SELECT ${day} as date, CAST(floor(timemillis/(3600 * 1000::INT8))*(3600) AS INT8) as epochstartux, ngram, CAST(count(*) AS INT4) as cnt from hgram_occ_${day} group by ngram,epochstartux;\
-CREATE INDEX hgram_cnt_${epoch}${len}_${day}_date ON hgram_cnt_${epoch}${len}_${day}(date);\
-CREATE INDEX hgram_cnt_${epoch}${len}_${day}_time ON hgram_cnt_${epoch}${len}_${day}(epochstartux);\
 ALTER TABLE hgram_cnt_${epoch}${len}_${day} INHERIT hgram_cnt_${epoch}${len};\
 CREATE TABLE hgram_vol_${epoch}${len}_${day} AS SELECT ${day} as date, epochstartux,sum(cnt) as totalcnt from hgram_cnt_${epoch}${len}_${day} group by epochstartux;\
-CREATE INDEX hgram_vol_${epoch}${len}_${day}_time ON hgram_vol_${epoch}${len}_${day}(epochstartux);\"&"
+CREATE INDEX hgram_occ_${day}_1_date ON hgram_occ_${day}_1(date);\
+CREATE INDEX hgram_occ_${day}_1_ngramlen ON hgram_occ_${day}_1(ngramlen);\
+CREATE INDEX hgram_occ_${day}_1_timemillis ON hgram_occ_${day}_1(timemillis);\
+CREATE INDEX hgram_cnt_${epoch}${len}_${day}_date ON hgram_cnt_${epoch}${len}_${day}(date);\
+CREATE INDEX hgram_cnt_${epoch}${len}_${day}_time ON hgram_cnt_${epoch}${len}_${day}(epochstartux);\
+CREATE INDEX hgram_vol_${epoch}${len}_${day}_time ON hgram_vol_${epoch}${len}_${day}(epochstartux);\
+COMMIT;\
+VACUUM ANALYZE;\"&"
 
 done
