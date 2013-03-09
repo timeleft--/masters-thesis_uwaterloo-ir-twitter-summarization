@@ -1,6 +1,6 @@
 
-HPD.DEBUG <- FALSE
-HPD.TRACE <- FALSE
+HPD.DEBUG <- T #FALSE
+HPD.TRACE <- T
 
 if(HPD.DEBUG){
   HPD.nCores <- 1
