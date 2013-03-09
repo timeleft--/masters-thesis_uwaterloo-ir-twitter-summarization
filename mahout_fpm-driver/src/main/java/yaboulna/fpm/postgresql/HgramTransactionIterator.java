@@ -2,7 +2,6 @@ package yaboulna.fpm.postgresql;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -19,6 +18,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.apache.mahout.common.Pair;
+import org.apache.mahout.math.map.OpenIntObjectHashMap;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -93,6 +93,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   ResultSet transactions = null;
   Pair<List<String>, Long> nextKeyVal = null;
   StringBuilder strBld = new StringBuilder();
+  StringBuilder posBld = new StringBuilder();
+  OpenIntObjectHashMap<String> preHgramByPos = new OpenIntObjectHashMap<String>();
+  
   long nRowsRead;
 
   private int currDayIx = 0;
@@ -288,9 +291,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 // 750 out of 19 million, I don't think it's a big deal
 
         //DISTINCT FOR DEDUPE of spam tweets
-        String sql = "select DISTINCT string_agg(ngram,?) from " + tablename + " where " + timeSql
+        String sql = "select DISTINCT string_agg(ngram||'='||pos,?) from " + tablename + " where " + timeSql
             + " and ngramlen <= " + maxHgramLen
-            + " group by id";
+            + " group by id"; // I just hope it will be already sorted: order by id,pos";
         stmt = conn.prepareStatement(sql);
         stmt.setString(1, "" + TOKEN_DELIMETER);
 
@@ -312,6 +315,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         
         boolean skipTransaction = false;
         int currUnigramStart = 0;
+        boolean inPos = false;
+        
         for (int i = 0; i < transChars.length; ++i) {
 
           if (excludeRetweets && // TODO if not find the rest of the tweet in the buffer and increase its support by 1
@@ -335,18 +340,49 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           if (transChars[i] == TOKEN_DELIMETER) {
             String hgram = strBld.toString();
             strBld.setLength(0);
-            hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
-          } else {
-            strBld.append(transChars[i]);
-          }
+            
+            int pos = Integer.parseInt(posBld.toString());
+            posBld.setLength(0);
+            inPos = false;
+            
+            String prevHgram = preHgramByPos.get(pos-1);
+            if(prevHgram != null && prevHgram.endsWith(hgram) && 
+                prevHgram.length() > hgram.length() && prevHgram.charAt(prevHgram.length() - hgram.length() - 1) == ','){
+              //unigram that is included in a bigram, don't add it
+              continue;
+            }
 
+            preHgramByPos.put(pos, hgram);
+            hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
+            
+          } else if(transChars[i] == '=') { //POSITION_SEPARATOR
+            inPos = true;
+          } else {
+            if(inPos){
+              posBld.append(transChars[i]);
+            } else {
+              strBld.append(transChars[i]);
+            }
+          }
         }
 
         // last token (makes sure strBld.setLength is called always)
         String hgram = strBld.toString();
         strBld.setLength(0);
-        hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
-
+        
+        int pos = Integer.parseInt(posBld.toString());
+        posBld.setLength(0);
+        inPos = false;
+        String prevHgram = preHgramByPos.get(pos-1);
+        preHgramByPos.clear();
+        
+        if(prevHgram != null && prevHgram.endsWith(hgram) && 
+            prevHgram.length() > hgram.length() && prevHgram.charAt(prevHgram.length() - hgram.length() - 1) == ','){
+          //unigram that is included in a bigram, don't add it
+        } else {
+          hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
+        }
+        
         if (skipTransaction) {
           continue;
         }

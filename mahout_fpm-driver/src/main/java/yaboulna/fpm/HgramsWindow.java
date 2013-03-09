@@ -134,9 +134,9 @@ public class HgramsWindow {
 
       // TODO: 2 should be replaced by the maximum hgram length
       HgramTransactionIterator transIter = new HgramTransactionIterator(days, windowStartUx,
-          windowStartUx + epochLen, 2, "sample-0.01");
+          windowStartUx + epochLen, 2);
       HgramTransactionIterator transIter2 = new HgramTransactionIterator(days, windowStartUx,
-          windowStartUx + epochLen, 2, "sample-0.01");
+          windowStartUx + epochLen, 2);
 
       try {
         transIter.init();
@@ -172,7 +172,7 @@ public class HgramsWindow {
             int i = 1; // get() returns 0 for items that are not contained
 
             while (transIter.hasNext()) {
-
+              
               for (String item : transIter.next().getFirst()) {
                 int id = itemIds.get(item);
                 if (id == 0) {
