@@ -1,9 +1,13 @@
 package yaboulna.fpm;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
@@ -12,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.apache.commons.io.output.FileWriterWithEncoding;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -22,6 +27,7 @@ import org.apache.mahout.fpm.pfpgrowth.convertors.SequenceFileOutputCollector;
 import org.apache.mahout.fpm.pfpgrowth.convertors.string.StringOutputConverter;
 import org.apache.mahout.fpm.pfpgrowth.convertors.string.TopKStringPatterns;
 import org.apache.mahout.fpm.pfpgrowth.fpgrowth.FPGrowth;
+import org.apache.mahout.math.map.OpenIntObjectHashMap;
 import org.apache.mahout.math.map.OpenObjectIntHashMap;
 import org.joda.time.DateMidnight;
 import org.joda.time.DateTimeZone;
@@ -148,18 +154,19 @@ public class HgramsWindow {
 
         if (USE_RELIABLE_ALGO) {
 
-          File epochOutLocal = new File(epochOut.toUri().toString().substring("file:".length()));
+          File epochOutLocal = new File(epochOut.toUri().toString().substring("file:".length()) + ".out");
           epochOutLocal.getParentFile().mkdirs();
-          
+
           File tmpFile = File.createTempFile("fpzhu", "trans", new File("/home/yaboulna/tmp/"));
           tmpFile.deleteOnExit();
-          
+
           String cmd = "/home/yaboulna/fimi/fp-zhu/fim_closed " + tmpFile.getAbsolutePath() + " " + minSupport + " "
-              +epochOutLocal;
+              + epochOutLocal;
 
           PrintStream feeder = new PrintStream(new FileOutputStream(tmpFile), true, "US-ASCII");
 
           OpenObjectIntHashMap<String> itemIds = new OpenObjectIntHashMap<String>();
+          OpenIntObjectHashMap<String> decodeMap = new OpenIntObjectHashMap<String>();
           try {
             // TODO: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting
             int i = 1; // get() returns 0 for items that are not contained
@@ -172,6 +179,7 @@ public class HgramsWindow {
                   id = i++; // TODO: use murmur chat and check for collisions, iff maintaining the same id across epochs is
 
                   itemIds.put(item, id);
+                  decodeMap.put(id, item);
                 }
                 feeder.print(id + " ");
               }
@@ -183,7 +191,7 @@ public class HgramsWindow {
           }
 
           Runtime rt = Runtime.getRuntime();
-          
+
           Process proc = rt
               .exec(cmd);
 
@@ -207,6 +215,27 @@ public class HgramsWindow {
           }
 
           executor.shutdown();
+
+          File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()));
+          BufferedReader decodeReader = new BufferedReader(new FileReader(epochOutLocal));
+          FileWriterWithEncoding decodeWriter = new FileWriterWithEncoding(epochOutText, Charset.forName("UTF-8"));
+          try {
+            String ln;
+            while ((ln = decodeReader.readLine()) != null) {
+              String[] codes = ln.split(" ");
+              int c;
+              for (c = 0; c < codes.length - 1; ++c) {
+                decodeWriter.write(decodeMap.get(Integer.parseInt(codes[c])) + " ");
+              }
+              decodeWriter.write("\t" + codes[c].substring(0, codes[c].length() - 1).substring(1) + "\n");
+            }
+          } finally {
+            decodeReader.close();
+            decodeWriter.flush();
+            decodeWriter.close();
+          }
+
+          epochOutLocal.delete();
 
         } else {
 
