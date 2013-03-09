@@ -1,8 +1,14 @@
 package yaboulna.fpm.postgresql;
 
 import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.io.Writer;
+import java.nio.channels.Channels;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -261,13 +267,30 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
       if (conn != null) {
         conn.close();
       }
+      if(badOccsWr!= null){
+        badOccsWr.flush();
+        badOccsWr.close();
+      }
     } catch (SQLException ignored) {
+    } catch (IOException ignored) {
     }
   }
 
+  File badCccsFile;
+  Writer badOccsWr;
   public boolean hasNext() {
     try {
       if (transactions == null) {
+        if(badOccsWr!= null){
+          badOccsWr.flush();
+          badOccsWr.close();
+        }
+        badCccsFile = new File("/home/yaboulna/bi_products/uniincinbi/"+days.get(currDayIx));
+        badCccsFile.getParentFile().mkdirs();
+        badCccsFile.createNewFile();
+        
+        badOccsWr = Channels.newWriter(new FileOutputStream(badCccsFile).getChannel(), "US-ASCII");
+        
         String timeSql = "date = " + days.get(currDayIx) + " "
             + " and timemillis >= (" + windowStartUx + " * 1000::INT8)"
             + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
@@ -291,7 +314,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 // 750 out of 19 million, I don't think it's a big deal
 
         //DISTINCT FOR DEDUPE of spam tweets
-        String sql = "select DISTINCT string_agg(ngram||'='||pos,?) from " + tablename + " where " + timeSql
+        String sql = "select DISTINCT string_agg(ngram||'='||pos,?),id from " + tablename + " where " + timeSql
             + " and ngramlen <= " + maxHgramLen
             + " group by id"; // I just hope it will be already sorted: order by id,pos";
         stmt = conn.prepareStatement(sql);
@@ -349,6 +372,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             if(prevHgram != null && prevHgram.endsWith(hgram) && 
                 prevHgram.length() > hgram.length() && prevHgram.charAt(prevHgram.length() - hgram.length() - 1) == ','){
               //unigram that is included in a bigram, don't add it
+              // Also log the occurrence's id, pos pair
+              badOccsWr.append(transactions.getLong("id")+"\t"+pos+"\n");
               continue;
             }
 
@@ -379,6 +404,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         if(prevHgram != null && prevHgram.endsWith(hgram) && 
             prevHgram.length() > hgram.length() && prevHgram.charAt(prevHgram.length() - hgram.length() - 1) == ','){
           //unigram that is included in a bigram, don't add it
+          badOccsWr.append(transactions.getLong("id")+"\t"+pos+"\n");
         } else {
           hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
         }
@@ -401,6 +427,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
       }
       return false;
     } catch (SQLException e) {
+      throw new RuntimeException(e);
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(e);
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
