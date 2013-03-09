@@ -1,5 +1,9 @@
 package yaboulna.fpm.postgresql;
 
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -12,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import org.apache.mahout.common.Pair;
 
@@ -21,6 +26,38 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 public class HgramTransactionIterator implements Iterator<Pair<List<String>, Long>> {
+  public static class EofStream extends OutputStream {
+    
+  }
+  public static class StreamPipe implements Callable<Void> {
+
+    final InputStream followed;
+    final PrintStream sink;
+
+    public StreamPipe(InputStream foll, PrintStream sink) {
+      this.followed = foll;
+      this.sink = sink;
+    }
+
+    @Override
+    public Void call() throws Exception {
+      BufferedInputStream res = new BufferedInputStream(followed);
+      try {
+        int chInt;
+        while ((chInt = res.read()) != -1) {
+          char ch = (char) chInt;
+          sink.print(ch);
+        }
+//        sink.print("\n End of subprocess output... I hope you like it \n");
+
+      } finally {
+        sink.flush();
+        res.close();
+      }
+      return null;
+    }
+
+  }
 
   private static final Long ONE = 1L;
 

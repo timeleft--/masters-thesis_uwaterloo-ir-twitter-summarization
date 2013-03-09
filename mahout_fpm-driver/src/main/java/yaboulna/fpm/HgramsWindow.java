@@ -1,9 +1,16 @@
 package yaboulna.fpm;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -15,6 +22,7 @@ import org.apache.mahout.fpm.pfpgrowth.convertors.SequenceFileOutputCollector;
 import org.apache.mahout.fpm.pfpgrowth.convertors.string.StringOutputConverter;
 import org.apache.mahout.fpm.pfpgrowth.convertors.string.TopKStringPatterns;
 import org.apache.mahout.fpm.pfpgrowth.fpgrowth.FPGrowth;
+import org.apache.mahout.math.map.OpenObjectIntHashMap;
 import org.joda.time.DateMidnight;
 import org.joda.time.DateTimeZone;
 import org.joda.time.MutableDateTime;
@@ -26,23 +34,27 @@ import org.slf4j.LoggerFactory;
 import yaboulna.fpm.postgresql.HgramTransactionIterator;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 
 public class HgramsWindow {
-  private static Logger LOG =  LoggerFactory.getLogger(HgramsWindow.class);
+  private static Logger LOG = LoggerFactory.getLogger(HgramsWindow.class);
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
   private static final boolean REMOVE_OUTPUT_AUTOMATICALLY = false;
   private static final int TOPIC_WORDS_PER_MINUTE = 100;
   private static final int FREQUENT_PATTERNS_PER_MINUTE = 1;
 
+  private static final boolean USE_RELIABLE_ALGO = true;
+
   /**
    * 
-   * @param args windowStartUx (1352260800 for wining hour 1352199600 for elections day)
-   *              windowEndUx (1352264400 for end of winning hour 1352286000 for end of elections day)
-   *              path of output
-   *              epochName
+   * @param args
+   *          windowStartUx (1352260800 for wining hour 1352199600 for elections day)
+   *          windowEndUx (1352264400 for end of winning hour 1352286000 for end of elections day)
+   *          path of output
+   *          epochName
    * @throws IOException
    * @throws SQLException
    * @throws ClassNotFoundException
@@ -113,14 +125,13 @@ public class HgramsWindow {
       
       LOG.info("Days: "+ days);
       
-      SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, new Path(outRoot,"fp_"+epochLen+"_"+windowStartUx), Text.class,
-          TopKStringPatterns.class);
+      Path epochOut = new Path(outRoot,"fp_"+epochLen+"_"+windowStartUx);
 
       // TODO: 2 should be replaced by the maximum hgram length
       HgramTransactionIterator transIter = new HgramTransactionIterator(days, windowStartUx,
-          windowStartUx + epochLen, 2);
+          windowStartUx + epochLen, 2, "sample-0.01");
       HgramTransactionIterator transIter2 = new HgramTransactionIterator(days, windowStartUx,
-          windowStartUx + epochLen, 2);
+          windowStartUx + epochLen, 2, "sample-0.01");
 
       try {
         transIter.init();
@@ -136,20 +147,98 @@ public class HgramsWindow {
           features = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60),dateFmt.print(histDay1));
         }
         
-        FPGrowth<String> fp = new FPGrowth<String>();
+        if(USE_RELIABLE_ALGO){
+          Runtime rt = Runtime.getRuntime();
+          Process proc = rt
+              .exec("/home/yaboulna/fimi/fp-zhu/fim_closed /dev/stdin " + minSupport + " " + epochOut.toUri().toString().substring("file:".length())); 
 
-        fp.generateTopKFrequentPatterns(
-            transIter,
-            fp.generateFList(transIter2, minSupport),
-            minSupport,
-            FREQUENT_PATTERNS_PER_MINUTE * (epochLen / 60), 
-            features,
-            new StringOutputConverter(new SequenceFileOutputCollector<Text, TopKStringPatterns>(
-                writer)),
-            new ContextStatusUpdater(null));
+          ExecutorService executor = Executors.newFixedThreadPool(2);
 
+          HgramTransactionIterator.StreamPipe outPipe = new HgramTransactionIterator.StreamPipe(proc.getInputStream(), System.out);
+          Future<Void> outFut = executor.submit(outPipe);
+
+          HgramTransactionIterator.StreamPipe errPipe = new HgramTransactionIterator.StreamPipe(proc.getErrorStream(), System.err);
+          Future<Void> errFut = executor.submit(errPipe);
+
+          PrintStream feeder = new PrintStream(new BufferedOutputStream(proc.getOutputStream()), true, "US-ASCII");
+
+          OpenObjectIntHashMap<String> itemIds = new OpenObjectIntHashMap<String>();
+
+          // TODO: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting
+          int i = 1; // get() returns 0 for items that are not contained
+          
+          while(transIter.hasNext()){
+            
+            for(String item: transIter.next().getFirst()){
+              int id = itemIds.get(item);
+              if(id == 0){
+                id = i++; //TODO: use murmur chat and check for collisions, iff maintaining the same id across epochs is desired
+                itemIds.put(item, id);
+              }
+              feeder.print(id+" ");
+            }
+            feeder.print("\n");
+          }
+
+          // Emitate EOF
+          // This is unnecessary.. uncomment to see it is uneffective feeder.print(EOF);
+          // Not really necessary but not harmful, autoflush is already set! feeder.flush();
+          feeder.close();
+          
+          // Scan 2
+          feeder = new PrintStream(new BufferedOutputStream(proc.getOutputStream()), true, "US-ASCII");
+          
+          while(transIter2.hasNext()){
+            
+            for(String item: transIter2.next().getFirst()){
+              feeder.print(itemIds.get(item)+" ");
+            }
+            feeder.print("\n");
+          }
+
+          // Emitate EOF
+          // This is unnecessary.. uncomment to see it is uneffective feeder.print(EOF);
+          // Not really necessary but not harmful, autoflush is already set! feeder.flush();
+          feeder.close();
+
+
+          try {
+            errFut.get();
+            outFut.get();
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          } catch (ExecutionException e) {
+            e.printStackTrace();
+          }
+
+          executor.shutdown();
+
+          
+        } else {
+          
+          SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, epochOut, Text.class,
+              TopKStringPatterns.class);
+          try{
+          FPGrowth<String> fp = new FPGrowth<String>();
+
+          fp.generateTopKFrequentPatterns(
+              transIter,
+              fp.generateFList(transIter2, minSupport),
+              minSupport,
+              FREQUENT_PATTERNS_PER_MINUTE * (epochLen / 60),
+              features,
+              new StringOutputConverter(new SequenceFileOutputCollector<Text, TopKStringPatterns>(
+                  writer)),
+              new ContextStatusUpdater(null));
+          
+          }finally{
+            Closeables.closeQuietly(writer);
+          }
+          
+        }
+        
       } finally {
-        Closeables.closeQuietly(writer);
+        
         transIter.uninit();
         transIter2.uninit();
       }
@@ -157,6 +246,4 @@ public class HgramsWindow {
       windowStartUx += epochLen;
     }
   }
-  
-  
 }

@@ -36,35 +36,7 @@ import com.google.common.base.Joiner;
 
 public class HgramTransactionsIterTest {
 
-  public static class StreamPipe implements Callable<Void> {
-
-    final InputStream followed;
-    final PrintStream sink;
-
-    public StreamPipe(InputStream foll, PrintStream sink) {
-      this.followed = foll;
-      this.sink = sink;
-    }
-
-    @Override
-    public Void call() throws Exception {
-      BufferedInputStream res = new BufferedInputStream(followed);
-      try {
-        int chInt;
-        while ((chInt = res.read()) != -1) {
-          char ch = (char) chInt;
-          sink.print(ch);
-        }
-        sink.print("\n End of subprocess output... I hope you like it \n");
-
-      } finally {
-        sink.flush();
-        res.close();
-      }
-      return null;
-    }
-
-  }
+  
 
   HgramTransactionIterator target;
   private Connection con;
@@ -148,18 +120,18 @@ public class HgramTransactionsIterTest {
 
     ExecutorService executor = Executors.newFixedThreadPool(2);
 
-    StreamPipe outPipe = new StreamPipe(proc.getInputStream(), System.out);
+    HgramTransactionIterator.StreamPipe outPipe = new HgramTransactionIterator.StreamPipe(proc.getInputStream(), System.out);
     Future<Void> outFut = executor.submit(outPipe);
 
-    StreamPipe errPipe = new StreamPipe(proc.getErrorStream(), System.err);
+    HgramTransactionIterator.StreamPipe errPipe = new HgramTransactionIterator.StreamPipe(proc.getErrorStream(), System.err);
     Future<Void> errFut = executor.submit(errPipe);
 
     PrintStream feeder = new PrintStream(new BufferedOutputStream(proc.getOutputStream()), true, "US-ASCII");
 
-    feeder.print("1 2 3 4 5 6 7 8 9 10\n");
+    feeder.print("1 2 3 4 5 6 7 8 9 10 \n");
     
     // feeder.print(Long.MAX_VALUE + "\n"); //expected: 18446744073709551615 actual: -1
-    feeder.print(Integer.MAX_VALUE + "\n"); // 2147483647 both expected and actual
+    feeder.print(Integer.MAX_VALUE + "       5      \n   6 7\n "); // 2147483647 both expected and actual
 
     // TODO: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting
 
