@@ -1,10 +1,10 @@
 package yaboulna.fpm;
 
-import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import yaboulna.fpm.postgresql.HgramTransactionIterator;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 
@@ -64,7 +63,7 @@ public class HgramsWindow {
     long windowStartUx = Long.parseLong(args[0]);
 
     long windowEndUx = Long.parseLong(args[1]);
-    
+
     Path outRoot = new Path(args[2]);
     Configuration conf = new Configuration();
     FileSystem fs = FileSystem.get(outRoot.toUri(), conf);
@@ -80,7 +79,7 @@ public class HgramsWindow {
     }
 
     int epochLen = 3600;
-    
+
     if (args[3].equals("1day")) {
       epochLen = 3600 * 24;
       LOG.info("epoch: 1 day");
@@ -91,41 +90,41 @@ public class HgramsWindow {
       epochLen = 300;
       LOG.info("epoch: 5min");
       LOG.info("I am always using the counts and history from 1hr tables, so " +
-      		" the counts of the whole hour will used if the window starts at a fraction of an hour");
+          " the counts of the whole hour will used if the window starts at a fraction of an hour");
     }
-    
+
     boolean stdUnigrams = true;
-    if(args[4].equals("all")){
+    if (args[4].equals("all")) {
       LOG.info("Generatint the frequent patterns associated with all hgrams");
-      stdUnigrams =false;
-    } 
-    
+      stdUnigrams = false;
+    }
+
     int minSupport = 5;
     if (args.length > 5) {
       minSupport = Integer.parseInt(args[5]);
     }
-    
+
     int historyDaysCnt = 7;
-    if(args.length > 6){
+    if (args.length > 6) {
       historyDaysCnt = Integer.parseInt(args[6]);
     }
 
     while (windowStartUx < windowEndUx) {
-      LOG.info("Strting Mining period from: {} to {}", windowStartUx ,windowStartUx + epochLen);
-      
-      DateMidnight startDay = new DateMidnight(windowStartUx*1000, DateTimeZone.forID("HST"));
+      LOG.info("Strting Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
+
+      DateMidnight startDay = new DateMidnight(windowStartUx * 1000, DateTimeZone.forID("HST"));
       DateMidnight endDay = new DateMidnight(windowEndUx * 1000, DateTimeZone.forID("HST"));
-      
+
       List<String> days = Lists.newLinkedList();
       MutableDateTime currDay = new MutableDateTime(startDay);
       while (!currDay.isAfter(endDay)) {
         days.add(dateFmt.print(currDay));
         currDay.addDays(1);
       }
-      
-      LOG.info("Days: "+ days);
-      
-      Path epochOut = new Path(outRoot,"fp_"+epochLen+"_"+windowStartUx);
+
+      LOG.info("Days: " + days);
+
+      Path epochOut = new Path(outRoot, "fp_" + epochLen + "_" + windowStartUx);
 
       // TODO: 2 should be replaced by the maximum hgram length
       HgramTransactionIterator transIter = new HgramTransactionIterator(days, windowStartUx,
@@ -138,69 +137,65 @@ public class HgramsWindow {
         transIter2.init();
 
         Set<String> features = Sets.newHashSet();
-        if(stdUnigrams){
-          
+        if (stdUnigrams) {
+
           MutableDateTime histDay1 = new MutableDateTime(startDay);
 
           histDay1.addDays(-historyDaysCnt);
 
-          features = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60),dateFmt.print(histDay1));
+          features = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60), dateFmt.print(histDay1));
         }
-        
-        if(USE_RELIABLE_ALGO){
+
+        if (USE_RELIABLE_ALGO) {
+
+          File epochOutLocal = new File(epochOut.toUri().toString().substring("file:".length()));
+          epochOutLocal.getParentFile().mkdirs();
+          
+          File tmpFile = File.createTempFile("fpzhu", "trans", new File("/home/yaboulna/tmp/"));
+          tmpFile.deleteOnExit();
+          
+          String cmd = "/home/yaboulna/fimi/fp-zhu/fim_closed " + tmpFile.getAbsolutePath() + " " + minSupport + " "
+              +epochOutLocal;
+
+          PrintStream feeder = new PrintStream(new FileOutputStream(tmpFile), true, "US-ASCII");
+
+          OpenObjectIntHashMap<String> itemIds = new OpenObjectIntHashMap<String>();
+          try {
+            // TODO: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting
+            int i = 1; // get() returns 0 for items that are not contained
+
+            while (transIter.hasNext()) {
+
+              for (String item : transIter.next().getFirst()) {
+                int id = itemIds.get(item);
+                if (id == 0) {
+                  id = i++; // TODO: use murmur chat and check for collisions, iff maintaining the same id across epochs is
+
+                  itemIds.put(item, id);
+                }
+                feeder.print(id + " ");
+              }
+              feeder.print("\n");
+            }
+          } finally {
+            feeder.flush();
+            feeder.close();
+          }
+
           Runtime rt = Runtime.getRuntime();
+          
           Process proc = rt
-              .exec("/home/yaboulna/fimi/fp-zhu/fim_closed /dev/stdin " + minSupport + " " + epochOut.toUri().toString().substring("file:".length())); 
+              .exec(cmd);
 
           ExecutorService executor = Executors.newFixedThreadPool(2);
 
-          HgramTransactionIterator.StreamPipe outPipe = new HgramTransactionIterator.StreamPipe(proc.getInputStream(), System.out);
+          HgramTransactionIterator.StreamPipe outPipe = new HgramTransactionIterator.StreamPipe(proc.getInputStream(),
+              System.out);
           Future<Void> outFut = executor.submit(outPipe);
 
-          HgramTransactionIterator.StreamPipe errPipe = new HgramTransactionIterator.StreamPipe(proc.getErrorStream(), System.err);
+          HgramTransactionIterator.StreamPipe errPipe = new HgramTransactionIterator.StreamPipe(proc.getErrorStream(),
+              System.err);
           Future<Void> errFut = executor.submit(errPipe);
-
-          PrintStream feeder = new PrintStream(new BufferedOutputStream(proc.getOutputStream()), true, "US-ASCII");
-
-          OpenObjectIntHashMap<String> itemIds = new OpenObjectIntHashMap<String>();
-
-          // TODO: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting
-          int i = 1; // get() returns 0 for items that are not contained
-          
-          while(transIter.hasNext()){
-            
-            for(String item: transIter.next().getFirst()){
-              int id = itemIds.get(item);
-              if(id == 0){
-                id = i++; //TODO: use murmur chat and check for collisions, iff maintaining the same id across epochs is desired
-                itemIds.put(item, id);
-              }
-              feeder.print(id+" ");
-            }
-            feeder.print("\n");
-          }
-
-          // Emitate EOF
-          // This is unnecessary.. uncomment to see it is uneffective feeder.print(EOF);
-          // Not really necessary but not harmful, autoflush is already set! feeder.flush();
-          feeder.close();
-          
-          // Scan 2
-          feeder = new PrintStream(new BufferedOutputStream(proc.getOutputStream()), true, "US-ASCII");
-          
-          while(transIter2.hasNext()){
-            
-            for(String item: transIter2.next().getFirst()){
-              feeder.print(itemIds.get(item)+" ");
-            }
-            feeder.print("\n");
-          }
-
-          // Emitate EOF
-          // This is unnecessary.. uncomment to see it is uneffective feeder.print(EOF);
-          // Not really necessary but not harmful, autoflush is already set! feeder.flush();
-          feeder.close();
-
 
           try {
             errFut.get();
@@ -213,36 +208,35 @@ public class HgramsWindow {
 
           executor.shutdown();
 
-          
         } else {
-          
+
           SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, epochOut, Text.class,
               TopKStringPatterns.class);
-          try{
-          FPGrowth<String> fp = new FPGrowth<String>();
+          try {
+            FPGrowth<String> fp = new FPGrowth<String>();
 
-          fp.generateTopKFrequentPatterns(
-              transIter,
-              fp.generateFList(transIter2, minSupport),
-              minSupport,
-              FREQUENT_PATTERNS_PER_MINUTE * (epochLen / 60),
-              features,
-              new StringOutputConverter(new SequenceFileOutputCollector<Text, TopKStringPatterns>(
-                  writer)),
-              new ContextStatusUpdater(null));
-          
-          }finally{
+            fp.generateTopKFrequentPatterns(
+                transIter,
+                fp.generateFList(transIter2, minSupport),
+                minSupport,
+                FREQUENT_PATTERNS_PER_MINUTE * (epochLen / 60),
+                features,
+                new StringOutputConverter(new SequenceFileOutputCollector<Text, TopKStringPatterns>(
+                    writer)),
+                new ContextStatusUpdater(null));
+
+          } finally {
             Closeables.closeQuietly(writer);
           }
-          
+
         }
-        
+
       } finally {
-        
+
         transIter.uninit();
         transIter2.uninit();
       }
-      LOG.info("Done Mining period from: {} to {}", windowStartUx ,windowStartUx + epochLen);
+      LOG.info("Done Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
       windowStartUx += epochLen;
     }
   }

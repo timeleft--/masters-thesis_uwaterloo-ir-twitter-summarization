@@ -26,9 +26,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 public class HgramTransactionIterator implements Iterator<Pair<List<String>, Long>> {
-  public static class EofStream extends OutputStream {
-    
-  }
+ 
   public static class StreamPipe implements Callable<Void> {
 
     final InputStream followed;
