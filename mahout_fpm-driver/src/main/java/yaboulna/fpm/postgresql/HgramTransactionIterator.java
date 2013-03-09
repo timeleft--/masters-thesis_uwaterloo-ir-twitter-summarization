@@ -278,19 +278,22 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   File badCccsFile;
   Writer badOccsWr;
+  public boolean produceLogOfBadPos = false;
   public boolean hasNext() {
     try {
       if (transactions == null) {
-        if(badOccsWr!= null){
-          badOccsWr.flush();
-          badOccsWr.close();
+        if (produceLogOfBadPos) {
+          if (badOccsWr != null) {
+            badOccsWr.flush();
+            badOccsWr.close();
+          }
+          badCccsFile = new File("/home/yaboulna/bi_products/uniincinbi/" + days.get(currDayIx) + "_"
+              + windowStartUx);
+          badCccsFile.getParentFile().mkdirs();
+          badCccsFile.createNewFile();
+
+          badOccsWr = Channels.newWriter(new FileOutputStream(badCccsFile).getChannel(), "US-ASCII");
         }
-        badCccsFile = new File("/home/yaboulna/bi_products/uniincinbi/"+days.get(currDayIx));
-        badCccsFile.getParentFile().mkdirs();
-        badCccsFile.createNewFile();
-        
-        badOccsWr = Channels.newWriter(new FileOutputStream(badCccsFile).getChannel(), "US-ASCII");
-        
         String timeSql = "date = " + days.get(currDayIx) + " "
             + " and timemillis >= (" + windowStartUx + " * 1000::INT8)"
             + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
@@ -373,7 +376,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
                 prevHgram.length() > hgram.length() && prevHgram.charAt(prevHgram.length() - hgram.length() - 1) == ','){
               //unigram that is included in a bigram, don't add it
               // Also log the occurrence's id, pos pair
-              badOccsWr.append(transactions.getLong("id")+"\t"+pos+"\n");
+              if(produceLogOfBadPos) badOccsWr.append(transactions.getLong("id")+"\t"+pos+"\n");
               continue;
             }
 
@@ -404,7 +407,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         if(prevHgram != null && prevHgram.endsWith(hgram) && 
             prevHgram.length() > hgram.length() && prevHgram.charAt(prevHgram.length() - hgram.length() - 1) == ','){
           //unigram that is included in a bigram, don't add it
-          badOccsWr.append(transactions.getLong("id")+"\t"+pos+"\n");
+          if(produceLogOfBadPos) badOccsWr.append(transactions.getLong("id")+"\t"+pos+"\n");
         } else {
           hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
         }

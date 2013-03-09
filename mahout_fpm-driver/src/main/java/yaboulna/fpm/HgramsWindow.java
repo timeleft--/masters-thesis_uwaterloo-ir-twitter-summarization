@@ -135,6 +135,7 @@ public class HgramsWindow {
       // TODO: 2 should be replaced by the maximum hgram length
       HgramTransactionIterator transIter = new HgramTransactionIterator(days, windowStartUx,
           windowStartUx + epochLen, 2);
+      transIter.produceLogOfBadPos = (epochLen == 3600 * 24); //1 day to minimize rewrite
       HgramTransactionIterator transIter2 = new HgramTransactionIterator(days, windowStartUx,
           windowStartUx + epochLen, 2);
 
