@@ -16,7 +16,8 @@ echo "${psql} 'CREATE TABLE bypos() INHERITS(ngrams);'"
 
 for p in {1..30} 
 do
-echo "${psql} \"DROP TABLE IF EXISTS unigramsP${p}; \
+# DROP TABLE IF EXISTS unigramsP${p};
+echo "${psql} \" \
     CREATE  TABLE unigramsP${p} (CHECK (pos = ${p})) INHERITS(bypos); \
     COPY unigramsP${p} FROM '${root}bypos_onefile/unigramsP${p}';   \
     CREATE INDEX unigramsP${p}_date ON unigramsP${p}(date);\
