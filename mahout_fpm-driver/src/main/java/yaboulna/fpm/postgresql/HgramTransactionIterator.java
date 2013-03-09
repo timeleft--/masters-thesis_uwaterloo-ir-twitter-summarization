@@ -288,7 +288,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             badOccsWr.close();
           }
           badCccsFile = new File("/home/yaboulna/bi_products/uniincinbi/" + days.get(currDayIx) + "_"
-              + windowStartUx);
+              + System.currentTimeMillis());
           badCccsFile.getParentFile().mkdirs();
           badCccsFile.createNewFile();
 

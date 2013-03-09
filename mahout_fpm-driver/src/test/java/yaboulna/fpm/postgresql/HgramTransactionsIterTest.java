@@ -111,7 +111,7 @@ public class HgramTransactionsIterTest {
 // assertEquals(10000, features.size());
 // }
 
-  @Test
+//  @Test
   public void testPlumbing() throws IOException {
 
     Runtime rt = Runtime.getRuntime();
