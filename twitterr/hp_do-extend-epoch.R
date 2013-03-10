@@ -1,7 +1,7 @@
 ## "Output" FTX.extensible FTX.len1OccsDf
 
-FTX.DEBUG <- TRUE
-FTX.TRACE <- TRUE
+FTX.DEBUG <- FALSE
+FTX.TRACE <- FALSE
 
 
 while(!require(RPostgreSQL)){

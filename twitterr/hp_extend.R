@@ -124,7 +124,7 @@ for(day in HPD.days){
 SELECT %d as date, CAST(floor(timemillis/(%d * 1000::INT8))*(%d) AS INT8) as epochstartux, 
 ngram, CAST(count(*) AS INT4) as cnt 
 from %s group by ngram,epochstartux; CREATE INDEX %s_time ON %s(epochstartux);CREATE INDEX %s_date ON %s(date);",cntTableName,cntTableName,day,
-HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableName,cntTableName,cntTableName,cntTableName,)
+HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableName,cntTableName,cntTableName,cntTableName)
 
 # TODONE add create index to above SQL
     execSql(sql,HPD.db)
@@ -133,7 +133,7 @@ HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableName,cntTableName,cntT
     sql <- sprintf("DROP TABLE IF EXISTS %s; CREATE TABLE %s AS 
 SELECT  %d as date, epochstartux,sum(cnt) as totalcnt from %s group by epochstartux;
 CREATE INDEX %s_time ON %s(epochstartux);CREATE INDEX %s_date ON %s(date);",
-volTableName,volTableName,day,cntTableName,volTableName,volTableName,volTableName,volTableName,)
+volTableName,volTableName,day,cntTableName,volTableName,volTableName,volTableName,volTableName)
 
     execSql(sql,HPD.db)
   }
