@@ -105,9 +105,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   private boolean preventRepeatedHGramsInTweet;
 
 
-  private static final String HGRAM_OPENING = "("; // " <, ";
+  private static final String HGRAM_OPENING = ""; // " <, ";
 
-  private static final String HGRAM_CLOSING = ")"; // " ,>";
+  private static final String HGRAM_CLOSING = ""; // " ,>";
 
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
