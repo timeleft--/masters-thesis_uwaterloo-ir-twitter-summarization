@@ -51,7 +51,7 @@ public class HgramsWindow {
   private static final int TOPIC_WORDS_PER_MINUTE = 100;
   private static final int FREQUENT_PATTERNS_PER_MINUTE = 1;
 
-  private static final boolean USE_RELIABLE_ALGO = true;
+  private static boolean USE_RELIABLE_ALGO = false;
 
   /**
    * 
@@ -103,16 +103,26 @@ public class HgramsWindow {
     if (args[4].equals("all")) {
       LOG.info("Generatint the frequent patterns associated with all hgrams");
       stdUnigrams = false;
+    } else {
+      LOG.info("Using mahout implementation because it supports selection of head items");
     }
 
+    USE_RELIABLE_ALGO = true;
+    if (args.length > 5){
+      if(args[5].equals("mahout")){
+        LOG.info("Using mahout implementation");
+        USE_RELIABLE_ALGO = false;
+      }
+    }
+    
     int minSupport = 5;
-    if (args.length > 5) {
-      minSupport = Integer.parseInt(args[5]);
+    if (args.length > 6) {
+      minSupport = Integer.parseInt(args[6]);
     }
 
-    int historyDaysCnt = 7;
-    if (args.length > 6) {
-      historyDaysCnt = Integer.parseInt(args[6]);
+    int historyDaysCnt = 5;
+    if (args.length > 7) {
+      historyDaysCnt = Integer.parseInt(args[7]);
     }
 
     while (windowStartUx < windowEndUx) {
