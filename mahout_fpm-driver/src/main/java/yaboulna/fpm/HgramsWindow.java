@@ -108,10 +108,14 @@ public class HgramsWindow {
     }
 
     USE_RELIABLE_ALGO = true;
+    String fpZhuExe = "fim_closed";
     if (args.length > 5){
       if(args[5].equals("mahout")){
         LOG.info("Using mahout implementation");
         USE_RELIABLE_ALGO = false;
+      } else if(args[5].startsWith("max")){
+        USE_RELIABLE_ALGO = true;
+        fpZhuExe = "fim_maximal";
       }
     }
     
@@ -172,7 +176,7 @@ public class HgramsWindow {
           File tmpFile = File.createTempFile("fpzhu", "trans", new File("/home/yaboulna/tmp/"));
           tmpFile.deleteOnExit();
 
-          String cmd = "/home/yaboulna/fimi/fp-zhu/fim_closed " + tmpFile.getAbsolutePath() + " "
+          String cmd = "/home/yaboulna/fimi/fp-zhu/" + fpZhuExe +" " + tmpFile.getAbsolutePath() + " "
               + minSupport + " "
               + epochOutLocal;
 
