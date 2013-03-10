@@ -192,14 +192,14 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         + "\n     stddev_pop(CAST(c.cnt as float8)/CAST(v.totalcnt as float8)) as dvprop " 
         + "\n   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
         + "\n   where cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx) +" / 3600.0) and " 
-        + "\n     date >= " + historyDay1 + " and date <= " + days.get(0)
+        + "\n     v.date >= " + historyDay1 + " and v.date <= " + days.get(0)
         + "\n     and c.epochstartmillis < (floor(" + windowStartUx + "/3600)*3600 * 1000::INT8)" 
         + "\n    group by c.ngram having count(*) >= " + minHoursInHistory + " * (3600.0 / " + (windowEndUx - windowStartUx) +") ),"
         + "\n curr as (select c.ngram, " 
         + "\n        CAST(sum(c.cnt) as float8)/CAST(sum(v.totalcnt) as float8)  as prop "
         + "\n   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
         + "\n   where cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx) +" / 3600.0) and" 
-        + "\n     date in (" + Joiner.on(",").join(days) + ") "
+        + "\n     v.date in (" + Joiner.on(",").join(days) + ") "
         + "\n     and c.epochstartmillis >= (floor(" + windowStartUx + "/3600)*3600 * 1000::INT8)"
         + "\n     and (c.epochstartmillis < (floor(" + windowEndUx + "/3600)*3600 * 1000::INT8) or (" + (windowEndUx - windowStartUx) + " < 3600 ))" 
         + "\n   group by c.ngram) "
