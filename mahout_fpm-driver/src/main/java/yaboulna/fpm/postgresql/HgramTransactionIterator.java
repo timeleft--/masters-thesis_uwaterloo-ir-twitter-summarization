@@ -45,7 +45,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           char ch = (char) chInt;
           sink.print(ch);
         }
-//        sink.print("\n End of subprocess output... I hope you like it \n");
+        sink.print("\n End of subprocess output/error... I hope you like it \n");
 
       } finally {
         sink.flush();

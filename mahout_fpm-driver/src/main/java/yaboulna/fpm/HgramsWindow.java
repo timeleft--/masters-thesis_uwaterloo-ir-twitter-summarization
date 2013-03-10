@@ -21,6 +21,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
+import org.apache.mahout.common.Pair;
 import org.apache.mahout.fpm.pfpgrowth.convertors.ContextStatusUpdater;
 import org.apache.mahout.fpm.pfpgrowth.convertors.SequenceFileOutputCollector;
 import org.apache.mahout.fpm.pfpgrowth.convertors.string.StringOutputConverter;
@@ -171,8 +172,11 @@ public class HgramsWindow {
             int i = 1; // get() returns 0 for items that are not contained
 
             while (transIter.hasNext()) {
-              
-              for (String item : transIter.next().getFirst()) {
+              Pair<List<String>, Long> trans = transIter.next();
+              if(transIter.getRowsRead() % 1000 == 0){
+                LOG.info("Read {} into the temp file {}. Last trans: " + trans.toString(), transIter.getRowsRead(), tmpFile.getAbsolutePath().toString());
+              }
+              for (String item : trans.getFirst()) {
                 int id = itemIds.get(item);
                 if (id == 0) {
                   id = i++; // TODO: use murmur chat and check for collisions, iff maintaining the same id across epochs is
@@ -188,12 +192,14 @@ public class HgramsWindow {
             feeder.flush();
             feeder.close();
           }
-
+          LOG.info("Read {} into the temp file {} (now flushed).", transIter.getRowsRead(), tmpFile.getAbsolutePath().toString());
+          
           Runtime rt = Runtime.getRuntime();
 
-          Process proc = rt
-              .exec(cmd);
+          LOG.info("Executing command: " + cmd);
+          Process proc = rt.exec(cmd);
 
+          LOG.info("Piping to output and error from the command to stdout and stderr");
           ExecutorService executor = Executors.newFixedThreadPool(2);
 
           HgramTransactionIterator.StreamPipe outPipe = new HgramTransactionIterator.StreamPipe(proc.getInputStream(),
@@ -214,19 +220,29 @@ public class HgramsWindow {
           }
 
           executor.shutdown();
+          
+          
 
           File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()));
+          
+          LOG.info("Translating the output file {} into {}",epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
+          
           BufferedReader decodeReader = new BufferedReader(new FileReader(epochOutLocal));
           FileWriterWithEncoding decodeWriter = new FileWriterWithEncoding(epochOutText, Charset.forName("UTF-8"));
           try {
+            int lnNum = 0;
             String ln;
             while ((ln = decodeReader.readLine()) != null) {
+              ++lnNum;
               String[] codes = ln.split(" ");
               int c;
               for (c = 0; c < codes.length - 1; ++c) {
                 decodeWriter.write(decodeMap.get(Integer.parseInt(codes[c])) + " ");
               }
               decodeWriter.write("\t" + codes[c].substring(0, codes[c].length() - 1).substring(1) + "\n");
+              if(lnNum%1000 == 0){
+                LOG.info("Translated {} frequent itemsets, but didn't flush yet",lnNum);
+              }
             }
           } finally {
             decodeReader.close();
@@ -234,6 +250,7 @@ public class HgramsWindow {
             decodeWriter.close();
           }
 
+          LOG.info("Translated the output file {} into {} and flushed, deleteing the original",epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
           epochOutLocal.delete();
 
         } else {
