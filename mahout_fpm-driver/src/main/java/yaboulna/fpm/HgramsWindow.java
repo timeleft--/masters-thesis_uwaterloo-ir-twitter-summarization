@@ -153,7 +153,7 @@ public class HgramsWindow {
               dateFmt.print(histDay1));
         }
 
-        if (USE_RELIABLE_ALGO) {
+        if (USE_RELIABLE_ALGO && !stdUnigrams) { //TODO support selection of unigrams
 
           File epochOutLocal = new File(epochOut.toUri().toString().substring("file:".length())
               + ".out");
@@ -269,7 +269,7 @@ public class HgramsWindow {
               epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
           epochOutLocal.delete();
 
-        } else {
+        } else { //if (!USE_RELIABLE_ALGO || stdUnigrams)
 
           SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, epochOut, Text.class,
               TopKStringPatterns.class);
