@@ -72,6 +72,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   protected static final boolean DEFAULT_EXLUDE_RETWEETS = false;
   protected static final boolean DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET = true;
+  protected static final boolean DEFAULT_removeIdenticalTweets = false;
 
   protected static final int DEFAULT_minPerHourFreq = 7;
   protected static final int DEFAULT_minHoursInHistory = 3;
@@ -82,7 +83,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   private PreparedStatement stmt = null;
 
   final boolean excludeRetweets;
-
+  final boolean removeIdenticalTweets;
   final int maxHgramLen;
 
   final List<String> days;
@@ -110,22 +111,23 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen) throws ClassNotFoundException {
-    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_minPerHourFreq,
-        DEFAULT_minHoursInHistory,
+    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_removeIdenticalTweets, 
+        DEFAULT_minPerHourFreq, DEFAULT_minHoursInHistory,
         DEFAULT_DBNAME, DEFAULT_EXLUDE_RETWEETS, DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen, String dbName) throws ClassNotFoundException {
-    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_minPerHourFreq,
-        DEFAULT_minHoursInHistory,
+    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_removeIdenticalTweets,
+        DEFAULT_minPerHourFreq,DEFAULT_minHoursInHistory,
         dbName, DEFAULT_EXLUDE_RETWEETS, DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
-      int maxLen, int minPerHourFreq, int minHoursInHistory,
+      int maxLen, boolean removeIdenticalTweets, 
+      int minPerHourFreq, int minHoursInHistory,
       String dbname, boolean excludeRetweets, boolean preventRepeatedHGramsInTweet,
       String driverName, String urlPrefix,
       String username, String password) throws ClassNotFoundException {
@@ -147,6 +149,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     this.minPerHourFreq = minPerHourFreq;
     this.minHoursInHistory = minHoursInHistory;
 
+    this.removeIdenticalTweets = removeIdenticalTweets;
     this.excludeRetweets = excludeRetweets;
 
     this.preventRepeatedHGramsInTweet = preventRepeatedHGramsInTweet;
@@ -232,7 +235,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           + "\n select DISTINCT  c.ngram  as ngram, h.appearances as durwtstdprop "
           + "\n from " + tablename + " c left join history h on c.ngram = h.ngram "
           + "\n where h.ngram is null and " + timeSql
-// + "\n       and ngramlen = " + maxHgramLen
+          // + "\n       and ngramlen = " + maxHgramLen
           + "\n       and c.cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx)
           + "/ 3600.0)"
           + "\n )";
@@ -294,7 +297,12 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 // 750 out of 19 million, I don't think it's a big deal
 
         // DISTINCT FOR DEDUPE of spam tweets
-        String sql = "select DISTINCT string_agg(ngram,?) from " + tablename + " where " + timeSql
+        String dedupe = "";
+        if (removeIdenticalTweets) {
+          dedupe = "DISTINCT";
+        }
+        String sql = "select " + dedupe + " string_agg(ngram,?) from " + tablename + " where "
+            + timeSql
             + " and ngramlen <= " + maxHgramLen
             + " group by id";
         stmt = conn.prepareStatement(sql);
