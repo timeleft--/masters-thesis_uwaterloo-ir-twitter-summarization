@@ -68,7 +68,7 @@ FTX.len1GramsSql <- sprintf("select b.${TIMECOL}/${TIMEADJUST} as epochstartux,
         join %s_%s%d%s v on v.${TIMECOL} = b.${TIMECOL}
         where b.date=%d and b.${TIMECOL} = (%d * ${TIMEADJUST}::INT8) 
 				and CAST(b.cnt AS float8)/CAST(v.totalcnt AS float8) > %g;",
-    ifelse(FTX.len1==1," ngramarr[1] ","ngram"),
+    ifelse(FTX.len1==1,"ngram","ngram"),
     ifelse(FTX.len1==1,"cnt","hgram_cnt"),
     FTX.epoch1, FTX.len1, ifelse(FTX.len1==1,'',paste("_",FTX.day, sep="")), 
     ifelse(FTX.len1==1,"volume","hgram_vol"),
@@ -109,8 +109,8 @@ annotPrint(FTX.label, "Fetched epoch occs: ", nrow(FTX.len1OccsDf))
 if(nrow(FTX.len1OccsDf)==0){
   annotPrint(FTX.label,"Epoch is missing in data, skipping")
 } else {
-if(FTX.len1 == 1){
-    FTX.len1OccsDf <- within(FTX.len1OccsDf,{ngram=stripEndChars(ngram)})
+#if(FTX.len1 == 1){
+#    FTX.len1OccsDf <- within(FTX.len1OccsDf,{ngram=stripEndChars(ngram)})
 }
 
 
@@ -219,7 +219,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
         }
         
 #        beforeJoin$ngram <- paste(beforeJoin$unigram,paste(FTX.compgramLeft,beforeJoin$ngram,FTX.compgramRight,sep=""),sep=",")
-        beforeJoin$ngram <- paste(stripEndChars(beforeJoin$unigram),beforeJoin$ngram,sep=",")
+        beforeJoin$ngram <- paste('(',paste(stripEndChars(beforeJoin$unigram),stripEndChars(beforeJoin$ngram),sep=","),')',sep="")
         beforeJoin$unigram <- NULL
         beforeJoin$ngramlen <- FTX.len1 + 1
         beforeJoin$pos <- p
@@ -280,7 +280,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
     if(nrow(afterJoin) > 0){
       
 #      afterJoin$ngram <- paste(paste(FTX.compgramLeft,afterJoin$ngram,FTX.compgramRight,sep=""),afterJoin$unigram,sep=",")
-      afterJoin$ngram <- paste(afterJoin$ngram,stripEndChars(afterJoin$unigram),sep=",")
+      afterJoin$ngram <- paste('(',paste(stripEndChars(afterJoin$ngram),stripEndChars(afterJoin$unigram),sep=","),')',sep="")
       afterJoin$unigram <- NULL
       afterJoin$ngramlen <- FTX.len1 + 1
       #already afterJoin$pos <- p
