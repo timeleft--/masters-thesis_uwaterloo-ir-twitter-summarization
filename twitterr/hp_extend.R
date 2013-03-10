@@ -62,9 +62,9 @@ for(day in HPD.days){
     daylenHgramsTable <- paste("hgram_occ",day,len1+1, sep="_")
     execSql(sprintf("CREATE TABLE %s () INHERITS (%s)",daylenHgramsTable, dayHgramTable),HPD.db)
     
-    if(len1==1) {
-      annotPrint( HPD.label, "Skipping filtering of occurrences, this shouldn't have suffered from the locks problem")
-    } else 
+#    if(len1==1) {
+#      annotPrint( HPD.label, "Skipping filtering of occurrences, this shouldn't have suffered from the locks problem")
+#    } else 
     tryCatch({
        
         sec0CurrDay <-  as.numeric(as.POSIXct(strptime(paste(day,"0000",sep=""),
@@ -121,18 +121,19 @@ for(day in HPD.days){
     # to inherit and create more indeces are required by inheritence
     cntTableName <- sprintf("hgram_cnt_%s%d_%d",HPD.epoch,len1+1,day)
     sql <- sprintf("DROP TABLE IF EXISTS %s; CREATE TABLE %s AS 
-SELECT %d as ngramlen, %d as date, CAST(floor(timemillis/(%d * 1000::INT8))*(%d) AS INT8) as epochstartux, 
+SELECT %d as date, CAST(floor(timemillis/(%d * 1000::INT8))*(%d) AS INT8) as epochstartux, 
 ngram, CAST(count(*) AS INT4) as cnt 
-from %s group by ngram,epochstartux; CREATE INDEX %s_time ON %s(epochstartux);",cntTableName,cntTableName,len1+1,day,
-HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableName,cntTableName)
+from %s group by ngram,epochstartux; CREATE INDEX %s_time ON %s(epochstartux);CREATE INDEX %s_date ON %s(date);",cntTableName,cntTableName,day,
+HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableName,cntTableName,cntTableName,cntTableName,)
 
 # TODONE add create index to above SQL
     execSql(sql,HPD.db)
 
     volTableName <- sprintf("hgram_vol_%s%d_%d",HPD.epoch,len1+1,day)
     sql <- sprintf("DROP TABLE IF EXISTS %s; CREATE TABLE %s AS 
-SELECT %d as ngramlen, %d as date, epochstartux,sum(cnt) as totalcnt from %s group by epochstartux;",
-volTableName,volTableName,len1+1,day,cntTableName)
+SELECT  %d as date, epochstartux,sum(cnt) as totalcnt from %s group by epochstartux;
+CREATE INDEX %s_time ON %s(epochstartux);CREATE INDEX %s_date ON %s(date);",
+volTableName,volTableName,day,cntTableName,volTableName,volTableName,volTableName,volTableName,)
 
     execSql(sql,HPD.db)
   }

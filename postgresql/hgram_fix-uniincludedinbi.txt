@@ -21,7 +21,7 @@ psql="psql -h hops.cs.uwaterloo.ca -U yaboulna -p 5433 -d ${db} -c "
 
 #ngramlen as ngramlen, <- can't be included in counts table
 
-# echo "${psql} 'DROP TABLLE hgram_cnt_${epoch}${len} CASCADE'"
+# echo "${psql} 'DROP TABLE hgram_cnt_${epoch}${len} CASCADE'"
 echo "${psql} 'CREATE TABLE hgram_cnt_${epoch}${len} (\
  date         integer, \
  epochstartux bigint, \

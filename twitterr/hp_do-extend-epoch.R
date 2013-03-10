@@ -1,7 +1,17 @@
 ## "Output" FTX.extensible FTX.len1OccsDf
 
-FTX.DEBUG <- FALSE
-FTX.TRACE <- FALSE
+FTX.DEBUG <- TRUE
+FTX.TRACE <- TRUE
+
+
+while(!require(RPostgreSQL)){
+  install.packages("RPostgreSQL")
+} 
+
+source("yaboulna_utils.R")
+source("compgrams_utils.R")
+
+###############################################
 
 FTX.epoch2 <- '1hr'
 FTX.secsInEpoch <- 3600
@@ -21,12 +31,16 @@ if(FTX.DEBUG){
 }
 
 if(FTX.TRACE) {
-  FTX.day <- 121105
+  FTX.day <- day<- 121105
   FTX.epochstartux <- 1352109600 + (3600 * 10)
   FTX.len1 <- 1
   FTX.parentHgramsTable <- paste("hgram_occ",FTX.day,FTX.len1+1, sep="_")
 #              FTX.dayDir <- HPD.dayDir
-  FTX.db <- "sample-0.01"      
+  FTX.db <- HPD.db <- "march" #"sample-0.01"      
+  
+  FTX.drv <- dbDriver("PostgreSQL")
+  FTX.con <- dbConnect(FTX.drv, dbname=HPD.db, user="yaboulna", password="5#afraPG",
+      host="hops.cs.uwaterloo.ca", port="5433")
   
 }
 
@@ -39,16 +53,6 @@ if(FTX.DEBUG) annotPrint(FTX.alterTableInheritTemplate)
 FTX.createIndexesTemplate <- "CREATE INDEX ${TNAME}_timemillis ON ${TNAME}(timemillis); CREATE INDEX ${TNAME}_date ON ${TNAME}(date); CREATE INDEX ${TNAME}_ngramlen ON ${TNAME}(ngramlen); CREATE INDEX ${TNAME}_pos ON ${TNAME}(pos);"
 ###############################################
 
-
-while(!require(RPostgreSQL)){
-  install.packages("RPostgreSQL")
-} 
-
-source("yaboulna_utils.R")
-source("compgrams_utils.R")
-
-###############################################
-
 FTX.label <- paste("FTX", FTX.day,FTX.len1, FTX.epochstartux, sep="_")
 
 #FTX.epochFile <- paste(FTX.dayDir,"/hgram_",FTX.epochstartux,".csv",sep="")
@@ -59,7 +63,7 @@ FTX.label <- paste("FTX", FTX.day,FTX.len1, FTX.epochstartux, sep="_")
 
 #annotPrint(FTX.label, "Prepared outfile", FTX.epochFile)
 
-annotPrint(FTX.label, "Connected to DB", HPD.db)
+#annotPrint(FTX.label, "Connected to DB", HPD.db)
 
 # Get what needs to be extended
 FTX.len1GramsSql <- sprintf("select b.${TIMECOL}/${TIMEADJUST} as epochstartux, 
@@ -245,7 +249,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   if(!is.null(FTX.cgOccMaskForBeforePrevIter)) {
     cgOccMaskForAfter <- FTX.cgOccMaskForBeforePrevIter 
   } else {
-    cgOccMaskForAfter <-  FTX.extensible & FTX.len1OccsDf$pos==p
+    cgOccMaskForAfter <-  which(FTX.extensible & FTX.len1OccsDf$pos==p)
   }
   
   if(FTX.len1==1){
@@ -298,7 +302,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   
   assign(paste("u",p+FTX.len1,sep=""),ugEndPosDf,envir=FTX.ugDfCache)
   
-  FTX.cgOccMaskForBeforePrevIter <<- cgMaskForBefore
+  FTX.cgOccMaskForBeforePrevIter <- cgMaskForBefore
   FTX.label <- FTX.labelOrig
   
   if(FTX.DEBUG) annotPrint(FTX.label,"Seeing what's there to be written")
