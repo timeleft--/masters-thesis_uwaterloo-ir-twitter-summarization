@@ -149,18 +149,21 @@ public class HgramsWindow {
 
           histDay1.addDays(-historyDaysCnt);
 
-          features = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60), dateFmt.print(histDay1));
+          features = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60),
+              dateFmt.print(histDay1));
         }
 
         if (USE_RELIABLE_ALGO) {
 
-          File epochOutLocal = new File(epochOut.toUri().toString().substring("file:".length()) + ".out");
+          File epochOutLocal = new File(epochOut.toUri().toString().substring("file:".length())
+              + ".out");
           epochOutLocal.getParentFile().mkdirs();
 
           File tmpFile = File.createTempFile("fpzhu", "trans", new File("/home/yaboulna/tmp/"));
           tmpFile.deleteOnExit();
 
-          String cmd = "/home/yaboulna/fimi/fp-zhu/fim_closed " + tmpFile.getAbsolutePath() + " " + minSupport + " "
+          String cmd = "/home/yaboulna/fimi/fp-zhu/fim_closed " + tmpFile.getAbsolutePath() + " "
+              + minSupport + " "
               + epochOutLocal;
 
           PrintStream feeder = new PrintStream(new FileOutputStream(tmpFile), true, "US-ASCII");
@@ -173,13 +176,15 @@ public class HgramsWindow {
 
             while (transIter.hasNext()) {
               Pair<List<String>, Long> trans = transIter.next();
-              if(transIter.getRowsRead() % 1000 == 0){
-                LOG.info("Read {} into the temp file {}. Last trans: " + trans.toString(), transIter.getRowsRead(), tmpFile.getAbsolutePath().toString());
+              if (transIter.getRowsRead() % 10000 == 0) {
+                LOG.info("Read {} into the temp file {}. Last trans: " + trans.toString(),
+                    transIter.getRowsRead(), tmpFile.getAbsolutePath().toString());
               }
               for (String item : trans.getFirst()) {
                 int id = itemIds.get(item);
                 if (id == 0) {
-                  id = i++; // TODO: use murmur chat and check for collisions, iff maintaining the same id across epochs is
+                  id = i++; // TODO: use murmur chat and check for collisions, iff maintaining the same id across epochs
+// is
 
                   itemIds.put(item, id);
                   decodeMap.put(id, item);
@@ -192,8 +197,9 @@ public class HgramsWindow {
             feeder.flush();
             feeder.close();
           }
-          LOG.info("Read {} into the temp file {} (now flushed).", transIter.getRowsRead(), tmpFile.getAbsolutePath().toString());
-          
+          LOG.info("Read {} into the temp file {} (now flushed).", transIter.getRowsRead(), tmpFile
+              .getAbsolutePath().toString());
+
           Runtime rt = Runtime.getRuntime();
 
           LOG.info("Executing command: " + cmd);
@@ -202,11 +208,13 @@ public class HgramsWindow {
           LOG.info("Piping to output and error from the command to stdout and stderr");
           ExecutorService executor = Executors.newFixedThreadPool(2);
 
-          HgramTransactionIterator.StreamPipe outPipe = new HgramTransactionIterator.StreamPipe(proc.getInputStream(),
+          HgramTransactionIterator.StreamPipe outPipe = new HgramTransactionIterator.StreamPipe(
+              proc.getInputStream(),
               System.out);
           Future<Void> outFut = executor.submit(outPipe);
 
-          HgramTransactionIterator.StreamPipe errPipe = new HgramTransactionIterator.StreamPipe(proc.getErrorStream(),
+          HgramTransactionIterator.StreamPipe errPipe = new HgramTransactionIterator.StreamPipe(
+              proc.getErrorStream(),
               System.err);
           Future<Void> errFut = executor.submit(errPipe);
 
@@ -220,35 +228,36 @@ public class HgramsWindow {
           }
 
           executor.shutdown();
-          
-          
 
           File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()));
-          
-          LOG.info("Translating the output file {} into {}",epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
-          
+
+          LOG.info("Translating the output file {} into {}", epochOutLocal.getAbsolutePath(),
+              epochOutText.getAbsolutePath());
+
           BufferedReader decodeReader = new BufferedReader(new FileReader(epochOutLocal));
-          FileWriterWithEncoding decodeWriter = new FileWriterWithEncoding(epochOutText, Charset.forName("UTF-8"));
+          FileWriterWithEncoding decodeWriter = new FileWriterWithEncoding(epochOutText,
+              Charset.forName("UTF-8"));
           try {
             int lnNum = 0;
             String ln;
             while ((ln = decodeReader.readLine()) != null) {
               ++lnNum;
-              if(lnNum%1000 == 0){
-                LOG.info("Translated {} frequent itemsets, but didn't flush yet",lnNum);
+              if (lnNum % 10000 == 0) {
+                LOG.info("Translated {} frequent itemsets, but didn't flush yet", lnNum);
               }
-              
+
               String[] codes = ln.split(" ");
-              if(codes.length == 2){
-                //only the hgram and its frequency
+              if (codes.length == 2) {
+                // only the hgram and its frequency
                 continue;
               }
               int c;
               for (c = 0; c < codes.length - 1; ++c) {
                 decodeWriter.write(decodeMap.get(Integer.parseInt(codes[c])) + " ");
               }
-              decodeWriter.write("\t" + codes[c].substring(0, codes[c].length() - 1).substring(1) + "\n");
-              
+              decodeWriter.write("\t" + codes[c].substring(0, codes[c].length() - 1).substring(1)
+                  + "\n");
+
             }
           } finally {
             decodeReader.close();
@@ -256,7 +265,8 @@ public class HgramsWindow {
             decodeWriter.close();
           }
 
-          LOG.info("Translated the output file {} into {} and flushed, deleteing the original",epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
+          LOG.info("Translated the output file {} into {} and flushed, deleteing the original",
+              epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
           epochOutLocal.delete();
 
         } else {
@@ -272,8 +282,9 @@ public class HgramsWindow {
                 minSupport,
                 FREQUENT_PATTERNS_PER_MINUTE * (epochLen / 60),
                 features,
-                new StringOutputConverter(new SequenceFileOutputCollector<Text, TopKStringPatterns>(
-                    writer)),
+                new StringOutputConverter(
+                    new SequenceFileOutputCollector<Text, TopKStringPatterns>(
+                        writer)),
                 new ContextStatusUpdater(null));
 
           } finally {
