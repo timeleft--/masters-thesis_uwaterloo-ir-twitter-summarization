@@ -60,7 +60,7 @@ for(day in HPD.days){
 #    HPD.dayDir <- paste(HPD.dataRoot,"hgram_occ",day, sep="/")
   dayHgramTable <- paste("hgram_occ",day,sep="_")
   execSql(sprintf("CREATE TABLE %s () INHERITS(hgram_occ)",dayHgramTable),HPD.db)
-	for(len1 in c(1:4)){
+	for(len1 in c(1)){
 #  HPD.lenDir <- paste(HPD.dayDir,"/",len1,"-",len1 + 1, sep="")
   
     HPD.label <- paste("HPD",len1,day,sep="_")
