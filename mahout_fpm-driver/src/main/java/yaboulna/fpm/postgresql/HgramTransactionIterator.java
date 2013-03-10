@@ -25,7 +25,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 public class HgramTransactionIterator implements Iterator<Pair<List<String>, Long>> {
- 
+
   public static class StreamPipe implements Callable<Void> {
 
     final InputStream followed;
@@ -69,10 +69,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
   protected static final String DEFAULT_DBNAME = "march";
   protected static final boolean DEBUG_SQL = false;
-  
+
   protected static final boolean DEFAULT_EXLUDE_RETWEETS = false;
   protected static final boolean DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET = true;
-  
+
   protected static final int DEFAULT_minPerHourFreq = 7;
   protected static final int DEFAULT_minHoursInHistory = 3;
 
@@ -93,7 +93,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   Pair<List<String>, Long> nextKeyVal = null;
   StringBuilder strBld = new StringBuilder();
   StringBuilder posBld = new StringBuilder();
-  
+
   long nRowsRead;
 
   private int currDayIx = 0;
@@ -104,22 +104,22 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   private boolean preventRepeatedHGramsInTweet;
 
-
-  private static final String HGRAM_OPENING = ""; // " <, ";
-
-  private static final String HGRAM_CLOSING = ""; // " ,>";
-
+// private static final String HGRAM_OPENING = "("; // " <, ";
+//
+// private static final String HGRAM_CLOSING = ")"; // " ,>";
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen) throws ClassNotFoundException {
-    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_minPerHourFreq, DEFAULT_minHoursInHistory, 
+    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_minPerHourFreq,
+        DEFAULT_minHoursInHistory,
         DEFAULT_DBNAME, DEFAULT_EXLUDE_RETWEETS, DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen, String dbName) throws ClassNotFoundException {
-    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_minPerHourFreq, DEFAULT_minHoursInHistory, 
+    this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_minPerHourFreq,
+        DEFAULT_minHoursInHistory,
         dbName, DEFAULT_EXLUDE_RETWEETS, DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
@@ -143,12 +143,12 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     }
 
     this.maxHgramLen = maxLen;
-    
+
     this.minPerHourFreq = minPerHourFreq;
     this.minHoursInHistory = minHoursInHistory;
 
     this.excludeRetweets = excludeRetweets;
-    
+
     this.preventRepeatedHGramsInTweet = preventRepeatedHGramsInTweet;
 
     Class.forName(driverName);
@@ -181,7 +181,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   }
 
   public Set<String> getTopicWords(int limit, String historyDay1) throws SQLException {
-    
+
     Statement hiStmt = conn.createStatement();
     try {
       //  @formatter:off
@@ -214,30 +214,33 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         + "\n)";
     //@formatter:on    
 
-      
       String timeSql = "date in (" + Joiner.on(',').join(days) + ")"
-            + " and epochstartux >= floor(" + windowStartUx + "/3600)*3600 "
-            + " and (epochstartux < floor(" + windowEndUx + "/3600)*3600 or (" + (windowEndUx - windowStartUx) + " < 3600 ))";
+          + " and epochstartux >= floor(" + windowStartUx + "/3600)*3600 "
+          + " and (epochstartux < floor(" + windowEndUx + "/3600)*3600 or ("
+          + (windowEndUx - windowStartUx) + " < 3600 ))";
 
       String tablename = "hgram_cnt_1hr" + maxHgramLen;
       String novelSql = "("
-              + "\n with history as (select ngram, count(*) as appearances " 
-              + "\n   from " + tablename 
-              + "\n   where cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx) +"/ 3600.0) and " 
-              + "\n     date >= " + historyDay1 + " and date <= " + days.get(0)
-              + "\n     and epochstartux < (floor(" + windowStartUx + "/3600)*3600) " 
-              + "\n    group by ngram having count(*) >= " + minHoursInHistory + " * (3600.0 / " + (windowEndUx - windowStartUx) +"))"
-              + "\n select DISTINCT  c.ngram  as ngram, h.appearances as durwtstdprop "
-              + "\n from " + tablename + " c left join history h on c.ngram = h.ngram " 
-              +	"\n where h.ngram is null and " + timeSql
-//              + "\n       and ngramlen = " + maxHgramLen
-              + "\n       and c.cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx) +"/ 3600.0)"
-              + "\n )";
-        
-      ResultSet hiRs = hiStmt.executeQuery(hiSql 
+          + "\n with history as (select ngram, count(*) as appearances "
+          + "\n   from " + tablename
+          + "\n   where cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx)
+          + "/ 3600.0) and "
+          + "\n     date >= " + historyDay1 + " and date <= " + days.get(0)
+          + "\n     and epochstartux < (floor(" + windowStartUx + "/3600)*3600) "
+          + "\n    group by ngram having count(*) >= " + minHoursInHistory + " * (3600.0 / "
+          + (windowEndUx - windowStartUx) + "))"
+          + "\n select DISTINCT  c.ngram  as ngram, h.appearances as durwtstdprop "
+          + "\n from " + tablename + " c left join history h on c.ngram = h.ngram "
+          + "\n where h.ngram is null and " + timeSql
+// + "\n       and ngramlen = " + maxHgramLen
+          + "\n       and c.cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx)
+          + "/ 3600.0)"
+          + "\n )";
+
+      ResultSet hiRs = hiStmt.executeQuery(hiSql
           + "\n UNION ALL \n" // ALL because dupliactes will be elimated in the set anyway DUPLICATES?
           + novelSql);
-      
+
       Set<String> retVal = Sets.newHashSet();
       while (hiRs.next()) {
         retVal.add(hiRs.getString(1));
@@ -259,7 +262,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
       if (conn != null) {
         conn.close();
       }
-      
+
     } catch (SQLException ignored) {
     }
   }
@@ -273,27 +276,27 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
 
         String tablename = "hgram_occ_" + days.get(currDayIx) + "_" + maxHgramLen;
-        
+
 // The need for DISTINCT ON (id,pos).. we do need it but for a tiny fraction where
-// the data isn't "clean".. that is multiple occurrences appear in the same id,pos        
-//select count(*) from hgram_occ_121106_2 where ngramlen=2;
-//  count   
-//----------
+// the data isn't "clean".. that is multiple occurrences appear in the same id,pos
+// select count(*) from hgram_occ_121106_2 where ngramlen=2;
+// count
+// ----------
 // 19766647
-//(1 row)
-//select * from hgram_occ_121106_2 where (id,pos) in (select id,pos from hgram_occ_121106_2
-//        group by id,pos having count(*) > 1) order by id,pos;
-//        266069533033394176 | 1352270894665 | 121106 | DEJAR,DE                    |        2 |       10 |   7
-//        266069533033394176 | 1352270894665 | 121106 | DEJAR                       |        1 |       10 |   7
-//        266069533033394176 | 1352270894665 | 121106 | SONREÍR                     |        1 |       10 |   9
-//        266069533033394176 | 1352270894665 | 121106 | SONREÍR                     |        1 |       10 |   9
-//       (1450 ROWS) -> divide that number by 2 (at least) to get the number of faulty locations 
+// (1 row)
+// select * from hgram_occ_121106_2 where (id,pos) in (select id,pos from hgram_occ_121106_2
+// group by id,pos having count(*) > 1) order by id,pos;
+// 266069533033394176 | 1352270894665 | 121106 | DEJAR,DE | 2 | 10 | 7
+// 266069533033394176 | 1352270894665 | 121106 | DEJAR | 1 | 10 | 7
+// 266069533033394176 | 1352270894665 | 121106 | SONREÍR | 1 | 10 | 9
+// 266069533033394176 | 1352270894665 | 121106 | SONREÍR | 1 | 10 | 9
+// (1450 ROWS) -> divide that number by 2 (at least) to get the number of faulty locations
 // 750 out of 19 million, I don't think it's a big deal
 
-        //DISTINCT FOR DEDUPE of spam tweets
+        // DISTINCT FOR DEDUPE of spam tweets
         String sql = "select DISTINCT string_agg(ngram,?) from " + tablename + " where " + timeSql
             + " and ngramlen <= " + maxHgramLen
-            + " group by id"; 
+            + " group by id";
         stmt = conn.prepareStatement(sql);
         stmt.setString(1, "" + TOKEN_DELIMETER);
 
@@ -307,15 +310,15 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         char[] transChars = transactions.getString(1).toCharArray();
 
         Collection<String> hgramList;
-        if(preventRepeatedHGramsInTweet) {
+        if (preventRepeatedHGramsInTweet) {
           hgramList = Sets.newHashSet();
         } else {
           hgramList = Lists.newLinkedList();
         }
-        
+
         boolean skipTransaction = false;
         int currUnigramStart = 0;
-        
+
         for (int i = 0; i < transChars.length; ++i) {
 
           if (excludeRetweets && // TODO if not find the rest of the tweet in the buffer and increase its support by 1
@@ -339,10 +342,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           if (transChars[i] == TOKEN_DELIMETER) {
             String hgram = strBld.toString();
             strBld.setLength(0);
-            
-            hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
-            
-         
+
+// hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
+            hgramList.add(hgram);
+
           } else {
             strBld.append(transChars[i]);
           }
@@ -351,17 +354,18 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         // last token (makes sure strBld.setLength is called always)
         String hgram = strBld.toString();
         strBld.setLength(0);
-        
-        hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
+
+// hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
+        hgramList.add(hgram);
 
         if (skipTransaction) {
           continue;
         }
-        
-        if(preventRepeatedHGramsInTweet){
+
+        if (preventRepeatedHGramsInTweet) {
           hgramList = ImmutableList.copyOf(hgramList);
         }
-        
+
         nextKeyVal = new Pair<List<String>, Long>((List<String>) hgramList, ONE);
         return true;
       }
