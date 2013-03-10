@@ -111,7 +111,7 @@ if(nrow(FTX.len1OccsDf)==0){
 } else {
 #if(FTX.len1 == 1){
 #    FTX.len1OccsDf <- within(FTX.len1OccsDf,{ngram=stripEndChars(ngram)})
-}
+#}
 
 
 ## Mark occurrences on candidates
