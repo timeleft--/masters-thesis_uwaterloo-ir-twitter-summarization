@@ -194,7 +194,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     try {
       //  @formatter:off
     String hiSql = "("
-        + "\n with hist as (select c.ngramarr, " 
+        + "\n with hist as (select c.ngram, " 
         + "\n     min(c.epochstartmillis) as firstseen, max(c.epochstartmillis) as lastseen,count(*) as appearances, " 
         + "\n     avg(CAST(c.cnt as float8)/CAST(v.totalcnt as float8)) as meanprop, "
         + "\n     stddev_pop(CAST(c.cnt as float8)/CAST(v.totalcnt as float8)) as dvprop " 
@@ -202,20 +202,20 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         + "\n   where cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx) +" / 3600.0) and " 
         + "\n     date >= " + historyDay1 + " and date <= " + days.get(0)
         + "\n     and c.epochstartmillis < (floor(" + windowStartUx + "/3600)*3600 * 1000::INT8)" 
-        + "\n    group by c.ngramarr having count(*) >= " + minHoursInHistory + " * (3600.0 / " + (windowEndUx - windowStartUx) +") ),"
-        + "\n curr as (select c.ngramarr, " 
+        + "\n    group by c.ngram having count(*) >= " + minHoursInHistory + " * (3600.0 / " + (windowEndUx - windowStartUx) +") ),"
+        + "\n curr as (select c.ngram, " 
         + "\n        CAST(sum(c.cnt) as float8)/CAST(sum(v.totalcnt) as float8)  as prop "
         + "\n   from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis " 
         + "\n   where cnt >= " + minPerHourFreq + " * (" + (windowEndUx - windowStartUx) +" / 3600.0) and" 
         + "\n     date in (" + Joiner.on(",").join(days) + ") "
         + "\n     and c.epochstartmillis >= (floor(" + windowStartUx + "/3600)*3600 * 1000::INT8)"
         + "\n     and (c.epochstartmillis < (floor(" + windowEndUx + "/3600)*3600 * 1000::INT8) or (" + (windowEndUx - windowStartUx) + " < 3600 ))" 
-        + "\n   group by c.ngramarr) "
-        + "\n select CAST(curr.ngramarr AS text)," 
+        + "\n   group by c.ngram) "
+        + "\n select CAST(curr.ngram AS text)," 
         + "\n     ( (curr.prop - hist.meanprop) /hist.dvprop) * " 
         + "\n              ( 1 - (((" + windowStartUx + " * 1000::FLOAT8) - hist.lastseen) / ((" + windowStartUx + " * 1000::FLOAT8) - hist.firstseen)) )"
         + "\n           as durwtstdprop"
-        + "\n   from hist join curr on curr.ngramarr = hist.ngramarr "
+        + "\n   from hist join curr on curr.ngram = hist.ngram "
 // hour of day fashla:        + "\n    and (curr.epochstartmillis%(24*3600000))/3600000 = (hist.epochstartmillis%(24*3600000))/3600000 "
         + "\n   order by durwtstdprop desc " 
         + "\n   limit " + limit // Limit already set according to epoch length
@@ -235,7 +235,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
               + "\n     date >= " + historyDay1 + " and date <= " + days.get(0)
               + "\n     and epochstartux < (floor(" + windowStartUx + "/3600)*3600) " 
               + "\n    group by ngram having count(*) >= " + minHoursInHistory + " * (3600.0 / " + (windowEndUx - windowStartUx) +"))"
-              + "\n select DISTINCT '{' || c.ngram || '}' as ngramarr, h.appearances as durwtstdprop "
+              + "\n select DISTINCT  c.ngram  as ngram, h.appearances as durwtstdprop "
               + "\n from " + tablename + " c left join history h on c.ngram = h.ngram " 
               +	"\n where h.ngram is null and " + timeSql
 //              + "\n       and ngramlen = " + maxHgramLen
