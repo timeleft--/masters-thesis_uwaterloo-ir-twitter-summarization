@@ -1,14 +1,8 @@
 package yaboulna.fpm.postgresql;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.io.Writer;
-import java.nio.channels.Channels;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -24,7 +18,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.apache.mahout.common.Pair;
-import org.apache.mahout.math.map.OpenIntObjectHashMap;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -74,7 +67,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   protected static final String DEFAULT_CONNECTION_URL = "jdbc:postgresql://hops.cs.uwaterloo.ca:5433/";
   protected static final String DEFAULT_USER = "yaboulna";
   protected static final String DEFAULT_PASSWORD = "5#afraPG";
-  protected static final String DEFAULT_DBNAME = "full";
+  protected static final String DEFAULT_DBNAME = "march";
   protected static final boolean DEBUG_SQL = false;
   
   protected static final boolean DEFAULT_EXLUDE_RETWEETS = false;
@@ -100,7 +93,6 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   Pair<List<String>, Long> nextKeyVal = null;
   StringBuilder strBld = new StringBuilder();
   StringBuilder posBld = new StringBuilder();
-  OpenIntObjectHashMap<String> preHgramByPos = new OpenIntObjectHashMap<String>();
   
   long nRowsRead;
 
@@ -113,9 +105,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   private boolean preventRepeatedHGramsInTweet;
 
 
-  private static final String HGRAM_OPENING = "{"; // " <, ";
+  private static final String HGRAM_OPENING = "("; // " <, ";
 
-  private static final String HGRAM_CLOSING = "}"; // " ,>";
+  private static final String HGRAM_CLOSING = ")"; // " ,>";
 
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
@@ -267,33 +259,15 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
       if (conn != null) {
         conn.close();
       }
-      if(badOccsWr!= null){
-        badOccsWr.flush();
-        badOccsWr.close();
-      }
+      
     } catch (SQLException ignored) {
-    } catch (IOException ignored) {
     }
   }
 
-  File badCccsFile;
-  Writer badOccsWr;
-  public boolean produceLogOfBadPos = false;
   public boolean hasNext() {
     try {
       if (transactions == null) {
-        if (produceLogOfBadPos) {
-          if (badOccsWr != null) {
-            badOccsWr.flush();
-            badOccsWr.close();
-          }
-          badCccsFile = new File("/home/yaboulna/bi_products/uniincinbi/" + days.get(currDayIx) + "_"
-              + System.currentTimeMillis());
-          badCccsFile.getParentFile().mkdirs();
-          badCccsFile.createNewFile();
 
-          badOccsWr = Channels.newWriter(new FileOutputStream(badCccsFile).getChannel(), "US-ASCII");
-        }
         String timeSql = "date = " + days.get(currDayIx) + " "
             + " and timemillis >= (" + windowStartUx + " * 1000::INT8)"
             + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
@@ -317,9 +291,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 // 750 out of 19 million, I don't think it's a big deal
 
         //DISTINCT FOR DEDUPE of spam tweets
-        String sql = "select DISTINCT string_agg(ngram||'='||pos,?),id from " + tablename + " where " + timeSql
+        String sql = "select DISTINCT string_agg(ngram,?) from " + tablename + " where " + timeSql
             + " and ngramlen <= " + maxHgramLen
-            + " group by id"; // I just hope it will be already sorted: order by id,pos";
+            + " group by id"; 
         stmt = conn.prepareStatement(sql);
         stmt.setString(1, "" + TOKEN_DELIMETER);
 
@@ -341,7 +315,6 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         
         boolean skipTransaction = false;
         int currUnigramStart = 0;
-        boolean inPos = false;
         
         for (int i = 0; i < transChars.length; ++i) {
 
@@ -367,30 +340,11 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             String hgram = strBld.toString();
             strBld.setLength(0);
             
-            int pos = Integer.parseInt(posBld.toString());
-            posBld.setLength(0);
-            inPos = false;
-            
-            String prevHgram = preHgramByPos.get(pos-1);
-            if(prevHgram != null && prevHgram.endsWith(hgram) && 
-                prevHgram.length() > hgram.length() && prevHgram.charAt(prevHgram.length() - hgram.length() - 1) == ','){
-              //unigram that is included in a bigram, don't add it
-              // Also log the occurrence's id, pos pair
-              if(produceLogOfBadPos) badOccsWr.append(transactions.getLong("id")+"\t"+pos+"\n");
-              continue;
-            }
-
-            preHgramByPos.put(pos, hgram);
             hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
             
-          } else if(transChars[i] == '=') { //POSITION_SEPARATOR
-            inPos = true;
+         
           } else {
-            if(inPos){
-              posBld.append(transChars[i]);
-            } else {
-              strBld.append(transChars[i]);
-            }
+            strBld.append(transChars[i]);
           }
         }
 
@@ -398,20 +352,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         String hgram = strBld.toString();
         strBld.setLength(0);
         
-        int pos = Integer.parseInt(posBld.toString());
-        posBld.setLength(0);
-        inPos = false;
-        String prevHgram = preHgramByPos.get(pos-1);
-        preHgramByPos.clear();
-        
-        if(prevHgram != null && prevHgram.endsWith(hgram) && 
-            prevHgram.length() > hgram.length() && prevHgram.charAt(prevHgram.length() - hgram.length() - 1) == ','){
-          //unigram that is included in a bigram, don't add it
-          if(produceLogOfBadPos) badOccsWr.append(transactions.getLong("id")+"\t"+pos+"\n");
-        } else {
-          hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
-        }
-        
+        hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
+
         if (skipTransaction) {
           continue;
         }
@@ -430,10 +372,6 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
       }
       return false;
     } catch (SQLException e) {
-      throw new RuntimeException(e);
-    } catch (FileNotFoundException e) {
-      throw new RuntimeException(e);
-    } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
