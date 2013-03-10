@@ -234,15 +234,21 @@ public class HgramsWindow {
             String ln;
             while ((ln = decodeReader.readLine()) != null) {
               ++lnNum;
+              if(lnNum%1000 == 0){
+                LOG.info("Translated {} frequent itemsets, but didn't flush yet",lnNum);
+              }
+              
               String[] codes = ln.split(" ");
+              if(codes.length == 2){
+                //only the hgram and its frequency
+                continue;
+              }
               int c;
               for (c = 0; c < codes.length - 1; ++c) {
                 decodeWriter.write(decodeMap.get(Integer.parseInt(codes[c])) + " ");
               }
               decodeWriter.write("\t" + codes[c].substring(0, codes[c].length() - 1).substring(1) + "\n");
-              if(lnNum%1000 == 0){
-                LOG.info("Translated {} frequent itemsets, but didn't flush yet",lnNum);
-              }
+              
             }
           } finally {
             decodeReader.close();
