@@ -16,8 +16,8 @@ import org.joda.time.format.DateTimeFormatter;
 public class DumpHgramsWindow {
 
   public static String fpsToString(Pair<String, TopKStringPatterns> tokenPatterns) {
-    StringBuilder sb = new StringBuilder(tokenPatterns.getFirst()+"\t");
-    String sep = " | ";
+    StringBuilder sb = new StringBuilder(">>>" + tokenPatterns.getFirst()+"\n");
+    String sep = "\n";
 
     boolean worthy = false;
     for (Pair<List<String>, Long> pattern : tokenPatterns.getSecond().getPatterns()) {
@@ -25,7 +25,7 @@ public class DumpHgramsWindow {
         continue;
       }
       worthy = true;
-      sb.append(pattern.getFirst() + " = " + pattern.getSecond());
+      sb.append(pattern.getFirst() + "\t" + pattern.getSecond());
       sb.append(sep);
     }
 
