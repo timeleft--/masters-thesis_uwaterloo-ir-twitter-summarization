@@ -84,20 +84,29 @@ public class HgramsWindow {
       }
     }
 
-    int epochLen = 3600;
+    String[] epochStep = args[3].split("/");
+    int epochLen = Integer.parseInt(epochStep[0]);
+    int stepSec = Integer.parseInt(epochStep[1]);
 
-    if (args[3].equals("1day")) {
-      epochLen = 3600 * 24;
-      LOG.info("epoch: 1 day");
-    } else if (args[3].equals("1hr")) {
-      epochLen = 3600;
-      LOG.info("epoch: 1hr");
-    } else if (args[3].equals("5min")) {
-      epochLen = 300;
-      LOG.info("epoch: 5min");
+    if (epochLen < 3600) {
       LOG.info("I am always using the counts and history from 1hr tables, so " +
           " the counts of the whole hour will used if the window starts at a fraction of an hour");
     }
+
+// int epochLen = 3600;
+//
+// if (args[3].equals("1day")) {
+// epochLen = 3600 * 24;
+// LOG.info("epoch: 1 day");
+// } else if (args[3].equals("1hr")) {
+// epochLen = 3600;
+// LOG.info("epoch: 1hr");
+// } else if (args[3].equals("5min")) {
+// epochLen = 300;
+// LOG.info("epoch: 5min");
+// LOG.info("I am always using the counts and history from 1hr tables, so " +
+// " the counts of the whole hour will used if the window starts at a fraction of an hour");
+// }
 
     boolean stdUnigrams = true;
     if (args[4].equals("all")) {
@@ -109,16 +118,16 @@ public class HgramsWindow {
 
     USE_RELIABLE_ALGO = true;
     String fpZhuExe = "fim_closed";
-    if (args.length > 5){
-      if(args[5].equals("mahout")){
+    if (args.length > 5) {
+      if (args[5].equals("mahout")) {
         LOG.info("Using mahout implementation");
         USE_RELIABLE_ALGO = false;
-      } else if(args[5].startsWith("max")){
+      } else if (args[5].startsWith("max")) {
         USE_RELIABLE_ALGO = true;
         fpZhuExe = "fim_maximal";
       }
     }
-    
+
     int minSupport = 5;
     if (args.length > 6) {
       minSupport = Integer.parseInt(args[6]);
@@ -167,7 +176,7 @@ public class HgramsWindow {
               dateFmt.print(histDay1));
         }
 
-        if (USE_RELIABLE_ALGO && !stdUnigrams) { //TODO support selection of unigrams
+        if (USE_RELIABLE_ALGO && !stdUnigrams) { // TODO support selection of unigrams
 
           File epochOutLocal = new File(epochOut.toUri().toString().substring("file:".length())
               + ".out");
@@ -176,7 +185,8 @@ public class HgramsWindow {
           File tmpFile = File.createTempFile("fpzhu", "trans", new File("/home/yaboulna/tmp/"));
           tmpFile.deleteOnExit();
 
-          String cmd = "/home/yaboulna/fimi/fp-zhu/" + fpZhuExe +" " + tmpFile.getAbsolutePath() + " "
+          String cmd = "/home/yaboulna/fimi/fp-zhu/" + fpZhuExe + " " + tmpFile.getAbsolutePath()
+              + " "
               + minSupport + " "
               + epochOutLocal;
 
@@ -283,7 +293,7 @@ public class HgramsWindow {
               epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
           epochOutLocal.delete();
 
-        } else { //if (!USE_RELIABLE_ALGO || stdUnigrams)
+        } else { // if (!USE_RELIABLE_ALGO || stdUnigrams)
 
           SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, epochOut, Text.class,
               TopKStringPatterns.class);
@@ -313,7 +323,7 @@ public class HgramsWindow {
         transIter2.uninit();
       }
       LOG.info("Done Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
-      windowStartUx += epochLen;
+      windowStartUx += stepSec;
     }
   }
 }
