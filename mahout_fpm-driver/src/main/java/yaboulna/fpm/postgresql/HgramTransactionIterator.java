@@ -72,7 +72,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   protected static final boolean DEFAULT_EXLUDE_RETWEETS = false;
   protected static final boolean DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET = true;
-  protected static final boolean DEFAULT_removeIdenticalTweets = false;
+  protected static final boolean DEFAULT_removeIdenticalTweets = true;
 
   protected static final int DEFAULT_minPerHourFreq = 7;
   protected static final int DEFAULT_minHoursInHistory = 3;
