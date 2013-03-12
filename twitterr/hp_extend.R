@@ -175,7 +175,7 @@ CREATE INDEX %s_time ON %s(epochstartux);
 CREATE INDEX %s_date ON %s(date);
 CREATE INDEX %s_ngramlen ON %s(ngramlen);
 ALTER TABLE %s inherit %s;",cntTableNameDay,cntTableNameDay,day,
-HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableNameDay,cntTableNameDay,cntTableNameDay,cntTableNameDay,cntTableNameDay,cntTableNameParent)
+HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableNameDay,cntTableNameDay,cntTableNameDay,cntTableNameDay,cntTableNameDay,cntTableNameDay,cntTableNameDay,cntTableNameParent)
 
 # TODONE add create index to above SQL
     execSql(sql,HPD.db)
