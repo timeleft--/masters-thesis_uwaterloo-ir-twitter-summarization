@@ -425,11 +425,14 @@ if(FTX.len1==1){
 	  return(retVal);
   }
   #debug(tweetFunc)
+  notEvenOneExtensible <- match(FTX.len1OccsDf$id, unique(occupiedDf$id), nomatch=0)
   
-  toWrite <- ddply(FTX.len1OccsDf[!FTX.extensible,],c("id"),tweetFunc)
+  toWrite <- rbind(ddply(FTX.len1OccsDf[!FTX.extensible & (notEvenOneExtensible!=0),],c("id"),tweetFunc),
+		  FTX.len1OccsDf[notEvenOneExtensible==0,])
   
   dbWriteTable(FTX.con,unigramsPartitionName,toWrite)
   
+  rm(occupiedDf)
   rm(toWrite)
 }
 
