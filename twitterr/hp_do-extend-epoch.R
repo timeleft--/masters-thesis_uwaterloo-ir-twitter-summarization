@@ -402,10 +402,6 @@ if(FTX.len1==1){
   annotPrint(FTX.label,"Got occupied pos. nRow: ",nrow(occupiedDf))
   
   tweetFunc <- function(tweetOcc){
-	  if(tweetOcc$tweetIncExtPos[1] == 0){
-		  return(tweetOcc)
-	  }
-	  
 	  occupiedPos <- occupiedDf[occupiedDf$id==tweetOcc$id[1],]
 	  occupiedPos$id <- NULL
 	  occupiedPos <- unique(unlist(occupiedPos,recursive=TRUE))
@@ -429,9 +425,10 @@ if(FTX.len1==1){
 	  return(retVal);
   }
   #debug(tweetFunc)
-  FTX.len1OccsDf$tweetIncExtPos <- match(FTX.len1OccsDf$id, unique(occupiedDf$id), nomatch=0)
+  notEvenOneExtensible <- match(FTX.len1OccsDf$id, unique(occupiedDf$id), nomatch=0)
   
-  toWrite <- ddply(FTX.len1OccsDf[!FTX.extensible,],c("id"),tweetFunc)
+  toWrite <- rbind(ddply(FTX.len1OccsDf[!FTX.extensible & (notEvenOneExtensible!=0),],c("id"),tweetFunc),
+		  FTX.len1OccsDf[notEvenOneExtensible==0,])
   
   dbWriteTable(FTX.con,unigramsPartitionName,toWrite)
   
