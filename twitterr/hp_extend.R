@@ -16,6 +16,7 @@ if(HPD.DEBUG){
 #  HPD.dataRoot <- "/home/yaboulna/r_march_debug/"
 } else {
   HPD.nCores <- 24
+  
   HPD.days <- c(130104, 121101, 121102, 121103, 121104, 121105, 121106, 121107, 121108, 121109, 121110, 121111, 121112, 121113, 121114, 121115, 
       120917, 120918, 120919, 120920, 120921, 120922, 120923, 120924, 120925, 120926, 120927, 120928, 120929, 120930, 
       121001, 121002, 121003, 121004, 121005, 121006, 121007, 121008, 121009, 121010, 121011, 121012, 121013, 121014, 121015, 121016,
@@ -180,7 +181,7 @@ HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableNameDay,cntTableNameDa
 # TODONE add create index to above SQL
     execSql(sql,HPD.db)
 
-    volTableNameParent <- sprintf("hgram_vol_%s%d_%d",HPD.epoch,len1+1)
+    volTableNameParent <- sprintf("hgram_vol_%s%d",HPD.epoch,len1+1)
     sql <- sprintf("CREATE TABLE %s (date integer, epochstartux bigint, totalcnt bigint);",volTableNameParent)
     execSql(sql,HPD.db)
     
@@ -189,7 +190,7 @@ HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableNameDay,cntTableNameDa
 SELECT  %d as date, epochstartux,sum(cnt) as totalcnt from %s group by epochstartux;
 CREATE INDEX %s_time ON %s(epochstartux);CREATE INDEX %s_date ON %s(date);
 ALTER TABLE %s inherit %s;",
-volTableName,volTableName,day,cntTableName,volTableName,volTableName,volTableName,volTableName,
+volTableNameDay,volTableNameDay,day,cntTableNameDay,volTableNameDay,volTableNameDay,volTableNameDay,volTableNameDay,
 volTableNameDay,volTableNameParent)
 
     execSql(sql,HPD.db)
