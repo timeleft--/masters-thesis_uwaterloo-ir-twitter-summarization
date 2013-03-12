@@ -18,7 +18,7 @@ FTX.secsInEpoch <- 3600
 FTX.epoch1 <- FTX.epoch2
 #Threshold got by executing 
 #select ngramarr, avg(CAST(cnt as float8)/CAST(totalcnt AS float8)) from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis=v.epochstartmillis where ngramarr[1] = 'obama' group by ngramarr;
-FTX.candidateThreshold <- 0.000126097580224557
+FTX.candidateThreshold <- 0.000126097580224557 * FTX.volumeAdjustmentFactor
 # Didn't use the average of the counts because this doesn't take into account the seasonal part
 #146.8455795677799607 is the average of obama in all of the collection (not taking into account missing data.. 2 types)
 
@@ -47,7 +47,12 @@ if(FTX.TRACE) {
 FTX.startPos <- 0
 FTX.maxPos <- 70
 
-FTX.alterTableInheritTemplate <- paste("ALTER TABLE %s ALTER COLUMN id TYPE int8 USING CAST(id AS int8), ALTER COLUMN timemillis TYPE int8 USING CAST(timemillis AS int8), ALTER COLUMN ngramlen TYPE int2, ALTER tweetlen TYPE int2, ALTER pos TYPE int2, INHERIT ", FTX.parentHgramsTable)
+FTX.epochAllPosTable <- paste("hgram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,sep="_")
+sql <- sprintf("CREATE TABLE %s () INHERITS (%s)",FTX.epochAllPosTable, FTX.parentHgramsTable)
+
+execSql(sql,FTX.db)
+
+FTX.alterTableInheritTemplate <- paste("ALTER TABLE %s ALTER COLUMN id TYPE int8 USING CAST(id AS int8), ALTER COLUMN timemillis TYPE int8 USING CAST(timemillis AS int8), ALTER COLUMN ngramlen TYPE int2, ALTER tweetlen TYPE int2, ALTER pos TYPE int2, INHERIT ", FTX.epochAllPosTable)
 if(FTX.DEBUG) annotPrint(FTX.alterTableInheritTemplate)
 
 FTX.createIndexesTemplate <- "CREATE INDEX ${TNAME}_timemillis ON ${TNAME}(timemillis); CREATE INDEX ${TNAME}_date ON ${TNAME}(date); CREATE INDEX ${TNAME}_ngramlen ON ${TNAME}(ngramlen); CREATE INDEX ${TNAME}_pos ON ${TNAME}(pos);"
@@ -71,13 +76,14 @@ FTX.len1GramsSql <- sprintf("select b.${TIMECOL}/${TIMEADJUST} as epochstartux,
         from %s_%s%d%s b 
         join %s_%s%d%s v on v.${TIMECOL} = b.${TIMECOL}
         where b.date=%d and b.${TIMECOL} = (%d * ${TIMEADJUST}::INT8) 
-				and CAST(b.cnt AS float8)/CAST(v.totalcnt AS float8) > %g;",
+        and CAST(b.cnt AS float8)/CAST(v.totalcnt AS float8) > %g
+        and ngramlen = %d;",
     ifelse(FTX.len1==1,"ngram","ngram"),
     ifelse(FTX.len1==1,"cnt","hgram_cnt"),
     FTX.epoch1, FTX.len1, ifelse(FTX.len1==1,'',paste("_",FTX.day, sep="")), 
     ifelse(FTX.len1==1,"volume","hgram_vol"),
     FTX.epoch1, FTX.len1, ifelse(FTX.len1==1,'',paste("_",FTX.day,sep="")), 
-    FTX.day, FTX.epochstartux, FTX.candidateThreshold)
+    FTX.day, FTX.epochstartux, FTX.candidateThreshold, FTX.len1)
 
 FTX.len1GramsSql <- gsub("${TIMECOL}",ifelse(FTX.len1==1,'epochstartmillis','epochstartux'),FTX.len1GramsSql,fixed=TRUE)
 FTX.len1GramsSql <- gsub("${TIMEADJUST}",ifelse(FTX.len1==1,'1000','1'),FTX.len1GramsSql,fixed=TRUE)
@@ -365,35 +371,83 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   annotPrint(FTX.label,"Moving on leaving indexes to be created",pospartitionName)
 }
 
+unigramsPartitionName <- paste("hgram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,"unextended", sep="_")
+annotPrint(FTX.label,"Writing table",unigramsPartitionName)  
+if(dbExistsTable(FTX.con,unigramsPartitionName)){
+  annotPrint(FTX.label,"Removing exiting table",unigramsPartitionName)
+  
+  dbRemoveTable(FTX.con,unigramsPartitionName)
+}
+
 if(FTX.len1==1){
-  unigramsPartitionName <- paste("hgram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,"unextended", sep="_")
-  
-  annotPrint(FTX.label,"Writing table",unigramsPartitionName)
-  
-  if(dbExistsTable(FTX.con,unigramsPartitionName)){
-    annotPrint(FTX.label,"Removing exiting table",unigramsPartitionName)
-    
-    dbRemoveTable(FTX.con,unigramsPartitionName)
-  }
   
   dbWriteTable(FTX.con,unigramsPartitionName,FTX.len1OccsDf[!FTX.dontCopyUgrams,])
   
-  annotPrint(FTX.label,"Wrote table",unigramsPartitionName)
+  rm(FTX.dontCopyUgrams)
+} else {
+  uptoLen <- 0:FTX.len1
+  pp <- paste("pos",uptoLen,sep="+")
+  pp <- paste(pp,uptoLen,sep=" p")
+  pp <- paste(pp,collapse=", ")
   
-  annotPrint(FTX.label,"Altering table",unigramsPartitionName)
-  alterTableSQL <- sprintf(FTX.alterTableInheritTemplate, unigramsPartitionName)
-  execSql(alterTableSQL,FTX.db)
+  #char(18)
+  sql <- sprintf(paste("SELECT CAST(id AS varchar), %s  from %s order by id, ",FTX.len1,sep="p"), pp, FTX.epochAllPosTable)
   
-  annotPrint(FTX.label,"Creating index",unigramsPartitionName)
-  createIndexSQL <- gsub("${TNAME}",unigramsPartitionName,FTX.createIndexesTemplate,fixed=TRUE)
-  execSql(createIndexSQL,FTX.db,asynch = TRUE)
+  annotPrint(FTX.label,"Getting occupied pos:\n",sql)
   
+  occupiedRs <- dbSendQuery(FTX.con, sql)
+  occupiedDf <- fetch(occupiedRs, n=-1)
+  try(dbClearResult(occupiedRs))
+  
+  annotPrint(FTX.label,"Got occupied pos. nRow: ",nrow(occupiedDf))
+  
+  tweetFunc <- function(tweetOcc){
+	  occupiedPos <- occupiedDf[occupiedDf$id==tweetOcc$id[1],]
+	  occupiedPos$id <- NULL
+	  occupiedPos <- unique(unlist(occupiedPos,recursive=TRUE))
+	  
+	  if(length(occupiedPos) > 0) {
+		  ngramFunc <- function(posOcc){
+			  if(length(setdiff((0:(posOcc$ngramlen - 1) + posOcc$pos), occupiedPos)) == 0){
+				  return(NULL)
+			  } else {
+				  return(posOcc)
+			  }
+		  }
+		 # debug(ngramFunc)
+		  
+		  retVal <- adply(tweetOcc,1,ngramFunc,.expand=FALSE)
+		  retVal$X1 <- NULL
+  	  } else {
+		  retVal <- tweetOcc
+	  }
+  
+	  return(retVal);
+  }
+  #debug(tweetFunc)
+  
+  toWrite <- ddply(FTX.len1OccsDf[!FTX.extensible,],c("id"),tweetFunc)
+  
+  dbWriteTable(FTX.con,unigramsPartitionName,toWrite)
+  
+  rm(toWrite)
+}
+
+annotPrint(FTX.label,"Wrote table",unigramsPartitionName)
+
+annotPrint(FTX.label,"Altering table",unigramsPartitionName)
+alterTableSQL <- sprintf(FTX.alterTableInheritTemplate, unigramsPartitionName)
+execSql(alterTableSQL,FTX.db)
+
+annotPrint(FTX.label,"Creating index",unigramsPartitionName)
+createIndexSQL <- gsub("${TNAME}",unigramsPartitionName,FTX.createIndexesTemplate,fixed=TRUE)
+execSql(createIndexSQL,FTX.db,asynch = TRUE)
+
 #  write.table(FTX.len1OccsDf[!FTX.dontCopyUgrams,], file = FTX.stagingFile, append = TRUE, quote = FALSE, sep = "\t",
 #      eol = "\n", na = "NA", dec = ".", row.names = FALSE,
 #      col.names = FALSE, # qmethod = c("escape", "double"),
 #      fileEncoding = "UTF-8")
-  rm(FTX.dontCopyUgrams)
-}
+
 
 #file.rename(FTX.stagingFile,FTX.epochFile)
 } 
