@@ -80,7 +80,9 @@ for(len1 in c(2:5)){
   
     HPD.volumeAdjustmentFactorRs <- dbSendQuery(HPD.con,sql)
     HPD.volumeAdjustmentFactorDf <- fetch(HPD.volumeAdjustmentFactorRs,n=-1)
-    
+	
+    try(dbClearResult(HPD.volumeAdjustmentFactorRs))
+	
     HPD.volumeAdjustmentFactor <- HPD.volumeAdjustmentFactorDf[1,1]
     
     annotPrint(paste("HPD",len1,sep="_"),"Got volume adjustment factor. Nrow: ",nrow(HPD.volumeAdjustmentFactorDf),
