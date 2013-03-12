@@ -391,7 +391,7 @@ if(FTX.len1==1){
   pp <- paste(pp,collapse=", ")
   
   #char(18)
-  sql <- sprintf(paste("SELECT CAST(id AS varchar), %s  from %s order by id, ",FTX.len1,sep="p"), pp, FTX.epochAllPosTable)
+  sql <- sprintf("SELECT CAST(id AS varchar), %s  from %s ", pp, FTX.epochAllPosTable)
   
   annotPrint(FTX.label,"Getting occupied pos:\n",sql)
   
