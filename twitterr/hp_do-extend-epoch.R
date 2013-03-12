@@ -432,6 +432,7 @@ if(FTX.len1==1){
   
   dbWriteTable(FTX.con,unigramsPartitionName,toWrite)
   
+  rm(notEvenOneExtensible)
   rm(occupiedDf)
   rm(toWrite)
 }
