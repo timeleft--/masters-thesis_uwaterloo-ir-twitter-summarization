@@ -387,36 +387,47 @@ if(FTX.len1==1){
 } else {
   uptoLen <- 0:FTX.len1
   pp <- paste("pos",uptoLen,sep="+")
-  pp <- paste(pp,collapse="||'_'||")
+  pp <- paste(pp,uptoLen,sep=" p")
+  pp <- paste(pp,collapse=", ")
   
   #char(18)
-  sql <- sprintf("SELECT CAST(id AS varchar), string_agg(%s,'_') as occupiedstr from %s where ngramlen = %d group by id", pp, FTX.epochAllPosTable, FTX.len1 + 1)
+  sql <- sprintf(paste("SELECT CAST(id AS varchar), %s  from %s order by id, ",FTX.len1,sep="p"), pp, FTX.epochAllPosTable)
   
   annotPrint(FTX.label,"Getting occupied pos:\n",sql)
   
   occupiedRs <- dbSendQuery(FTX.con, sql)
   occupiedDf <- fetch(occupiedRs, n=-1)
-  
   try(dbClearResult(occupiedRs))
   
   annotPrint(FTX.label,"Got occupied pos. nRow: ",nrow(occupiedDf))
   
-  occupiedDf <- adply(occupiedDf,1,transform,occupiedPos = I(list(as.numeric(unique(unlist(strsplit(occupiedstr,'_')))))),.expand=TRUE) 
-  occupiedDf$occupiedstr <- NULL
+  tweetFunc <- function(tweetOcc){
+	  occupiedPos <- occupiedDf[occupiedDf$id==tweetOcc$id[1],]
+	  occupiedPos$id <- NULL
+	  occupiedPos <- unique(unlist(occupiedPos,recursive=TRUE))
+	  
+	  if(length(occupiedPos) > 0) {
+		  ngramFunc <- function(posOcc){
+			  if(length(setdiff((0:(posOcc$ngramlen - 1) + posOcc$pos), occupiedPos)) == 0){
+				  return(NULL)
+			  } else {
+				  return(posOcc)
+			  }
+		  }
+		 # debug(ngramFunc)
+		  
+		  retVal <- adply(tweetOcc,1,ngramFunc,.expand=FALSE)
+		  retVal$X1 <- NULL
+  	  } else {
+		  retVal <- tweetOcc
+	  }
   
-	 ngramFunc <- function(posOcc){
-		 if(length(setdiff((0:(posOcc$ngramlen - 1) + posOcc$pos), unlist(posOcc$occupiedPos))) == 0){
-			 return(NULL)
-		 } else {
-			 posOcc$occupiedPos <- NULL
-			 return(posOcc)
-		 }
-	 }
-	 #debug(ngramFunc)
-
+	  return(retVal);
+  }
+  #debug(tweetFunc)
   notEvenOneExtensible <- match(FTX.len1OccsDf$id, unique(occupiedDf$id), nomatch=0)
-  occsJOccup <- merge(FTX.len1OccsDf[!FTX.extensible & (notEvenOneExtensible!=0),],occupiedDf,on="id")
-  toWrite <- rbind(adply(occsJOccup,1,ngramFunc,.expand=FALSE),
+  
+  toWrite <- rbind(ddply(FTX.len1OccsDf[!FTX.extensible & (notEvenOneExtensible!=0),],c("id"),tweetFunc),
 		  FTX.len1OccsDf[notEvenOneExtensible==0,])
   
   dbWriteTable(FTX.con,unigramsPartitionName,toWrite)
