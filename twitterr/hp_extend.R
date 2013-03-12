@@ -82,6 +82,8 @@ for(len1 in c(2:5)){
     HPD.volumeAdjustmentFactorDf <- fetch(HPD.volumeAdjustmentFactorRs,n=-1)
 	
     try(dbClearResult(HPD.volumeAdjustmentFactorRs))
+	try(dbDisconnect(HPD.con))
+	try(dbUnloadDriver(HPD.drv))
 	
     HPD.volumeAdjustmentFactor <- HPD.volumeAdjustmentFactorDf[1,1]
     
