@@ -404,6 +404,13 @@ if(FTX.len1==1){
   occupiedPos <- c()
   currTweetId <- "-1"
   hgramFunc <- function(posOcc){
+	  if(posOcc$extended){
+		  return(NULL)
+	  }
+	  if(posOcc$tweetIncExts == 0){
+		  return(data.frame(id=posOcc$id, timemillis=posOcc$timemillis,date=posOcc$date,ngram=posOcc$ngram,
+						  ngramlen=posOcc$ngramlen,tweetlen=posOcc$tweetlen,pos=posOcc$pos))
+	  }
 	  if(currTweetId != posOcc$id){
 		  occupiedPosNew <- occupiedDf[occupiedDf$id==posOcc$id,]
 		  occupiedPosNew$id <- NULL
@@ -414,17 +421,16 @@ if(FTX.len1==1){
 	  if(length(setdiff((0:(posOcc$ngramlen - 1) + posOcc$pos), occupiedPos)) == 0){
 		  return(NULL)
 	  } else {
-		  return(posOcc)
+		  return(data.frame(id=posOcc$id, timemillis=posOcc$timemillis,date=posOcc$date,ngram=posOcc$ngram,
+						  ngramlen=posOcc$ngramlen,tweetlen=posOcc$tweetlen,pos=posOcc$pos))
 	  }
   }
-   #debug(hgramFunc)
+  #debug(hgramFunc)
   
-   notEvenOneExtensible <- match(FTX.len1OccsDf$id, unique(occupiedDf$id), nomatch=0)
-   
-  extended <-	adply(FTX.len1OccsDf[!FTX.extensible & (notEvenOneExtensible!=0),],1,hgramFunc,.expand=FALSE)
-  extended$X1 <- NULL
-  toWrite <- rbind(extended,
-		  FTX.len1OccsDf[notEvenOneExtensible==0,])
+  FTX.len1OccsDf$tweetIncExts <- match(FTX.len1OccsDf$id, unique(occupiedDf$id), nomatch=0)
+  FTX.len1OccsDf$extended <- FTX.extensible
+  toWrite <- adply(idata.frame(FTX.len1OccsDf),1,hgramFunc,.expand=FALSE)
+  toWrite$X1 <- NULL
   
   dbWriteTable(FTX.con,unigramsPartitionName,toWrite)
   
