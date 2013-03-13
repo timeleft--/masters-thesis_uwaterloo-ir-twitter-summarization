@@ -70,6 +70,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   protected static final String DEFAULT_DBNAME = "march";
   protected static final boolean DEBUG_SQL = false;
 
+  protected static final boolean DEFAULT_includeHashtags = true;
   protected static final boolean DEFAULT_EXLUDE_RETWEETS = false;
   protected static final boolean DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET = true;
   protected static final boolean DEFAULT_removeIdenticalTweets = true;
@@ -104,6 +105,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   private int minHoursInHistory;
 
   private boolean preventRepeatedHGramsInTweet;
+  
+  private boolean includeHashtags;
 
 // private static final String HGRAM_OPENING = "("; // " <, ";
 //
@@ -112,7 +115,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen) throws ClassNotFoundException {
     this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_removeIdenticalTweets, 
-        DEFAULT_minPerHourFreq, DEFAULT_minHoursInHistory,
+        DEFAULT_minPerHourFreq, DEFAULT_minHoursInHistory, DEFAULT_includeHashtags,
         DEFAULT_DBNAME, DEFAULT_EXLUDE_RETWEETS, DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
@@ -120,14 +123,14 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen, String dbName) throws ClassNotFoundException {
     this(days, windowStartUx, windowEndUx, maxLen, DEFAULT_removeIdenticalTweets,
-        DEFAULT_minPerHourFreq,DEFAULT_minHoursInHistory,
+        DEFAULT_minPerHourFreq,DEFAULT_minHoursInHistory, DEFAULT_includeHashtags,
         dbName, DEFAULT_EXLUDE_RETWEETS, DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET,
         DEFAULT_DRIVER, DEFAULT_CONNECTION_URL, DEFAULT_USER, DEFAULT_PASSWORD);
   }
 
   public HgramTransactionIterator(List<String> days, long windowStartUx, long windowEndUx,
       int maxLen, boolean removeIdenticalTweets, 
-      int minPerHourFreq, int minHoursInHistory,
+      int minPerHourFreq, int minHoursInHistory, boolean includeHashtags,
       String dbname, boolean excludeRetweets, boolean preventRepeatedHGramsInTweet,
       String driverName, String urlPrefix,
       String username, String password) throws ClassNotFoundException {
@@ -151,6 +154,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
     this.removeIdenticalTweets = removeIdenticalTweets;
     this.excludeRetweets = excludeRetweets;
+    
+    this.includeHashtags = includeHashtags;
 
     this.preventRepeatedHGramsInTweet = preventRepeatedHGramsInTweet;
 
@@ -301,10 +306,21 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         if (removeIdenticalTweets) {
           dedupe = "DISTINCT";
         }
-        String sql = "select " + dedupe + " string_agg(ngram,?) from " + tablename + " where "
+        String sql;
+        if(includeHashtags){
+          sql = "with tokens as (select id,htag as ngram from hashtags where " + timeSql 
+          	  + " UNION ALL "  
+          	  + " select id,ngram from " + tablename + " where "
+              + timeSql
+              + " and ngramlen <= " + maxHgramLen + ")"
+              + " select " + dedupe + " string_agg(ngram,?) from tokens "
+              + " group by id"; 
+        } else {
+          sql = "select " + dedupe + " string_agg(ngram,?) from " + tablename + " where "
             + timeSql
             + " and ngramlen <= " + maxHgramLen
             + " group by id";
+        }
         stmt = conn.prepareStatement(sql);
         stmt.setString(1, "" + TOKEN_DELIMETER);
 
