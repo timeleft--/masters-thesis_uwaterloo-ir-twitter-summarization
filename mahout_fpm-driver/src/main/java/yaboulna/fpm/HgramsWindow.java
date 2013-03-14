@@ -48,7 +48,7 @@ public class HgramsWindow {
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
   private static final boolean REMOVE_OUTPUT_AUTOMATICALLY = false;
-  private static final int TOPIC_WORDS_PER_MINUTE = 1000;
+  private static final int TOPIC_WORDS_PER_MINUTE = 100;
   private static final int FREQUENT_PATTERNS_PER_MINUTE = 1;
 
   private static boolean USE_RELIABLE_ALGO;
