@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 import yaboulna.fpm.postgresql.HgramTransactionIterator;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 
 public class HgramsWindow {
@@ -197,7 +196,8 @@ public class HgramsWindow {
               windowEndUx, hgramLen);
           try {
             transIter3.init();
-            topicWords = transIter3.getTopicWords((int) (TOPIC_WORDS_PER_MINUTE * ((windowEndUx - windowStartUx) / 60)),
+            topicWords = transIter3.getTopicWords(
+                (int) (TOPIC_WORDS_PER_MINUTE * ((windowEndUx - windowStartUx) / 60)),
                 dateFmt.print(histDay1));
           } finally {
             transIter3.uninit();
@@ -215,13 +215,17 @@ public class HgramsWindow {
               + ".out");
           epochOutLocal.getParentFile().mkdirs();
 
+          String epochCooccursLocal = outRoot.toUri().toString().substring("file:".length()) + "cooccurs_" + epochLen
+              + "_" + windowStartUx;
+
           File tmpFile = File.createTempFile("fpzhu", "trans", new File("/home/yaboulna/tmp/"));
           tmpFile.deleteOnExit();
 
           String cmd = "/home/yaboulna/fimi/fp-zhu/" + fpZhuExe + " " + tmpFile.getAbsolutePath()
               + " "
               + minSupport + " "
-              + epochOutLocal;
+              + epochOutLocal + " "
+              + epochCooccursLocal;
 
           PrintStream feeder = new PrintStream(new FileOutputStream(tmpFile), true, "US-ASCII");
 
