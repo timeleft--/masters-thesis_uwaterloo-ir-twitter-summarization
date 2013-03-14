@@ -142,10 +142,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     this.windowStartUx = windowStartUx;
     this.windowEndUx = windowEndUx;
 
-    if (maxLen < 2 || maxLen > 2) {
-      throw new UnsupportedOperationException(
-          "Joining multiple tables and selecting only occurrences that aren't included in larger hgrams is too much work.. later when it proves really necessary! Right now there are usually nothing in the hgram tables of lengthes more than 2.. I don't know if it is caused by a bug or there really isn't any bigram with high enough propotion of the stream. Maybe what we need to do is to recalculate the proportion of 'Obama' after each len");
-    }
+//    if (maxLen < 2 || maxLen > 2) {
+//      throw new UnsupportedOperationException(
+//          "Joining multiple tables and selecting only occurrences that aren't included in larger hgrams is too much work.. later when it proves really necessary! Right now there are usually nothing in the hgram tables of lengthes more than 2.. I don't know if it is caused by a bug or there really isn't any bigram with high enough propotion of the stream. Maybe what we need to do is to recalculate the proportion of 'Obama' after each len");
+//    }
 
     this.maxHgramLen = maxLen;
 
