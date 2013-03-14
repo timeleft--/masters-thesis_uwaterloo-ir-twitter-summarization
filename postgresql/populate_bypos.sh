@@ -14,7 +14,7 @@ psql="psql -p 5433 -d ${db} -c "
 echo "${psql} 'CREATE TABLE bypos() INHERITS(ngrams);'"
 #(id int8, timeMillis int8, date int4, ngram text, ngramLen int2, tweetLen int2, pos int2);'"
 
-for p in {1..30} 
+for p in {53..70} 
 do
 # DROP TABLE IF EXISTS unigramsP${p};
 echo "${psql} \" \
