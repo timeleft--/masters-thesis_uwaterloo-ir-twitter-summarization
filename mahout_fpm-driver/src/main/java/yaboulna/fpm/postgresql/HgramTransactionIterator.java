@@ -344,7 +344,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         }
 
         boolean skipTransaction = (topicUnigrams != null);
-        int currUnigramStart = 0;
+        int currUnigramStart = 1;
 
         for (int i = 0; i < transChars.length; ++i) {
           boolean lastIter = i == transChars.length - 1;
@@ -354,7 +354,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
               lastIter)) {
 
             String uni = strBld.substring(currUnigramStart,
-                strBld.length() - (transChars[i] == TOKEN_DELIMETER ? 2 : 1)); // to skip the closing paranthesis
+                // to skip the closing paranthesis, note that || transChars[i] == ')' --> lastIter
+                strBld.length() - (transChars[i] == TOKEN_DELIMETER  ? 1 : 0));
 
             if (excludeRetweets && RETWEET_TOKENS.contains(uni)) {
               skipTransaction = true;
