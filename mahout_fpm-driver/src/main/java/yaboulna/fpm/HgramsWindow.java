@@ -151,7 +151,7 @@ public class HgramsWindow {
     DateMidnight startDayOfTopicWords = new DateMidnight(0L);
     DateMidnight endDayOfTopicWords = new DateMidnight(0L);
     Set<String> topicWords = null;
-    
+
     while (windowStartUx < windowEndUx) {
       LOG.info("Strting Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
 
@@ -179,10 +179,21 @@ public class HgramsWindow {
         transIter.init();
         transIter2.init();
 
-        if (stdUnigrams
-            && (startDayOfTopicWords.isAfter(startDay)
-            || endDayOfTopicWords.isBefore(endDay))) {
-          // TODO cache the "with hist table" and stop cheating (by looking in the future through using windowEndUx)
+        if (stdUnigrams && !startDayOfTopicWords.equals(startDay)) {
+// // TODO cache the "with hist table" and stop cheating (by looking in the future through using windowEndUx)
+// && (startDayOfTopicWords.isAfter(startDay)
+// || endDayOfTopicWords.isBefore(endDay))) {
+// ...
+// HgramTransactionIterator transIter3 = new HgramTransactionIterator(days, windowStartUx,
+// windowEndUx, hgramLen);
+// try {
+// transIter3.init();
+// topicWords = transIter3.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60),
+// dateFmt.print(histDay1));
+// } finally {
+// transIter3.uninit();
+// }
+
           startDayOfTopicWords = startDay; // avoids recalculating the same
           endDayOfTopicWords = endDay;
 
@@ -190,15 +201,8 @@ public class HgramsWindow {
 
           histDay1.addDays(-historyDaysCnt);
 
-          HgramTransactionIterator transIter3 = new HgramTransactionIterator(days, windowStartUx,
-              windowEndUx, hgramLen);
-          try {
-            transIter3.init();
-            topicWords = transIter3.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60),
-                dateFmt.print(histDay1));
-          } finally {
-            transIter3.uninit();
-          }
+          topicWords = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60),
+              dateFmt.print(histDay1));
         }
 
         if (USE_RELIABLE_ALGO) {
