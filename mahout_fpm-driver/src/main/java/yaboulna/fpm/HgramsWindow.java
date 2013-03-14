@@ -51,7 +51,7 @@ public class HgramsWindow {
   private static final int TOPIC_WORDS_PER_MINUTE = 100;
   private static final int FREQUENT_PATTERNS_PER_MINUTE = 1;
 
-  private static boolean USE_RELIABLE_ALGO = false;
+  private static boolean USE_RELIABLE_ALGO;
 
   /**
    * 
@@ -128,14 +128,19 @@ public class HgramsWindow {
       }
     }
 
+    int hgramLen = 3;
+    if(args.length > 6){
+    	hgramLen = Integer.parseInt(args[6]);
+    }
+     
     int minSupport = 5;
-    if (args.length > 6) {
-      minSupport = Integer.parseInt(args[6]);
+    if (args.length > 7) {
+      minSupport = Integer.parseInt(args[7]);
     }
 
     int historyDaysCnt = 5;
-    if (args.length > 7) {
-      historyDaysCnt = Integer.parseInt(args[7]);
+    if (args.length > 8) {
+      historyDaysCnt = Integer.parseInt(args[8]);
     }
 
     while (windowStartUx < windowEndUx) {
@@ -157,9 +162,9 @@ public class HgramsWindow {
 
       // TODO: 2 should be replaced by the maximum hgram length
       HgramTransactionIterator transIter = new HgramTransactionIterator(days, windowStartUx,
-          windowStartUx + epochLen, 2);
+          windowStartUx + epochLen, hgramLen);
       HgramTransactionIterator transIter2 = new HgramTransactionIterator(days, windowStartUx,
-          windowStartUx + epochLen, 2);
+          windowStartUx + epochLen, hgramLen);
 
       try {
         transIter.init();
