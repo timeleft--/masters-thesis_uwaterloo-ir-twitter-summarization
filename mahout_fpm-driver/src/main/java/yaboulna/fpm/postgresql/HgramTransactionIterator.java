@@ -223,8 +223,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         + "\n   limit " + limit // Limit already set according to epoch length
         + "\n)";
     //@formatter:on
-    
-// Luck made me discover that the "novel" hgrams are mostly spam.. except "once you go black" 
+
+// Luck made me discover that the "novel" hgrams are mostly spam.. except "once you go black"
 // String timeSql = "date in (" + Joiner.on(',').join(days) + ")"
 // + " and epochstartux >= floor(" + windowStartUx + "/3600)*3600 "
 // + " and (epochstartux < floor(" + windowEndUx + "/3600)*3600 or ("
@@ -353,7 +353,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
                   transChars[i] == TOKEN_DELIMETER ||
               lastIter)) {
 
-            String uni = strBld.substring(currUnigramStart);
+            String uni = strBld.substring(currUnigramStart,
+                strBld.length() - (transChars[i] == TOKEN_DELIMETER ? 2 : 1)); // to skip the closing paranthesis
 
             if (excludeRetweets && RETWEET_TOKENS.contains(uni)) {
               skipTransaction = true;
@@ -367,7 +368,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             if (transChars[i] == UNIGRAM_DELIMETER) {
               currUnigramStart = strBld.length() + 1;
             } else if (transChars[i] == TOKEN_DELIMETER) {
-              currUnigramStart = 0;
+              currUnigramStart = 1; // to skip the opening paranthesis
             }
           }
 
@@ -382,12 +383,12 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             strBld.append(transChars[i]);
           }
         }
-        
+
         // last token
         String hgram = strBld.toString();
         strBld.setLength(0);
 
-//hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
+// hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
         hgramList.add(hgram);
 
         if (skipTransaction) {
