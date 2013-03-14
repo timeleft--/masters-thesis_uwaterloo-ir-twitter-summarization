@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 {
 	if (argc < 3)
 	{
-	  cout << "usage: fmi <infile> <MINSUP> [<outfile>]\n";
+	  cout << "usage: fmi <infile> <MINSUP> [<outfile>] [<cooccurFile>]\n";
 	  exit(1);
 	}
 	THRESHOLD = atoi(argv[2]);
@@ -133,8 +133,6 @@ int main(int argc, char **argv)
     fdat->close();
 	if(fptree->itemno==0)return 0;
 
-	fptree->writeCooccurrTable(argv[3]);
-
 	FSout* fout;
 	if(argc==4)
 	{
@@ -152,6 +150,8 @@ int main(int argc, char **argv)
 	}else
 		fout = NULL;
 
+	if(argc==5)
+		fptree->writeCooccurrTable(argv[4]);
 
 	if(fptree->Single_path())
 	{

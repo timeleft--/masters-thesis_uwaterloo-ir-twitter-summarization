@@ -37,7 +37,6 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #include <math.h>
 #include "buffer.h"
 #include "common.h"
-#include <string.h>
 
 template <class T> void swap(T* k, T* j)
 {
@@ -700,13 +699,13 @@ void FI_tree::fill_count(int* origin, int support)
 	}
 }
 
-void FI_tree::writeCooccurrTable(char * pathOfOut){
+void FI_tree::writeCooccurrTable(char * pathOfCooccurs){
 	if(array == NULL){
 		return;
 	}
 
 	//open file
-	FSout *fsout = new FSout(strcat(strcpy(pathOfOut),".cooccurs"));
+	FSout *fsout = new FSout(pathOfCooccurs);
 
 	//write order or item_order in one line, NO!
 	// actually what we need to write is >>> order_item <<<
