@@ -349,16 +349,17 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           boolean lastIter = i == transChars.length - 1;
           if ((excludeRetweets || (topicUnigrams  != null)) && 
               (transChars[i] == UNIGRAM_DELIMETER ||
-              transChars[i] == TOKEN_DELIMETER) ||
-              lastIter) {
+              transChars[i] == TOKEN_DELIMETER ||
+              lastIter)) {
 
             String uni = strBld.substring(currUnigramStart);
+            
             if (excludeRetweets && RETWEET_TOKENS.contains(uni)) {
               skipTransaction = true;
               break;
             }
             
-            if(topicUnigrams != null && topicUnigrams.contains(uni)){
+            if((topicUnigrams != null) && topicUnigrams.contains(uni)){
               skipTransaction = false;
             }
 
@@ -369,7 +370,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             }
           }
 
-          if (transChars[i] == TOKEN_DELIMETER || lastIter) {
+          if ((transChars[i] == TOKEN_DELIMETER) || lastIter) {
             String hgram = strBld.toString();
             strBld.setLength(0);
 

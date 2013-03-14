@@ -59,7 +59,12 @@ public class HgramsWindow {
    *          windowStartUx (1352260800 for wining hour 1352199600 for elections day)
    *          windowEndUx (1352264400 for end of winning hour 1352286000 for end of elections day)
    *          path of output
-   *          epochName
+   *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps
+   *          all/sel all is the only recognized word and otherwise only selected features
+   *          [algo] mahout or max are recognized, otherwise it will default to fpzhu's closed fim
+   *          [hgramlen]
+   *          [minSupp]
+   *          [historyDays]
    * @throws IOException
    * @throws SQLException
    * @throws ClassNotFoundException
@@ -113,7 +118,7 @@ public class HgramsWindow {
       LOG.info("Generatint the frequent patterns associated with all hgrams");
       stdUnigrams = false;
     } else {
-      LOG.info("Using mahout implementation because it supports selection of head items");
+// LOG.info("Using mahout implementation because it supports selection of head items");
     }
 
     USE_RELIABLE_ALGO = true;
@@ -129,10 +134,10 @@ public class HgramsWindow {
     }
 
     int hgramLen = 3;
-    if(args.length > 6){
-    	hgramLen = Integer.parseInt(args[6]);
+    if (args.length > 6) {
+      hgramLen = Integer.parseInt(args[6]);
     }
-     
+
     int minSupport = 5;
     if (args.length > 7) {
       minSupport = Integer.parseInt(args[7]);
@@ -143,6 +148,10 @@ public class HgramsWindow {
       historyDaysCnt = Integer.parseInt(args[8]);
     }
 
+    DateMidnight startDayOfTopicWords = new DateMidnight(0L);
+    DateMidnight endDayOfTopicWords = new DateMidnight(0L);
+    Set<String> topicWords = null;
+    
     while (windowStartUx < windowEndUx) {
       LOG.info("Strting Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
 
@@ -170,22 +179,32 @@ public class HgramsWindow {
         transIter.init();
         transIter2.init();
 
-        Set<String> features = Sets.newHashSet();
-        if (stdUnigrams) {
+        if (stdUnigrams
+            && (startDayOfTopicWords.isAfter(startDay)
+            || endDayOfTopicWords.isBefore(endDay))) {
+          // TODO cache the "with hist table" and stop cheating (by looking in the future through using windowEndUx)
+          startDayOfTopicWords = startDay; // avoids recalculating the same
+          endDayOfTopicWords = endDay;
 
           MutableDateTime histDay1 = new MutableDateTime(startDay);
 
           histDay1.addDays(-historyDaysCnt);
 
-          features = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60),
-              dateFmt.print(histDay1));
+          HgramTransactionIterator transIter3 = new HgramTransactionIterator(days, windowStartUx,
+              windowEndUx, hgramLen);
+          try {
+            transIter3.init();
+            topicWords = transIter3.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60),
+                dateFmt.print(histDay1));
+          } finally {
+            transIter3.uninit();
+          }
         }
 
-        if (USE_RELIABLE_ALGO) { 
-          
+        if (USE_RELIABLE_ALGO) {
+
           if (stdUnigrams) {
-            transIter.setTopicUnigrams(features);
-            features = null;
+            transIter.setTopicUnigrams(topicWords);
           }
 
           File epochOutLocal = new File(epochOut.toUri().toString().substring("file:".length())
@@ -314,7 +333,7 @@ public class HgramsWindow {
                 fp.generateFList(transIter2, minSupport),
                 minSupport,
                 FREQUENT_PATTERNS_PER_MINUTE * (epochLen / 60),
-                features,
+                topicWords,
                 new StringOutputConverter(
                     new SequenceFileOutputCollector<Text, TopKStringPatterns>(
                         writer)),
