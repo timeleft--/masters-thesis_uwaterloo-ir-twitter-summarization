@@ -48,7 +48,7 @@ public class HgramsWindow {
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
   private static final boolean REMOVE_OUTPUT_AUTOMATICALLY = false;
-  private static final int TOPIC_WORDS_PER_MINUTE = 100;
+  private static final int TOPIC_WORDS_PER_MINUTE = 1000;
   private static final int FREQUENT_PATTERNS_PER_MINUTE = 1;
 
   private static boolean USE_RELIABLE_ALGO;
@@ -138,7 +138,7 @@ public class HgramsWindow {
       minSupport = Integer.parseInt(args[7]);
     }
 
-    int historyDaysCnt = 5;
+    int historyDaysCnt = 30;
     if (args.length > 8) {
       historyDaysCnt = Integer.parseInt(args[8]);
     }
@@ -181,7 +181,12 @@ public class HgramsWindow {
               dateFmt.print(histDay1));
         }
 
-        if (USE_RELIABLE_ALGO && !stdUnigrams) { // TODO support selection of unigrams
+        if (USE_RELIABLE_ALGO) { 
+          
+          if (stdUnigrams) {
+            transIter.setTopicUnigrams(features);
+            features = null;
+          }
 
           File epochOutLocal = new File(epochOut.toUri().toString().substring("file:".length())
               + ".out");
@@ -213,7 +218,6 @@ public class HgramsWindow {
                 int id = itemIds.get(item);
                 if (id == 0) {
                   id = i++; // TODO: use murmur chat and check for collisions, iff maintaining the same id across epochs
-// is
 
                   itemIds.put(item, id);
                   decodeMap.put(id, item);

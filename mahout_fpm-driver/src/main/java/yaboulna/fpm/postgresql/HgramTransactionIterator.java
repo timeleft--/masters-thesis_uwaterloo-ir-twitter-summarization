@@ -108,6 +108,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   
   private boolean includeHashtags;
 
+  private Set<String> topicUnigrams = null;
+
 // private static final String HGRAM_OPENING = "("; // " <, ";
 //
 // private static final String HGRAM_CLOSING = ")"; // " ,>";
@@ -340,20 +342,24 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           hgramList = Lists.newLinkedList();
         }
 
-        boolean skipTransaction = false;
+        boolean skipTransaction = (topicUnigrams != null);
         int currUnigramStart = 0;
 
         for (int i = 0; i < transChars.length; ++i) {
-
-          if (excludeRetweets && // TODO if not find the rest of the tweet in the buffer and increase its support by 1
+          boolean lastIter = i == transChars.length - 1;
+          if ((excludeRetweets || (topicUnigrams  != null)) && 
               (transChars[i] == UNIGRAM_DELIMETER ||
-              transChars[i] == TOKEN_DELIMETER)) {
-// FIXME: The rt token will not be "caught" if it were the last unigram in the tweet.. || i == transChars.length - 1)) {
+              transChars[i] == TOKEN_DELIMETER) ||
+              lastIter) {
 
             String uni = strBld.substring(currUnigramStart);
-            if (RETWEET_TOKENS.contains(uni)) {
+            if (excludeRetweets && RETWEET_TOKENS.contains(uni)) {
               skipTransaction = true;
               break;
+            }
+            
+            if(topicUnigrams != null && topicUnigrams.contains(uni)){
+              skipTransaction = false;
             }
 
             if (transChars[i] == UNIGRAM_DELIMETER) {
@@ -363,7 +369,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             }
           }
 
-          if (transChars[i] == TOKEN_DELIMETER) {
+          if (transChars[i] == TOKEN_DELIMETER || lastIter) {
             String hgram = strBld.toString();
             strBld.setLength(0);
 
@@ -374,13 +380,6 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             strBld.append(transChars[i]);
           }
         }
-
-        // last token (makes sure strBld.setLength is called always)
-        String hgram = strBld.toString();
-        strBld.setLength(0);
-
-// hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
-        hgramList.add(hgram);
 
         if (skipTransaction) {
           continue;
@@ -419,6 +418,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   public long getRowsRead() {
     return nRowsRead;
+  }
+
+  public void setTopicUnigrams(Set<String> topicUnigrams) {
+    this.topicUnigrams = topicUnigrams;
   }
 
 }
