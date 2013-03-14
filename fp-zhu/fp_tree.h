@@ -89,6 +89,8 @@ public:
 	int FP_growth(FSout* fout);
 	int FPmax(FSout*);
 	int FPclose(FSout*);
+
+	void writeCooccurrTable(char* pathOfOut);
 };
 
 class MFI_tree : public FP_tree{

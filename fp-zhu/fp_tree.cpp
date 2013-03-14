@@ -699,6 +699,27 @@ void FI_tree::fill_count(int* origin, int support)
 	}
 }
 
+void FI_tree::writeCooccurrTable(char * pathOfOut){
+	if(array == NULL){
+		return;
+	}
+
+	//open file
+	FSout *fsout = new FSout(strcat(strcpy(pathOfOut),".cooccurs"));
+
+	//write order or item_order in one line, NO!
+	// actually what we need to write is >>> order_item <<<
+	fsout->printset(itemno,order_item);
+
+	// write array as a lower triangular matrix
+	for(int i=0;i<itemno-1-SUDDEN; ++i){
+		fsout->printset(itemno-1-i,array[i]);
+	}
+
+	fsout->close();
+	delete fsout;
+}
+
 void FI_tree::scan2_DB(Data *fdat)
 {
 	int i, j, has;

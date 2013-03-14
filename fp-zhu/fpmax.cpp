@@ -133,6 +133,8 @@ int main(int argc, char **argv)
     fdat->close();
 	if(fptree->itemno==0)return 0;
 
+	fptree->writeCooccurrTable(argv[3]);
+
 	FSout* fout;
 	if(argc==4)
 	{
