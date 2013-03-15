@@ -37,8 +37,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #include <math.h>
 #include "buffer.h"
 #include "common.h"
-#include <stdio.h>
 
+#include <iostream>
 using namespace std;
 
 template <class T> void swap(T* k, T* j)
