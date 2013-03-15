@@ -14,6 +14,8 @@ class FSout
 
   void printset(int length, int *iset);
   void printSet(int length, int *iset, int support);
+  void printsetEndl(int length, int *iset);
+
   void close();
 
  private:

@@ -38,6 +38,16 @@ void FSout::printset(int length, int *iset)
 //#endif
 }
 
+void FSout::printsetEndl(int length, int *iset)
+{
+//#ifdef shown
+  for(int i=0; i<length; i++)
+    fprintf(out, "%d ", order_item[iset[i]]);
+//#endif
+  fprintf(out, "\n");
+}
+
+
 void FSout::close()
 {
 	fclose(out);

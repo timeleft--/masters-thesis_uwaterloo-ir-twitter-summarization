@@ -38,9 +38,6 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #include "buffer.h"
 #include "common.h"
 
-#include <iostream>
-using namespace std;
-
 template <class T> void swap(T* k, T* j)
 {
 	T temp;
@@ -706,26 +703,21 @@ void FI_tree::writeCooccurrTable(char * pathOfCooccurs){
 	if(array == NULL){
 		return;
 	}
-	cout << "Writing cooccurr table to " << pathOfCooccurs << endl;
 
 	//open file
 	FSout fsout =  FSout(pathOfCooccurs);
 
 	if(!fsout.isOpen()){
-		cerr << pathOfCooccurs << " cannot be opened " <<endl;
 		return;
 	}
 	//write order or item_order in one line, NO!
 	// actually what we need to write is >>> order_item <<<
-	cout << "Writing order_item" <<endl;
-	fsout.printset(itemno,order_item);
+	fsout.printsetEndl(itemno,order_item);
 
-	cout << "Writing array" <<endl;
 	// write array as a lower triangular matrix
 	for(int i=0;i<itemno-1-SUDDEN; ++i){
-		fsout.printset(itemno-1-i,array[i]);
+		fsout.printsetEndl(itemno-1-i,array[i]);
 	}
-	cout << "Finished Writing cooccur table" <<endl;
 	// will be called in the destructor: fsout.close();
 }
 

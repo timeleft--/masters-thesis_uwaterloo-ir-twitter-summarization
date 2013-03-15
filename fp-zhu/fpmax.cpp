@@ -134,7 +134,7 @@ int main(int argc, char **argv)
 	if(fptree->itemno==0)return 0;
 
 	FSout* fout;
-	if(argc==4)
+	if(argc>3)
 	{
 		fout = new FSout(argv[3]);
 
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 	}else
 		fout = NULL;
 
-	if(argc==5)
+	if(argc>4)
 		fptree->writeCooccurrTable(argv[4]);
 
 	if(fptree->Single_path())
