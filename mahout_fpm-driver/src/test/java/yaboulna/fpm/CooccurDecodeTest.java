@@ -14,7 +14,7 @@ import org.junit.Test;
 public class CooccurDecodeTest {
   String inPath = "/Users/yia/fpm_out_debug/cooccurs_3600_1352224800";
   
-  @Test
+//  @Test
   public void testDecodeCooccurs() throws IOException{
     // mock the hashmap
     OpenIntObjectHashMap<String> decodeMap = mock(OpenIntObjectHashMap.class);
