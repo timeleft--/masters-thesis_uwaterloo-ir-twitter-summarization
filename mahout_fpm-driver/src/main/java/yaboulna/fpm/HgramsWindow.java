@@ -391,7 +391,11 @@ public class HgramsWindow {
       int orderItemIx = 0;
       for (int i = 0; i < orderItemStr.length; ++i) {
         if (orderItemStr[i] == ' ') {
-          orderItem[orderItemIx] = Integer.parseInt(new String(Arrays.copyOfRange(orderItemStr, numStartIx, i)));
+          try {
+            orderItem[orderItemIx] = Integer.parseInt(new String(Arrays.copyOfRange(orderItemStr, numStartIx, i)));
+          } catch (NumberFormatException ex) {
+            LOG.warn(ex.getMessage());
+          }
           ++orderItemIx;
           numStartIx = i + 1;
         }
