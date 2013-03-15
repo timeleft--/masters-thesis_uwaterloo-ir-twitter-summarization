@@ -715,9 +715,16 @@ void FI_tree::writeCooccurrTable(char * pathOfCooccurs){
 	fsout.printAsIsEndl(itemno,order_item);
 
 	// write array as a lower triangular matrix
-	for(int i=0;i<itemno-1-SUDDEN; ++i){
-		fsout.printAsIsEndl(itemno-1-i,array[i]);
+	int i, item;
+	for(item=itemno-1;item>=SUDDEN; --item){
+		int* toWrite = new int[itemno-2-item+1];
+		for(i=itemno-2-item; i>=0;i--) {
+			toWrite[itemno-2-item-i]=array[item][i];
+		}
+		fsout.printAsIsEndl(itemno-1-i,toWrite);
+		delete[] toWrite;
 	}
+
 	// will be called in the destructor: fsout.close();
 }
 
