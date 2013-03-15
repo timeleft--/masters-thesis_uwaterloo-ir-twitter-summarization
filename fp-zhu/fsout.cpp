@@ -38,11 +38,11 @@ void FSout::printset(int length, int *iset)
 //#endif
 }
 
-void FSout::printsetEndl(int length, int *iset)
+void FSout::printAsIsEndl(int length, int *iset)
 {
 //#ifdef shown
   for(int i=0; i<length; i++)
-    fprintf(out, "%d ", order_item[iset[i]]);
+    fprintf(out, "%d ", iset[i]);
 //#endif
   fprintf(out, "\n"); // the line ends in space to make it easier to parse the string
 }
