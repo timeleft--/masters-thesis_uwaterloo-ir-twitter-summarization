@@ -215,7 +215,10 @@ public class HgramsWindow {
           String epochCooccursLocal = outRoot.toUri().toString().substring("file:".length()) + "cooccurs_" + epochLen
               + "_" + windowStartUx;
 
-          File tmpFile = File.createTempFile("fpzhu", "trans", new File("/home/yaboulna/tmp/"));
+          File tempDir = new File(outRoot.toUri().toString().substring("file:".length()),"tmp");
+          tempDir.mkdirs();
+          
+          File tmpFile = File.createTempFile("fpzhu", "trans", tempDir);
           tmpFile.deleteOnExit();
 
           String cmd = fpZhuExe + " " + tmpFile.getAbsolutePath()
