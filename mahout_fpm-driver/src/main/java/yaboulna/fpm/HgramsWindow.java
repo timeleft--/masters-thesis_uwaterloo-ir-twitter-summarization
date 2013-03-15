@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -27,6 +28,7 @@ import org.apache.mahout.fpm.pfpgrowth.convertors.SequenceFileOutputCollector;
 import org.apache.mahout.fpm.pfpgrowth.convertors.string.StringOutputConverter;
 import org.apache.mahout.fpm.pfpgrowth.convertors.string.TopKStringPatterns;
 import org.apache.mahout.fpm.pfpgrowth.fpgrowth.FPGrowth;
+import org.apache.mahout.math.map.OpenIntIntHashMap;
 import org.apache.mahout.math.map.OpenIntObjectHashMap;
 import org.apache.mahout.math.map.OpenObjectIntHashMap;
 import org.joda.time.DateMidnight;
@@ -212,7 +214,7 @@ public class HgramsWindow {
               + ".out");
           epochOutLocal.getParentFile().mkdirs();
 
-          File epochCooccursLocal = new File(outRoot.toUri().toString().substring("file:".length()), "cooccurs_" + epochLen
+          File epochCoocLocal = new File(outRoot.toUri().toString().substring("file:".length()), "cooccurs_" + epochLen
               + "_" + windowStartUx);
 
           File tempDir = new File(outRoot.toUri().toString().substring("file:".length()),"tmp");
@@ -225,14 +227,15 @@ public class HgramsWindow {
               + " "
               + minSupport + " "
               + epochOutLocal + " "
-              + epochCooccursLocal;
+              + epochCoocLocal;
 
           PrintStream feeder = new PrintStream(new FileOutputStream(tmpFile), true, "US-ASCII");
 
           OpenObjectIntHashMap<String> itemIds = new OpenObjectIntHashMap<String>();
           OpenIntObjectHashMap<String> decodeMap = new OpenIntObjectHashMap<String>();
           try {
-            // TODO: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting
+            // TODONE: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting 
+            // THE ANSWER IS NO BECAUSE THE NUMBER IS SED AS AN ARRAY INDEX IN origin[item_order[Tran->t[j]]] = item_order[Tran->t[j]];
             int i = 1; // get() returns 0 for items that are not contained
 
             while (transIter.hasNext()) {
@@ -291,7 +294,6 @@ public class HgramsWindow {
 
           File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()));
 
-          //TODO translate epochCooccursLocal as well
           LOG.info("Translating the output file {} into {}", epochOutLocal.getAbsolutePath(),
               epochOutText.getAbsolutePath());
 
@@ -329,6 +331,61 @@ public class HgramsWindow {
           LOG.info("Translated the output file {} into {} and flushed, deleteing the original",
               epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
           epochOutLocal.delete();
+          
+          
+          
+          File epochCoocText = new File(epochCoocLocal.getAbsolutePath() + ".txt");
+
+          
+          LOG.info("Translating the output file {} into {}", epochCoocLocal.getAbsolutePath(),
+              epochCoocText.getAbsolutePath());
+
+          decodeReader = new BufferedReader(new FileReader(epochCoocLocal));
+          decodeWriter = new FileWriterWithEncoding(epochCoocText,
+              Charset.forName("UTF-8"));
+          try {
+            int lnNum = 0;
+            
+            char[] orderItemStr = decodeReader.readLine().toCharArray();
+            int[] orderItem = new int[decodeMap.size()];
+            int numStartIx = 0;
+            int orderItemIx = 0;
+            for(int i = 0; i<orderItemStr.length; ++i){
+              if(orderItemStr[i] == ' '){
+                orderItem[orderItemIx] = Integer.parseInt(new String(Arrays.copyOfRange(orderItemStr, numStartIx, i)));
+                ++orderItemIx;
+                numStartIx = i+1;
+              }
+            }
+
+            String ln;
+            while ((ln = decodeReader.readLine()) != null) {
+              int rowItemName = orderItem[lnNum];
+              String rowToken = decodeMap.get(rowItemName);
+              decodeWriter.write(rowToken);
+              ++lnNum;
+              if (lnNum % 1000 == 0) {
+                LOG.info("Translated {} cooccurence rows itemsets, but didn't flush yet", lnNum);
+              }
+
+              String[] counts = ln.split(" ");
+              
+              for (int c = 0; c < counts.length - 1; ++c) {
+                decodeWriter.write("\t" + Integer.parseInt(counts[c]));
+              }
+              decodeWriter.write("\n");
+
+            }
+          } finally {
+            decodeReader.close();
+            decodeWriter.flush();
+            decodeWriter.close();
+          }
+
+          LOG.info("Translated the output file {} into {} and flushed, deleteing the original",
+              epochCoocLocal.getAbsolutePath(), epochCoocText.getAbsolutePath());
+//          epochCoocLocal.delete();
+          
 
         } else { // if (!USE_RELIABLE_ALGO || stdUnigrams)
 

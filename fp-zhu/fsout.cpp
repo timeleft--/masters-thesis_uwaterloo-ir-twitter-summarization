@@ -44,7 +44,7 @@ void FSout::printsetEndl(int length, int *iset)
   for(int i=0; i<length; i++)
     fprintf(out, "%d ", order_item[iset[i]]);
 //#endif
-  fprintf(out, "\n");
+  fprintf(out, " \n"); //space to make it easier to parse the string
 }
 
 
