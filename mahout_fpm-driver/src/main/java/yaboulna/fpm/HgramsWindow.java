@@ -212,8 +212,8 @@ public class HgramsWindow {
               + ".out");
           epochOutLocal.getParentFile().mkdirs();
 
-          String epochCooccursLocal = outRoot.toUri().toString().substring("file:".length()) + "cooccurs_" + epochLen
-              + "_" + windowStartUx;
+          File epochCooccursLocal = new File(outRoot.toUri().toString().substring("file:".length()) + "cooccurs_" + epochLen
+              + "_" + windowStartUx);
 
           File tempDir = new File(outRoot.toUri().toString().substring("file:".length()),"tmp");
           tempDir.mkdirs();
