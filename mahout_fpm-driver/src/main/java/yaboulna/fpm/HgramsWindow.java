@@ -291,6 +291,7 @@ public class HgramsWindow {
 
           File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()));
 
+          //TODO translate epochCooccursLocal as well
           LOG.info("Translating the output file {} into {}", epochOutLocal.getAbsolutePath(),
               epochOutText.getAbsolutePath());
 

@@ -703,26 +703,26 @@ void FI_tree::writeCooccurrTable(char * pathOfCooccurs){
 	if(array == NULL){
 		return;
 	}
-	cout << "Writing cooccurr table to " << pathOfCooccurs << endl;
+	cout << "Writing cooccurr table to " << pathOfCooccurs << std::endl;
 
 	//open file
 	FSout fsout =  FSout(pathOfCooccurs);
 
 	if(!fsout.isOpen()){
-		cerr << pathOfCooccurs << " cannot be opened " <<endl;
+		cerr << pathOfCooccurs << " cannot be opened " << std::endl;
 		return;
 	}
 	//write order or item_order in one line, NO!
 	// actually what we need to write is >>> order_item <<<
-	cout << "Writing order_item" <<endl;
+	cout << "Writing order_item" << std::endl;
 	fsout.printset(itemno,order_item);
 
-	cout << "Writing array" <<endl;
+	cout << "Writing array" << std::endl;
 	// write array as a lower triangular matrix
 	for(int i=0;i<itemno-1-SUDDEN; ++i){
 		fsout.printset(itemno-1-i,array[i]);
 	}
-	cout << "Finished Writing cooccur table" <<endl;
+	cout << "Finished Writing cooccur table" << std::endl;
 	// will be called in the destructor: fsout.close();
 }
 
