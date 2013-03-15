@@ -38,15 +38,24 @@ void FSout::printset(int length, int *iset)
 //#endif
 }
 
-void FSout::printAsIsEndl(int length, int *iset)
+void FSout::printAsIsEndl(int length, int *iset, int offset)
 {
 //#ifdef shown
-  for(int i=0; i<length; i++)
+  for(int i=offset; i<length; i++)
     fprintf(out, "%d ", iset[i]);
 //#endif
   fprintf(out, "\n"); // the line ends in space to make it easier to parse the string
 }
 
+
+void FSout::printReverseEndl(int length, int *iset)
+{
+//#ifdef shown
+  for(int i=length-1; i>=0; --i)
+    fprintf(out, "%d ", iset[i]);
+//#endif
+  fprintf(out, "\n"); // the line ends in space to make it easier to parse the string
+}
 
 void FSout::close()
 {
