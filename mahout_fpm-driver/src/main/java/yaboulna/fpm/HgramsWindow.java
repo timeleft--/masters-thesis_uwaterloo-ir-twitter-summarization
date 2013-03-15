@@ -403,10 +403,15 @@ public class HgramsWindow {
 
       String ln;
       while ((ln = decodeReader.readLine()) != null) {
-        int rowItemName = orderItem[lnNum];
+        int rowItemName = orderItem[lnNum++];
+        
         String rowToken = decodeMap.get(rowItemName);
+        if(rowToken == null){
+          LOG.warn("No token found in the decode map for the code: " + rowItemName);
+          continue;
+        }
         decodeWriter.write(rowToken);
-        ++lnNum;
+        
         if (lnNum % 1000 == 0) {
           LOG.info("Translated {} cooccurence rows itemsets, but didn't flush yet", lnNum);
         }
