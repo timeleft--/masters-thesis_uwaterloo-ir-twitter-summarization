@@ -15,13 +15,18 @@ import org.junit.Test;
 
 public class CooccurDecodeTest {
   String codedPath = "/Users/yia/fpm_out_debug/cooccurs_3600_1352224800";
-  String decodedPath = "/Users/yia/fpm_out_debug/cooccurs_3600_1352206800.txt";
+  String decodedPath = "/Users/yia/fpm_out_debug/cooccurs_3600_1352199600_2.txt"; //cooccurs_3600_1352206800.txt";
 
+  public static void main(String[] args) throws IOException {
+    CooccurDecodeTest test = new CooccurDecodeTest();
+    test.verifyDecoded();
+  }
+  
   //@Test
   public void verifyDecoded() throws IOException {
-    BufferedReader fr = new BufferedReader(new FileReader(decodedPath));
-    String[] items = new String[100000];
-    int[] sums = new int[100000];
+     BufferedReader fr = new BufferedReader(new FileReader(decodedPath));
+    String[] items = null;
+    int[] sums = null;
     String ln;
     int j=0;
     int cntItems = -1;
@@ -29,18 +34,27 @@ public class CooccurDecodeTest {
       String[] nums = ln.split("\\t");
       if(cntItems < 0 ){
         cntItems = nums.length-1;
+        items = new String[cntItems];
+        sums = new int[cntItems];
       }
-      int sum = 0;
+      int rowsum = 0;
       for(int i=1; i<nums.length; ++i){
         int n = Integer.parseInt(nums[i]);
-        sums[5 + nums.length-1-(i-1)] += n;
-        sum += n;
+        if((i-1+5) != j && (i-1+5) < sums.length)
+          sums[(i-1+5)] += n;
+        rowsum += n;
       }
-      sums[5+ cntItems-1-j]+=sum;
+      sums[j] += rowsum;
       items[j] = nums[0];
       ++j;
     }
-    for(int i=5;i<sums.length; ++i){
+    for(int i=0;i<sums.length; ++i){
+      if((items[i] == null && sums[i] != 0)
+          || (items[i] != null && sums[i] == 0)){
+        throw new ArrayIndexOutOfBoundsException("Not the same number of rows as colums");
+      } else if((items[i] == null && sums[i] == 0)){
+        break;
+      }
       System.out.println(items[i]+"="+sums[i]);
     }
 

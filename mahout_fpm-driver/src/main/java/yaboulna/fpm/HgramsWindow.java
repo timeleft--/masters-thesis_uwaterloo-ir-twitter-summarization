@@ -419,7 +419,7 @@ public class HgramsWindow {
         String[] counts = ln.split(" ");
 
         for (int c = 0; c < counts.length; ++c) {
-          decodeWriter.write("\t" + Integer.parseInt(counts[c]));
+          decodeWriter.write("\t" + counts[c]);
         }
         decodeWriter.write("\n");
 
