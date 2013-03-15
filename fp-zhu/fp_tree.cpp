@@ -724,7 +724,7 @@ void FI_tree::writeCooccurrTable(char * pathOfCooccurs){
 		//fsout.printAsIsEndl(itemno-2-item+1,toWrite);
 		//delete[] toWrite;
 		// can we do the flip while translating and just write array[item]:
-		fsout.printAsIsEndl(itemno-2-item+1,array[item]);
+		fsout.printAsIsEndl(itemno-1-item+1,array[item]);
 	}
 
 	// will be called in the destructor: fsout.close();
