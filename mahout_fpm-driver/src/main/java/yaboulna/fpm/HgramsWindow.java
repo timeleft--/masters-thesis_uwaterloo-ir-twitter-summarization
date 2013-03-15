@@ -53,14 +53,14 @@ public class HgramsWindow {
   private static boolean USE_RELIABLE_ALGO;
 
   /**
-   * 
+   * java -cp target/mahout_fpm-driver-0.0.1-SNAPSHOT.jar yaboulna.fpm.HgramsWindow 1352199600 1352286000 file:///home/yaboulna/fim_out/debug 3600/3600 all ../fp-zhu/fim_closed 2
    * @param args
    *          windowStartUx (1352260800 for wining hour 1352199600 for elections day)
    *          windowEndUx (1352264400 for end of winning hour 1352286000 for end of elections day)
    *          path of output
    *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps
    *          all/sel all is the only recognized word and otherwise only selected features
-   *          [algo] mahout or max are recognized, otherwise it will default to fpzhu's closed fim
+   *          algo mahout or path to the compiled executable of fp_zhu
    *          [hgramlen]
    *          [minSupp]
    *          [historyDays]

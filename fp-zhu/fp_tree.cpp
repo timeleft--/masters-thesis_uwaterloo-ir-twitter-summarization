@@ -717,7 +717,6 @@ void FI_tree::writeCooccurrTable(char * pathOfCooccurs){
 	}
 
 	fsout->close();
-	delete fsout;
 }
 
 void FI_tree::scan2_DB(Data *fdat)
