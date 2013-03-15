@@ -17,7 +17,7 @@ public class CooccurDecodeTest {
   String codedPath = "/Users/yia/fpm_out_debug/cooccurs_3600_1352224800";
   String decodedPath = "/Users/yia/fpm_out_debug/cooccurs_3600_1352206800.txt";
 
-  @Test
+  //@Test
   public void verifyDecoded() throws IOException {
     BufferedReader fr = new BufferedReader(new FileReader(decodedPath));
     String[] items = new String[100000];

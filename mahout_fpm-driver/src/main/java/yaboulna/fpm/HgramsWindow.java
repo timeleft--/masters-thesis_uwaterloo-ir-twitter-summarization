@@ -403,8 +403,8 @@ public class HgramsWindow {
 
       String ln;
       while ((ln = decodeReader.readLine()) != null) {
-        int rowItemName = orderItem[orderItem.length - lnNum];
-        ++lnNum;
+        int rowItemName = orderItem[lnNum++];
+        
         String rowToken = decodeMap.get(rowItemName);
         if(rowToken == null){
           LOG.warn("No token found in the decode map for the code: " + rowItemName);
