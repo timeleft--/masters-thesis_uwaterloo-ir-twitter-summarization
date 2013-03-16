@@ -228,7 +228,8 @@ public class HgramsWindow {
           OpenObjectIntHashMap<String> itemIds = new OpenObjectIntHashMap<String>();
           OpenIntObjectHashMap<String> decodeMap = new OpenIntObjectHashMap<String>();
           try {
-            // TODO: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting
+            // TODONE: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting
+            // NO, because the the names are used as array indexes, e.g: order[Trans->t[j]
             int i = 1; // get() returns 0 for items that are not contained
 
             while (transIter.hasNext()) {
