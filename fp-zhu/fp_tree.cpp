@@ -712,7 +712,7 @@ void FI_tree::writeCooccurrTable(char * pathOfCooccurs){
 	}
 	//write order or item_order in one line, NO!
 	// actually what we need to write is >>> order_item <<<
-	fsout.printAsIsEndl(itemno,order_item,SUDDEN);
+	fsout.printReverseEndl(itemno,item_order);
 
 	// write array as a lower triangular matrix
 	for(int i=0;i<itemno-1-SUDDEN; ++i)
