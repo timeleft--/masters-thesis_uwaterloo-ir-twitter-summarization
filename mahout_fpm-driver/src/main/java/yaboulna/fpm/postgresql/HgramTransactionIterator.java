@@ -286,8 +286,12 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             + " and timemillis >= (" + windowStartUx + " * 1000::INT8)"
             + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
 
-        String tablename = "hgram_occ_" + days.get(currDayIx) + "_" + maxHgramLen;
-
+        String tablename;
+        if(maxHgramLen == 1){
+          tablename = "ngrams1";
+        } else {
+          tablename = "hgram_occ_" + days.get(currDayIx) + "_" + maxHgramLen;
+        }
 // The need for DISTINCT ON (id,pos).. we do need it but for a tiny fraction where
 // the data isn't "clean".. that is multiple occurrences appear in the same id,pos
 // select count(*) from hgram_occ_121106_2 where ngramlen=2;
