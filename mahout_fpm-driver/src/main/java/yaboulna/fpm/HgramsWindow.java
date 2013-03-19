@@ -40,14 +40,14 @@ import org.slf4j.LoggerFactory;
 import yaboulna.fpm.postgresql.HgramTransactionIterator;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 
 public class HgramsWindow {
   private static Logger LOG = LoggerFactory.getLogger(HgramsWindow.class);
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
-  private static final boolean REMOVE_OUTPUT_AUTOMATICALLY = false;
+  private static final boolean HALT_IF_OUT_PATH_EXISTS = false;
+  private static final boolean SKIP_EXISTING_OUTPUT = true;
   private static final int TOPIC_WORDS_PER_MINUTE = 100;
   private static final int FREQUENT_PATTERNS_PER_MINUTE = 1;
 
@@ -81,11 +81,13 @@ public class HgramsWindow {
 
     LOG.info("outroot:" + outRoot.toUri());
     if (fs.exists(outRoot)) {
-      if (REMOVE_OUTPUT_AUTOMATICALLY) {
-        fs.delete(outRoot, true);
-      } else {
+      if (HALT_IF_OUT_PATH_EXISTS) {
         throw new IllegalArgumentException("Output path already exists.. remove it yourself: "
             + outRoot.toUri());
+      } else {
+        if (!SKIP_EXISTING_OUTPUT){
+          fs.delete(outRoot, true);
+        }
       }
     }
 
@@ -152,9 +154,18 @@ public class HgramsWindow {
     DateMidnight endDayOfTopicWords = new DateMidnight(0L);
     Set<String> topicWords = null;
 
-    while (windowStartUx < windowEndUx) {
+    for (; windowStartUx < windowEndUx; windowStartUx += stepSec) {
       LOG.info("Strting Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
-
+      Path epochOut = new Path(outRoot, "fp_" + epochLen + "_" + windowStartUx);
+      if (fs.exists(epochOut)) {
+        if (SKIP_EXISTING_OUTPUT) {
+          LOG.info("Done mining period from: {} to {}.. output already exists", windowStartUx, windowStartUx + epochLen);
+          continue;
+        } else {
+          LOG.error("Shouldn't be possible to be at this line of code: HALT and SKIP should work better togeher");
+        }
+      }
+      
       DateMidnight startDay = new DateMidnight(windowStartUx * 1000, DateTimeZone.forID("HST"));
       DateMidnight endDay = new DateMidnight(windowEndUx * 1000, DateTimeZone.forID("HST"));
 
@@ -166,8 +177,6 @@ public class HgramsWindow {
       }
 
       LOG.info("Days: " + days);
-
-      Path epochOut = new Path(outRoot, "fp_" + epochLen + "_" + windowStartUx);
 
       // TODO: 2 should be replaced by the maximum hgram length
       HgramTransactionIterator transIter = new HgramTransactionIterator(days, windowStartUx,
@@ -197,7 +206,8 @@ public class HgramsWindow {
               windowEndUx, hgramLen);
           try {
             transIter3.init();
-            topicWords = transIter3.getTopicWords((int) (TOPIC_WORDS_PER_MINUTE * ((windowEndUx - windowStartUx) / 60)),
+            topicWords = transIter3.getTopicWords(
+                (int) (TOPIC_WORDS_PER_MINUTE * ((windowEndUx - windowStartUx) / 60)),
                 dateFmt.print(histDay1));
           } finally {
             transIter3.uninit();
@@ -288,6 +298,12 @@ public class HgramsWindow {
 
           File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()));
 
+          if (!epochOutLocal.exists()) {
+            LOG.info("The output file {} doesn't exist. Done mining epoch with no result.",
+                epochOutLocal.getAbsolutePath());
+            continue;
+          }
+          
           LOG.info("Translating the output file {} into {}", epochOutLocal.getAbsolutePath(),
               epochOutText.getAbsolutePath());
 
@@ -316,6 +332,7 @@ public class HgramsWindow {
                   + "\n");
 
             }
+
           } finally {
             decodeReader.close();
             decodeWriter.flush();
@@ -356,7 +373,7 @@ public class HgramsWindow {
         transIter2.uninit();
       }
       LOG.info("Done Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
-      windowStartUx += stepSec;
+// windowStartUx += stepSec;
     }
   }
 }
