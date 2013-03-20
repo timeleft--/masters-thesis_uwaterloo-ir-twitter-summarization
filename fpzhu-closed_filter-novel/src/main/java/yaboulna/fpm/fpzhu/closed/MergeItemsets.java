@@ -50,6 +50,7 @@ public class MergeItemsets {
       int chInt;
       while((chInt = novR.read()) != -1){
         char ch = (char) chInt;
+        
       }
 //      termOccs.
       }finally{
