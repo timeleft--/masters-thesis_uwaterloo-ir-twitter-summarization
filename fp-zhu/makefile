@@ -1,5 +1,8 @@
 flags = -Wall -O3 -march=native -mtune=native
 
+test: test_plumbing.cpp test_plumbing.h data.o 
+	g++ $(flags) test_plumbing.cpp -o test_plumbing
+
 all:: fim_all fim_closed fim_maximal
 fim_all: fpgrowth.o data.o fp_tree.o buffer.o fsout.o fp_node.o
 	g++ $(flags) fpgrowth.o data.o fp_tree.o buffer.o fsout.o fp_node.o -o fim_all
