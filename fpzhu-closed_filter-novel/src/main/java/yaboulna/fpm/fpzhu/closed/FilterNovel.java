@@ -38,6 +38,8 @@ public class FilterNovel {
 
   public static final int AVERAGE_FREQUENT_ITEMSETS_PER_HOUR = 10000; // anecdotal not really calculated
 
+  private static final double DEFAULT_FPP = 1e-4;
+
   public static void main(String[] args) throws IOException {
     File dataDir = new File(args[0]);
     if (!dataDir.exists()) {
@@ -45,6 +47,9 @@ public class FilterNovel {
     }
 
 // TODO: Landmark window --> int numHistFiles = Integer.parseInt(args[2]);
+    
+    //TODO pass false positive probability
+    double fpp = DEFAULT_FPP;
 
     List<File> fpFiles = (List<File>) FileUtils.listFiles(dataDir, new IOFileFilter() {
 
@@ -66,8 +71,8 @@ public class FilterNovel {
 // HashFunction murmur = Hashing.murmur3_32();
 
     int expectedInsertions = AVERAGE_FREQUENT_ITEMSETS_PER_HOUR * fpFiles.size(); // FIXME: This assumes an epoch of 1hr
-    BloomFilter<List<String>> historyBloom = BloomFilter.create(Funnels.StrListFunnel.INSTANCE, expectedInsertions); // TODO
-// pass Fpp
+    
+    BloomFilter<List<String>> historyBloom = BloomFilter.create(Funnels.StrListFunnel.INSTANCE, expectedInsertions, fpp);
 
     Set<String> itemSet = Sets.newHashSet();
     LinkedList<String> distinctSortedTokens = Lists.newLinkedList();
@@ -115,6 +120,7 @@ public class FilterNovel {
               tokenBuilder.setLength(0);
 
               for (String token : itemSet) {
+                // TODO: This is actually the doc freq before dedupe, will this work well as an approximation?
                 // The frequency is misleading, because if we actually use it we will add the frequencies of all longer
                 // itemsets to the tokenCounts of tokens in the shorter itemsets.. counts renamed to docFreq to show that.
                 tokenDocFreq.put(token, tokenDocFreq.get(token) + 1); // freq);
