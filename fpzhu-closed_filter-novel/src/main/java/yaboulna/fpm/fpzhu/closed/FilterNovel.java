@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.channels.Channels;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -65,7 +66,8 @@ public class FilterNovel {
 // HashFunction murmur = Hashing.murmur3_32();
 
     int expectedInsertions = AVERAGE_FREQUENT_ITEMSETS_PER_HOUR * fpFiles.size(); // FIXME: This assumes an epoch of 1hr
-    BloomFilter<List<String>> historyBloom = BloomFilter.create(Funnels.StrListFunnel.INSTANCE, expectedInsertions);
+    BloomFilter<List<String>> historyBloom = BloomFilter.create(Funnels.StrListFunnel.INSTANCE, expectedInsertions); // TODO
+// pass Fpp
 
     Set<String> itemSet = Sets.newHashSet();
     LinkedList<String> distinctSortedTokens = Lists.newLinkedList();
@@ -74,19 +76,22 @@ public class FilterNovel {
     OpenObjectIntHashMap<String> tokenDocFreq = new OpenObjectIntHashMap<String>();
 
     for (File fpF : fpFiles) {
-//      File bloomFile = new File(fpF.getParentFile(), fpF.getName().replaceFirst("fp_", "bloom_"));
-//      if (bloomFile.exists()) {
-//        // TODO: read the bloom filter for the subwindow
-//      }
-      
+// File bloomFile = new File(fpF.getParentFile(), fpF.getName().replaceFirst("fp_", "bloom_"));
+// if (bloomFile.exists()) {
+// // TODO: read the bloom filter for the subwindow
+// }
+
       File novelFile = new File(fpF.getParentFile(), fpF.getName().replaceFirst("fp_", "novel_"));
-      if(novelFile.exists()){
-        //TODO: skip output that already exists
+      if (novelFile.exists()) {
+        // TODO: skip output that already exists
       }
-      
+
       Writer novelWr = Channels.newWriter(FileUtils.openOutputStream(novelFile).getChannel(), "UTF-8");
-      
+
       FileReader fpR = new FileReader(fpF);
+      int totalFps = 0;
+      int skippedFp = 0;
+      // TODO: read the first line containing the empty set (number of transactions) to skip it or to know the number
       try {
         int chInt;
         while ((chInt = fpR.read()) != -1) {
@@ -94,24 +99,24 @@ public class FilterNovel {
           if (ignoredChars.contains(ch)) {
             continue;
           } else if (delims.contains(ch)) {
-            itemSet.add(tokenBuilder.toString());
-            tokenBuilder.setLength(0);
-
+            if (tokenBuilder.length() > 0) {
+              itemSet.add(tokenBuilder.toString());
+              tokenBuilder.setLength(0);
+            } // else: the first line or the end of each itemset ending with an hgram
             if (ch == '\t') {
               // End of itemset
-
+              ++totalFps;
               // read until the end of line: 10 is the ascii for \n
-              while ((chInt = fpR.read()) != 10);
-              // The frequency is misleading, because if we actually use it we will add the frequencies of all longer
-              // itemsets to the tokenCounts of tokens in the shorter itemsets.. counts renamed to docFreq to show that.
-// {
-// ch = (char)chInt;
-// tokenBuilder.append(ch);
-// }
-// int freq = Integer.parseInt(tokenBuilder.toString());
-// tokenBuilder.setLength(0);
+              while ((chInt = fpR.read()) != 10) {
+                ch = (char) chInt;
+                tokenBuilder.append(ch);
+              }
+              int freq = Integer.parseInt(tokenBuilder.toString());
+              tokenBuilder.setLength(0);
 
               for (String token : itemSet) {
+                // The frequency is misleading, because if we actually use it we will add the frequencies of all longer
+                // itemsets to the tokenCounts of tokens in the shorter itemsets.. counts renamed to docFreq to show that.
                 tokenDocFreq.put(token, tokenDocFreq.get(token) + 1); // freq);
 
                 // Insertion sort of the itemset lexicographically
@@ -128,7 +133,9 @@ public class FilterNovel {
               // See if this is a novel itemset
               if (!historyBloom.mightContain(distinctSortedTokens)) {
                 // definitely a novel itemset
-                novelWr.append(distinctSortedTokens.toString()).append('\n');
+                novelWr.append(freq+"\t").append(distinctSortedTokens.toString()).append('\n');
+              } else {
+                ++skippedFp;
               }
 
               // Add the itemset to the bloom filter (only if it is novel? Abbadi's paper seems to insert it anyway)
@@ -148,6 +155,18 @@ public class FilterNovel {
         fpR.close();
       }
 
+      ArrayList<String> idfSortedTokens = Lists.newArrayListWithCapacity(tokenDocFreq.size());
+      tokenDocFreq.keysSortedByValue(idfSortedTokens);
+      tokenDocFreq.clear();
+
+      File idfFile = new File(fpF.getParentFile(), fpF.getName().replaceFirst("fp_", "idf-tokens_"));
+      if (idfFile.exists()) {
+        // TODO: what to do??
+      }
+      FileUtils.writeLines(idfFile, idfSortedTokens, false);
+      
+      LOG.info("Done processing file {} of {} lines", fpF.getAbsolutePath(), totalFps);
+      LOG.info("Number of distinct tokens: {} - Number of skipped itemsets: {}", idfSortedTokens.size(), skippedFp);
     }
   }
 }
