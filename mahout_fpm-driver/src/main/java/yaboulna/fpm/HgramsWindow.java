@@ -2,14 +2,12 @@ package yaboulna.fpm;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -29,7 +27,6 @@ import org.apache.mahout.fpm.pfpgrowth.convertors.SequenceFileOutputCollector;
 import org.apache.mahout.fpm.pfpgrowth.convertors.string.StringOutputConverter;
 import org.apache.mahout.fpm.pfpgrowth.convertors.string.TopKStringPatterns;
 import org.apache.mahout.fpm.pfpgrowth.fpgrowth.FPGrowth;
-import org.apache.mahout.math.map.OpenIntIntHashMap;
 import org.apache.mahout.math.map.OpenIntObjectHashMap;
 import org.apache.mahout.math.map.OpenObjectIntHashMap;
 import org.joda.time.DateMidnight;
@@ -49,15 +46,14 @@ public class HgramsWindow {
   private static Logger LOG = LoggerFactory.getLogger(HgramsWindow.class);
 
   protected static final DateTimeFormatter dateFmt = DateTimeFormat.forPattern("yyMMdd");
-  private static final boolean REMOVE_OUTPUT_AUTOMATICALLY = false;
+  private static final boolean HALT_IF_OUT_PATH_EXISTS = false;
+  private static final boolean SKIP_EXISTING_OUTPUT = true;
   private static final int TOPIC_WORDS_PER_MINUTE = 100;
   private static final int FREQUENT_PATTERNS_PER_MINUTE = 1;
 
   private static boolean USE_RELIABLE_ALGO;
 
   /**
-   * java -cp target/mahout_fpm-driver-0.0.1-SNAPSHOT.jar yaboulna.fpm.HgramsWindow 1352199600 1352286000
-   * file:///home/yaboulna/fim_out/debug 3600/3600 all ../fp-zhu/fim_closed 2
    * 
    * @param args
    *          windowStartUx (1352260800 for wining hour 1352199600 for elections day)
@@ -65,7 +61,7 @@ public class HgramsWindow {
    *          path of output
    *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps
    *          all/sel all is the only recognized word and otherwise only selected features
-   *          algo mahout or path to the compiled executable of fp_zhu
+   *          [algo] mahout or max are recognized, otherwise it will default to fpzhu's closed fim
    *          [hgramlen]
    *          [minSupp]
    *          [historyDays]
@@ -85,11 +81,13 @@ public class HgramsWindow {
 
     LOG.info("outroot:" + outRoot.toUri());
     if (fs.exists(outRoot)) {
-      if (REMOVE_OUTPUT_AUTOMATICALLY) {
-        fs.delete(outRoot, true);
-      } else {
+      if (HALT_IF_OUT_PATH_EXISTS) {
         throw new IllegalArgumentException("Output path already exists.. remove it yourself: "
             + outRoot.toUri());
+      } else {
+        if (!SKIP_EXISTING_OUTPUT){
+          fs.delete(outRoot, true);
+        }
       }
     }
 
@@ -125,13 +123,16 @@ public class HgramsWindow {
 // LOG.info("Using mahout implementation because it supports selection of head items");
     }
 
-    String fpZhuExe = null;
-    if (args[5].equals("mahout")) {
-      LOG.info("Using mahout implementation");
-      USE_RELIABLE_ALGO = false;
-    } else {
-      USE_RELIABLE_ALGO = true;
-      fpZhuExe = args[5];// "fim_closed""fim_maximal";
+    USE_RELIABLE_ALGO = true;
+    String fpZhuExe = "fim_closed";
+    if (args.length > 5) {
+      if (args[5].equals("mahout")) {
+        LOG.info("Using mahout implementation");
+        USE_RELIABLE_ALGO = false;
+      } else if (args[5].startsWith("max")) {
+        USE_RELIABLE_ALGO = true;
+        fpZhuExe = "fim_maximal";
+      }
     }
 
     int hgramLen = 3;
@@ -153,9 +154,18 @@ public class HgramsWindow {
     DateMidnight endDayOfTopicWords = new DateMidnight(0L);
     Set<String> topicWords = null;
 
-    while (windowStartUx < windowEndUx) {
+    for (; windowStartUx < windowEndUx; windowStartUx += stepSec) {
       LOG.info("Strting Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
-
+      Path epochOut = new Path(outRoot, "fp_" + epochLen + "_" + windowStartUx);
+      if (fs.exists(epochOut)) {
+        if (SKIP_EXISTING_OUTPUT) {
+          LOG.info("Done mining period from: {} to {}.. output already exists", windowStartUx, windowStartUx + epochLen);
+          continue;
+        } else {
+          LOG.error("Shouldn't be possible to be at this line of code: HALT and SKIP should work better togeher");
+        }
+      }
+      
       DateMidnight startDay = new DateMidnight(windowStartUx * 1000, DateTimeZone.forID("HST"));
       DateMidnight endDay = new DateMidnight(windowEndUx * 1000, DateTimeZone.forID("HST"));
 
@@ -167,8 +177,6 @@ public class HgramsWindow {
       }
 
       LOG.info("Days: " + days);
-
-      Path epochOut = new Path(outRoot, "fp_" + epochLen + "_" + windowStartUx);
 
       // TODO: 2 should be replaced by the maximum hgram length
       HgramTransactionIterator transIter = new HgramTransactionIterator(days, windowStartUx,
@@ -217,20 +225,13 @@ public class HgramsWindow {
               + ".out");
           epochOutLocal.getParentFile().mkdirs();
 
-          File epochCoocLocal = new File(outRoot.toUri().toString().substring("file:".length()), "cooccurs_" + epochLen
-              + "_" + windowStartUx);
-
-          File tempDir = new File(outRoot.toUri().toString().substring("file:".length()), "tmp");
-          tempDir.mkdirs();
-
-          File tmpFile = File.createTempFile("fpzhu", "trans", tempDir);
+          File tmpFile = File.createTempFile("fpzhu", "trans", new File("/home/yaboulna/tmp/"));
           tmpFile.deleteOnExit();
 
-          String cmd = fpZhuExe + " " + tmpFile.getAbsolutePath()
+          String cmd = "/home/yaboulna/fimi/fp-zhu/" + fpZhuExe + " " + tmpFile.getAbsolutePath()
               + " "
               + minSupport + " "
-              + epochOutLocal + " "
-              + epochCoocLocal;
+              + epochOutLocal;
 
           PrintStream feeder = new PrintStream(new FileOutputStream(tmpFile), true, "US-ASCII");
 
@@ -238,8 +239,7 @@ public class HgramsWindow {
           OpenIntObjectHashMap<String> decodeMap = new OpenIntObjectHashMap<String>();
           try {
             // TODONE: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting
-            // THE ANSWER IS NO BECAUSE THE NUMBER IS SED AS AN ARRAY INDEX IN origin[item_order[Tran->t[j]]] =
-// item_order[Tran->t[j]];
+            // NO, because the the names are used as array indexes, e.g: order[Trans->t[j]
             int i = 1; // get() returns 0 for items that are not contained
 
             while (transIter.hasNext()) {
@@ -298,6 +298,12 @@ public class HgramsWindow {
 
           File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()));
 
+          if (!epochOutLocal.exists()) {
+            LOG.info("The output file {} doesn't exist. Done mining epoch with no result.",
+                epochOutLocal.getAbsolutePath());
+            continue;
+          }
+          
           LOG.info("Translating the output file {} into {}", epochOutLocal.getAbsolutePath(),
               epochOutText.getAbsolutePath());
 
@@ -326,6 +332,7 @@ public class HgramsWindow {
                   + "\n");
 
             }
+
           } finally {
             decodeReader.close();
             decodeWriter.flush();
@@ -335,10 +342,6 @@ public class HgramsWindow {
           LOG.info("Translated the output file {} into {} and flushed, deleteing the original",
               epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
           epochOutLocal.delete();
-
-          File epochCoocText = new File(epochCoocLocal.getAbsolutePath() + ".txt");
-
-          decodeCooccurs(epochCoocLocal, epochCoocText, decodeMap);
 
         } else { // if (!USE_RELIABLE_ALGO || stdUnigrams)
 
@@ -370,69 +373,7 @@ public class HgramsWindow {
         transIter2.uninit();
       }
       LOG.info("Done Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
-      windowStartUx += stepSec;
+// windowStartUx += stepSec;
     }
-  }
-
-  static void decodeCooccurs(File epochCoocLocal, File epochCoocText, OpenIntObjectHashMap<String> decodeMap)
-      throws IOException {
-    LOG.info("Translating the cooccurrence file {} into {}", epochCoocLocal.getAbsolutePath(),
-        epochCoocText.getAbsolutePath());
-
-    BufferedReader decodeReader = new BufferedReader(new FileReader(epochCoocLocal));
-    FileWriterWithEncoding decodeWriter = new FileWriterWithEncoding(epochCoocText,
-        Charset.forName("UTF-8"));
-    try {
-      int lnNum = 0;
-
-      char[] orderItemStr = decodeReader.readLine().toCharArray();
-      int[] orderItem = new int[decodeMap.size()];
-      int numStartIx = 0;
-      int orderItemIx = 0;
-      for (int i = 0; i < orderItemStr.length; ++i) {
-        if (orderItemStr[i] == ' ') {
-          try {
-            orderItem[orderItemIx] = Integer.parseInt(new String(Arrays.copyOfRange(orderItemStr, numStartIx, i)));
-          } catch (NumberFormatException ex) {
-            LOG.warn(ex.getMessage());
-          }
-          ++orderItemIx;
-          numStartIx = i + 1;
-        }
-      }
-
-      String ln;
-      while ((ln = decodeReader.readLine()) != null) {
-        int rowItemName = orderItem[lnNum++];
-        
-        String rowToken = decodeMap.get(rowItemName);
-        if(rowToken == null){
-          LOG.warn("No token found in the decode map for the code: " + rowItemName);
-          continue;
-        }
-        decodeWriter.write(rowToken);
-        
-        if (lnNum % 1000 == 0) {
-          LOG.info("Translated {} cooccurence rows itemsets, but didn't flush yet", lnNum);
-        }
-
-        String[] counts = ln.split(" ");
-
-        for (int c = 0; c < counts.length; ++c) {
-          decodeWriter.write("\t" + Integer.parseInt(counts[c]));
-        }
-        decodeWriter.write("\n");
-
-      }
-    } finally {
-      decodeReader.close();
-      decodeWriter.flush();
-      decodeWriter.close();
-    }
-
-    LOG.info("Translated the output file {} into {} and flushed, deleteing the original",
-        epochCoocLocal.getAbsolutePath(), epochCoocText.getAbsolutePath());
-// epochCoocLocal.delete();
-
   }
 }
