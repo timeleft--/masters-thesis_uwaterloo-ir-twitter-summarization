@@ -47,8 +47,8 @@ public class FilterNovel {
     }
 
 // TODO: Landmark window --> int numHistFiles = Integer.parseInt(args[2]);
-    
-    //TODO pass false positive probability
+
+    // TODO pass false positive probability
     double fpp = DEFAULT_FPP;
 
     List<File> fpFiles = (List<File>) FileUtils.listFiles(dataDir, new IOFileFilter() {
@@ -71,8 +71,9 @@ public class FilterNovel {
 // HashFunction murmur = Hashing.murmur3_32();
 
     int expectedInsertions = AVERAGE_FREQUENT_ITEMSETS_PER_HOUR * fpFiles.size(); // FIXME: This assumes an epoch of 1hr
-    
-    BloomFilter<List<String>> historyBloom = BloomFilter.create(Funnels.StrListFunnel.INSTANCE, expectedInsertions, fpp);
+
+    BloomFilter<List<String>> historyBloom = BloomFilter
+        .create(Funnels.StrListFunnel.INSTANCE, expectedInsertions, fpp);
 
     Set<String> itemSet = Sets.newHashSet();
     LinkedList<String> distinctSortedTokens = Lists.newLinkedList();
@@ -139,9 +140,11 @@ public class FilterNovel {
               // See if this is a novel itemset
               if (!historyBloom.mightContain(distinctSortedTokens)) {
                 // definitely a novel itemset
-                novelWr.append(freq+"\t").append(distinctSortedTokens.toString()).append('\n');
+                novelWr.append(freq + "\t").append(distinctSortedTokens.toString()).append('\n');
               } else {
                 ++skippedFp;
+                if (LOG.isDebugEnabled())
+                  LOG.debug(distinctSortedTokens.toString());
               }
 
               // Add the itemset to the bloom filter (only if it is novel? Abbadi's paper seems to insert it anyway)
@@ -170,7 +173,7 @@ public class FilterNovel {
         // TODO: what to do??
       }
       FileUtils.writeLines(idfFile, idfSortedTokens, false);
-      
+
       LOG.info("Done processing file {} of {} lines", fpF.getAbsolutePath(), totalFps);
       LOG.info("Number of distinct tokens: {} - Number of skipped itemsets: {}", idfSortedTokens.size(), skippedFp);
     }
