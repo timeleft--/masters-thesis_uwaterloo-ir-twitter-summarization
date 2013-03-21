@@ -146,8 +146,8 @@ public class FilterNovel {
                 novelWr.append(freq + "\t").append(distinctSortedTokens.toString()).append('\n');
               } else {
                 ++skippedFp;
-                if (skippedFp % 100 == 0 && LOG.isDebugEnabled())
-                  LOG.debug(distinctSortedTokens.toString());
+                if (skippedFp % 100 == 0 && LOG.isTraceEnabled())
+                  LOG.trace(distinctSortedTokens.toString());
               }
 
               // Add the itemset to the bloom filter (only if it is novel? Abbadi's paper seems to insert it anyway)
