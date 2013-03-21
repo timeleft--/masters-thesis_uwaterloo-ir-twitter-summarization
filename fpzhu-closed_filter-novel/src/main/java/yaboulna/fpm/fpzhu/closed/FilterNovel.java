@@ -39,7 +39,7 @@ public class FilterNovel {
 
   public static final int AVERAGE_FREQUENT_ITEMSETS_PER_HOUR = 10000; // anecdotal not really calculated
 
-  private static final double DEFAULT_FPP = 1e-4;
+  private static final double DEFAULT_FPP = 1e-6;
 
   public static void main(String[] args) throws IOException {
     File dataDir = new File(args[0]);
