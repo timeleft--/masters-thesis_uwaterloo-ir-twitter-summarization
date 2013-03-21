@@ -166,13 +166,21 @@ public class FilterNovel {
 
       ArrayList<String> idfSortedTokens = Lists.newArrayListWithCapacity(tokenDocFreq.size());
       tokenDocFreq.keysSortedByValue(idfSortedTokens);
-      tokenDocFreq.clear();
-
+      
       File idfFile = new File(fpF.getParentFile(), fpF.getName().replaceFirst("fp_", "idf-tokens_"));
       if (idfFile.exists()) {
         // TODO: what to do??
       }
-      FileUtils.writeLines(idfFile, idfSortedTokens, false);
+      Writer idfWr = Channels.newWriter(FileUtils.openOutputStream(idfFile).getChannel(), "UTF-8");
+      try{
+      for(String token: idfSortedTokens){
+        idfWr.append(tokenDocFreq.get(token) + "\t").append(token).append('\n');
+      }
+      }finally{
+        idfWr.flush();
+        idfWr.close();
+      }
+      tokenDocFreq.clear();
 
       LOG.info("Done processing file {} of {} lines", fpF.getAbsolutePath(), totalFps);
       LOG.info("Number of distinct tokens: {} - Number of skipped itemsets: {}", idfSortedTokens.size(), skippedFp);
