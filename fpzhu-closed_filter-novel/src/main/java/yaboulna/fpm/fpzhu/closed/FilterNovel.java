@@ -19,7 +19,6 @@ import org.apache.mahout.math.map.OpenObjectIntHashMap;
 import org.slf4j.Logger;
 
 import yaboulna.guava.Funnels;
-import yaboulna.guava.Funnels.IntArrFunnel;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -112,9 +111,10 @@ public class FilterNovel {
             if (ch == '\t') {
               // End of itemset
               ++totalFps;
-              // read until the end of line: 10 is the ascii for \n
-              while ((chInt = fpR.read()) != 10) {
+              while ((chInt = fpR.read()) != -1) {
                 ch = (char) chInt;
+                if (ch == '\n')
+                  break;
                 tokenBuilder.append(ch);
               }
               int freq = Integer.parseInt(tokenBuilder.toString());
