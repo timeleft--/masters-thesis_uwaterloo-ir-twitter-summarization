@@ -64,7 +64,7 @@ createRes <- execSql("CREATE TABLE ogram_occ
 
 ###################################
 nullCombine <- function(a,b) NULL
-for(len1 in c(2:5)){
+for(len1 in c(1:5)){
 #  HPD.lenDir <- paste(HPD.dayDir,"/",len1,"-",len1 + 1, sep="")
   if(len1==1){
     HPD.volumeAdjustmentFactor <- 1

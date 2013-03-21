@@ -77,13 +77,13 @@ FTX.len1GramsSql <- sprintf("select b.${TIMECOL}/${TIMEADJUST} as epochstartux,
         join %s_%s%d%s v on v.${TIMECOL} = b.${TIMECOL}
         where b.date=%d and b.${TIMECOL} = (%d * ${TIMEADJUST}::INT8) 
         and CAST(b.cnt AS float8)/CAST(v.totalcnt AS float8) > %g
-        and ngramlen = %d;",
+        %s;",
     ifelse(FTX.len1==1,"ngram","ngram"),
     ifelse(FTX.len1==1,"cnt","ogram_cnt"),
     FTX.epoch1, FTX.len1, ifelse(FTX.len1==1,'',paste("_",FTX.day, sep="")), 
     ifelse(FTX.len1==1,"volume","ogram_vol"),
     FTX.epoch1, FTX.len1, ifelse(FTX.len1==1,'',paste("_",FTX.day,sep="")), 
-    FTX.day, FTX.epochstartux, FTX.candidateThreshold, FTX.len1)
+    FTX.day, FTX.epochstartux, FTX.candidateThreshold, ifelse(FTX.len1>1,paste("and ngramlen",FTX.len1,sep="="),""));
 
 FTX.len1GramsSql <- gsub("${TIMECOL}",ifelse(FTX.len1==1,'epochstartmillis','epochstartux'),FTX.len1GramsSql,fixed=TRUE)
 FTX.len1GramsSql <- gsub("${TIMEADJUST}",ifelse(FTX.len1==1,'1000','1'),FTX.len1GramsSql,fixed=TRUE)
