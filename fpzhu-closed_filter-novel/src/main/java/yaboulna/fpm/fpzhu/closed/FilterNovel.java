@@ -15,12 +15,15 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.NameFileComparator;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.mahout.math.map.OpenObjectIntHashMap;
 import org.slf4j.Logger;
 
 import yaboulna.guava.Funnels;
 
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Multisets;
 import com.google.common.collect.Sets;
 import com.google.common.hash.BloomFilter;
 
@@ -78,7 +81,7 @@ public class FilterNovel {
     LinkedList<String> distinctSortedTokens = Lists.newLinkedList();
 
     StringBuilder tokenBuilder = new StringBuilder();
-    OpenObjectIntHashMap<String> tokenDocFreq = new OpenObjectIntHashMap<String>();
+    Multiset<String> tokens = HashMultiset.create();
 
     for (File fpF : fpFiles) {
 // File bloomFile = new File(fpF.getParentFile(), fpF.getName().replaceFirst("fp_", "bloom_"));
@@ -124,7 +127,7 @@ public class FilterNovel {
                 // TODO: This is actually the doc freq before dedupe, will this work well as an approximation?
                 // The frequency is misleading, because if we actually use it we will add the frequencies of all longer
                 // itemsets to the tokenCounts of tokens in the shorter itemsets.. counts renamed to docFreq to show that.
-                tokenDocFreq.put(token, tokenDocFreq.get(token) + 1); // freq);
+                tokens.add(token); // freq);
 
                 // Insertion sort of the itemset lexicographically
                 int tokenIx = 0;
@@ -164,26 +167,26 @@ public class FilterNovel {
         fpR.close();
       }
 
-      ArrayList<String> idfSortedTokens = Lists.newArrayListWithCapacity(tokenDocFreq.size());
-      tokenDocFreq.keysSortedByValue(idfSortedTokens);
-      
+      ImmutableMultiset<String> freqSortedTokens = Multisets.copyHighestCountFirst(tokens);
+
       File idfFile = new File(fpF.getParentFile(), fpF.getName().replaceFirst("fp_", "idf-tokens_"));
       if (idfFile.exists()) {
         // TODO: what to do??
       }
       Writer idfWr = Channels.newWriter(FileUtils.openOutputStream(idfFile).getChannel(), "UTF-8");
-      try{
-      for(String token: idfSortedTokens){
-        idfWr.append(tokenDocFreq.get(token) + "\t").append(token).append('\n');
-      }
-      }finally{
+      try {
+//        idfWr.append("NUM_TOKENS\t"+freqSortedTokens.size()).append('\n');
+        for (Multiset.Entry<String> tokenCount : freqSortedTokens.entrySet()) {
+          idfWr.append(tokenCount.getCount() + "\t").append(tokenCount.getElement()).append('\n');
+        }
+      } finally {
         idfWr.flush();
         idfWr.close();
       }
-      tokenDocFreq.clear();
+      tokens.clear();
 
       LOG.info("Done processing file {} of {} lines", fpF.getAbsolutePath(), totalFps);
-      LOG.info("Number of distinct tokens: {} - Number of skipped itemsets: {}", idfSortedTokens.size(), skippedFp);
+      LOG.info("Number of skipped itemsets: {} . Thus included: {} ", skippedFp, totalFps - skippedFp);
     }
   }
 }
