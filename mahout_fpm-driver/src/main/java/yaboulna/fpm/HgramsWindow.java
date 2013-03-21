@@ -27,8 +27,6 @@ import org.apache.mahout.fpm.pfpgrowth.convertors.SequenceFileOutputCollector;
 import org.apache.mahout.fpm.pfpgrowth.convertors.string.StringOutputConverter;
 import org.apache.mahout.fpm.pfpgrowth.convertors.string.TopKStringPatterns;
 import org.apache.mahout.fpm.pfpgrowth.fpgrowth.FPGrowth;
-import org.apache.mahout.math.map.OpenIntObjectHashMap;
-import org.apache.mahout.math.map.OpenObjectIntHashMap;
 import org.joda.time.DateMidnight;
 import org.joda.time.DateTimeZone;
 import org.joda.time.MutableDateTime;
@@ -39,6 +37,8 @@ import org.slf4j.LoggerFactory;
 
 import yaboulna.fpm.postgresql.HgramTransactionIterator;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 
@@ -235,12 +235,11 @@ public class HgramsWindow {
 
           PrintStream feeder = new PrintStream(new FileOutputStream(tmpFile), true, "US-ASCII");
 
-          OpenObjectIntHashMap<String> itemIds = new OpenObjectIntHashMap<String>();
-          OpenIntObjectHashMap<String> decodeMap = new OpenIntObjectHashMap<String>();
+          BiMap<String, Integer> tokenIdMapping = HashBiMap.create();
           try {
             // TODONE: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting
             // NO, because the the names are used as array indexes, e.g: order[Trans->t[j]
-            int i = 1; // get() returns 0 for items that are not contained
+            int i = 1; // We used OpenIntHashMap whose get() returns 0 for items that are not contained
 
             while (transIter.hasNext()) {
               Pair<List<String>, Long> trans = transIter.next();
@@ -249,12 +248,11 @@ public class HgramsWindow {
                     transIter.getRowsRead(), tmpFile.getAbsolutePath().toString());
               }
               for (String item : trans.getFirst()) {
-                int id = itemIds.get(item);
-                if (id == 0) {
+                Integer id = tokenIdMapping.get(item);
+                if (id == null) {
                   id = i++; // TODO: use murmur chat and check for collisions, iff maintaining the same id across epochs
 
-                  itemIds.put(item, id);
-                  decodeMap.put(id, item);
+                  tokenIdMapping.put(item, id);
                 }
                 feeder.print(id + " ");
               }
@@ -313,6 +311,7 @@ public class HgramsWindow {
           try {
             int lnNum = 0;
             String ln;
+            BiMap<Integer, String> decodeMap = tokenIdMapping.inverse();
             while ((ln = decodeReader.readLine()) != null) {
               ++lnNum;
               if (lnNum % 10000 == 0) {

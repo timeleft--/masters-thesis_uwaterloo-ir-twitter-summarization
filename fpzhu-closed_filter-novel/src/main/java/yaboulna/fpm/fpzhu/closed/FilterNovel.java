@@ -146,7 +146,7 @@ public class FilterNovel {
                 novelWr.append(freq + "\t").append(distinctSortedTokens.toString()).append('\n');
               } else {
                 ++skippedFp;
-                if (LOG.isDebugEnabled())
+                if (skippedFp % 100 == 0 && LOG.isDebugEnabled())
                   LOG.debug(distinctSortedTokens.toString());
               }
 
