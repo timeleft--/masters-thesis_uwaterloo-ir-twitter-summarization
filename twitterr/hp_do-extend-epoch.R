@@ -34,7 +34,7 @@ if(FTX.TRACE) {
   FTX.day <- day<- 121105
   FTX.epochstartux <- 1352109600 + (3600 * 10)
   FTX.len1 <- 1
-  FTX.parentHgramsTable <- paste("hgram_occ",FTX.day,FTX.len1+1, sep="_")
+  FTX.parentHgramsTable <- paste("ogram_occ",FTX.day,FTX.len1+1, sep="_")
 #              FTX.dayDir <- HPD.dayDir
   FTX.db <- HPD.db <- "march" #"sample-0.01"      
   
@@ -47,7 +47,7 @@ if(FTX.TRACE) {
 FTX.startPos <- 0
 FTX.maxPos <- 70
 
-FTX.epochAllPosTable <- paste("hgram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,sep="_")
+FTX.epochAllPosTable <- paste("ogram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,sep="_")
 sql <- sprintf("CREATE TABLE %s () INHERITS (%s)",FTX.epochAllPosTable, FTX.parentHgramsTable)
 
 execSql(sql,FTX.db)
@@ -60,7 +60,7 @@ FTX.createIndexesTemplate <- "CREATE INDEX ${TNAME}_timemillis ON ${TNAME}(timem
 
 FTX.label <- paste("FTX", FTX.day,FTX.len1, FTX.epochstartux, sep="_")
 
-#FTX.epochFile <- paste(FTX.dayDir,"/hgram_",FTX.epochstartux,".csv",sep="")
+#FTX.epochFile <- paste(FTX.dayDir,"/ogram_",FTX.epochstartux,".csv",sep="")
 
 # TODO if(FTX.SKIP_EXISTING_OUT && file.exists()) 
 
@@ -79,9 +79,9 @@ FTX.len1GramsSql <- sprintf("select b.${TIMECOL}/${TIMEADJUST} as epochstartux,
         and CAST(b.cnt AS float8)/CAST(v.totalcnt AS float8) > %g
         and ngramlen = %d;",
     ifelse(FTX.len1==1,"ngram","ngram"),
-    ifelse(FTX.len1==1,"cnt","hgram_cnt"),
+    ifelse(FTX.len1==1,"cnt","ogram_cnt"),
     FTX.epoch1, FTX.len1, ifelse(FTX.len1==1,'',paste("_",FTX.day, sep="")), 
-    ifelse(FTX.len1==1,"volume","hgram_vol"),
+    ifelse(FTX.len1==1,"volume","ogram_vol"),
     FTX.epoch1, FTX.len1, ifelse(FTX.len1==1,'',paste("_",FTX.day,sep="")), 
     FTX.day, FTX.epochstartux, FTX.candidateThreshold, FTX.len1)
 
@@ -102,7 +102,7 @@ annotPrint(FTX.label, "Fetched:", nrow(FTX.len1GramsDf))
 # Get epoch occurrences
 FTX.len1OccsSql <- sprintf("SELECT CAST(id AS varchar), timemillis, date, ngram, ngramlen, tweetlen, pos from %s 
  where date=%d and timemillis >= (%d * 1000::INT8) and timemillis < (%d * 1000::INT8) order by id,pos",
-ifelse(FTX.len1==1,"ngrams1",paste("hgram_occ",FTX.day,FTX.len1, sep="_")),
+ifelse(FTX.len1==1,"ngrams1",paste("ogram_occ",FTX.day,FTX.len1, sep="_")),
 FTX.day, FTX.epochstartux, FTX.epochstartux + FTX.secsInEpoch)
 
 annotPrint(FTX.label, "Fetching epoch occurrences:\n", FTX.len1OccsSql)
@@ -130,9 +130,9 @@ FTX.extensible <- FTX.occCandidate != 0
 #Don't get confused.. the extension of an Ngram by a unigram doesn't mean that the ngram
 # occurence before or after the extended occurrence shuldn't get copied.. except in the
 # case when ngrams are of legnth 1, that is unigrams..
-if(FTX.len1 == 1){
-  FTX.dontCopyUgrams <- FTX.extensible
-} 
+#if(FTX.len1 == 1){
+#  FTX.dontCopyUgrams <- FTX.extensible
+#} 
 
 rm(FTX.occCandidate)
 rm(FTX.len1GramsDf)
@@ -147,7 +147,7 @@ rm(FTX.len1GramsDf)
 #        join volume_%s%d%s v on v.epochstartmillis = b.epochstartmillis
 #        where b.date=%d and b.epochstartmillis = (%d * 1000::INT8) 
 #				and CAST(b.cnt AS float8)/CAST(v.totalcnt AS float8) > %g);",
-#    ifelse(FTX.len1==1,"ngrams1",paste("hgram",FTX.len1, sep="_")),
+#    ifelse(FTX.len1==1,"ngrams1",paste("ogram",FTX.len1, sep="_")),
 #		 FTX.day, FTX.epochstartux, FTX.epochstartux + FTX.secsInEpoch,
 #    ifelse(FTX.len1==1,"'(' || ngramarr[1] || ')'","ngram"),
 #    FTX.epoch1, FTX.len1, ifelse(FTX.len1==1,"",paste("_",FTX.day, sep="")), 
@@ -220,13 +220,13 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
       
       if(nrow(beforeJoin) > 0){
         
-        if(FTX.len1==1){
-          #FIXME: the newly occupied was mask - 1, make sure that the bug was that.. the mask is
-          # already for pos p + 1 so those are the unigrams that actually got extended
-          newlyOccupied <- cgMaskForBefore - 1
-          FTX.dontCopyUgrams[newlyOccupied] <- TRUE
-          rm(newlyOccupied)
-        }
+#        if(FTX.len1==1){
+#          #FIXME: the newly occupied was mask - 1, make sure that the bug was that.. the mask is
+#          # already for pos p + 1 so those are the unigrams that actually got extended
+#          newlyOccupied <- cgMaskForBefore - 1
+#          FTX.dontCopyUgrams[newlyOccupied] <- TRUE
+#          rm(newlyOccupied)
+#        }
         
 #        beforeJoin$ngram <- paste(beforeJoin$unigram,paste(FTX.compgramLeft,beforeJoin$ngram,FTX.compgramRight,sep=""),sep=",")
         beforeJoin$ngram <- paste('(',paste(stripEndChars(beforeJoin$unigram),stripEndChars(beforeJoin$ngram),sep=","),')',sep="")
@@ -258,12 +258,12 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
     cgOccMaskForAfter <-  which(FTX.extensible & FTX.len1OccsDf$pos==p)
   }
   
-  if(FTX.len1==1){
-    newlyOccupied <- cgOccMaskForAfter[(FTX.len1OccsDf$tweetlen[cgOccMaskForAfter] - FTX.len1OccsDf$pos[cgOccMaskForAfter]) >= (FTX.len1+1)]
-    newlyOccupied <- newlyOccupied + FTX.len1
-    FTX.dontCopyUgrams[newlyOccupied] <- TRUE
-    rm(newlyOccupied)
-  }
+#  if(FTX.len1==1){
+#    newlyOccupied <- cgOccMaskForAfter[(FTX.len1OccsDf$tweetlen[cgOccMaskForAfter] - FTX.len1OccsDf$pos[cgOccMaskForAfter]) >= (FTX.len1+1)]
+#    newlyOccupied <- newlyOccupied + FTX.len1
+#    FTX.dontCopyUgrams[newlyOccupied] <- TRUE
+#    rm(newlyOccupied)
+#  }
   
   sql <- sprintf(sqlTemplate,p+FTX.len1)
   
@@ -343,7 +343,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   try(rm(beforeJoin))
   try(rm(afterJoin))
   
-  pospartitionName <- paste("hgram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,p, sep="_")
+  pospartitionName <- paste("ogram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,p, sep="_")
   
   annotPrint(FTX.label,"Writing table",pospartitionName)
   annotPrint(FTX.label,"nrow after dedup: ", nrow(toWrite))
@@ -371,7 +371,7 @@ for(p in c(FTX.startPos:(FTX.maxPos - FTX.len1))){
   annotPrint(FTX.label,"Moving on leaving indexes to be created",pospartitionName)
 }
 
-unigramsPartitionName <- paste("hgram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,"unextended", sep="_")
+unigramsPartitionName <- paste("ogram_occ",FTX.day,FTX.len1+1,FTX.epochstartux,"unextended", sep="_")
 annotPrint(FTX.label,"Writing table",unigramsPartitionName)  
 if(dbExistsTable(FTX.con,unigramsPartitionName)){
   annotPrint(FTX.label,"Removing exiting table",unigramsPartitionName)
@@ -379,63 +379,74 @@ if(dbExistsTable(FTX.con,unigramsPartitionName)){
   dbRemoveTable(FTX.con,unigramsPartitionName)
 }
 
-if(FTX.len1==1){
-  
-  dbWriteTable(FTX.con,unigramsPartitionName,FTX.len1OccsDf[!FTX.dontCopyUgrams,])
-  
-  rm(FTX.dontCopyUgrams)
-} else {
-  uptoLen <- 0:FTX.len1
-  pp <- paste("pos",uptoLen,sep="+")
-  pp <- paste(pp,uptoLen,sep=" p")
-  pp <- paste(pp,collapse=", ")
-  
-  #char(18)
-  sql <- sprintf("SELECT CAST(id AS varchar), %s  from %s ", pp, FTX.epochAllPosTable)
-  
-  annotPrint(FTX.label,"Getting occupied pos:\n",sql)
-  
-  occupiedRs <- dbSendQuery(FTX.con, sql)
-  occupiedDf <- fetch(occupiedRs, n=-1)
-  try(dbClearResult(occupiedRs))
-  
-  annotPrint(FTX.label,"Got occupied pos. nRow: ",nrow(occupiedDf))
-  
-  tweetFunc <- function(tweetOcc){
-	  occupiedPos <- occupiedDf[occupiedDf$id==tweetOcc$id[1],]
-	  occupiedPos$id <- NULL
-	  occupiedPos <- unique(unlist(occupiedPos,recursive=TRUE))
-	  
-	  if(length(occupiedPos) > 0) {
-		  ngramFunc <- function(posOcc){
-			  if(length(setdiff((0:(posOcc$ngramlen - 1) + posOcc$pos), occupiedPos)) == 0){
-				  return(NULL)
-			  } else {
-				  return(posOcc)
-			  }
-		  }
-		 # debug(ngramFunc)
-		  
-		  retVal <- adply(tweetOcc,1,ngramFunc,.expand=FALSE)
-		  retVal$X1 <- NULL
-  	  } else {
-		  retVal <- tweetOcc
-	  }
-  
-	  return(retVal);
+FTX.coveredByHighFreqGram <- FTX.extensible
+if(FTX.len1 > 1){
+  newlyOccupied <- which(FTX.extensible)
+  newlyOccupied <- newlyOccupied[(FTX.len1OccsDf$tweetlen[newlyOccupied] - FTX.len1OccsDf$pos[newlyOccupied]) >= FTX.len1]
+  for(q in (1:FTX.len1-1)){
+    FTX.coveredByHighFreqGram[newlyOccupied + q] <- TRUE
   }
-  #debug(tweetFunc)
-  notEvenOneExtensible <- match(FTX.len1OccsDf$id, unique(occupiedDf$id), nomatch=0)
-  
-  toWrite <- rbind(ddply(FTX.len1OccsDf[!FTX.extensible & (notEvenOneExtensible!=0),],c("id"),tweetFunc),
-		  FTX.len1OccsDf[notEvenOneExtensible==0,])
-  
-  dbWriteTable(FTX.con,unigramsPartitionName,toWrite)
-  
-  rm(notEvenOneExtensible)
-  rm(occupiedDf)
-  rm(toWrite)
+  rm(newlyOccupied)
 }
+dbWriteTable(FTX.con,unigramsPartitionName,FTX.len1OccsDf[!FTX.coveredByHighFreqGram,])
+
+#if(FTX.len1==1){
+#  
+#  dbWriteTable(FTX.con,unigramsPartitionName,FTX.len1OccsDf[!FTX.dontCopyUgrams,])
+#  
+#  rm(FTX.dontCopyUgrams)
+#} else {
+#  uptoLen <- 0:FTX.len1
+#  pp <- paste("pos",uptoLen,sep="+")
+#  pp <- paste(pp,uptoLen,sep=" p")
+#  pp <- paste(pp,collapse=", ")
+#  
+#  #char(18)
+#  sql <- sprintf("SELECT CAST(id AS varchar), %s  from %s ", pp, FTX.epochAllPosTable)
+#  
+#  annotPrint(FTX.label,"Getting occupied pos:\n",sql)
+#  
+#  occupiedRs <- dbSendQuery(FTX.con, sql)
+#  occupiedDf <- fetch(occupiedRs, n=-1)
+#  try(dbClearResult(occupiedRs))
+#  
+#  annotPrint(FTX.label,"Got occupied pos. nRow: ",nrow(occupiedDf))
+#  
+#  tweetFunc <- function(tweetOcc){
+#	  occupiedPos <- occupiedDf[occupiedDf$id==tweetOcc$id[1],]
+#	  occupiedPos$id <- NULL
+#	  occupiedPos <- unique(unlist(occupiedPos,recursive=TRUE))
+#	  
+#	  if(length(occupiedPos) > 0) {
+#		  ngramFunc <- function(posOcc){
+#			  if(length(setdiff((0:(posOcc$ngramlen - 1) + posOcc$pos), occupiedPos)) == 0){
+#				  return(NULL)
+#			  } else {
+#				  return(posOcc)
+#			  }
+#		  }
+#		 # debug(ngramFunc)
+#		  
+#		  retVal <- adply(tweetOcc,1,ngramFunc,.expand=FALSE)
+#		  retVal$X1 <- NULL
+#  	  } else {
+#		  retVal <- tweetOcc
+#	  }
+#  
+#	  return(retVal);
+#  }
+#  #debug(tweetFunc)
+#  notEvenOneExtensible <- match(FTX.len1OccsDf$id, unique(occupiedDf$id), nomatch=0)
+#  
+#  toWrite <- rbind(ddply(FTX.len1OccsDf[!FTX.extensible & (notEvenOneExtensible!=0),],c("id"),tweetFunc),
+#		  FTX.len1OccsDf[notEvenOneExtensible==0,])
+#  
+#  dbWriteTable(FTX.con,unigramsPartitionName,toWrite)
+#  
+#  rm(notEvenOneExtensible)
+#  rm(occupiedDf)
+#  rm(toWrite)
+#}
 
 annotPrint(FTX.label,"Wrote table",unigramsPartitionName)
 

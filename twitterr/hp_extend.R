@@ -59,7 +59,7 @@ while(!require(RPostgreSQL)){
 source("yaboulna_utils.R")
 ##################################
 
-createRes <- execSql("CREATE TABLE hgram_occ 
+createRes <- execSql("CREATE TABLE ogram_occ 
 (id int8, timemillis int8, date int4, ngram text, ngramlen int2, tweetlen int2, pos int2)", HPD.db)
 
 ###################################
@@ -70,8 +70,8 @@ for(len1 in c(2:5)){
     HPD.volumeAdjustmentFactor <- 1
   } else {
     sql <- sprintf("select avg(CAST(v2.totalcnt as float8)/v1.totalcnt) as volRedFactor 
-      from %s v1 join %s v2 on v2.epochstartux = v1.%s;", ifelse(len1==2,paste("volume_",HPD.epoch,len1-1,sep=""),paste("hgram_vol_",HPD.epoch,len1-1,sep="")),
-      paste("hgram_vol_",HPD.epoch,len1,sep=""),
+      from %s v1 join %s v2 on v2.epochstartux = v1.%s;", ifelse(len1==2,paste("volume_",HPD.epoch,len1-1,sep=""),paste("ogram_vol_",HPD.epoch,len1-1,sep="")),
+      paste("ogram_vol_",HPD.epoch,len1,sep=""),
       ifelse(len1==2,"epochstartmillis/1000","epochstartux"))
   
     annotPrint(paste("HPD",len1,sep="_"),"Getting volume adjustment factor by sql: \n",sql)
@@ -94,14 +94,14 @@ for(len1 in c(2:5)){
   }
   
   for(day in HPD.days){   
-#    HPD.dayDir <- paste(HPD.dataRoot,"hgram_occ",day, sep="/")
-	dayHgramTable <- paste("hgram_occ",day,sep="_")
+#    HPD.dayDir <- paste(HPD.dataRoot,"ogram_occ",day, sep="/")
+	dayHgramTable <- paste("ogram_occ",day,sep="_")
 	if(len1==1){
-      execSql(sprintf("CREATE TABLE %s () INHERITS(hgram_occ)",dayHgramTable),HPD.db)
+      execSql(sprintf("CREATE TABLE %s () INHERITS(ogram_occ)",dayHgramTable),HPD.db)
     }
     HPD.label <- paste("HPD",len1,day,sep="_")
     
-    daylenHgramsTable <- paste("hgram_occ",day,len1+1, sep="_")
+    daylenHgramsTable <- paste("ogram_occ",day,len1+1, sep="_")
     execSql(sprintf("CREATE TABLE %s () INHERITS (%s)",daylenHgramsTable, dayHgramTable),HPD.db)
     
 #    if(len1==1) {
@@ -159,10 +159,10 @@ for(len1 in c(2:5)){
 # and also there is an obvious bug below.. since the length is always len1+1 even though I don't 
 # have a where ngramlen= len1+1
 
-    # TODO: use the SQL in hgramcnt_fix-uniincludedinbi.txt to delete unis included in bi, and 
+    # TODO: use the SQL in ogramcnt_fix-uniincludedinbi.txt to delete unis included in bi, and 
     # to inherit and create more indeces are required by inheritence
-    cntTableNameDay <- sprintf("hgram_cnt_%s%d_%d",HPD.epoch,len1+1,day)
-    cntTableNameParent <- sprintf("hgram_cnt_%s%d",HPD.epoch,len1+1)
+    cntTableNameDay <- sprintf("ogram_cnt_%s%d_%d",HPD.epoch,len1+1,day)
+    cntTableNameParent <- sprintf("ogram_cnt_%s%d",HPD.epoch,len1+1)
     sql <- sprintf("CREATE TABLE %s (date integer, epochstartux bigint, ngram text, cnt integer, ngramlen int);",cntTableNameParent)
     execSql(sql,HPD.db)
     
@@ -181,11 +181,11 @@ HPD.secsInEpoch,HPD.secsInEpoch,daylenHgramsTable,cntTableNameDay,cntTableNameDa
 # TODONE add create index to above SQL
     execSql(sql,HPD.db)
 
-    volTableNameParent <- sprintf("hgram_vol_%s%d",HPD.epoch,len1+1)
+    volTableNameParent <- sprintf("ogram_vol_%s%d",HPD.epoch,len1+1)
     sql <- sprintf("CREATE TABLE %s (date integer, epochstartux bigint, totalcnt bigint);",volTableNameParent)
     execSql(sql,HPD.db)
     
-    volTableNameDay <- sprintf("hgram_vol_%s%d_%d",HPD.epoch,len1+1,day)
+    volTableNameDay <- sprintf("ogram_vol_%s%d_%d",HPD.epoch,len1+1,day)
     sql <- sprintf("DROP TABLE IF EXISTS %s; CREATE TABLE %s AS 
 SELECT  %d as date, epochstartux,sum(cnt) as totalcnt from %s group by epochstartux;
 CREATE INDEX %s_time ON %s(epochstartux);CREATE INDEX %s_date ON %s(date);

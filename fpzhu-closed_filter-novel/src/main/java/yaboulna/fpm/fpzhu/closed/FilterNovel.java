@@ -109,7 +109,7 @@ public class FilterNovel {
             if (tokenBuilder.length() > 0) {
               itemSet.add(tokenBuilder.toString());
               tokenBuilder.setLength(0);
-            } // else: the first line or the end of each itemset ending with an hgram
+            } // else: the first line or the end of each itemset ending with an ogram
             if (ch == '\t') {
               // End of itemset
               ++totalFps;

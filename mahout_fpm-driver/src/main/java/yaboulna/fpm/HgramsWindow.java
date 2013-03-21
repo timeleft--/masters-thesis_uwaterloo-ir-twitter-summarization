@@ -62,7 +62,7 @@ public class HgramsWindow {
    *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps
    *          all/sel all is the only recognized word and otherwise only selected features
    *          [algo] mahout or max are recognized, otherwise it will default to fpzhu's closed fim
-   *          [hgramlen]
+   *          [ogramlen]
    *          [minSupp]
    *          [historyDays]
    * @throws IOException
@@ -117,7 +117,7 @@ public class HgramsWindow {
 
     boolean stdUnigrams = true;
     if (args[4].equals("all")) {
-      LOG.info("Generatint the frequent patterns associated with all hgrams");
+      LOG.info("Generatint the frequent patterns associated with all ograms");
       stdUnigrams = false;
     } else {
 // LOG.info("Using mahout implementation because it supports selection of head items");
@@ -135,9 +135,9 @@ public class HgramsWindow {
       }
     }
 
-    int hgramLen = 3;
+    int ogramLen = 3;
     if (args.length > 6) {
-      hgramLen = Integer.parseInt(args[6]);
+      ogramLen = Integer.parseInt(args[6]);
     }
 
     int minSupport = 5;
@@ -178,11 +178,11 @@ public class HgramsWindow {
 
       LOG.info("Days: " + days);
 
-      // TODO: 2 should be replaced by the maximum hgram length
+      // TODO: 2 should be replaced by the maximum ogram length
       HgramTransactionIterator transIter = new HgramTransactionIterator(days, windowStartUx,
-          windowStartUx + epochLen, hgramLen);
+          windowStartUx + epochLen, ogramLen);
       HgramTransactionIterator transIter2 = new HgramTransactionIterator(days, windowStartUx,
-          windowStartUx + epochLen, hgramLen);
+          windowStartUx + epochLen, ogramLen);
 
       try {
         transIter.init();
@@ -203,7 +203,7 @@ public class HgramsWindow {
 // topicWords = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60),
 // dateFmt.print(histDay1));
           HgramTransactionIterator transIter3 = new HgramTransactionIterator(days, windowStartUx,
-              windowEndUx, hgramLen);
+              windowEndUx, ogramLen);
           try {
             transIter3.init();
             topicWords = transIter3.getTopicWords(
@@ -320,7 +320,7 @@ public class HgramsWindow {
 
               String[] codes = ln.split(" ");
               if (codes.length == 2) {
-                // only the hgram and its frequency
+                // only the ogram and its frequency
                 continue;
               }
               int c;

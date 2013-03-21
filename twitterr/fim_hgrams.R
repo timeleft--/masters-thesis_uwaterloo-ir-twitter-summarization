@@ -15,7 +15,7 @@ FIM.TRACE <- FALSE
 
 FIM.argv <- commandArgs(trailingOnly = TRUE)
 FIME.miningFuncName <- FIM.argv[1]
-# for now we only do the  hgram_occ_DAY_2 tables
+# for now we only do the  ogram_occ_DAY_2 tables
 #FIM.compgramlenm<-as.integer(FIM.argv[1]) #4
 source("yaboulna_utils.R")
 annotPrint(FIM.label,"Command line arguments read: FIME.miningFuncName=",FIME.miningFuncName)
@@ -94,7 +94,7 @@ options(error = quote(dump.frames(paste("~/r_logs/fim-arules_",format(Sys.time()
 for(day in FIM.days) {
   tryCatch({
   
-        baseDirName <- ifelse(FIM.NORETWEET,"fim_hgrams-2_no-retweets_apriori","fim_hgrams-2")
+        baseDirName <- ifelse(FIM.NORETWEET,"fim_ograms-2_no-retweets_apriori","fim_ograms-2")
         FIME.outDir <- paste(FIM.dataRoot,baseDirName,FIME.miningFuncName,day,sep="/");
         if(!file.exists(FIME.outDir)){
           dir.create(FIME.outDir,recursive = T)
@@ -108,11 +108,11 @@ for(day in FIM.days) {
   try(stop(paste(Sys.time(), FIM.label, "for day:", FIMW.day, " - Connected to DB", FIM.db)))
   
   if(FIM.NORETWEET){
-    sql <- sprintf("select string_agg(ngram,'|') as noretweet,floor(timemillis/3600000)*3600 as epochstartux from hgram_occ_%s_2 group by id,timemillis having string_agg(ngram,'|') !~ '(^|[\\|\\,])rt([\\|\\,]|$)'; ", FIMW.day )
+    sql <- sprintf("select string_agg(ngram,'|') as noretweet,floor(timemillis/3600000)*3600 as epochstartux from ogram_occ_%s_2 group by id,timemillis having string_agg(ngram,'|') !~ '(^|[\\|\\,])rt([\\|\\,]|$)'; ", FIMW.day )
   
   } else {
     sql <- sprintf("select DISTINCT ON (id,ngram) CAST(ngram as text) as compgram,CAST(id as varchar),floor(timemillis/3600000)*3600 as epochstartux, ngramlen as compgramlen,pos 
-            from  hgram_occ_%s_2",FIMW.day);  
+            from  ogram_occ_%s_2",FIMW.day);  
   } 
   
   try(stop(paste(Sys.time(), FIM.label, "for day:", FIMW.day, " - Fetching day's occurrences using sql:\n", sql)))

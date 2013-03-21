@@ -146,7 +146,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
 // if (maxLen < 2 || maxLen > 2) {
 // throw new UnsupportedOperationException(
-// "Joining multiple tables and selecting only occurrences that aren't included in larger hgrams is too much work.. later when it proves really necessary! Right now there are usually nothing in the hgram tables of lengthes more than 2.. I don't know if it is caused by a bug or there really isn't any bigram with high enough propotion of the stream. Maybe what we need to do is to recalculate the proportion of 'Obama' after each len");
+// "Joining multiple tables and selecting only occurrences that aren't included in larger ograms is too much work.. later when it proves really necessary! Right now there are usually nothing in the ogram tables of lengthes more than 2.. I don't know if it is caused by a bug or there really isn't any bigram with high enough propotion of the stream. Maybe what we need to do is to recalculate the proportion of 'Obama' after each len");
 // }
 
     this.maxHgramLen = maxLen;
@@ -224,13 +224,13 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         + "\n)";
     //@formatter:on
 
-// Luck made me discover that the "novel" hgrams are mostly spam.. except "once you go black"
+// Luck made me discover that the "novel" ograms are mostly spam.. except "once you go black"
 // String timeSql = "date in (" + Joiner.on(',').join(days) + ")"
 // + " and epochstartux >= floor(" + windowStartUx + "/3600)*3600 "
 // + " and (epochstartux < floor(" + windowEndUx + "/3600)*3600 or ("
 // + (windowEndUx - windowStartUx) + " < 3600 ))";
 //  @formatter:off
-//      String tablename = "hgram_cnt_1hr" + maxHgramLen;
+//      String tablename = "ogram_cnt_1hr" + maxHgramLen;
 //      String novelSql = "("
 //          + "\n with history as (select ngram, count(*) as appearances "
 //          + "\n   from " + tablename
@@ -290,16 +290,16 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         if(maxHgramLen == 1){
           tablename = "ngrams1";
         } else {
-          tablename = "hgram_occ_" + days.get(currDayIx) + "_" + maxHgramLen;
+          tablename = "ogram_occ_" + days.get(currDayIx) + "_" + maxHgramLen;
         }
 // The need for DISTINCT ON (id,pos).. we do need it but for a tiny fraction where
 // the data isn't "clean".. that is multiple occurrences appear in the same id,pos
-// select count(*) from hgram_occ_121106_2 where ngramlen=2;
+// select count(*) from ogram_occ_121106_2 where ngramlen=2;
 // count
 // ----------
 // 19766647
 // (1 row)
-// select * from hgram_occ_121106_2 where (id,pos) in (select id,pos from hgram_occ_121106_2
+// select * from ogram_occ_121106_2 where (id,pos) in (select id,pos from ogram_occ_121106_2
 // group by id,pos having count(*) > 1) order by id,pos;
 // 266069533033394176 | 1352270894665 | 121106 | DEJAR,DE | 2 | 10 | 7
 // 266069533033394176 | 1352270894665 | 121106 | DEJAR | 1 | 10 | 7
@@ -331,7 +331,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         stmt = conn.prepareStatement(sql);
         stmt.setString(1, "" + TOKEN_DELIMETER);
 
-        // example sql: "select id,string_agg(ngram,'|') from hgram_occ_120917_2_1347904800_unextended group by id;"
+        // example sql: "select id,string_agg(ngram,'|') from ogram_occ_120917_2_1347904800_unextended group by id;"
         transactions = stmt.executeQuery();
 
       }
@@ -340,11 +340,11 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
         char[] transChars = transactions.getString(1).toCharArray();
 
-        Collection<String> hgramList;
+        Collection<String> ogramList;
         if (preventRepeatedHGramsInTweet) {
-          hgramList = Sets.newHashSet();
+          ogramList = Sets.newHashSet();
         } else {
-          hgramList = Lists.newLinkedList();
+          ogramList = Lists.newLinkedList();
         }
 
         boolean skipTransaction = (topicUnigrams != null);
@@ -378,11 +378,11 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           }
 
           if (transChars[i] == TOKEN_DELIMETER) {
-            String hgram = strBld.toString();
+            String ogram = strBld.toString();
             strBld.setLength(0);
 
-// hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
-            hgramList.add(hgram);
+// ogramList.add(HGRAM_OPENING + ogram + HGRAM_CLOSING);
+            ogramList.add(ogram);
 
           } else {
             strBld.append(transChars[i]);
@@ -390,21 +390,21 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         }
 
         // last token
-        String hgram = strBld.toString();
+        String ogram = strBld.toString();
         strBld.setLength(0);
 
-// hgramList.add(HGRAM_OPENING + hgram + HGRAM_CLOSING);
-        hgramList.add(hgram);
+// ogramList.add(HGRAM_OPENING + ogram + HGRAM_CLOSING);
+        ogramList.add(ogram);
 
         if (skipTransaction) {
           continue;
         }
 
         if (preventRepeatedHGramsInTweet) {
-          hgramList = ImmutableList.copyOf(hgramList);
+          ogramList = ImmutableList.copyOf(ogramList);
         }
 
-        nextKeyVal = new Pair<List<String>, Long>((List<String>) hgramList, ONE);
+        nextKeyVal = new Pair<List<String>, Long>((List<String>) ogramList, ONE);
         return true;
       }
       if (currDayIx < days.size() - 1) {

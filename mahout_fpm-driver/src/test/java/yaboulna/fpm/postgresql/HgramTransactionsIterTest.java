@@ -81,7 +81,7 @@ public class HgramTransactionsIterTest {
 
 // @Test
   public void testNoHasNextCallExlcludeRetweets() throws SQLException {
-    String sqlTemplate = "(select string_agg(ngram,'|') as tokenized from hgram_occ_DAY_2 "
+    String sqlTemplate = "(select string_agg(ngram,'|') as tokenized from ogram_occ_DAY_2 "
         + " where timemillis >= (1352192400 * 1000::INT8) and timemillis < (1352199600 * 1000::INT8) "
         + " group by id) "; // having string_agg(ngram,'|') !~ '(^|[\\|\\,])rt([\\|\\,]|$)'; ");
     expected = stmt

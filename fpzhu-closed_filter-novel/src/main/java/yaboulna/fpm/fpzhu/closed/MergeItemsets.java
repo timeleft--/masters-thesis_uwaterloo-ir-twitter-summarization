@@ -60,7 +60,7 @@ public class MergeItemsets {
       String token = ixToken.get(ix);
       int freq = tokenFreq.get(token);
       if (freq >= MIN_OCCURRENCES_FOR_RESPECTING && freq < stopWordsThresh) {
-        sum += ix / ixToken.size();
+        sum += ix * 2.0 / ixToken.size();
       }
       return true;
     }
@@ -278,11 +278,14 @@ public class MergeItemsets {
       File similarityFile = new File(novF.getParentFile(), novF.getName().replaceFirst("novel_", "similarity_"));
       Writer similarityWr = Channels
           .newWriter(FileUtils.openOutputStream(similarityFile).getChannel(), Charsets.UTF_8.name());
+      File selFile = new File(novF.getParentFile(), novF.getName().replaceFirst("novel_", "sel_"));
+      Writer selWr = Channels
+          .newWriter(FileUtils.openOutputStream(selFile).getChannel(), Charsets.UTF_8.name());
       try {
         for(int p = 0; p<itemsetCounts.size(); ++p){
           Multiset.Entry<List<String>> mergeCand1 = itemsetCounts.get(p);
           similarityWr.append(">>>" + mergeCand1 + "\n");
-          
+          selWr.append(mergeCand1.getCount()+"\t";
           for(int q=0; q<itemsetCounts.size(); ++q){
             if(similarity[p][q] != 0){
               Multiset.Entry<List<String>> mergeCand2 = itemsetCounts.get(q);
@@ -292,6 +295,8 @@ public class MergeItemsets {
         }
         
       } finally {
+        selWr.flush();
+        selWr.close();
         similarityWr.flush();
         similarityWr.close();
       }

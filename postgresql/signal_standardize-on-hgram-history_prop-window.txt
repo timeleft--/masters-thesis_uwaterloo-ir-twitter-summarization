@@ -1,5 +1,5 @@
 ﻿with hist as (select c.*,CAST(c.cnt as float8)/CAST(v.totalcnt as float8) as prop 
-	from hgram_cnt_1hr2 c join volume_1hr1 v on c.epochstartux = v.epochstartux 
+	from ogram_cnt_1hr2 c join volume_1hr1 v on c.epochstartux = v.epochstartux 
 	where date >= 121025 and date <= 121106),
     curr as (select c.*,v.totalcnt,CAST(c.cnt as float8)/CAST(v.totalcnt as float8)  as prop 
 	from cnt_1hr1 c join volume_1hr1 v on c.epochstartmillis = v.epochstartmillis 
