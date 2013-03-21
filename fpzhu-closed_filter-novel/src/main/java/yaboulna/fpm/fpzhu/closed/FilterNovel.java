@@ -5,7 +5,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.channels.Channels;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -124,10 +123,10 @@ public class FilterNovel {
               tokenBuilder.setLength(0);
 
               for (String token : itemSet) {
-                // TODO: This is actually the doc freq before dedupe, will this work well as an approximation?
-                // The frequency is misleading, because if we actually use it we will add the frequencies of all longer
-                // itemsets to the tokenCounts of tokens in the shorter itemsets.. counts renamed to docFreq to show that.
-                tokens.add(token); // freq);
+//                // TODONE: This is actually the doc freq before dedupe, will this work well as an approximation? NO!
+//                // The frequency is misleading, because if we actually use it we will add the frequencies of all longer
+//                // itemsets to the tokenCounts of tokens in the shorter itemsets.. counts renamed to docFreq to show that.
+//                tokens.add(token); // freq);
 
                 // Insertion sort of the itemset lexicographically
                 int tokenIx = 0;
@@ -144,6 +143,9 @@ public class FilterNovel {
               if (!historyBloom.mightContain(distinctSortedTokens)) {
                 // definitely a novel itemset
                 novelWr.append(freq + "\t").append(distinctSortedTokens.toString()).append('\n');
+                for(String token: distinctSortedTokens){
+                  tokens.add(token);
+                }
               } else {
                 ++skippedFp;
                 if (skippedFp % 100 == 0 && LOG.isTraceEnabled())
@@ -169,7 +171,7 @@ public class FilterNovel {
 
       ImmutableMultiset<String> freqSortedTokens = Multisets.copyHighestCountFirst(tokens);
 
-      File idfFile = new File(fpF.getParentFile(), fpF.getName().replaceFirst("fp_", "idf-tokens_"));
+      File idfFile = new File(fpF.getParentFile(), fpF.getName().replaceFirst("fp_", "freq-tokens_"));
       if (idfFile.exists()) {
         // TODO: what to do??
       }

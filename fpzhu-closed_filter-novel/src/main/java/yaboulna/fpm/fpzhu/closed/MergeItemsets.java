@@ -9,7 +9,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 
+import com.google.common.collect.Lists;
+
 import cern.colt.bitvector.BitMatrix;
+import cern.colt.bitvector.QuickBitVector;
 
 public class MergeItemsets {
 
@@ -43,7 +46,7 @@ public class MergeItemsets {
       }
       List<String> tokens = FileUtils.readLines(idfFile);
       
-      BitMatrix termOccs = new BitMatrix(tokens.size(), AVERAGE_FREQUENT_ITEMSETS_PER_HOUR);
+      List<QuickBitVector> termOccs = Lists.newLinkedList();
       
       FileReader novR = new FileReader(novF);
       try{
