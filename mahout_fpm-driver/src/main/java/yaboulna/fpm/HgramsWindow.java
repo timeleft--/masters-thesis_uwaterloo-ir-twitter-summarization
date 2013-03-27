@@ -37,9 +37,11 @@ import org.slf4j.LoggerFactory;
 
 import yaboulna.fpm.postgresql.HgramTransactionIterator;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 
 public class HgramsWindow {
@@ -62,7 +64,7 @@ public class HgramsWindow {
    *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps
    *          [cmd] absolute path to the command to use, or mahout to fall back to its unreliable slow implementation
    *          [minSupp/support] The minimum support, that is the absolute support desired at the trough of the day volume,
-   *           has to be preceeded by a > for example, >5. An absolute support, for example 3360 will be used as is.
+   *          has to be preceeded by a > for example, >5. An absolute support, for example 3360 will be used as is.
    *          [ogramlen] defaults to 5
    *          [all/sel] all (default) is the only recognized word and otherwise only selected features
    *          [historyDays] defaults to 30
@@ -145,7 +147,7 @@ public class HgramsWindow {
         support = Integer.parseInt(args[5]);
       }
     }
-    
+
     int ogramLen = 5;
     if (args.length > 6) {
       ogramLen = Integer.parseInt(args[6]);
@@ -334,8 +336,13 @@ public class HgramsWindow {
             int lnNum = 0;
             String ln;
             BiMap<Integer, String> decodeMap = tokenIdMapping.inverse();
+            Set<String> itemSet = Sets.newHashSet();
+            List<String> hashtags = Lists.newLinkedList();
+            StringBuilder tokenBuilder = new StringBuilder();
             while ((ln = decodeReader.readLine()) != null) {
               ++lnNum;
+              itemSet.clear();
+              hashtags.clear();
               if (lnNum % 10000 == 0) {
                 LOG.info("Translated {} frequent itemsets, but didn't flush yet", lnNum);
               }
@@ -347,11 +354,39 @@ public class HgramsWindow {
               }
               int c;
               for (c = 0; c < codes.length - 1; ++c) {
-                decodeWriter.write(decodeMap.get(Integer.parseInt(codes[c])) + " ");
-              }
-              decodeWriter.write("\t" + codes[c].substring(0, codes[c].length() - 1).substring(1)
-                  + "\n");
+                String item = decodeMap.get(Integer.parseInt(codes[c]));
+                if (item.charAt(0) == '#') {
+                  hashtags.add(item);
+                  continue;
+                }
+                // there will be two brackets if the item is not a hashtag
+// item = item.substring(0, item.length() - 1).substring(1);
+// for(String token: commaSplitter.split(item)){
+// itemSet.add(token);
+// }
+                char[] itemChars = item.toCharArray();
+                // the first char is always a bracket
+                for (int x = 1; x < itemChars.length; ++x) {
+                  if (itemChars[x] == ',' || x == itemChars.length - 1) {
+                    // the last char will be a bracket so we won't add it but will know that we have reached the end
+                    itemSet.add(tokenBuilder.toString());
+                    tokenBuilder.setLength(0);
+                  } else {
+                    tokenBuilder.append(itemChars[x]);
+                  }
 
+                }
+              }
+              for (String htag : hashtags) {
+                if (!itemSet.contains(htag.substring(1))) {
+                  itemSet.add(htag);
+                } //TODO: else, should we replace the naked hashtag with the original one (think #obama obama :( )
+              }
+              if (itemSet.size() > 1) {
+                decodeWriter.write(itemSet.toString() + "\t"
+                    + codes[c].substring(0, codes[c].length() - 1).substring(1)
+                    + "\n");
+              }
             }
 
           } finally {
