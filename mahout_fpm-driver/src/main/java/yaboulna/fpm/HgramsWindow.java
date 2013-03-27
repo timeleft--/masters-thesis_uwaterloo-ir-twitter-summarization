@@ -195,7 +195,6 @@ public class HgramsWindow {
 
       LOG.info("Days: " + days);
 
-      // TODO: 2 should be replaced by the maximum ogram length
       HgramTransactionIterator transIter = new HgramTransactionIterator(days, windowStartUx,
           windowStartUx + epochLen, ogramLen);
       HgramTransactionIterator transIter2 = new HgramTransactionIterator(days, windowStartUx,
@@ -267,7 +266,7 @@ public class HgramsWindow {
 
             while (transIter.hasNext()) {
               Pair<List<String>, Long> trans = transIter.next();
-              if (transIter.getRowsRead() % 10000 == 0) {
+              if (transIter.getRowsRead() % (10000.0 * epochLen / 3600.0)  == 0) {
                 LOG.info("Read {} into the temp file {}. Last trans: " + trans.toString(),
                     transIter.getRowsRead(), tmpFile.getAbsolutePath().toString());
               }
