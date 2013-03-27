@@ -61,10 +61,10 @@ public class HgramsWindow {
    *          path of output
    *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps
    *          [cmd] absolute path to the command to use, or mahout to fall back to its unreliable slow implementation
-   *          [ogramlen]
+   *          [ogramlen] defaults to 5
    *          [all/sel] all (default) is the only recognized word and otherwise only selected features
-   *          [minSupp]
-   *          [historyDays]
+   *          [minSupp] The minimum support, that is the absolute support desired at the trough of the day volume
+   *          [historyDays] defaults to 30
    * 
    * @throws IOException
    * @throws SQLException
