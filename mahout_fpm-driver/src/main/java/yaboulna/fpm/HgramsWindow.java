@@ -61,9 +61,10 @@ public class HgramsWindow {
    *          path of output
    *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps
    *          [cmd] absolute path to the command to use, or mahout to fall back to its unreliable slow implementation
+   *          [minSupp/support] The minimum support, that is the absolute support desired at the trough of the day volume,
+   *           has to be preceeded by a > for example, >5. An absolute support, for example 3360 will be used as is.
    *          [ogramlen] defaults to 5
    *          [all/sel] all (default) is the only recognized word and otherwise only selected features
-   *          [minSupp] The minimum support, that is the absolute support desired at the trough of the day volume
    *          [historyDays] defaults to 30
    * 
    * @throws IOException
@@ -181,7 +182,7 @@ public class HgramsWindow {
       // TODONE: Do we need the days to be all the days of the mined period, or just the sliding step. Do we cheat?
       // If we need to cheat, I will have to change this back:
 // DateMidnight endDay = new DateMidnight(windowEndUx * 1000, DateTimeZone.forID("HST"));
-      DateMidnight endDay = new DateMidnight(windowStartUx + epochLen * 1000, DateTimeZone.forID("HST"));
+      DateMidnight endDay = new DateMidnight((windowStartUx + epochLen) * 1000, DateTimeZone.forID("HST"));
 
       List<String> days = Lists.newLinkedList();
       MutableDateTime currDay = new MutableDateTime(startDay);
