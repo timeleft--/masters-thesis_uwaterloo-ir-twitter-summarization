@@ -116,7 +116,6 @@ public class HgramsWindow {
 // " the counts of the whole hour will used if the window starts at a fraction of an hour");
 // }
 
-
     USE_RELIABLE_ALGO = true;
     String fimiExe;
     if (args.length > 4) {
@@ -132,22 +131,29 @@ public class HgramsWindow {
       fimiExe = "/home/yaboulna/fimi/fp-zhu/fim_closed";
     }
 
-    int ogramLen = 5;
-    if (args.length > 5) {
-      ogramLen = Integer.parseInt(args[5]);
-    }
-    
-    boolean stdUnigrams = false;
-    if (args.length > 6 && !args[6].equals("all")) {
-      LOG.info("Generatint the frequent patterns associated with all ograms");
-      stdUnigrams = true;
-    } 
-
     int minSupp = 5;
     double suppPct = 0.0001; // when multiplied by the volume gives at least 5 (at the trough of the day)
-    if (args.length > 7) {
-      minSupp = Integer.parseInt(args[7]);
-      suppPct =  minSupp * 0.0001 / 5;
+    int support = -1;
+    if (args.length > 5) {
+      if (args[5].charAt(0) == '>') {
+        minSupp = Integer.parseInt(args[5].substring(1));
+        suppPct = minSupp * 0.0001 / 5;
+      } else {
+        minSupp = -1;
+        suppPct = -1;
+        support = Integer.parseInt(args[5]);
+      }
+    }
+    
+    int ogramLen = 5;
+    if (args.length > 6) {
+      ogramLen = Integer.parseInt(args[6]);
+    }
+
+    boolean stdUnigrams = false;
+    if (args.length > 7 && !args[7].equals("all")) {
+      LOG.info("Generating the frequent patterns associated with all ograms");
+      stdUnigrams = true;
     }
 
     int historyDaysCnt = 30;
@@ -172,8 +178,10 @@ public class HgramsWindow {
       }
 
       DateMidnight startDay = new DateMidnight(windowStartUx * 1000, DateTimeZone.forID("HST"));
-      //TODO: Do we need the days to be all the days of the mined period, or just the sliding step. Do we cheat? 
-      DateMidnight endDay = new DateMidnight(windowEndUx * 1000, DateTimeZone.forID("HST"));
+      // TODONE: Do we need the days to be all the days of the mined period, or just the sliding step. Do we cheat?
+      // If we need to cheat, I will have to change this back:
+// DateMidnight endDay = new DateMidnight(windowEndUx * 1000, DateTimeZone.forID("HST"));
+      DateMidnight endDay = new DateMidnight(windowStartUx + epochLen * 1000, DateTimeZone.forID("HST"));
 
       List<String> days = Lists.newLinkedList();
       MutableDateTime currDay = new MutableDateTime(startDay);
@@ -193,8 +201,10 @@ public class HgramsWindow {
       try {
         transIter.init();
         transIter2.init();
-        
-        int support = transIter.getAbsSupport(suppPct);
+
+        if (support == -1) {
+          support = transIter.getAbsSupport(suppPct);
+        }
         LOG.info("Window support: {}", support);
 
         if (stdUnigrams
@@ -212,7 +222,9 @@ public class HgramsWindow {
 // topicWords = transIter.getTopicWords(TOPIC_WORDS_PER_MINUTE * (epochLen / 60),
 // dateFmt.print(histDay1));
           HgramTransactionIterator transIter3 = new HgramTransactionIterator(days, windowStartUx,
-              windowEndUx, ogramLen);
+              // TO cheat or not to cheat, that is no question
+              windowStartUx + epochLen, ogramLen);
+// windowEndUx, ogramLen);
           try {
             transIter3.init();
             topicWords = transIter3.getTopicWords(
