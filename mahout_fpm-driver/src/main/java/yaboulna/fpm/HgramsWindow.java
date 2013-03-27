@@ -318,7 +318,7 @@ public class HgramsWindow {
 
           executor.shutdown();
 
-          File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()));
+          File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()) + "_supp" + support);
 
           if (!epochOutLocal.exists()) {
             LOG.info("The output file {} doesn't exist. Done mining epoch with no result.",
@@ -336,12 +336,12 @@ public class HgramsWindow {
             int lnNum = 0;
             String ln;
             BiMap<Integer, String> decodeMap = tokenIdMapping.inverse();
-            Set<String> itemSet = Sets.newHashSet();
+            List<String> distinctSortedTokens = Lists.newLinkedList();
             List<String> hashtags = Lists.newLinkedList();
             StringBuilder tokenBuilder = new StringBuilder();
             while ((ln = decodeReader.readLine()) != null) {
               ++lnNum;
-              itemSet.clear();
+              distinctSortedTokens.clear();
               hashtags.clear();
               if (lnNum % 10000 == 0) {
                 LOG.info("Translated {} frequent itemsets, but didn't flush yet", lnNum);
@@ -367,9 +367,22 @@ public class HgramsWindow {
                 char[] itemChars = item.toCharArray();
                 // the first char is always a bracket
                 for (int x = 1; x < itemChars.length; ++x) {
-                  if (itemChars[x] == ',' || x == itemChars.length - 1) {
-                    // the last char will be a bracket so we won't add it but will know that we have reached the end
-                    itemSet.add(tokenBuilder.toString());
+                  if (itemChars[x] == ','
+                   // the last char will be a bracket so we won't add it but will know that we have reached the end
+                      || x == itemChars.length - 1) {
+                    
+                    String token = tokenBuilder.toString();
+                    
+                 // Insertion sort of the itemset lexicographically
+                    int tokenIx = 0;
+                    for (String sortedToken : distinctSortedTokens) {
+                      if (sortedToken.compareTo(token) > 0) {
+                        break;
+                      }
+                      ++tokenIx;
+                    }
+                    distinctSortedTokens.add(tokenIx, token);
+                    
                     tokenBuilder.setLength(0);
                   } else {
                     tokenBuilder.append(itemChars[x]);
@@ -378,12 +391,12 @@ public class HgramsWindow {
                 }
               }
               for (String htag : hashtags) {
-                if (!itemSet.contains(htag.substring(1))) {
-                  itemSet.add(htag);
+                if (!distinctSortedTokens.contains(htag.substring(1))) {
+                  distinctSortedTokens.add(htag);
                 } //TODO: else, should we replace the naked hashtag with the original one (think #obama obama :( )
               }
-              if (itemSet.size() > 1) {
-                decodeWriter.write(itemSet.toString() + "\t"
+              if (distinctSortedTokens.size() > 1) {
+                decodeWriter.write(distinctSortedTokens.toString() + "\t"
                     + codes[c].substring(0, codes[c].length() - 1).substring(1)
                     + "\n");
               }
