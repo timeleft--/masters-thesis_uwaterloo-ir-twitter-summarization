@@ -172,6 +172,7 @@ public class HgramsWindow {
       }
 
       DateMidnight startDay = new DateMidnight(windowStartUx * 1000, DateTimeZone.forID("HST"));
+      //TODO: Do we need the days to be all the days of the mined period, or just the sliding step. Do we cheat? 
       DateMidnight endDay = new DateMidnight(windowEndUx * 1000, DateTimeZone.forID("HST"));
 
       List<String> days = Lists.newLinkedList();
@@ -194,6 +195,7 @@ public class HgramsWindow {
         transIter2.init();
         
         int support = transIter.getAbsSupport(suppPct);
+        LOG.info("Window support: {}", support);
 
         if (stdUnigrams
             // // TODO cache the "with hist table" and stop cheating (by looking in the future through using windowEndUx)
