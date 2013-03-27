@@ -200,8 +200,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           + "\n SELECT floor(" + suppPct + " * sum(totalCnt/10.0)) " //10 is avg(tweetLen)
           + "\n FROM volume_1hr1 " //TODONOT: use the ogram_vol. NOT: number of Tweets remain the same
           + "\n WHERE date IN (" + Joiner.on(",").join(days) + ") "
-          + "\n   AND epochstartux >= " + windowStartUx 
-          + "\n   AND epochstartux < " + windowEndUx
+          + "\n   AND epochstartmillis >= (" + windowStartUx + " * 1000::INT8)"
+          + "\n   AND epochstartmillis < (" + windowEndUx + " * 1000::INT8)"
           + "\n ";
 //    @formatter:on
       
