@@ -395,7 +395,7 @@ public class HgramsWindow {
                   distinctSortedTokens.add(htag);
                 } //TODO: else, should we replace the naked hashtag with the original one (think #obama obama :( )
               }
-              if (distinctSortedTokens.size() > 1) {
+              if (distinctSortedTokens.size() != 1) { //0 is good, becuase it is the number of Tweets
                 decodeWriter.write(distinctSortedTokens.toString() + "\t"
                     + codes[c].substring(0, codes[c].length() - 1).substring(1)
                     + "\n");
