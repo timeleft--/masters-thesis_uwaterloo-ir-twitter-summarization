@@ -60,11 +60,12 @@ public class HgramsWindow {
    *          windowEndUx (1352264400 for end of winning hour 1352286000 for end of elections day)
    *          path of output
    *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps
-   *          all/sel all is the only recognized word and otherwise only selected features
-   *          [algo] mahout or max are recognized, otherwise it will default to fpzhu's closed fim
+   *          [cmd] absolute path to the command to use, or mahout to fall back to its unreliable slow implementation
    *          [ogramlen]
+   *          [all/sel] all (default) is the only recognized word and otherwise only selected features
    *          [minSupp]
    *          [historyDays]
+   * 
    * @throws IOException
    * @throws SQLException
    * @throws ClassNotFoundException
@@ -85,7 +86,7 @@ public class HgramsWindow {
         throw new IllegalArgumentException("Output path already exists.. remove it yourself: "
             + outRoot.toUri());
       } else {
-        if (!SKIP_EXISTING_OUTPUT){
+        if (!SKIP_EXISTING_OUTPUT) {
           fs.delete(outRoot, true);
         }
       }
@@ -115,34 +116,38 @@ public class HgramsWindow {
 // " the counts of the whole hour will used if the window starts at a fraction of an hour");
 // }
 
-    boolean stdUnigrams = true;
-    if (args[4].equals("all")) {
-      LOG.info("Generatint the frequent patterns associated with all ograms");
-      stdUnigrams = false;
-    } else {
-// LOG.info("Using mahout implementation because it supports selection of head items");
-    }
 
     USE_RELIABLE_ALGO = true;
-    String fpZhuExe = "fim_closed";
-    if (args.length > 5) {
-      if (args[5].equals("mahout")) {
+    String fimiExe;
+    if (args.length > 4) {
+      if (args[4].equals("mahout")) {
         LOG.info("Using mahout implementation");
         USE_RELIABLE_ALGO = false;
-      } else if (args[5].startsWith("max")) {
+        fimiExe = null;
+      } else {
         USE_RELIABLE_ALGO = true;
-        fpZhuExe = "fim_maximal";
+        fimiExe = args[4];
       }
+    } else {
+      fimiExe = "/home/yaboulna/fimi/fp-zhu/fim_closed";
     }
 
-    int ogramLen = 3;
-    if (args.length > 6) {
-      ogramLen = Integer.parseInt(args[6]);
+    int ogramLen = 5;
+    if (args.length > 5) {
+      ogramLen = Integer.parseInt(args[5]);
     }
+    
+    boolean stdUnigrams = false;
+    if (args.length > 6 && !args[6].equals("all")) {
+      LOG.info("Generatint the frequent patterns associated with all ograms");
+      stdUnigrams = true;
+    } 
 
-    int minSupport = 5;
+    int minSupp = 5;
+    double suppPct = 0.0001; // when multiplied by the volume gives at least 5 (at the trough of the day)
     if (args.length > 7) {
-      minSupport = Integer.parseInt(args[7]);
+      minSupp = Integer.parseInt(args[7]);
+      suppPct =  minSupp * 0.0001 / 5;
     }
 
     int historyDaysCnt = 30;
@@ -165,7 +170,7 @@ public class HgramsWindow {
           LOG.error("Shouldn't be possible to be at this line of code: HALT and SKIP should work better togeher");
         }
       }
-      
+
       DateMidnight startDay = new DateMidnight(windowStartUx * 1000, DateTimeZone.forID("HST"));
       DateMidnight endDay = new DateMidnight(windowEndUx * 1000, DateTimeZone.forID("HST"));
 
@@ -187,6 +192,8 @@ public class HgramsWindow {
       try {
         transIter.init();
         transIter2.init();
+        
+        int support = transIter.getAbsSupport(suppPct);
 
         if (stdUnigrams
             // // TODO cache the "with hist table" and stop cheating (by looking in the future through using windowEndUx)
@@ -228,9 +235,9 @@ public class HgramsWindow {
           File tmpFile = File.createTempFile("fpzhu", "trans", new File("/home/yaboulna/tmp/"));
           tmpFile.deleteOnExit();
 
-          String cmd = "/home/yaboulna/fimi/fp-zhu/" + fpZhuExe + " " + tmpFile.getAbsolutePath()
+          String cmd = fimiExe + " " + tmpFile.getAbsolutePath()
               + " "
-              + minSupport + " "
+              + support + " "
               + epochOutLocal;
 
           PrintStream feeder = new PrintStream(new FileOutputStream(tmpFile), true, "US-ASCII");
@@ -301,7 +308,7 @@ public class HgramsWindow {
                 epochOutLocal.getAbsolutePath());
             continue;
           }
-          
+
           LOG.info("Translating the output file {} into {}", epochOutLocal.getAbsolutePath(),
               epochOutText.getAbsolutePath());
 
@@ -351,8 +358,8 @@ public class HgramsWindow {
 
             fp.generateTopKFrequentPatterns(
                 transIter,
-                fp.generateFList(transIter2, minSupport),
-                minSupport,
+                fp.generateFList(transIter2, support),
+                support,
                 FREQUENT_PATTERNS_PER_MINUTE * (epochLen / 60),
                 topicWords,
                 new StringOutputConverter(

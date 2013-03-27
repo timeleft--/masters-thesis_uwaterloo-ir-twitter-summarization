@@ -190,6 +190,34 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     nRowsRead = 0;
   }
 
+  public int getAbsSupport(double suppPct) throws SQLException {
+    int retVal = 5;
+    
+    Statement suppStmt = conn.createStatement();
+    try{
+//    @formatter:off
+      String suppSql = ""
+          + "\n SELECT floor(" + suppPct + " * sum(totalCnt/10.0)) " //10 is avg(tweetLen)
+          + "\n FROM volume_1hr1 " //TODONOT: use the ogram_vol. NOT: number of Tweets remain the same
+          + "\n WHERE date IN (" + Joiner.on(",").join(days) + ") "
+          + "\n   AND epochstartux >= " + windowStartUx 
+          + "\n   AND epochstartux < " + windowEndUx
+          + "\n ";
+//    @formatter:on
+      
+      ResultSet suppRs = suppStmt.executeQuery(suppSql);
+      if(suppRs.next()){
+        retVal = suppRs.getInt(1); 
+      }
+      if(suppRs.next()){
+        throw new AssertionError();
+      }
+    }finally{
+      suppStmt.close();
+    }
+    return retVal;
+  }
+
   public Set<String> getTopicWords(int limit, String historyDay1) throws SQLException {
 
     Statement hiStmt = conn.createStatement();
@@ -287,7 +315,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
             + " and timemillis < (" + windowEndUx + " * 1000::INT8) ";
 
         String tablename;
-        if(maxHgramLen == 1){
+        if (maxHgramLen == 1) {
           tablename = "ngrams1";
         } else {
           tablename = "ogram_occ_" + days.get(currDayIx) + "_" + maxHgramLen;
@@ -359,7 +387,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
             String uni = strBld.substring(currUnigramStart,
                 // to skip the closing paranthesis, note that || transChars[i] == ')' --> lastIter
-                strBld.length() - (transChars[i] == TOKEN_DELIMETER  ? 1 : 0));
+                strBld.length() - (transChars[i] == TOKEN_DELIMETER ? 1 : 0));
 
             if (excludeRetweets && RETWEET_TOKENS.contains(uni)) {
               skipTransaction = true;
