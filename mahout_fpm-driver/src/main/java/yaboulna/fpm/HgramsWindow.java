@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import yaboulna.fpm.postgresql.HgramTransactionIterator;
 
-import com.google.common.base.Splitter;
+import com.google.common.base.Joiner;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
@@ -339,6 +339,7 @@ public class HgramsWindow {
             List<String> distinctSortedTokens = Lists.newLinkedList();
             List<String> hashtags = Lists.newLinkedList();
             StringBuilder tokenBuilder = new StringBuilder();
+            Joiner commaJoiner = Joiner.on(',');
             while ((ln = decodeReader.readLine()) != null) {
               ++lnNum;
               distinctSortedTokens.clear();
@@ -360,10 +361,6 @@ public class HgramsWindow {
                   continue;
                 }
                 // there will be two brackets if the item is not a hashtag
-// item = item.substring(0, item.length() - 1).substring(1);
-// for(String token: commaSplitter.split(item)){
-// itemSet.add(token);
-// }
                 char[] itemChars = item.toCharArray();
                 // the first char is always a bracket
                 for (int x = 1; x < itemChars.length; ++x) {
@@ -382,6 +379,7 @@ public class HgramsWindow {
                         break;
                       } else if (compRes == 0) {
                         tokenIx = -1;
+                        break;
                       }
                       ++tokenIx;
                     }
@@ -401,7 +399,8 @@ public class HgramsWindow {
                 } // TODO: else, should we replace the naked hashtag with the original one (think #obama obama :( )
               }
               if (distinctSortedTokens.size() != 1) { // 0 is good, becuase it is the number of Tweets
-                decodeWriter.write(distinctSortedTokens.toString() + "\t"
+                
+                decodeWriter.write(commaJoiner.join(distinctSortedTokens) + "\t"
                     + codes[c].substring(0, codes[c].length() - 1).substring(1)
                     + "\n");
               }
