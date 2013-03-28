@@ -58,10 +58,10 @@ public class HgramsWindow {
   /**
    * 
    * @param args
-   *          windowStartUx (1352260800 for wining hour 1352199600 for elections day)
-   *          windowEndUx (1352264400 for end of winning hour 1352286000 for end of elections day)
+   *          windowStartUx (1352260800 for wining hour 1352199600 for elections day,  1349085600  for oct 1st 2012 5am)
+   *          windowEndUx (1352264400 for end of winning hour 1352286000 for end of elections day,  1357038000 jan1,13)
    *          path of output
-   *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps
+   *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps, 2419200/604800 4wk/1wk
    *          [cmd] absolute path to the command to use, or mahout to fall back to its unreliable slow implementation
    *          [minSupp/support] The minimum support, that is the absolute support desired at the trough of the day volume,
    *          has to be preceeded by a > for example, >5. An absolute support, for example 3360 will be used as is.
@@ -393,9 +393,15 @@ public class HgramsWindow {
                 }
               }
               for (String htag : hashtags) {
-                if (!distinctSortedTokens.contains(htag.substring(1))) {
+                int htagIx = distinctSortedTokens.indexOf(htag.substring(1));
+                if (htagIx==-1) {
                   distinctSortedTokens.add(htag);
-                } // TODO: else, should we replace the naked hashtag with the original one (think #obama obama :( )
+                } else {
+               // TODONE: else, should we replace the naked hashtag with the original one (think #obama obama :( )
+                  distinctSortedTokens.remove(htagIx);
+                  distinctSortedTokens.add(htagIx,htag);
+                }
+                
               }
               if (distinctSortedTokens.size() != 1) { // 0 is good, becuase it is the number of Tweets
                 
