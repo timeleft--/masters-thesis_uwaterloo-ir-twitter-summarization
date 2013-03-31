@@ -248,7 +248,7 @@ public class HgramsWindow {
               + ".out");
           epochOutLocal.getParentFile().mkdirs();
 
-          File tmpFile = File.createTempFile("fpzhu", "trans", new File("/home/yaboulna/tmp/"));
+          File tmpFile = File.createTempFile("fpzhu", "trans"); //FIXME, new File("/home/yaboulna/tmp/"));
           tmpFile.deleteOnExit();
 
           String cmd = fimiExe + " " + tmpFile.getAbsolutePath()
