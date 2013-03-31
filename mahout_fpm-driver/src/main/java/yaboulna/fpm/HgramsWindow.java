@@ -177,7 +177,7 @@ public class HgramsWindow {
     if (args.length > 10) {
       tmpDir = new File(args[10]);
     }
-
+    
     DateMidnight startDayOfTopicWords = new DateMidnight(0L);
     DateMidnight endDayOfTopicWords = new DateMidnight(0L);
     Set<String> topicWords = null;
@@ -221,6 +221,7 @@ public class HgramsWindow {
         if (support == -1) {
           support = transIter.getAbsSupport(suppPct);
         }
+        int maxNumIdsToWriteOut = 2 * support; //To avoid writing out ids for language itemsets FIXME: 2 is arbitrary
         LOG.info("Window support: {}", support);
 
         if (stdUnigrams
@@ -407,9 +408,11 @@ public class HgramsWindow {
                 if (ln.charAt(0) == ' ') {
                   // this is the transaction ids from lcm
                   String[] ids = ln.substring(1).split(" ");
-                  decodeWriter.write("\t" + tweetIds.get(Integer.parseInt(ids[0])));
-                  for (int d = 1; d < ids.length; ++d) {
-                    decodeWriter.write("," + tweetIds.get(Integer.parseInt(ids[d])));
+                  if (ids.length <= maxNumIdsToWriteOut) {
+                    decodeWriter.write("\t" + tweetIds.get(Integer.parseInt(ids[0])));
+                    for (int d = 1; d < ids.length; ++d) {
+                      decodeWriter.write("," + tweetIds.get(Integer.parseInt(ids[d])));
+                    }
                   }
                   decodeWriter.write("\n");
                   continue;
