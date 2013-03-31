@@ -23,6 +23,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 
 public class HgramTransactionIterator implements Iterator<Pair<List<String>, Long>> {
 
@@ -110,6 +112,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   private Set<String> topicUnigrams = null;
 
+  private BloomFilter<CharSequence> windowBloom = null;
+
 // private static final String HGRAM_OPENING = "("; // " <, ";
 //
 // private static final String HGRAM_CLOSING = ")"; // " ,>";
@@ -155,6 +159,13 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     this.minHoursInHistory = minHoursInHistory;
 
     this.removeIdenticalTweets = removeIdenticalTweets;
+    if (removeIdenticalTweets) {
+      // 100,000 comes from select avg(totalcnt) from volume_1hr1;
+      // avg
+      // ----------------------
+      // 1025471.020816967793
+      windowBloom = BloomFilter.create(Funnels.stringFunnel(), (int) (((windowEndUx - windowStartUx) / 3600) * 100000));
+    }
     this.excludeRetweets = excludeRetweets;
 
     this.includeHashtags = includeHashtags;
@@ -192,9 +203,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   public int getAbsSupport(double suppPct) throws SQLException {
     int retVal = 5;
-    
+
     Statement suppStmt = conn.createStatement();
-    try{
+    try {
 //    @formatter:off
       String suppSql = ""
           + "\n SELECT floor(" + suppPct + " * sum(totalCnt/10.0)) " //10 is avg(tweetLen)
@@ -204,15 +215,15 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           + "\n   AND epochstartmillis < (" + windowEndUx + " * 1000::INT8)"
           + "\n ";
 //    @formatter:on
-      
+
       ResultSet suppRs = suppStmt.executeQuery(suppSql);
-      if(suppRs.next()){
-        retVal = suppRs.getInt(1); 
+      if (suppRs.next()) {
+        retVal = suppRs.getInt(1);
       }
-      if(suppRs.next()){
+      if (suppRs.next()) {
         throw new AssertionError();
       }
-    }finally{
+    } finally {
       suppStmt.close();
     }
     return retVal;
@@ -338,9 +349,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
         // DISTINCT FOR DEDUPE of spam tweets
         String dedupe = "";
-        if (removeIdenticalTweets) {
-          dedupe = "DISTINCT";
-        }
+// if (removeIdenticalTweets) {
+// dedupe = "DISTINCT";
+// }
         String sql;
         if (includeHashtags) {
           sql = "with tokens as (select id,htag as ngram from hashtags where " + timeSql
@@ -365,8 +376,18 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
       }
       while (transactions.next()) {
         ++nRowsRead;
+        String tweet = transactions.getString(1);
 
-        char[] transChars = transactions.getString(1).toCharArray();
+        boolean couldBeRepeated = false;
+        boolean isARetweet = false;
+
+        if (removeIdenticalTweets) {
+          // See if this is a novel tweet
+          couldBeRepeated = windowBloom.mightContain(tweet);
+          windowBloom.put(tweet);
+        }
+
+        char[] transChars = tweet.toCharArray();
 
         Collection<String> ogramList;
         if (preventRepeatedHGramsInTweet) {
@@ -389,9 +410,15 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
                 // to skip the closing paranthesis, note that || transChars[i] == ')' --> lastIter
                 strBld.length() - (transChars[i] == TOKEN_DELIMETER ? 1 : 0));
 
-            if (excludeRetweets && RETWEET_TOKENS.contains(uni)) {
-              skipTransaction = true;
-              break;
+            if ((excludeRetweets || (removeIdenticalTweets && couldBeRepeated))
+                && RETWEET_TOKENS.contains(uni)) {
+              if (excludeRetweets) {
+                skipTransaction = true;
+                break;
+              }
+              if (removeIdenticalTweets) {
+                isARetweet = true;
+              }
             }
 
             if ((topicUnigrams != null) && topicUnigrams.contains(uni)) {
@@ -424,7 +451,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 // ogramList.add(HGRAM_OPENING + ogram + HGRAM_CLOSING);
         ogramList.add(ogram);
 
-        if (skipTransaction) {
+        if (skipTransaction || (removeIdenticalTweets && !isARetweet)) {
           continue;
         }
 
