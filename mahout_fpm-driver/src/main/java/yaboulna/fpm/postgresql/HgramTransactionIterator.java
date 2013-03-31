@@ -58,7 +58,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   }
 
-  private static final Long ONE = 1L;
+//  private static final Long ONE = 1L;
 
   static final char TOKEN_DELIMETER = '|'; // must be a char
   static final char UNIGRAM_DELIMETER = ','; // must be a char
@@ -359,10 +359,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
               + " select id,ngram from " + tablename + " where "
               + timeSql
               + " and ngramlen <= " + maxHgramLen + ")"
-              + " select " + dedupe + " string_agg(ngram,?) from tokens "
+              + " select " + dedupe + " string_agg(ngram,?),id from tokens "
               + " group by id";
         } else {
-          sql = "select " + dedupe + " string_agg(ngram,?) from " + tablename + " where "
+          sql = "select " + dedupe + " string_agg(ngram,?),id from " + tablename + " where "
               + timeSql
               + " and ngramlen <= " + maxHgramLen
               + " group by id";
@@ -451,7 +451,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 // ogramList.add(HGRAM_OPENING + ogram + HGRAM_CLOSING);
         ogramList.add(ogram);
 
-        if (skipTransaction || (removeIdenticalTweets && !isARetweet)) {
+        if (skipTransaction || (removeIdenticalTweets && couldBeRepeated && !isARetweet)) {
           continue;
         }
 
@@ -459,7 +459,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           ogramList = ImmutableList.copyOf(ogramList);
         }
 
-        nextKeyVal = new Pair<List<String>, Long>((List<String>) ogramList, ONE);
+        nextKeyVal = new Pair<List<String>, Long>((List<String>) ogramList, transactions.getLong(2));
         return true;
       }
       if (currDayIx < days.size() - 1) {
