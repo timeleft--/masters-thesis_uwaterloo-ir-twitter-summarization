@@ -350,25 +350,28 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 // 750 out of 19 million, I don't think it's a big deal
 
         // DISTINCT FOR DEDUPE of spam tweets
-        String dedupe = "";
+// String dedupe = ""; //used to be added as select " + dedupe + " string_agg....
 // if (removeIdenticalTweets) {
 // dedupe = "DISTINCT";
 // }
-        String sql = "with tokens as (";
+        String sql;
         if (includeHashtags) {
-          sql += "select id,htag as ngram,-1 as pos, 1 as ngramlen from hashtags where " + timeSql
-              + " UNION ALL ";
+          sql = "with tokens as (select id,htag as ngram from hashtags where " + timeSql
+              + " UNION ALL "
+              + " select id,ngram from " + tablename + " where "
+              + timeSql
+              + " and ngramlen <= " + maxHgramLen + ")"
+              + " select  string_agg(ngram,?) from tokens "
+              + " group by id";
+        } else {
+          sql = "select  string_agg(ngram,?) from " + tablename + " where "
+              + timeSql
+              + " and ngramlen <= " + maxHgramLen
+              + " group by id";
         }
-        sql += "\n"
-            + " select id,ngram,pos,ngramlen from " + tablename + " where "
-            + timeSql
-            + " and ngramlen <= " + maxHgramLen + "order by id,pos asc, ngramlen desc)"
-            + " select " + dedupe + " string_agg(ngram,?),string_agg(CAST(pos AS varchar(2)),?) from tokens "
-            + " group by id";
 
         stmt = conn.prepareStatement(sql);
         stmt.setString(1, "" + TOKEN_DELIMETER);
-        stmt.setString(2, "" + TOKEN_DELIMETER);
 
         // example sql: "select id,string_agg(ngram,'|') from ogram_occ_120917_2_1347904800_unextended group by id;"
         transactions = stmt.executeQuery();
