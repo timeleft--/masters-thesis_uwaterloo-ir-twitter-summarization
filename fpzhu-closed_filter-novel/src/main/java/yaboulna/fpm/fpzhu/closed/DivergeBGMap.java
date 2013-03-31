@@ -39,13 +39,20 @@ public class DivergeBGMap {
 
     @Override
     public boolean processLine(String line) throws IOException {
-      int tabIx = line.length() - 1;
-      while (line.charAt(tabIx) != '\t') {
-        --tabIx;
+      int tabIx1 = 0;
+      while (line.charAt(tabIx1) != '\t') {
+        ++tabIx1;
       }
-      int count = Integer.parseInt(line.substring(tabIx + 1));
+      String itemset = (tabIx1 > 0 ? line.substring(0, tabIx1) : NUM_TWEETS_KEY);
 
-      String itemset = (tabIx > 0 ? line.substring(0, tabIx) : NUM_TWEETS_KEY);
+      int tabIx2 = tabIx1 + 1;
+      while (line.charAt(tabIx2) != '\t') {
+        if(tabIx2 == line.length()){ //not -1 because it is used in substring
+          break;
+        }
+        ++tabIx2;
+      }
+      int count = Integer.parseInt(line.substring(tabIx1 + 1, tabIx2));
 
 // mapBuilder.put(itemset, count);
       fpCntMap.put(itemset, count);
@@ -79,7 +86,7 @@ public class DivergeBGMap {
       throw new IllegalArgumentException("Path doesn't exist: " + fgDir.getAbsolutePath());
     }
 
-    int histLenSecs = 4 * 7 * 24 * 3600;  // TODO: Integer.parseInt(args[2]);
+    int histLenSecs = 4 * 7 * 24 * 3600; // TODO: Integer.parseInt(args[2]);
 
     List<File> fgFiles = (List<File>) FileUtils.listFiles(fgDir, FileFilterUtils.prefixFileFilter("fp_"),
         FileFilterUtils.trueFileFilter());
@@ -124,7 +131,7 @@ public class DivergeBGMap {
 
       final double bgNumTweets = bgMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
       final double fgNumTweets = fgMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
-      final double bgFgLogP = Math.log((bgNumTweets + fgMap.size())/(fgNumTweets+ fgMap.size()));
+      final double bgFgLogP = Math.log((bgNumTweets + fgMap.size()) / (fgNumTweets + fgMap.size()));
 
       final File novelFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", "novel_"));
       if (novelFile.exists()) {
@@ -133,26 +140,25 @@ public class DivergeBGMap {
 
       Closer novelClose = Closer.create();
       try {
-        Formatter highPrecFormat = novelClose.register(new Formatter(novelFile,Charsets.UTF_8.name()));
+        Formatter highPrecFormat = novelClose.register(new Formatter(novelFile, Charsets.UTF_8.name()));
 // final Writer novelWr = novelClose.register(Channels.newWriter(FileUtils.openOutputStream(novelFile)
 // .getChannel(), Charsets.UTF_8.name()));
 
         int counter = 0;
         for (String itemset : fgMap.keySet()) {
           double fgFreq = fgMap.get(itemset) + 1;
-//          double fgLogP = Math.log(fgFreq / fgNumTweets);
+// double fgLogP = Math.log(fgFreq / fgNumTweets);
 
-          
           Integer bgCount = bgMap.get(itemset);
-          if (bgCount == null) 
+          if (bgCount == null)
             bgCount = 1;
-//            bgLogP = 2 * fgLogP; // so that the final result will be the abs(fpLogP)
-//          } else {
-//            bgLogP = Math.log(bgCount / bgNumTweets);
-//          }
+// bgLogP = 2 * fgLogP; // so that the final result will be the abs(fpLogP)
+// } else {
+// bgLogP = Math.log(bgCount / bgNumTweets);
+// }
 
           double klDiver = fgFreq * (Math.log(fgFreq / bgCount) + bgFgLogP);
-//          novelWr.append(itemset).append('\t').append(Doubles. String.format(klDiver)).append('\n');
+// novelWr.append(itemset).append('\t').append(Doubles. String.format(klDiver)).append('\n');
           highPrecFormat.format(itemset + "\t%.15f\n", klDiver);
           if (++counter % 10000 == 0) {
             LOG.info("Processed {} itemsets. Last one: {}", counter, itemset + "=" + klDiver);

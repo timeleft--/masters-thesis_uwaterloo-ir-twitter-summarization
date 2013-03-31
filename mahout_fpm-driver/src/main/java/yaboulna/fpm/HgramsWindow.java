@@ -266,7 +266,7 @@ public class HgramsWindow {
           tmpFile.deleteOnExit();
 
           ArrayList<Long> tweetIds = Lists.newArrayListWithExpectedSize(100000 * (epochLen / 3600));
-//          int tweetIdIx = 0;
+// int tweetIdIx = 0;
 
           PrintStream feeder = new PrintStream(new FileOutputStream(tmpFile), true, "US-ASCII");
 
@@ -291,7 +291,7 @@ public class HgramsWindow {
                 feeder.print(id + " ");
               }
               feeder.print("\n");
-              tweetIds.add(trans.getSecond()); //tweetIdIx++, 
+              tweetIds.add(trans.getSecond()); // tweetIdIx++,
             }
           } finally {
             feeder.flush();
@@ -403,17 +403,19 @@ public class HgramsWindow {
               if (lnNum % 10000 == 0) {
                 LOG.info("Translated {} frequent itemsets, but didn't flush yet", lnNum);
               }
-              if (ln.charAt(0) == ' ') {
-                // this is the transaction ids from lcm
-                String[] ids = ln.substring(1).split(" ");
-                decodeWriter.write("\t" + tweetIds.get(Integer.parseInt(ids[0])));
-                for (int d = 1; d < ids.length; ++d) {
-                  decodeWriter.write("," + tweetIds.get(Integer.parseInt(ids[d])));
+              if (lnNum > 1) {
+                if (ln.charAt(0) == ' ') {
+                  // this is the transaction ids from lcm
+                  String[] ids = ln.substring(1).split(" ");
+                  decodeWriter.write("\t" + tweetIds.get(Integer.parseInt(ids[0])));
+                  for (int d = 1; d < ids.length; ++d) {
+                    decodeWriter.write("," + tweetIds.get(Integer.parseInt(ids[d])));
+                  }
+                  decodeWriter.write("\n");
+                  continue;
+                } else {
+                  decodeWriter.write("\n");
                 }
-                decodeWriter.write("\n");
-                continue;
-              } else if (lnNum > 1) {
-                decodeWriter.write("\n");
               }
               String[] codes = ln.split(" ");
               if (codes.length == 2) {
