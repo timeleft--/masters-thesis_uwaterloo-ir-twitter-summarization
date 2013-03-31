@@ -177,7 +177,7 @@ public class HgramsWindow {
     if (args.length > 10) {
       tmpDir = new File(args[10]);
     }
-    
+
     DateMidnight startDayOfTopicWords = new DateMidnight(0L);
     DateMidnight endDayOfTopicWords = new DateMidnight(0L);
     Set<String> topicWords = null;
@@ -221,7 +221,7 @@ public class HgramsWindow {
         if (support == -1) {
           support = transIter.getAbsSupport(suppPct);
         }
-        int maxNumIdsToWriteOut = 2 * support; //To avoid writing out ids for language itemsets FIXME: 2 is arbitrary
+        int maxNumIdsToWriteOut = 2 * support; // To avoid writing out ids for language itemsets FIXME: 2 is arbitrary
         LOG.info("Window support: {}", support);
 
         if (stdUnigrams
@@ -278,7 +278,7 @@ public class HgramsWindow {
             int i = 1; // We used OpenIntHashMap whose get() returns 0 for items that are not contained
             while (transIter.hasNext()) {
               Pair<List<String>, Long> trans = transIter.next();
-              if (transIter.getRowsRead() % (10000.0 * epochLen / 3600.0) == 0) {
+              if (transIter.getRowsRead() % (100000.0 * epochLen / 3600.0) == 0) {
                 LOG.info("Read {} into the temp file {}. Last trans: " + trans.toString(),
                     transIter.getRowsRead(), tmpFile.getAbsolutePath().toString());
               }
@@ -315,25 +315,22 @@ public class HgramsWindow {
               };
 
               int m = 0;
-              double currWeight = 1;
+              double currWeight = 1.0;
               while (true) {
-                if (epochLen <= weightDecreaseMarkers[m]) {
+                if (epochLen <= weightDecreaseMarkers[m]
+                    || m == weightDecreaseMarkers.length - 1) {
                   break;
                 }
 
-                currWeight -= 1 / (weightDecreaseMarkers.length + 1);
-                if (m < weightDecreaseMarkers.length - 1) {
-                  ++m;
-                } else {
-                  break;
-                }
+                currWeight -= 1.0 / (weightDecreaseMarkers.length + 1);
+                ++m;
               }
 
               long nexMarkerId = snowFlakeAtUxtime(windowStartUx + epochLen - weightDecreaseMarkers[m--]);
               for (long tweetId : tweetIds) {
                 if (currWeight < 1 && tweetId >= nexMarkerId) {
                   nexMarkerId = snowFlakeAtUxtime(windowStartUx + epochLen - weightDecreaseMarkers[m--]);
-                  currWeight += 1 / (weightDecreaseMarkers.length + 1);
+                  currWeight += 1.0 / (weightDecreaseMarkers.length + 1);
                 }
                 weightFormat.format("%.1f\n", currWeight);
               }
@@ -397,6 +394,7 @@ public class HgramsWindow {
             List<String> hashtags = Lists.newLinkedList();
             StringBuilder tokenBuilder = new StringBuilder();
             Joiner commaJoiner = Joiner.on(',');
+            boolean pendingEndLn = false;
             while ((ln = decodeReader.readLine()) != null) {
               ++lnNum;
               distinctSortedTokens.clear();
@@ -413,11 +411,13 @@ public class HgramsWindow {
                     for (int d = 1; d < ids.length; ++d) {
                       decodeWriter.write("," + tweetIds.get(Integer.parseInt(ids[d])));
                     }
+                    decodeWriter.write("\n");
                   }
-                  decodeWriter.write("\n");
+
                   continue;
-                } else {
+                } else if (pendingEndLn) {
                   decodeWriter.write("\n");
+                  pendingEndLn = false;
                 }
               }
               String[] codes = ln.split(" ");
@@ -480,6 +480,7 @@ public class HgramsWindow {
 
                 decodeWriter.write(commaJoiner.join(distinctSortedTokens) + "\t"
                     + codes[c].substring(0, codes[c].length() - 1).substring(1));
+                pendingEndLn = true;
 // will be written only after making sure there aren't transaction ids for this itemset: + "\n");
               }
             }
