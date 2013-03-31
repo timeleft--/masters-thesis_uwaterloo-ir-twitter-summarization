@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.regex.Pattern;
 
 import org.apache.mahout.common.Pair;
 
@@ -63,7 +62,6 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   static final char TOKEN_DELIMETER = '|'; // must be a char
   static final char UNIGRAM_DELIMETER = ','; // must be a char
-  static final Pattern TOKEN_SPLITTER = Pattern.compile("\\|");
 
   static final Set<String> RETWEET_TOKENS = Sets.newHashSet("rt"); // ,"via");
 
@@ -350,7 +348,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 // 750 out of 19 million, I don't think it's a big deal
 
         // DISTINCT FOR DEDUPE of spam tweets
-// String dedupe = ""; //used to be added as select " + dedupe + " string_agg....
+        String dedupe = "";
 // if (removeIdenticalTweets) {
 // dedupe = "DISTINCT";
 // }
@@ -361,15 +359,14 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
               + " select id,ngram from " + tablename + " where "
               + timeSql
               + " and ngramlen <= " + maxHgramLen + ")"
-              + " select  string_agg(ngram,?) from tokens "
+              + " select " + dedupe + " string_agg(ngram,?) from tokens "
               + " group by id";
         } else {
-          sql = "select  string_agg(ngram,?) from " + tablename + " where "
+          sql = "select " + dedupe + " string_agg(ngram,?) from " + tablename + " where "
               + timeSql
               + " and ngramlen <= " + maxHgramLen
               + " group by id";
         }
-
         stmt = conn.prepareStatement(sql);
         stmt.setString(1, "" + TOKEN_DELIMETER);
 
@@ -380,7 +377,6 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
       while (transactions.next()) {
         ++nRowsRead;
         String tweet = transactions.getString(1);
-        String[] positions = TOKEN_SPLITTER.split(transactions.getString(2));
 
         boolean couldBeRepeated = false;
         boolean isARetweet = false;
@@ -402,13 +398,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
         boolean skipTransaction = (topicUnigrams != null);
         int currUnigramStart = 1;
-        int currTokenIx = 0;
-        int maxOccupiedPos = -2;
-        int ngramLen = 0;
+
         for (int i = 0; i < transChars.length; ++i) {
-          if (transChars[i] == UNIGRAM_DELIMETER) {
-            ++ngramLen;
-          }
           boolean lastIter = i == transChars.length - 1;
           if ((excludeRetweets || (topicUnigrams != null)) &&
               (transChars[i] == UNIGRAM_DELIMETER ||
@@ -444,17 +435,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           if (transChars[i] == TOKEN_DELIMETER) {
             String ogram = strBld.toString();
             strBld.setLength(0);
-            ++ngramLen;
-            int pos = Integer.parseInt(positions[currTokenIx++]);
-            if (maxOccupiedPos <= pos + ngramLen - 1) {
-              // ogramList.add(HGRAM_OPENING + ogram + HGRAM_CLOSING);
-              ogramList.add(ogram);
 
-              if (pos >= 0) {
-                maxOccupiedPos = pos + ngramLen - 1;
-              }
-            }
-            ngramLen = 0;
+// ogramList.add(HGRAM_OPENING + ogram + HGRAM_CLOSING);
+            ogramList.add(ogram);
+
           } else {
             strBld.append(transChars[i]);
           }
@@ -463,17 +447,9 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         // last token
         String ogram = strBld.toString();
         strBld.setLength(0);
-        ++ngramLen;
-        int pos = Integer.parseInt(positions[currTokenIx++]);
-        if (maxOccupiedPos <= pos + ngramLen - 1) {
-          // ogramList.add(HGRAM_OPENING + ogram + HGRAM_CLOSING);
-          ogramList.add(ogram);
 
-          if (pos >= 0) {
-            maxOccupiedPos = pos + ngramLen - 1;
-          }
-        }
-        ngramLen = 0;
+// ogramList.add(HGRAM_OPENING + ogram + HGRAM_CLOSING);
+        ogramList.add(ogram);
 
         if (skipTransaction || (removeIdenticalTweets && !isARetweet)) {
           continue;
