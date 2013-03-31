@@ -348,7 +348,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 // 750 out of 19 million, I don't think it's a big deal
 
         // DISTINCT FOR DEDUPE of spam tweets
-        String dedupe = "";
+//        String dedupe = ""; //used to be added as select " + dedupe + " string_agg....
 // if (removeIdenticalTweets) {
 // dedupe = "DISTINCT";
 // }
@@ -359,10 +359,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
               + " select id,ngram from " + tablename + " where "
               + timeSql
               + " and ngramlen <= " + maxHgramLen + ")"
-              + " select " + dedupe + " string_agg(ngram,?) from tokens "
+              + " select  string_agg(ngram,?) from tokens "
               + " group by id";
         } else {
-          sql = "select " + dedupe + " string_agg(ngram,?) from " + tablename + " where "
+          sql = "select  string_agg(ngram,?) from " + tablename + " where "
               + timeSql
               + " and ngramlen <= " + maxHgramLen
               + " group by id";
