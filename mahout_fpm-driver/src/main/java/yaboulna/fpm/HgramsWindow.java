@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Formatter;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -37,12 +39,13 @@ import org.slf4j.LoggerFactory;
 
 import yaboulna.fpm.postgresql.HgramTransactionIterator;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
+import com.google.common.io.Closer;
 
 public class HgramsWindow {
   private static Logger LOG = LoggerFactory.getLogger(HgramsWindow.class);
@@ -58,14 +61,15 @@ public class HgramsWindow {
   /**
    * 
    * @param args
-   *          windowStartUx (1352260800 for wining hour 1352199600 for elections day,  1349085600  for oct 1st 2012 5am)
-   *          windowEndUx (1352264400 for end of winning hour 1352286000 for end of elections day,  1357038000 jan1,13)
+   *          windowStartUx (1352260800 for wining hour 1352199600 for elections day, 1349085600 for oct 1st 2012 5am)
+   *          windowEndUx (1352264400 for end of winning hour 1352286000 for end of elections day, 1357038000 jan1,13)
    *          path of output
    *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps, 2419200/604800 4wk/1wk
    *          [cmd] absolute path to the command to use, or mahout to fall back to its unreliable slow implementation
    *          [minSupp/support] The minimum support, that is the absolute support desired at the trough of the day volume,
    *          has to be preceeded by a > for example, >5. An absolute support, for example 3360 will be used as is.
    *          [ogramlen] defaults to 5
+   *          [weightTweetsByAge] if anything but false this will turn on the weighting of tweets (for use with lcm5)
    *          [all/sel] all (default) is the only recognized word and otherwise only selected features
    *          [historyDays] defaults to 30
    * 
@@ -153,15 +157,25 @@ public class HgramsWindow {
       ogramLen = Integer.parseInt(args[6]);
     }
 
+    boolean weightTweetsByAge = false;
+    if (args.length > 7 && !args[7].equals("false")) {
+      weightTweetsByAge = true;
+    }
+
     boolean stdUnigrams = false;
-    if (args.length > 7 && !args[7].equals("all")) {
+    if (args.length > 8 && !args[8].equals("all")) {
       LOG.info("Generating the frequent patterns associated with all ograms");
       stdUnigrams = true;
     }
 
     int historyDaysCnt = 30;
-    if (args.length > 8) {
-      historyDaysCnt = Integer.parseInt(args[8]);
+    if (args.length > 9) {
+      historyDaysCnt = Integer.parseInt(args[9]);
+    }
+
+    File tmpDir = new File("/home/yaboulna/tmp/");
+    if (args.length > 10) {
+      tmpDir = new File(args[10]);
     }
 
     DateMidnight startDayOfTopicWords = new DateMidnight(0L);
@@ -248,13 +262,11 @@ public class HgramsWindow {
               + ".out");
           epochOutLocal.getParentFile().mkdirs();
 
-          File tmpFile = File.createTempFile("fpzhu", "trans", new File("/home/yaboulna/tmp/"));
+          File tmpFile = File.createTempFile("fimi", "transactions", tmpDir);
           tmpFile.deleteOnExit();
 
-          String cmd = fimiExe + " " + tmpFile.getAbsolutePath()
-              + " "
-              + support + " "
-              + epochOutLocal;
+          ArrayList<Long> tweetIds = Lists.newArrayListWithExpectedSize(100000 * (epochLen / 3600));
+//          int tweetIdIx = 0;
 
           PrintStream feeder = new PrintStream(new FileOutputStream(tmpFile), true, "US-ASCII");
 
@@ -263,10 +275,9 @@ public class HgramsWindow {
             // TODONE: Can we make use of the negative numbers to indicate (to ourselves) what heads are interesting
             // NO, because the the names are used as array indexes, e.g: order[Trans->t[j]
             int i = 1; // We used OpenIntHashMap whose get() returns 0 for items that are not contained
-
             while (transIter.hasNext()) {
               Pair<List<String>, Long> trans = transIter.next();
-              if (transIter.getRowsRead() % (10000.0 * epochLen / 3600.0)  == 0) {
+              if (transIter.getRowsRead() % (10000.0 * epochLen / 3600.0) == 0) {
                 LOG.info("Read {} into the temp file {}. Last trans: " + trans.toString(),
                     transIter.getRowsRead(), tmpFile.getAbsolutePath().toString());
               }
@@ -280,6 +291,7 @@ public class HgramsWindow {
                 feeder.print(id + " ");
               }
               feeder.print("\n");
+              tweetIds.add(trans.getSecond()); //tweetIdIx++, 
             }
           } finally {
             feeder.flush();
@@ -287,6 +299,51 @@ public class HgramsWindow {
           }
           LOG.info("Read {} into the temp file {} (now flushed).", transIter.getRowsRead(), tmpFile
               .getAbsolutePath().toString());
+
+          String cmd = fimiExe;
+          if (weightTweetsByAge) {
+            File weightsFile = File.createTempFile("fimiLcm", "tweetWeights", tmpDir);
+            weightsFile.deleteOnExit();
+            Closer weightClose = Closer.create();
+            try {
+              Formatter weightFormat = weightClose.register(new Formatter(weightsFile, Charsets.UTF_8.name()));
+              long[] weightDecreaseMarkers = {3600 * 8, // this will get a weight of 0.8, and lower -0.2
+                  3600 * 25, // 24 for a day and 1 hour that would be the same hour as now so we bias towards it
+                  3600 * 24 * 8, // a week and 1 day that we also leave at higher weight since it is like today
+                  3600 * 24 * 28 // 4 weeks.. anything more that this is very very old.. we will give it a weigh 0.2
+              };
+
+              int m = 0;
+              double currWeight = 1;
+              while (true) {
+                if (epochLen <= weightDecreaseMarkers[m]) {
+                  break;
+                }
+
+                currWeight -= 1 / (weightDecreaseMarkers.length + 1);
+                if (m < weightDecreaseMarkers.length - 1) {
+                  ++m;
+                } else {
+                  break;
+                }
+              }
+
+              long nexMarkerId = snowFlakeAtUxtime(windowStartUx + epochLen - weightDecreaseMarkers[m--]);
+              for (long tweetId : tweetIds) {
+                if (currWeight < 1 && tweetId >= nexMarkerId) {
+                  nexMarkerId = snowFlakeAtUxtime(windowStartUx + epochLen - weightDecreaseMarkers[m--]);
+                  currWeight += 1 / (weightDecreaseMarkers.length + 1);
+                }
+                weightFormat.format("%.1f\n", currWeight);
+              }
+            } finally {
+              weightClose.close();
+            }
+            cmd += " -w " + weightsFile.getAbsolutePath();
+          }
+
+          cmd += " " + tmpFile.getAbsolutePath()
+              + " " + support + " " + epochOutLocal;
 
           Runtime rt = Runtime.getRuntime();
 
@@ -346,7 +403,18 @@ public class HgramsWindow {
               if (lnNum % 10000 == 0) {
                 LOG.info("Translated {} frequent itemsets, but didn't flush yet", lnNum);
               }
-
+              if (ln.charAt(0) == ' ') {
+                // this is the transaction ids from lcm
+                String[] ids = ln.substring(1).split(" ");
+                decodeWriter.write("\t" + tweetIds.get(Integer.parseInt(ids[0])));
+                for (int d = 1; d < ids.length; ++d) {
+                  decodeWriter.write("," + tweetIds.get(Integer.parseInt(ids[d])));
+                }
+                decodeWriter.write("\n");
+                continue;
+              } else if (lnNum > 1) {
+                decodeWriter.write("\n");
+              }
               String[] codes = ln.split(" ");
               if (codes.length == 2) {
                 // only the ogram and its frequency
@@ -385,7 +453,7 @@ public class HgramsWindow {
                     if (tokenIx >= 0) {
                       distinctSortedTokens.add(tokenIx, token);
                     }
-                    
+
                   } else {
                     tokenBuilder.append(itemChars[x]);
                   }
@@ -394,20 +462,20 @@ public class HgramsWindow {
               }
               for (String htag : hashtags) {
                 int htagIx = distinctSortedTokens.indexOf(htag.substring(1));
-                if (htagIx==-1) {
+                if (htagIx == -1) {
                   distinctSortedTokens.add(htag);
                 } else {
-               // TODONE: else, should we replace the naked hashtag with the original one (think #obama obama :( )
+                  // TODONE: else, should we replace the naked hashtag with the original one (think #obama obama :( )
                   distinctSortedTokens.remove(htagIx);
-                  distinctSortedTokens.add(htagIx,htag);
+                  distinctSortedTokens.add(htagIx, htag);
                 }
-                
+
               }
               if (distinctSortedTokens.size() != 1) { // 0 is good, becuase it is the number of Tweets
-                
+
                 decodeWriter.write(commaJoiner.join(distinctSortedTokens) + "\t"
-                    + codes[c].substring(0, codes[c].length() - 1).substring(1)
-                    + "\n");
+                    + codes[c].substring(0, codes[c].length() - 1).substring(1));
+// will be written only after making sure there aren't transaction ids for this itemset: + "\n");
               }
             }
 
@@ -453,5 +521,10 @@ public class HgramsWindow {
       LOG.info("Done Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
 // windowStartUx += stepSec;
     }
+  }
+
+  private static long snowFlakeAtUxtime(long uxTime) {
+    long msecs = 0;
+    return (((uxTime * 1000L + msecs) - 1288834974657L) << 22); // TWEET_EPOCH_MAGIC_NUM
   }
 }
