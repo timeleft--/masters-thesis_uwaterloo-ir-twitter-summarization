@@ -91,10 +91,12 @@ public class DivergeBGMap {
 
     int histLenSecs = 4 * 7 * 24 * 3600; // TODO: Integer.parseInt(args[2]);
 
+    //FIXME: if there are any .out files, this will cause an error now... skip them
     List<File> fgFiles = (List<File>) FileUtils.listFiles(fgDir, FileFilterUtils.prefixFileFilter("fp_"),
         FileFilterUtils.trueFileFilter());
     Collections.sort(fgFiles, NameFileComparator.NAME_COMPARATOR);
-    Map<String, Integer> fgMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
+    Map<String, Integer> fgCountMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
+    Map<String, String> fgIdsMap = Maps.newHashMap();
 
     List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, FileFilterUtils.prefixFileFilter("fp_"),
         FileFilterUtils.trueFileFilter());
@@ -127,14 +129,15 @@ public class DivergeBGMap {
         }
       }
 
-      fgMap.clear();
+      fgCountMap.clear();
+      fgIdsMap.clear();
       LOG.info("Loading foreground freqs from {}", fgF);
-      Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgMap,null));
-      LOG.info("Loaded foreground freqs - num itemsets: {}", fgMap.size());
+      Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgCountMap,fgIdsMap));
+      LOG.info("Loaded foreground freqs - num itemsets: {}", fgCountMap.size());
 
       final double bgNumTweets = bgMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
-      final double fgNumTweets = fgMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
-      final double bgFgLogP = Math.log((bgNumTweets + fgMap.size()) / (fgNumTweets + fgMap.size()));
+      final double fgNumTweets = fgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
+      final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
 
       final File novelFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", "novel_"));
       if (novelFile.exists()) {
@@ -148,8 +151,8 @@ public class DivergeBGMap {
 // .getChannel(), Charsets.UTF_8.name()));
 
         int counter = 0;
-        for (String itemset : fgMap.keySet()) {
-          double fgFreq = fgMap.get(itemset) + 1;
+        for (String itemset : fgCountMap.keySet()) {
+          double fgFreq = fgCountMap.get(itemset) + 1;
 // double fgLogP = Math.log(fgFreq / fgNumTweets);
 
           Integer bgCount = bgMap.get(itemset);
@@ -162,7 +165,8 @@ public class DivergeBGMap {
 
           double klDiver = fgFreq * (Math.log(fgFreq / bgCount) + bgFgLogP);
 // novelWr.append(itemset).append('\t').append(Doubles. String.format(klDiver)).append('\n');
-          highPrecFormat.format(itemset + "\t%.15f\n", klDiver);
+          highPrecFormat.format(itemset + "\t%.15f\t%s\n", klDiver,
+              (fgIdsMap.containsKey(itemset)?fgIdsMap.get(itemset):""));
           if (++counter % 10000 == 0) {
             LOG.info("Processed {} itemsets. Last one: {}", counter, itemset + "=" + klDiver);
           }
