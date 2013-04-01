@@ -285,7 +285,7 @@ public class MergeItemsets {
         for(int p = 0; p<itemsetCounts.size(); ++p){
           Multiset.Entry<List<String>> mergeCand1 = itemsetCounts.get(p);
           similarityWr.append(">>>" + mergeCand1 + "\n");
-          selWr.append(mergeCand1.getCount()+"\t";
+//          FIXME: continue from here: selWr.append(mergeCand1.getCount()+"\t";
           for(int q=0; q<itemsetCounts.size(); ++q){
             if(similarity[p][q] != 0){
               Multiset.Entry<List<String>> mergeCand2 = itemsetCounts.get(q);
