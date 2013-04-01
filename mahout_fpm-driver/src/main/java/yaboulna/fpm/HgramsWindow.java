@@ -402,7 +402,7 @@ public class HgramsWindow {
               if (lnNum % 10000 == 0) {
                 LOG.info("Translated {} frequent itemsets, but didn't flush yet", lnNum);
               }
-              if (lnNum > 1) {
+              if (lnNum > 1 && pendingEndLn) {
                 if (ln.charAt(0) == ' ') {
                   // this is the transaction ids from lcm
                   String[] ids = ln.substring(1).split(" ");
@@ -411,13 +411,11 @@ public class HgramsWindow {
                     for (int d = 1; d < ids.length; ++d) {
                       decodeWriter.write("," + tweetIds.get(Integer.parseInt(ids[d])));
                     }
-                    decodeWriter.write("\n");
-                  } else if (pendingEndLn) {
-                    decodeWriter.write("\n");
                   }
+                  decodeWriter.write("\n");
                   pendingEndLn = false;
                   continue;
-                } else if (pendingEndLn) {
+                } else {
                   decodeWriter.write("\n");
                   pendingEndLn = false;
                 }
