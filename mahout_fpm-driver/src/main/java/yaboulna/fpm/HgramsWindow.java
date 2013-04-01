@@ -402,8 +402,10 @@ public class HgramsWindow {
               if (lnNum % 10000 == 0) {
                 LOG.info("Translated {} frequent itemsets, but didn't flush yet", lnNum);
               }
-              if (lnNum > 1 && pendingEndLn) {
+              if (lnNum > 1) {
+
                 if (ln.charAt(0) == ' ') {
+
                   // this is the transaction ids from lcm
                   String[] ids = ln.substring(1).split(" ");
                   if (ids.length <= maxNumIdsToWriteOut) {
@@ -412,13 +414,16 @@ public class HgramsWindow {
                       decodeWriter.write("," + tweetIds.get(Integer.parseInt(ids[d])));
                     }
                   }
-                  decodeWriter.write("\n");
-                  pendingEndLn = false;
+                  if (pendingEndLn) {
+                    decodeWriter.write("\n");
+                    pendingEndLn = false;
+                  }
                   continue;
-                } else {
+                } else if (pendingEndLn) {
                   decodeWriter.write("\n");
                   pendingEndLn = false;
                 }
+
               }
               String[] codes = ln.split(" ");
               if (codes.length == 2) {
