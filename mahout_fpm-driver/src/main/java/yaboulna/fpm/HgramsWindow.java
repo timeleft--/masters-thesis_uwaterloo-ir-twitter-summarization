@@ -405,16 +405,16 @@ public class HgramsWindow {
               if (lnNum > 1) {
 
                 if (ln.charAt(0) == ' ') {
-
-                  // this is the transaction ids from lcm
-                  String[] ids = ln.substring(1).split(" ");
-                  if (ids.length <= maxNumIdsToWriteOut) {
-                    decodeWriter.write("\t" + tweetIds.get(Integer.parseInt(ids[0])));
-                    for (int d = 1; d < ids.length; ++d) {
-                      decodeWriter.write("," + tweetIds.get(Integer.parseInt(ids[d])));
-                    }
-                  }
                   if (pendingEndLn) {
+                    // this is the transaction ids from lcm
+                    String[] ids = ln.substring(1).split(" ");
+                    if (ids.length <= maxNumIdsToWriteOut) {
+                      decodeWriter.write("\t" + tweetIds.get(Integer.parseInt(ids[0])));
+                      for (int d = 1; d < ids.length; ++d) {
+                        decodeWriter.write("," + tweetIds.get(Integer.parseInt(ids[d])));
+                      }
+                    }
+
                     decodeWriter.write("\n");
                     pendingEndLn = false;
                   }
