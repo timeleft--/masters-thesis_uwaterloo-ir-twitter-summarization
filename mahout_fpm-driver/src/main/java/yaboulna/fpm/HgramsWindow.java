@@ -413,7 +413,7 @@ public class HgramsWindow {
                     }
                     decodeWriter.write("\n");
                   }
-
+                  pendingEndLn = false;
                   continue;
                 } else if (pendingEndLn) {
                   decodeWriter.write("\n");

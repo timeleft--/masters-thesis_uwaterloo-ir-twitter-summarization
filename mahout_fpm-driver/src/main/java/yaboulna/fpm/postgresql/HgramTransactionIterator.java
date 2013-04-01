@@ -365,7 +365,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
           sql = "select " + dedupe + " string_agg(ngram,?),id from " + tablename + " where "
               + timeSql
               + " and ngramlen <= " + maxHgramLen
-              + " group by id order by id";
+              + " group by id order by id ";
         }
         stmt = conn.prepareStatement(sql);
         stmt.setString(1, "" + TOKEN_DELIMETER);
