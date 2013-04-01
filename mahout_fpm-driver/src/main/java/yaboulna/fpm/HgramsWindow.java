@@ -412,6 +412,8 @@ public class HgramsWindow {
                       decodeWriter.write("," + tweetIds.get(Integer.parseInt(ids[d])));
                     }
                     decodeWriter.write("\n");
+                  } else if (pendingEndLn) {
+                    decodeWriter.write("\n");
                   }
                   pendingEndLn = false;
                   continue;
