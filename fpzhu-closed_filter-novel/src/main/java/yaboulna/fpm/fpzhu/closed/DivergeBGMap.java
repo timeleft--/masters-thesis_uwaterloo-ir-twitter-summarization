@@ -2,6 +2,7 @@ package yaboulna.fpm.fpzhu.closed;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.RoundingMode;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
@@ -20,6 +21,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
+import com.google.common.math.DoubleMath;
 
 public class DivergeBGMap {
   private final static Logger LOG = LoggerFactory.getLogger(DivergeBGMap.class);
@@ -50,7 +52,7 @@ public class DivergeBGMap {
       while (tabIx2 < line.length() && line.charAt(tabIx2) != '\t') {
         ++tabIx2;
       }
-      int count = Integer.parseInt(line.substring(tabIx1 + 1, tabIx2));
+      int count = DoubleMath.roundToInt(Double.parseDouble(line.substring(tabIx1 + 1, tabIx2)),RoundingMode.UP);
 
 // mapBuilder.put(itemset, count);
       fpCntMap.put(itemset, count);
