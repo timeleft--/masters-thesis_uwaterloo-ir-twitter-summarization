@@ -92,6 +92,11 @@ public class DivergeBGMap {
     }
 
     int histLenSecs = 4 * 7 * 24 * 3600; // TODO: Integer.parseInt(args[2]);
+    
+    String novelPfx = "novel_";
+    if(args.length > 2){
+      novelPfx = args[2];
+    }
 
     //FIXME: if there are any .out files, this will cause an error now... skip them
     List<File> fgFiles = (List<File>) FileUtils.listFiles(fgDir, FileFilterUtils.prefixFileFilter("fp_"),
@@ -141,7 +146,7 @@ public class DivergeBGMap {
       final double fgNumTweets = fgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
       final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
 
-      final File novelFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", "novel_"));
+      final File novelFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", novelPfx)); // "novel_"));
       if (novelFile.exists()) {
         // TODO: skip output that already exists
       }
