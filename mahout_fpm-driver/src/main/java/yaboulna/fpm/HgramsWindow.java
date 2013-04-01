@@ -402,9 +402,11 @@ public class HgramsWindow {
               if (lnNum % 10000 == 0) {
                 LOG.info("Translated {} frequent itemsets, but didn't flush yet", lnNum);
               }
-              if (lnNum > 1) {
 
-                if (ln.charAt(0) == ' ') {
+              if (ln.charAt(0) == ' ') {
+                if (lnNum == 1) {
+                  ln = ln.substring(1);
+                } else {
                   if (pendingEndLn) {
                     // this is the transaction ids from lcm
                     String[] ids = ln.substring(1).split(" ");
@@ -418,13 +420,14 @@ public class HgramsWindow {
                     decodeWriter.write("\n");
                     pendingEndLn = false;
                   }
+                  // Not pending endln but still needs to be skipped, because prev line was len == 2
                   continue;
-                } else if (pendingEndLn) {
-                  decodeWriter.write("\n");
-                  pendingEndLn = false;
                 }
-
+              } else if (pendingEndLn) {
+                decodeWriter.write("\n");
+                pendingEndLn = false;
               }
+
               String[] codes = ln.split(" ");
               if (codes.length == 2) {
                 // only the ogram and its frequency
@@ -483,7 +486,8 @@ public class HgramsWindow {
               }
               if (distinctSortedTokens.size() != 1) { // 0 is good, becuase it is the number of Tweets
 
-                decodeWriter.write(commaJoiner.join(distinctSortedTokens) + "\t"
+                decodeWriter.write((distinctSortedTokens.size() == 0 ? "NUMTWEETS" :
+                    commaJoiner.join(distinctSortedTokens)) + "\t"
                     + codes[c].substring(0, codes[c].length() - 1).substring(1));
                 pendingEndLn = true;
 // will be written only after making sure there aren't transaction ids for this itemset: + "\n");

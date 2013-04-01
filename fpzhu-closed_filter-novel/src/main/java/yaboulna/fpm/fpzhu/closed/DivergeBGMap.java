@@ -20,7 +20,6 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
-import com.google.common.primitives.Doubles;
 
 public class DivergeBGMap {
   private final static Logger LOG = LoggerFactory.getLogger(DivergeBGMap.class);
@@ -31,10 +30,12 @@ public class DivergeBGMap {
 
 // Builder<String, Integer> mapBuilder = ImmutableMap.builder();
     final Map<String, Integer> fpCntMap;
+    final Map<String, String> fpDocIdsMap;
 // Avoid copying this from one frame to another = Maps.newHashMapWithExpectedSize(4444444);
 
-    public ItemsetTabCountProcessor(Map<String, Integer> fpCntMap) {
+    public ItemsetTabCountProcessor(Map<String, Integer> fpCntMap,  Map<String, String> fpDocIdsMap) {
       this.fpCntMap = fpCntMap;
+      this.fpDocIdsMap = fpDocIdsMap;
     }
 
     @Override
@@ -46,16 +47,18 @@ public class DivergeBGMap {
       String itemset = (tabIx1 > 0 ? line.substring(0, tabIx1) : NUM_TWEETS_KEY);
 
       int tabIx2 = tabIx1 + 1;
-      while (line.charAt(tabIx2) != '\t') {
-        if(tabIx2 == line.length()){ //not -1 because it is used in substring
-          break;
-        }
+      while (tabIx2 < line.length() && line.charAt(tabIx2) != '\t') {
         ++tabIx2;
       }
       int count = Integer.parseInt(line.substring(tabIx1 + 1, tabIx2));
 
 // mapBuilder.put(itemset, count);
       fpCntMap.put(itemset, count);
+      
+      if(fpDocIdsMap != null){
+        String ids = (tabIx2 < line.length() ? line.substring(tabIx2 + 1) : "");
+        fpDocIdsMap.put(itemset, ids);
+      }
 
       return true;
     }
@@ -117,7 +120,7 @@ public class DivergeBGMap {
             LOG.info("Loading background freqs from {}", bgFiles.get(b));
             loadedBgStartUx = bgFileWinStart;
             bgMap.clear();
-            Files.readLines(bgFiles.get(b), Charsets.UTF_8, new ItemsetTabCountProcessor(bgMap));
+            Files.readLines(bgFiles.get(b), Charsets.UTF_8, new ItemsetTabCountProcessor(bgMap,null));
             LOG.info("Loaded background freqs - num itemsets: {} ", bgMap.size());
           }
           break;
@@ -126,7 +129,7 @@ public class DivergeBGMap {
 
       fgMap.clear();
       LOG.info("Loading foreground freqs from {}", fgF);
-      Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgMap));
+      Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgMap,null));
       LOG.info("Loaded foreground freqs - num itemsets: {}", fgMap.size());
 
       final double bgNumTweets = bgMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
