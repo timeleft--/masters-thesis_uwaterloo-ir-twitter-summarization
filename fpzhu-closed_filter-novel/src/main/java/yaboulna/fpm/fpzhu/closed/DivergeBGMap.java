@@ -330,7 +330,8 @@ public class DivergeBGMap {
             }
             //write out the itemset (orig or merged) into selection file(s)
             // TODO: write out the intersect in another file
-            selectionFormat.format((mergedItemset.isEmpty()?itemset:mergedItemset) + "\t%.15f\t%d\t%d\t%s\n", klDiver,
+            selectionFormat.format((mergedItemset.isEmpty()?itemset:mergedItemset) + "\t%.15f\t%d\t%d\t%s\n", 
+                maxConfidence,
                 (grandIntersDocId.isEmpty()?iDocIds.size():grandIntersDocId.size()),
                 (grandUionDocId.isEmpty()?iDocIds.size():grandUionDocId.size()),
                 (grandUionDocId.isEmpty()?iDocIds:grandUionDocId));
