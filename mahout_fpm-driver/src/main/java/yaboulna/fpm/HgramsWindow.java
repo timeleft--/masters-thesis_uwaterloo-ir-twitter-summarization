@@ -429,10 +429,10 @@ public class HgramsWindow {
               }
 
               String[] codes = ln.split(" ");
-              if (codes.length == 2) {
-                // only the ogram and its frequency
-                continue;
-              }
+//              if (codes.length == 2) {
+//                // only the ogram and its frequency
+//                continue;
+//              }
               int c;
               for (c = 0; c < codes.length - 1; ++c) {
                 String item = decodeMap.get(Integer.parseInt(codes[c]));
