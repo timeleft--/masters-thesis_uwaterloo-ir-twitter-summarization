@@ -284,6 +284,7 @@ public class DivergeBGMap {
                 }
 
                 // Intersection and union calculation (depends on that docIds are sorted)
+                //TODO: use a variation of this measure that calculates the time period covered by each itemset
                 Iterator<Long> iDidIter = iDocIds.iterator();
                 Iterator<Long> candDidIter = candDocIds.iterator();
                 Long iDid = iDidIter.next(), candDid = candDidIter.next();

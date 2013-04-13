@@ -397,7 +397,7 @@ public class HgramsWindow {
             StringBuilder tokenBuilder = new StringBuilder();
             Joiner commaJoiner = Joiner.on(',');
             boolean pendingEndLn = false;
-            while ((ln = decodeReader.readLine()) != null) {
+            while ((ln = decodeReader.readLine()) != null && !ln.isEmpty()) {
               ++lnNum;
               distinctSortedTokens.clear();
               hashtags.clear();
