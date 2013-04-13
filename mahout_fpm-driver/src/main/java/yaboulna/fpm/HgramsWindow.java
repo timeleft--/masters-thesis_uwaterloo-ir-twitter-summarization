@@ -221,7 +221,7 @@ public class HgramsWindow {
         if (support == -1) {
           support = transIter.getAbsSupport(suppPct);
         }
-        int maxNumIdsToWriteOut = 2 * support; // To avoid writing out ids for language itemsets FIXME: 2 is arbitrary
+        int maxNumIdsToWriteOut = 200000 * support; // To avoid writing out ids for language itemsets FIXME: 2 is arbitrary
         LOG.info("Window support: {}", support);
 
         if (stdUnigrams
@@ -484,14 +484,15 @@ public class HgramsWindow {
                 }
 
               }
-              if (distinctSortedTokens.size() != 1) { // 0 is good, becuase it is the number of Tweets
+// if (distinctSortedTokens.size() != 1) { // 0 is good, becuase it is the number of Tweets
 
-                decodeWriter.write((distinctSortedTokens.size() == 0 ? "NUMTWEETS" :
-                    commaJoiner.join(distinctSortedTokens)) + "\t"
-                    + codes[c].substring(0, codes[c].length() - 1).substring(1));
-                pendingEndLn = true;
+              decodeWriter.write((distinctSortedTokens.size() == 0 ? "NUMTWEETS" :
+                  commaJoiner.join(distinctSortedTokens)) + "\t"
+                  + codes[c].substring(0, codes[c].length() - 1).substring(1));
+
+              pendingEndLn = true; // distinctSortedTokens.size() != 1;
 // will be written only after making sure there aren't transaction ids for this itemset: + "\n");
-              }
+
             }
 
           } finally {
