@@ -398,6 +398,7 @@ public class DivergeBGMap {
                 }
               }
             }
+
             if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD ||
                 (maxConfidence < 0 && mergedItemset.isEmpty())) {
               // write out the itemset (orig) into selection file(s),
