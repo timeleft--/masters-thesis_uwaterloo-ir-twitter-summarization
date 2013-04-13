@@ -106,7 +106,7 @@ public class DivergeBGMap {
   private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0.33; // Jaccard similarity
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; //Cosine or Jaccard similariy
 
-  private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.9;
+  private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.9; // Jaccard similarity
 
   private static final double KLDIVERGENCE_MIN = 10; // this is multiplied by frequency not prob
 
