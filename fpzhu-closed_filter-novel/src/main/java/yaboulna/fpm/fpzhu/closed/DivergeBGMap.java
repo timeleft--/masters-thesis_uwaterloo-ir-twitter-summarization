@@ -106,7 +106,7 @@ public class DivergeBGMap {
   private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0.33; // Jaccard similarity
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; //Cosine or Jaccard similariy
 
-  private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.9; // Jaccard similarity
+  private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Jaccard similarity
 
   private static final double KLDIVERGENCE_MIN = 10; // this is multiplied by frequency not prob
 
@@ -214,8 +214,8 @@ public class DivergeBGMap {
           }
         }
       });
-      Set<Long> grandUionDocId = Sets.newHashSet();
-      Set<Long> grandIntersDocId = Sets.newHashSet();
+//      Set<Long> grandUionDocId = Sets.newHashSet();
+//      Set<Long> grandIntersDocId = Sets.newHashSet();
 // LinkedList<Long> unionDocId = Lists.newLinkedList();
 // LinkedList<Long> intersDocId = Lists.newLinkedList();
 
@@ -329,8 +329,8 @@ public class DivergeBGMap {
 
             mergedItemset.clear();
 
-            grandUionDocId.clear();
-            grandIntersDocId.clear();
+//            grandUionDocId.clear();
+//            grandIntersDocId.clear();
 
             if (maxConfidence < CLOSED_CONFIDENCE_THRESHOLD) {
               for (CopyOnWriteArraySet<String> cand : mergeCandidates) {
@@ -392,9 +392,17 @@ public class DivergeBGMap {
                       .append(Sets.difference(cand, interset)).append('}');
                   mergedItemset.add(branches.toString());
 
-                  // add the union and intersection to grand ones
-                  grandUionDocId.addAll(unionDocId);
-// grandIntersDocId = Sets.intersection(grandIntersDocId, interset);
+//                  // add the union and intersection to grand ones
+//                  grandUionDocId.addAll(unionDocId);
+//// grandIntersDocId = Sets.intersection(grandIntersDocId, interset);
+                  
+               // write out the merged itemset into selection file(s)
+                  // TODO: write out the intersect in another file
+                  selectionFormat.format(mergedItemset + "\t%.15f\t%d\t%d\t%s\n",
+                      maxConfidence,
+                      intersDocId.size(),
+                      unionDocId.size(),
+                      unionDocId);
                 }
               }
             }
@@ -417,15 +425,7 @@ public class DivergeBGMap {
               // only itemsets that don't get merged make it to the prev itemsets list, because they can be parents
               // while merged ones can't... children of merged ones will be matched with their un-merged grandparents
               prevItemsets.add(itemset);
-            } else {
-              // write out the merged itemset into selection file(s)
-              // TODO: write out the intersect in another file
-              selectionFormat.format(mergedItemset + "\t%.15f\t%d\t%d\t%s\n",
-                  maxConfidence,
-                  grandIntersDocId.size(),
-                  grandUionDocId.size(),
-                  grandUionDocId);
-            }
+            } 
           }
 
           if (++counter % 10000 == 0) {
