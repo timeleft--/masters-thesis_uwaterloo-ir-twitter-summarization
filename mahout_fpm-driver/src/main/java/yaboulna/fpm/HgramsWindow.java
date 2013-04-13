@@ -141,10 +141,12 @@ public class HgramsWindow {
     int minSupp = 5;
     double suppPct = 0.0001; // when multiplied by the volume gives at least 5 (at the trough of the day)
     int support = -1;
+    boolean relSupp = false;
     if (args.length > 5) {
       if (args[5].charAt(0) == '>') {
         minSupp = Integer.parseInt(args[5].substring(1));
         suppPct = minSupp * 0.0001 / 5;
+        relSupp = true;
       } else {
         minSupp = -1;
         suppPct = -1;
@@ -218,7 +220,7 @@ public class HgramsWindow {
         transIter.init();
         transIter2.init();
 
-        if (support == -1) {
+        if (relSupp) {
           support = transIter.getAbsSupport(suppPct);
         }
         int maxNumIdsToWriteOut = 200000 * support; // To avoid writing out ids for language itemsets FIXME: 2 is arbitrary
