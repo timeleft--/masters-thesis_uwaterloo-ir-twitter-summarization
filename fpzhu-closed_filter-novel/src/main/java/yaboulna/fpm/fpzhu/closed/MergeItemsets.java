@@ -31,7 +31,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Multisets;
-import com.google.common.collect.Ordering;
 import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
 import com.google.common.math.DoubleMath;
