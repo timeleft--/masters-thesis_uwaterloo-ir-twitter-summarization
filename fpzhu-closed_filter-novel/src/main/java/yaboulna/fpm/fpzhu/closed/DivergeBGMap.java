@@ -152,6 +152,15 @@ public class DivergeBGMap {
 
     String selectionPfx = "sel_";
 
+    String options;
+    if (args.length > 2) {
+      options = args[2];
+    } else {
+      options = "Buff-SimLow-AvoidNew";
+    }
+    novelPfx += options + "_";
+    selectionPfx += options + "_";
+
     // FIXME: if there are any .out files, this will cause an error now... skip them
     List<File> fgFiles = (List<File>) FileUtils.listFiles(fgDir, FileFilterUtils.prefixFileFilter("fp_"),
         FileFilterUtils.trueFileFilter());
@@ -376,6 +385,8 @@ public class DivergeBGMap {
               double maxDiffCnt = Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
                   Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * iDocIds.size()));
 
+              Set<String> theOnlyOneIllMerge = null;
+              int theOnlyOnesDifference = Integer.MAX_VALUE;
               for (Set<String> cand : mergeCandidates) {
                 LinkedList<Long> candDocIds = fgIdsMap.get(cand);
                 int differentDocs = 0;
@@ -447,8 +458,8 @@ public class DivergeBGMap {
 // } else {
 //
 // }
+                  int currentBestDifference = differentDocs;
                   if (existingAllainceHeads != null) {
-                    int currentBestDifference = differentDocs;
                     for (Set<String> exitingAllianceHead : existingAllainceHeads) {
                       int existingHeadNonOverlap = 0;
                       Iterator<Long> iDidIter = iDocIds.iterator();
@@ -470,63 +481,65 @@ public class DivergeBGMap {
                         }
                       }
 
-                      if ((avoidFormingNewAllianceIfPossible && existingHeadNonOverlap <= maxDiffCnt)
+                      if ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand && existingHeadNonOverlap <= maxDiffCnt)
                           || (!avoidFormingNewAllianceIfPossible && existingHeadNonOverlap <= currentBestDifference)) {
                         // <= prefers existing allinaces to forming new ones
 
                         currentBestDifference = existingHeadNonOverlap;
                         bestAllianceHead = exitingAllianceHead;
 
-                        if (avoidFormingNewAllianceIfPossible) {
-                          // not choosing the best possible, and hopefully there will be only one
-                          // TODO: any problem with that?
-//                          if (existingAllainceHeads.size() > 1) {
-//                            LOG.trace(
-//                                "There should be only one possible alliance head... or so I think. Itemset {}, candidate {}, alliance heads: "
-//                                    + existingAllainceHeads, itemset, cand);
-//                          }
-                          break;
-                        }
                       }
                     }
                   }
 
-                  // /////////// Store that you joined this alliance
-                  existingAllainceHeads = allianceTransitive.get(itemset);
-                  if (existingAllainceHeads == null) {
-                    existingAllainceHeads = Sets.newHashSet();
-                    allianceTransitive.put(itemset, existingAllainceHeads);
+                  if (currentBestDifference <= theOnlyOnesDifference) {
+                    theOnlyOneIllMerge = bestAllianceHead;
+                    theOnlyOnesDifference = currentBestDifference;
                   }
-                  if (existingAllainceHeads.contains(bestAllianceHead)) {
-                    // // this itemset is already part of the alliance, in an earlier iteration
-                    continue;
-                  }
-                  existingAllainceHeads.add(bestAllianceHead);
-
-                  java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
-                      .get(bestAllianceHead);
-
-                  if (alliedItemsets == null) {
-                    // ////// Create a new alliance
-                    assert bestAllianceHead == cand : "Why aren't we joining the existing alliance?";
-                    alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
-                        HashMultiset.create(cand), Sets.newHashSet(candDocIds));
-                    growingAlliances.put(cand, alliedItemsets);
-                    if (cand.size() > parentItemset.size()
-                        && candDocIds.size() < fgIdsMap.get(parentItemset).size()) {
-                      parentOfAllianceHead.put(cand, parentItemset);
-                    } else {
-                      parentOfAllianceHead.put(cand, cand);
-                    }
-
-                    unalliedItemsets.remove(cand);
-                  }
-                  alliedItemsets.getKey().addAll(itemset);
-                  alliedItemsets.getValue().addAll(iDocIds);
-
-                  allied = true;
                 }
               }
+              if (theOnlyOneIllMerge != null) {
+                // /////////// Store that you joined this alliance
+                Set<Set<String>> existingAllainceHeads = allianceTransitive.get(itemset);
+                if (existingAllainceHeads == null) {
+                  existingAllainceHeads = Sets.newHashSet();
+                  allianceTransitive.put(itemset, existingAllainceHeads);
+                } else {
+                  LOG.warn("I thought we will never find a cluster (alliance) head from earlier, " +
+                      "but the itemset {} already has {} while the current alleged onlyOneIllMerge is :"
+                      + theOnlyOneIllMerge, itemset, existingAllainceHeads);
+                }
+                // Cannot happen with the hard clusters (since the only one)
+// if (existingAllainceHeads.contains(theOnlyOneIllMerge)) {
+// // // this itemset is already part of the alliance, in an earlier iteration
+// continue;
+// }
+                existingAllainceHeads.add(theOnlyOneIllMerge);
+
+                java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
+                    .get(theOnlyOneIllMerge);
+
+                if (alliedItemsets == null) {
+                  // ////// Create a new alliance
+                  LinkedList<Long> theOnlyOnesDocIds = fgIdsMap.get(theOnlyOneIllMerge);
+                  alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
+                      HashMultiset.create(theOnlyOneIllMerge), Sets.newHashSet(theOnlyOnesDocIds));
+                  growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
+                  if (theOnlyOneIllMerge.size() > parentItemset.size()
+                      && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
+                    parentOfAllianceHead.put(theOnlyOneIllMerge, parentItemset);
+                  } else {
+                    parentOfAllianceHead.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
+                  }
+
+                  unalliedItemsets.remove(theOnlyOneIllMerge);
+                }
+                alliedItemsets.getKey().addAll(itemset);
+                alliedItemsets.getValue().addAll(iDocIds);
+
+                allied = true;
+              }
+
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
             }
 
