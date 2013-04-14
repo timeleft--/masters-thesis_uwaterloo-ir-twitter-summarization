@@ -22,14 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
-import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.google.common.io.Closer;
@@ -386,7 +384,7 @@ public class DivergeBGMap {
                   Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * iDocIds.size()));
 
               Set<String> theOnlyOneIllMerge = null;
-              int theOnlyOnesDifference = Integer.MAX_VALUE;
+              int theOnlyOnesDifference = Integer.MIN_VALUE;
               for (Set<String> cand : mergeCandidates) {
                 LinkedList<Long> candDocIds = fgIdsMap.get(cand);
                 int differentDocs = 0;
@@ -481,9 +479,10 @@ public class DivergeBGMap {
                         }
                       }
 
-                      if ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand && existingHeadNonOverlap <= maxDiffCnt)
-                          || (existingHeadNonOverlap <= currentBestDifference)) {
-                        // <= prefers existing allinaces to forming new ones
+                      if (existingHeadNonOverlap <= maxDiffCnt &&
+                          (avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
+                          || (existingHeadNonOverlap >= currentBestDifference)) {
+                        // or equals prefers existing allinaces to forming new ones
 
                         currentBestDifference = existingHeadNonOverlap;
                         bestAllianceHead = exitingAllianceHead;
@@ -492,7 +491,10 @@ public class DivergeBGMap {
                     }
                   }
 
-                  if (currentBestDifference <= theOnlyOnesDifference) {
+                  if ((currentBestDifference > theOnlyOnesDifference) ||
+                      (currentBestDifference == theOnlyOnesDifference 
+                       && (theOnlyOneIllMerge == null //redundant because cannot be == while null
+                        || bestAllianceHead.size() < theOnlyOneIllMerge.size()))){
                     theOnlyOneIllMerge = bestAllianceHead;
                     theOnlyOnesDifference = currentBestDifference;
                   }
