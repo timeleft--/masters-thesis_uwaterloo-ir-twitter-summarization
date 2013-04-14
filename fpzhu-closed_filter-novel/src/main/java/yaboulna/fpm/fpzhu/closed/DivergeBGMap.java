@@ -482,7 +482,7 @@ public class DivergeBGMap {
                       }
 
                       if ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand && existingHeadNonOverlap <= maxDiffCnt)
-                          || (!avoidFormingNewAllianceIfPossible && existingHeadNonOverlap <= currentBestDifference)) {
+                          || (existingHeadNonOverlap <= currentBestDifference)) {
                         // <= prefers existing allinaces to forming new ones
 
                         currentBestDifference = existingHeadNonOverlap;
