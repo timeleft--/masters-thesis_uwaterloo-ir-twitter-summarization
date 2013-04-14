@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
@@ -271,11 +272,11 @@ public class DivergeBGMap {
                   // first parent to encounter will be have the lowest support, thus gives highest confidence
                   double pisFreq = fgCountMap.get(pis);
                   maxConfidence = fgCountMap.get(itemset) / pisFreq;
-                  if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
-                    break;
-                  }
                 }
                 parentItemset = pis;
+                if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
+                  break;
+                }
               } else {
                 // Itemset similiarity starts by a lightweight Jaccard Similarity similiarity,
                 // then if it is promising then the cosine similarity is calculated with IDF weights
@@ -319,7 +320,7 @@ public class DivergeBGMap {
                   }
                 }
                 if (parentItemset != null && isPisSim < ITEMSET_SIMILARITY_BAD_THRESHOLD) {
-                  // TODO: could this also work without checking foundParent &&
+                  // TODO: could this also work without checking foundParent OR is it losing anything
                   if (LOG.isTraceEnabled())
                     LOG.trace("Decided there won't be any more candidates for itemset {} when we encountered {}.",
                         itemset, pis);
@@ -417,7 +418,7 @@ public class DivergeBGMap {
 
                 klDiver *= (Math.log(grandUionDocId.size() / bgCount) + bgFgLogP);
                 
-                mergedItemset =  Multisets.copyHighestCountFirst(mergedItemset);
+//                mergedItemset =  Multisets.copyHighestCountFirst(mergedItemset);
               }
               selectionFormat.out().append(printMultiset(mergedItemset));
               selectionFormat.format("\t%.15f\t%.15f\t%.15f\t",
@@ -456,11 +457,13 @@ public class DivergeBGMap {
 
   }
 
-  private static CharSequence printMultiset(Multiset<String> copyHighestCountFirst) {
-    StringBuilder ret = new StringBuilder();
-    for (Entry<String> e : copyHighestCountFirst.entrySet()) {
-      ret.append(e.getElement() + ":" + e.getCount());
+  private static CharSequence printMultiset(Multiset<String> mset) {
+    String[] ret = new String[mset.entrySet().size()];
+    int i=0;
+    for(Entry<String> e: mset.entrySet()){
+      ret[i++] = e.getCount() + ":" + e.getElement();
     }
-    return ret.toString();
+    Arrays.sort(ret);
+    return Joiner.on(",").join(ret);
   }
 }
