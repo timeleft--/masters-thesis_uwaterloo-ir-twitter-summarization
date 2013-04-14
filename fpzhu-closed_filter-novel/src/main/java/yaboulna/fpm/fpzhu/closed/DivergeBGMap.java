@@ -106,7 +106,7 @@ public class DivergeBGMap {
   private static final double CLOSED_CONFIDENCE_THRESHOLD = 0.05; // upper bound
   private static final double HIGH_CONFIDENCE_THRESHOLD = 0.05; // lower bound
 
-  private static final double ITEMSET_SIMILARITY_GOOD_THRESHOLD = 0.8; // Cosine similarity
+  private static final double ITEMSET_SIMILARITY_GOOD_THRESHOLD = 0.66; // Jaccard or Cosine similarity
   private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0.33; // Jaccard similarity
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
 
@@ -133,9 +133,11 @@ public class DivergeBGMap {
 
     boolean stopMatchingLimitedBufferSize = true;
     boolean stopMatchingParentFSimLow = true;
+    boolean avoidFormingNewAllianceIfPossible = true;
     if (args.length > 2) {
       stopMatchingLimitedBufferSize = args[2].contains("Buff");
       stopMatchingParentFSimLow = args[2].contains("SimLow");
+      avoidFormingNewAllianceIfPossible = args[2].contains("AvoidNew");
     }
 
     int histLenSecs = 4 * 7 * 24 * 3600;
@@ -218,6 +220,7 @@ public class DivergeBGMap {
 
       Map<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> growingAlliances = Maps.newHashMap();
       Map<Set<String>, Set<String>> parentOfAllianceHead = Maps.newHashMap();
+      Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
       Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
       Map<Set<String>, Double> confidentItemsets = Maps.newHashMap();
 
@@ -281,7 +284,7 @@ public class DivergeBGMap {
               Set<String> pis = prevIter.next();
 
               SetView<String> interset = Sets.intersection(pis, itemset);
-              if (pis.size() == interset.size()) {
+              if (pis.size() == interset.size()) { // TODO: can the parent (shorter) come after?
                 // one of the parent itemset (in the closed patterns lattice)
 
                 mergeCandidates.add(pis);
@@ -297,6 +300,7 @@ public class DivergeBGMap {
 // break;
 // }
               } else {
+                // TODO: prefix filter ppjoin; using an adaptation to get maxAllDiffPos
                 // Itemset similiarity starts by a lightweight Jaccard Similarity similiarity,
                 // then if it is promising then the cosine similarity is calculated with IDF weights
                 SetView<String> isPisUnion = Sets.union(pis, itemset);
@@ -304,36 +308,40 @@ public class DivergeBGMap {
                 if (isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
                   double pisNorm = 0;
                   double itemsetNormTemp = 0;
-                  for (String interItem : isPisUnion) {
-                    // IDF weights
-                    Double idf = bgIDFMap.get(interItem);
-                    if (idf == null) {
-                      Integer bgCnt = bgCountMap.get(Sets.newCopyOnWriteArraySet(Arrays.asList(interItem)));
-                      if (bgCnt == null) {
-                        bgCnt = 0;
+                  if (isPisSim < ITEMSET_SIMILARITY_GOOD_THRESHOLD) {
+                    // calculate the cosine similarity only if the jaccard similarity isn't enough
+                    isPisSim = 0;
+                    for (String interItem : isPisUnion) {
+                      // IDF weights
+                      Double idf = bgIDFMap.get(interItem);
+                      if (idf == null) {
+                        Integer bgCnt = bgCountMap.get(Sets.newCopyOnWriteArraySet(Arrays.asList(interItem)));
+                        if (bgCnt == null) {
+                          bgCnt = 0;
+                        }
+                        idf = Math.log(bgNumTweets / (1.0 + bgCnt));
+                        idf *= idf;
+                        bgIDFMap.put(interItem, idf);
                       }
-                      idf = Math.log(bgNumTweets / (1.0 + bgCnt));
-                      idf *= idf;
-                      bgIDFMap.put(interItem, idf);
-                    }
 
-                    if (interset.contains(interItem)) {
-                      isPisSim += idf; // * idf;
-                      pisNorm += idf; // * idf;
-                      if (itemsetNorm == null) {
+                      if (interset.contains(interItem)) {
+                        isPisSim += idf; // * idf;
+                        pisNorm += idf; // * idf;
+                        if (itemsetNorm == null) {
+                          itemsetNormTemp += idf; // * idf;
+                        }
+                      } else if (pis.contains(interItem)) {
+                        pisNorm += idf; // * idf;
+                      } else if (itemsetNorm == null && itemset.contains(interItem)) {
                         itemsetNormTemp += idf; // * idf;
                       }
-                    } else if (pis.contains(interItem)) {
-                      pisNorm += idf; // * idf;
-                    } else if (itemsetNorm == null && itemset.contains(interItem)) {
-                      itemsetNormTemp += idf; // * idf;
-                    }
 
+                    }
+                    if (itemsetNorm == null) {
+                      itemsetNorm = Math.sqrt(itemsetNormTemp);
+                    }
+                    isPisSim /= Math.sqrt(pisNorm) * itemsetNorm;
                   }
-                  if (itemsetNorm == null) {
-                    itemsetNorm = Math.sqrt(itemsetNormTemp);
-                  }
-                  isPisSim /= Math.sqrt(pisNorm) * itemsetNorm;
                   if (isPisSim >= ITEMSET_SIMILARITY_GOOD_THRESHOLD) {
                     mergeCandidates.add(pis);
                   }
@@ -364,10 +372,10 @@ public class DivergeBGMap {
               unalliedItemsets.put(itemset, klDiver);
               continue;
             } else { // if (maxConfidence < CLOSED_CONFIDENCE_THRESHOLD) {
-              
+
               double maxDiffCnt = Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
                   Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * iDocIds.size()));
-              
+
               for (Set<String> cand : mergeCandidates) {
                 LinkedList<Long> candDocIds = fgIdsMap.get(cand);
                 int differentDocs = 0;
@@ -385,10 +393,8 @@ public class DivergeBGMap {
 
                   // Intersection and union calculation (depends on that docIds are sorted)
                   // TODO: use a variation of this measure that calculates the time period covered by each itemset
-                  // TODO: prefix filter ppjoin; using an adaptation to get maxDiffPos
                   // TODONE: overlap of intersection with the current itemset's docids
 
-                 
                   Iterator<Long> iDidIter = iDocIds.iterator();
                   Iterator<Long> candDidIter = candDocIds.iterator();
                   long iDid = iDidIter.next(), candDid = candDidIter.next();
@@ -431,8 +437,78 @@ public class DivergeBGMap {
 // }
                 // If similar enough, attach to the merge candidate and put both in pending queue
                 if (differentDocs <= maxDiffCnt) {
-                  java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances.get(cand);
+                  // Try and join and existing alliance
+                  Set<String> bestAllianceHead = cand;
+
+                  Set<Set<String>> existingAllainceHeads = allianceTransitive.get(cand);
+                  // what did the candidate do wrong to ignore it if it doesn't have earlier allies?
+// if(existingAllainceHeads == null){
+// existingAllainceHeads = allianceTransitive.get(itemset);
+// } else {
+//
+// }
+                  if (existingAllainceHeads != null) {
+                    int currentBestDifference = differentDocs;
+                    for (Set<String> exitingAllianceHead : existingAllainceHeads) {
+                      int existingHeadNonOverlap = 0;
+                      Iterator<Long> iDidIter = iDocIds.iterator();
+                      Iterator<Long> existingDidIter = fgIdsMap.get(exitingAllianceHead).iterator();
+                      long iDid = iDidIter.next(), existingDid = existingDidIter.next();
+                      while (existingHeadNonOverlap <= maxDiffCnt && iDidIter.hasNext() && existingDidIter.hasNext()) {
+                        if (iDid == existingDid) {
+                          // intersDocId.add(iDid);
+                          // unionDocId.add(iDid);
+                          iDid = iDidIter.next();
+                          existingDid = existingDidIter.next();
+                        } else if (iDid < existingDid) {
+                          // unionDocId.add(iDid);
+                          iDid = iDidIter.next();
+                          ++existingHeadNonOverlap;
+                        } else {
+                          // unionDocId.add(candDid);
+                          existingDid = existingDidIter.next();
+                        }
+                      }
+
+                      if ((avoidFormingNewAllianceIfPossible && existingHeadNonOverlap <= maxDiffCnt)
+                          || (!avoidFormingNewAllianceIfPossible && existingHeadNonOverlap <= currentBestDifference)) {
+                        // <= prefers existing allinaces to forming new ones
+
+                        currentBestDifference = existingHeadNonOverlap;
+                        bestAllianceHead = exitingAllianceHead;
+
+                        if (avoidFormingNewAllianceIfPossible) {
+                          // not choosing the best possible, and hopefully there will be only one
+                          // TODO: any problem with that?
+//                          if (existingAllainceHeads.size() > 1) {
+//                            LOG.trace(
+//                                "There should be only one possible alliance head... or so I think. Itemset {}, candidate {}, alliance heads: "
+//                                    + existingAllainceHeads, itemset, cand);
+//                          }
+                          break;
+                        }
+                      }
+                    }
+                  }
+
+                  // /////////// Store that you joined this alliance
+                  existingAllainceHeads = allianceTransitive.get(itemset);
+                  if (existingAllainceHeads == null) {
+                    existingAllainceHeads = Sets.newHashSet();
+                    allianceTransitive.put(itemset, existingAllainceHeads);
+                  }
+                  if (existingAllainceHeads.contains(bestAllianceHead)) {
+                    // // this itemset is already part of the alliance, in an earlier iteration
+                    continue;
+                  }
+                  existingAllainceHeads.add(bestAllianceHead);
+
+                  java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
+                      .get(bestAllianceHead);
+
                   if (alliedItemsets == null) {
+                    // ////// Create a new alliance
+                    assert bestAllianceHead == cand : "Why aren't we joining the existing alliance?";
                     alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
                         HashMultiset.create(cand), Sets.newHashSet(candDocIds));
                     growingAlliances.put(cand, alliedItemsets);
@@ -442,11 +518,12 @@ public class DivergeBGMap {
                     } else {
                       parentOfAllianceHead.put(cand, cand);
                     }
+
+                    unalliedItemsets.remove(cand);
                   }
                   alliedItemsets.getKey().addAll(itemset);
                   alliedItemsets.getValue().addAll(iDocIds);
 
-                  unalliedItemsets.remove(cand);
                   allied = true;
                 }
               }
@@ -455,36 +532,36 @@ public class DivergeBGMap {
 
             if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
               confidentItemsets.put(itemset, maxConfidence);
-//              // write out the itemset (orig or merged) into selection file(s),
-//              // because it is high confidence either from the beginning or after merging
-//// This is originally a high confidence itemset, we didnt increase conf yet: if (mergedItemset.isEmpty()) {
-//              Multiset<String> mergedItemset = HashMultiset.create(itemset);  // mergedItemset.addAll(itemset);
-//// } else {
-//// klDiver = grandUionDocId.size();
-//// bgCount = bgCountMap.get(mergedItemset.elementSet());
-//// if (bgCount == null)
-//// bgCount = 1;
-////
-//// klDiver *= (Math.log(grandUionDocId.size() * 1.0 / bgCount) + bgFgLogP);
-////
-//// // mergedItemset = Multisets.copyHighestCountFirst(mergedItemset);
-//// }
-//              selectionFormat.out().append(printMultiset(mergedItemset));
-//              selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
-//                  maxConfidence,
-//                  klDiver,
-//                  maxConfidence * klDiver,
-//                  iDocIds.size(),
-//                  maxConfidence * iDocIds.size());
-//// if (grandUionDocId.isEmpty()) {
-//              selectionFormat.out().append(iDocIds.toString().substring(1));
-//// } else {
-//// selectionFormat.out().append(grandIntersDocId.toString().substring(1))
-//// .append(Sets.difference(grandUionDocId, grandIntersDocId).toString().substring(1));
-//// }
-//              selectionFormat.out().append("\n");
+// // write out the itemset (orig or merged) into selection file(s),
+// // because it is high confidence either from the beginning or after merging
+// // This is originally a high confidence itemset, we didnt increase conf yet: if (mergedItemset.isEmpty()) {
+// Multiset<String> mergedItemset = HashMultiset.create(itemset); // mergedItemset.addAll(itemset);
+// // } else {
+// // klDiver = grandUionDocId.size();
+// // bgCount = bgCountMap.get(mergedItemset.elementSet());
+// // if (bgCount == null)
+// // bgCount = 1;
+// //
+// // klDiver *= (Math.log(grandUionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+// //
+// // // mergedItemset = Multisets.copyHighestCountFirst(mergedItemset);
+// // }
+// selectionFormat.out().append(printMultiset(mergedItemset));
+// selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
+// maxConfidence,
+// klDiver,
+// maxConfidence * klDiver,
+// iDocIds.size(),
+// maxConfidence * iDocIds.size());
+// // if (grandUionDocId.isEmpty()) {
+// selectionFormat.out().append(iDocIds.toString().substring(1));
+// // } else {
+// // selectionFormat.out().append(grandIntersDocId.toString().substring(1))
+// // .append(Sets.difference(grandUionDocId, grandIntersDocId).toString().substring(1));
+// // }
+// selectionFormat.out().append("\n");
 
-              //TODO: are you sure about that?
+              // TODO: are you sure about that?
               // The parent will be present in the final output within this itemset, so even if it
               // were pending alliance to get printed it can be removed now
               unalliedItemsets.remove(parentItemset);
@@ -513,7 +590,7 @@ public class DivergeBGMap {
           if (bgCount == null) {
             bgCount = 1;
           } else {
-//            LOG.trace("it matches background");
+// LOG.trace("it matches background");
           }
           klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
 
@@ -539,13 +616,13 @@ public class DivergeBGMap {
           Set<String> itemset = e.getKey();
           Multiset<String> mergedItemset = HashMultiset.create(itemset);
           LinkedList<Long> docids = fgIdsMap.get(itemset);
-          
+
           double confidence;
           double klDiver = e.getValue();
           int supp = docids.size();
           double confKLD;
           double confSupp;
-          if(confidentItemsets.containsKey(itemset)){
+          if (confidentItemsets.containsKey(itemset)) {
             confidence = confidentItemsets.get(itemset);
             confKLD = confidence * klDiver;
             confSupp = confidence * supp;
@@ -554,7 +631,7 @@ public class DivergeBGMap {
             confKLD = -1;
             confSupp = -1;
           }
-          
+
           selectionFormat.out().append(printMultiset(mergedItemset));
           selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
               confidence,
