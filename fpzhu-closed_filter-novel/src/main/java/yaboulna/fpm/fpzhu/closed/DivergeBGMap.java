@@ -234,7 +234,7 @@ public class DivergeBGMap {
         int counter = 0;
         for (Set<String> itemset : fgCountMap.keySet()) {
 
-          double fgFreq = fgCountMap.get(itemset) + 1;
+          double fgFreq = fgCountMap.get(itemset) + 1.0;
 // double fgLogP = Math.log(fgFreq / fgNumTweets);
 
           Integer bgCount = bgCountMap.get(itemset);
@@ -312,7 +312,7 @@ public class DivergeBGMap {
                       if (bgCnt == null) {
                         bgCnt = 0;
                       }
-                      idf = Math.log(bgNumTweets / (1 + bgCnt));
+                      idf = Math.log(bgNumTweets / (1.0 + bgCnt));
                       idf *= idf;
                       bgIDFMap.put(interItem, idf);
                     }
@@ -465,7 +465,7 @@ public class DivergeBGMap {
 //// if (bgCount == null)
 //// bgCount = 1;
 ////
-//// klDiver *= (Math.log(grandUionDocId.size() / bgCount) + bgFgLogP);
+//// klDiver *= (Math.log(grandUionDocId.size() * 1.0 / bgCount) + bgFgLogP);
 ////
 //// // mergedItemset = Multisets.copyHighestCountFirst(mergedItemset);
 //// }
@@ -510,10 +510,12 @@ public class DivergeBGMap {
           Multiset<String> mergedItemset = e.getValue().getKey();
           double klDiver = unionDocId.size();
           Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
-          if (bgCount == null)
+          if (bgCount == null) {
             bgCount = 1;
-
-          klDiver *= (Math.log(unionDocId.size() / bgCount) + bgFgLogP);
+          } else {
+//            LOG.trace("it matches background");
+          }
+          klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
 
           selectionFormat.out().append(printMultiset(mergedItemset));
           selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
@@ -574,7 +576,7 @@ public class DivergeBGMap {
     String[] ret = new String[mset.entrySet().size()];
     int i = 0;
     for (Entry<String> e : mset.entrySet()) {
-      ret[i++] = e.getCount() + " X " + e.getElement();
+      ret[i++] = e.getCount() + " " + e.getElement();
     }
     Arrays.sort(ret);
     return Joiner.on(",").join(ret);
