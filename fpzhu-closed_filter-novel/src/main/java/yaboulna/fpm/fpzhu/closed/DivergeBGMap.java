@@ -667,7 +667,7 @@ public class DivergeBGMap {
     StringBuilder retVal = new StringBuilder();
     Arrays.sort(elts);
     for (String e : elts) {
-      retVal.append(",").append(mset.count(e)).append(" ").append(e);
+      retVal.append(","+ e + "(" + mset.count(e) + ")");
     }
     return retVal.substring(1);
   }
