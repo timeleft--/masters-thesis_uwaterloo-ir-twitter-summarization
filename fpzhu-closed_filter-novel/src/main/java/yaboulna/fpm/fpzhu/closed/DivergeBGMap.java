@@ -650,12 +650,12 @@ public class DivergeBGMap {
 
   }
   private static CharSequence printMultiset(Multiset<String> mset) {
-    String[] ret = new String[mset.entrySet().size()];
-    int i = 0;
-    for (Entry<String> e : mset.entrySet()) {
-      ret[i++] = e.getCount() + " " + e.getElement();
+    String[] elts = mset.elementSet().toArray(new String[mset.entrySet().size()]);
+    StringBuilder retVal = new StringBuilder();
+    Arrays.sort(elts);
+    for (String e : elts) {
+      retVal.append(",").append(mset.count(e)).append(" ").append(e);
     }
-    Arrays.sort(ret);
-    return Joiner.on(",").join(ret);
+    return retVal.substring(1);
   }
 }
