@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Formatter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -23,9 +22,13 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Multiset.Entry;
+import com.google.common.collect.Multisets;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.google.common.io.Closer;
@@ -45,12 +48,12 @@ public class DivergeBGMap {
         .asList(NUM_TWEETS_STR));
 
 // Builder<String, Integer> mapBuilder = ImmutableMap.builder();
-    final Map<CopyOnWriteArraySet<String>, Integer> fpCntMap;
-    final LinkedHashMap<CopyOnWriteArraySet<String>, LinkedList<Long>> fpDocIdsMap;
+    final Map<Set<String>, Integer> fpCntMap;
+    final LinkedHashMap<Set<String>, LinkedList<Long>> fpDocIdsMap;
 // Avoid copying this from one frame to another = Maps.newHashMapWithExpectedSize(4444444);
 
-    public ItemsetTabCountProcessor(Map<CopyOnWriteArraySet<String>, Integer> fgCountMap,
-        LinkedHashMap<CopyOnWriteArraySet<String>, LinkedList<Long>> fgIdsMap) {
+    public ItemsetTabCountProcessor(Map<Set<String>, Integer> fgCountMap,
+        LinkedHashMap<Set<String>, LinkedList<Long>> fgIdsMap) {
       this.fpCntMap = fgCountMap;
       this.fpDocIdsMap = fgIdsMap;
     }
@@ -102,9 +105,9 @@ public class DivergeBGMap {
   private static final double CLOSED_CONFIDENCE_THRESHOLD = 0.05; // upper bound
   private static final double HIGH_CONFIDENCE_THRESHOLD = 0.05; // lower bound
 
-  private static final double ITEMSET_SIMILARITY_GOOD_THRESHOLD = 0.8; //Cosine similarity
+  private static final double ITEMSET_SIMILARITY_GOOD_THRESHOLD = 0.8; // Cosine similarity
   private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0.33; // Jaccard similarity
-  private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; //Cosine or Jaccard similariy
+  private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
 
   private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Jaccard similarity
 
@@ -141,14 +144,14 @@ public class DivergeBGMap {
     List<File> fgFiles = (List<File>) FileUtils.listFiles(fgDir, FileFilterUtils.prefixFileFilter("fp_"),
         FileFilterUtils.trueFileFilter());
     Collections.sort(fgFiles, NameFileComparator.NAME_COMPARATOR);
-    Map<CopyOnWriteArraySet<String>, Integer> fgCountMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
-    LinkedHashMap<CopyOnWriteArraySet<String>, LinkedList<Long>> fgIdsMap = Maps.newLinkedHashMap();
+    Map<Set<String>, Integer> fgCountMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
+    LinkedHashMap<Set<String>, LinkedList<Long>> fgIdsMap = Maps.newLinkedHashMap();
 
     List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, FileFilterUtils.prefixFileFilter("fp_"),
         FileFilterUtils.trueFileFilter());
     Collections.sort(bgFiles, NameFileComparator.NAME_COMPARATOR);
     long loadedBgStartUx = -1;
-    Map<CopyOnWriteArraySet<String>, Integer> bgCountMap = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS);
+    Map<Set<String>, Integer> bgCountMap = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS);
     Map<String, Double> bgIDFMap = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS / 10);
 
     Splitter underscoreSplit = Splitter.on('_');
@@ -194,32 +197,17 @@ public class DivergeBGMap {
 
       final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", selectionPfx));
 
-      LinkedList<CopyOnWriteArraySet<String>> mergeCandidates = Lists.newLinkedList();
-      Set<String> mergedItemset = Sets.newTreeSet(new Comparator<String>() {
-        /**
-         * Place strings starting with "{" at the end, because these are branches of the itemset
-         * 
-         * @param o1
-         * @param o2
-         * @return
-         */
-        @Override
-        public int compare(String o1, String o2) {
-          if (o1.charAt(0) == '{') {
-            return 1;
-          } else if (o2.charAt(0) == '{') {
-            return -1;
-          } else {
-            return o1.compareTo(o2);
-          }
-        }
-      });
-//      Set<Long> grandUionDocId = Sets.newHashSet();
-//      Set<Long> grandIntersDocId = Sets.newHashSet();
-// LinkedList<Long> unionDocId = Lists.newLinkedList();
-// LinkedList<Long> intersDocId = Lists.newLinkedList();
+      LinkedList<Set<String>> mergeCandidates = Lists.newLinkedList();
+      Multiset<String> mergedItemset = HashMultiset.create();
+      Set<Long> grandUionDocId = Sets.newHashSet();
+      Set<Long> grandIntersDocId = Sets.newHashSet();
+      LinkedList<Long> unionDocId;
+      Set<Long> intersDocId;
+      unionDocId = Lists.newLinkedList();
+      intersDocId = Sets.newHashSet();
 
-      LinkedList<CopyOnWriteArraySet<String>> prevItemsets = Lists.newLinkedList();
+      LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
+      Map<Set<String>,Double> parentlessAndLong = Maps.newHashMap();
 
       Closer novelClose = Closer.create();
       try {
@@ -230,7 +218,8 @@ public class DivergeBGMap {
         Formatter selectionFormat = novelClose.register(new Formatter(selFile, Charsets.UTF_8.name()));
 
         int counter = 0;
-        for (CopyOnWriteArraySet<String> itemset : fgCountMap.keySet()) {
+        for (Set<String> itemset : fgCountMap.keySet()) {
+          
           double fgFreq = fgCountMap.get(itemset) + 1;
 // double fgLogP = Math.log(fgFreq / fgNumTweets);
 
@@ -247,6 +236,14 @@ public class DivergeBGMap {
           highPrecFormat.format(itemset + "\t%.15f\t%s\n", klDiver,
               (fgIdsMap.containsKey(itemset) ? fgIdsMap.get(itemset) : ""));
 
+          //////////////////////////////////////////////
+          
+          if (++counter % 10000 == 0) {
+            LOG.info("Processed {} itemsets. Last one: {}", counter, itemset + "=" + klDiver);
+          }
+          
+          //////////////////////////////////////////////
+          
           if (itemset.size() == 1) {
             prevItemsets.addLast(itemset);
           } else if (klDiver > KLDIVERGENCE_MIN) {
@@ -255,28 +252,32 @@ public class DivergeBGMap {
               prevItemsets.addLast(itemset);
               continue;
             }
+
             Double itemsetNorm = null;
             mergeCandidates.clear();
-            CopyOnWriteArraySet<String> parentItemset = null;
-            Iterator<CopyOnWriteArraySet<String>> prevIter = prevItemsets.descendingIterator();
-            boolean foundParent = false;
+
+            Set<String> parentItemset = null;
+            Iterator<Set<String>> prevIter = prevItemsets.descendingIterator();
             double maxConfidence = -1.0; // if there is no parent, then this is the first from these items
             while (prevIter.hasNext()) { // there are more than one parent: && !foundParent
-              CopyOnWriteArraySet<String> pis = prevIter.next();
+              Set<String> pis = prevIter.next();
 
               SetView<String> interset = Sets.intersection(pis, itemset);
               if (pis.size() == interset.size()) {
                 // one of the parent itemset (in the closed patterns lattice)
-                parentItemset = pis;
+
                 mergeCandidates.add(pis);
-                if (!foundParent) {
+                if (parentItemset == null) {
                   // first parent to encounter will be have the lowest support, thus gives highest confidence
                   double pisFreq = fgCountMap.get(pis);
                   maxConfidence = fgCountMap.get(itemset) / pisFreq;
+                  if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
+                    break;
+                  }
                 }
-                foundParent = true;
+                parentItemset = pis;
               } else {
-                // Itemset similiarity starts by a lightweight  Jaccard Similarity similiarity, 
+                // Itemset similiarity starts by a lightweight Jaccard Similarity similiarity,
                 // then if it is promising then the cosine similarity is calculated with IDF weights
                 SetView<String> isPisUnion = Sets.union(pis, itemset);
                 double isPisSim = interset.size() * 1.0 / isPisUnion.size();
@@ -317,7 +318,7 @@ public class DivergeBGMap {
                     mergeCandidates.add(pis);
                   }
                 }
-                if (foundParent && isPisSim < ITEMSET_SIMILARITY_BAD_THRESHOLD) {
+                if (parentItemset != null && isPisSim < ITEMSET_SIMILARITY_BAD_THRESHOLD) {
                   // TODO: could this also work without checking foundParent &&
                   if (LOG.isTraceEnabled())
                     LOG.trace("Decided there won't be any more candidates for itemset {} when we encountered {}.",
@@ -326,25 +327,31 @@ public class DivergeBGMap {
                 }
               }
             }
+            
+            //Add to previous for next iterations to access it, regardless if it will get merged or not.. it can 
+            prevItemsets.add(itemset);
 
             mergedItemset.clear();
 
-//            grandUionDocId.clear();
-//            grandIntersDocId.clear();
+            grandUionDocId.clear();
+            grandIntersDocId.clear();
 
-            if (maxConfidence < CLOSED_CONFIDENCE_THRESHOLD) {
-              for (CopyOnWriteArraySet<String> cand : mergeCandidates) {
+            if (parentItemset == null) {
+              parentlessAndLong.put(itemset,klDiver);
+              continue;
+            } else if (maxConfidence < CLOSED_CONFIDENCE_THRESHOLD) {
+              for (Set<String> cand : mergeCandidates) {
                 LinkedList<Long> candDocIds = fgIdsMap.get(cand);
-                LinkedList<Long> unionDocId;
-                LinkedList<Long> intersDocId;
+
                 if (parentItemset == cand) {
-                  unionDocId = candDocIds;
-                  intersDocId = iDocIds;
+                  // TODONE: why do we add parent to candidates while it'd be impossible for maxCof to be both
+                  // < closed threshold AND >= docIdSimilarity
+// unionDocId = candDocIds;
+// intersDocId = iDocIds;
+                  continue;
                 } else {
-// unionDocId.clear();
-// intersDocId.clear();
-                  unionDocId = Lists.newLinkedList();
-                  intersDocId = Lists.newLinkedList();
+                  unionDocId.clear();
+                  intersDocId.clear();
 
                   if (candDocIds == null || candDocIds.isEmpty()) {
                     LOG.warn("Using a file with truncated inverted indexes");
@@ -385,52 +392,62 @@ public class DivergeBGMap {
                 // Similarity checking: jaccard similarity
                 double docIdSim = intersDocId.size() * 1.0 / unionDocId.size();
                 if (docIdSim >= DOCID_SIMILARITY_GOOD_THRESHOLD) {
-                  SetView<String> interset = Sets.intersection(cand, itemset);
-                  mergedItemset.addAll(interset);
-                  StringBuilder branches = new StringBuilder();
-                  branches.append('{').append(Sets.difference(itemset, interset)).append('|')
-                      .append(Sets.difference(cand, interset)).append('}');
-                  mergedItemset.add(branches.toString());
 
-//                  // add the union and intersection to grand ones
-//                  grandUionDocId.addAll(unionDocId);
-//// grandIntersDocId = Sets.intersection(grandIntersDocId, interset);
-                  
-               // write out the merged itemset into selection file(s)
-                  // TODO: write out the intersect in another file
-                  selectionFormat.format(mergedItemset + "\t%.15f\t%d\t%d\t%s\n",
-                      maxConfidence,
-                      intersDocId.size(),
-                      unionDocId.size(),
-                      unionDocId);
+                  mergedItemset.addAll(Sets.union(itemset, cand));
+
+                  // add the union and intersection to grand ones
+                  grandUionDocId.addAll(unionDocId);
+                  grandIntersDocId = Sets.intersection(grandIntersDocId, intersDocId);
+
                 }
               }
+              maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
             }
 
-            if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD ||
-                (maxConfidence < 0 && mergedItemset.isEmpty())) {
-              // write out the itemset (orig) into selection file(s),
-              // because it is either high confidence or this is the first one in cluster of
-              // high KL Divergence.. TODO: should we wait before writing it out to make sure
-              // it won't get merged? But then how to signal writing it out?
-              // TODO: write out the intersect in another file
-              selectionFormat.format(itemset + "\t%.15f\t%d\t%d\t%s\n",
+            if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
+              // write out the itemset (orig or merged) into selection file(s),
+              // because it is high confidence either from the beginning or after merging
+              if (mergedItemset.isEmpty()) {
+                mergedItemset.addAll(itemset);
+              } else {
+                klDiver = grandUionDocId.size();
+                bgCount = bgCountMap.get(mergedItemset.elementSet());
+                if (bgCount == null)
+                  bgCount = 1;
+
+                klDiver *= (Math.log(grandUionDocId.size() / bgCount) + bgFgLogP);
+                
+                mergedItemset =  Multisets.copyHighestCountFirst(mergedItemset);
+              }
+              selectionFormat.out().append(printMultiset(mergedItemset));
+              selectionFormat.format("\t%.15f\t%.15f\t%.15f\t",
                   maxConfidence,
-                  iDocIds.size(),
-                  iDocIds.size(),
-                  iDocIds);
+                  klDiver,
+                  maxConfidence * klDiver);
+              if(grandUionDocId.isEmpty()){
+                selectionFormat.out().append(iDocIds.toString().substring(1));
+              } else {
+                selectionFormat.out().append(grandIntersDocId.toString().substring(1))
+                  .append(Sets.difference(grandUionDocId,grandIntersDocId).toString().substring(1));
+              }
+              selectionFormat.out().append("\n");   
             }
 
-            if (mergedItemset.isEmpty()) {
-              // only itemsets that don't get merged make it to the prev itemsets list, because they can be parents
-              // while merged ones can't... children of merged ones will be matched with their un-merged grandparents
-              prevItemsets.add(itemset);
-            } 
+            if(mergedItemset.isEmpty()){
+              parentlessAndLong.put(itemset,klDiver);
+            } else {
+              parentlessAndLong.remove(parentItemset);
+            }
           }
-
-          if (++counter % 10000 == 0) {
-            LOG.info("Processed {} itemsets. Last one: {}", counter, itemset + "=" + klDiver);
-          }
+        }
+        for( java.util.Map.Entry<Set<String>, Double> e:parentlessAndLong.entrySet()){
+          mergedItemset.addAll(e.getKey());
+          selectionFormat.out().append(printMultiset(mergedItemset));
+          selectionFormat.format("\t%.15f\t%.15f\t%.15f\t",
+              -1,
+              e.getValue(),
+              -1);
+          selectionFormat.out().append(fgIdsMap.get(e.getKey()).toString().substring(1));
         }
       } finally {
         novelClose.close();
@@ -439,4 +456,11 @@ public class DivergeBGMap {
 
   }
 
+  private static CharSequence printMultiset(Multiset<String> copyHighestCountFirst) {
+    StringBuilder ret = new StringBuilder();
+    for (Entry<String> e : copyHighestCountFirst.entrySet()) {
+      ret.append(e.getElement() + ":" + e.getCount());
+    }
+    return ret.toString();
+  }
 }
