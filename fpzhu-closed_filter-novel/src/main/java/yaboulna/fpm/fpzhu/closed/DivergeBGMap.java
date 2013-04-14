@@ -114,6 +114,8 @@ public class DivergeBGMap {
 
   private static final double KLDIVERGENCE_MIN = 10; // this is multiplied by frequency not prob
 
+  private static final int MAX_LOOKBACK_FOR_PARENT = 1000;
+
   /**
    * @param args
    * @throws IOException
@@ -265,6 +267,8 @@ public class DivergeBGMap {
             double maxConfidence = -1.0; // if there is no parent, then this is the first from these items
             boolean allied = false;
 
+            int lookBackRecords = 0;
+            
             while (prevIter.hasNext()) { // there are more than one parent: && !foundParent
               Set<String> pis = prevIter.next();
 
@@ -326,11 +330,14 @@ public class DivergeBGMap {
                     mergeCandidates.add(pis);
                   }
                 }
-                if (parentItemset != null && isPisSim < ITEMSET_SIMILARITY_BAD_THRESHOLD) {
-                  // TODO: could this also work without checking foundParent OR is it losing anything
-                  if (LOG.isTraceEnabled())
-                    LOG.trace("Decided there won't be any more candidates for itemset {} when we encountered {}.",
-                        itemset, pis);
+                if ((parentItemset != null && 
+                    isPisSim < ITEMSET_SIMILARITY_BAD_THRESHOLD)
+                    || (++lookBackRecords > MAX_LOOKBACK_FOR_PARENT)) {
+                  // TODONE: could this also work without checking foundParent -> NO, very few alliances happen
+                  // TODO: are we losing anything by breaking on the first bad similarity
+//                  if (LOG.isTraceEnabled())
+//                    LOG.trace("Decided there won't be any more candidates for itemset {} when we encountered {}.",
+//                        itemset, pis);
                   break; // the cluster of itemsets from these items is consumed
                 }
               }
@@ -516,9 +523,9 @@ public class DivergeBGMap {
           Multiset<String> mergedItemset = HashMultiset.create(e.getKey());
           selectionFormat.out().append(printMultiset(mergedItemset));
           selectionFormat.format("\t%.15f\t%.15f\t%.15f\t",
-              -1,
+              -1.0,
               e.getValue(),
-              -1);
+              -1.0);
           selectionFormat.out().append(fgIdsMap.get(e.getKey()).toString().substring(1));
         }
         unalliedItemsets.clear();
