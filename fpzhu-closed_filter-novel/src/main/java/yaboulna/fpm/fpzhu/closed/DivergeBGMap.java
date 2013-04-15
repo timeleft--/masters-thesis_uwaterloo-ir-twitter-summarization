@@ -18,6 +18,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.NameFileComparator;
 import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -177,14 +178,26 @@ public class DivergeBGMap {
     novelPfx += options + "_";
     selectionPfx += options + "_";
 
-    // FIXME: if there are any .out files, this will cause an error now... skip them
-    List<File> fgFiles = (List<File>) FileUtils.listFiles(fgDir, FileFilterUtils.prefixFileFilter("fp_"),
+    // FIXMED: if there are any .out files, this will cause an error now... skip them
+    IOFileFilter fpNotOutFilter = new IOFileFilter() {
+      
+      @Override
+      public boolean accept(File dir, String name) {
+        return name.startsWith("fp_") && !name.endsWith(".out");
+      }
+      
+      @Override
+      public boolean accept(File file) {
+        return accept(file.getParentFile(), file.getName());
+      }
+    };
+    List<File> fgFiles = (List<File>) FileUtils.listFiles(fgDir, fpNotOutFilter,
         FileFilterUtils.trueFileFilter());
     Collections.sort(fgFiles, NameFileComparator.NAME_COMPARATOR);
     Map<Set<String>, Integer> fgCountMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
     LinkedHashMap<Set<String>, LinkedList<Long>> fgIdsMap = Maps.newLinkedHashMap();
 
-    List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, FileFilterUtils.prefixFileFilter("fp_"),
+    List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, fpNotOutFilter,
         FileFilterUtils.trueFileFilter());
     Collections.sort(bgFiles, NameFileComparator.NAME_COMPARATOR);
     long loadedBgStartUx = -1;
