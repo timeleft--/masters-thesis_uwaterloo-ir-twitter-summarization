@@ -49,6 +49,7 @@ public class DivergeBGMap {
     final Map<Set<String>, Integer> fpCntMap;
     final LinkedHashMap<Set<String>, LinkedList<Long>> fpDocIdsMap;
 // Avoid copying this from one frame to another = Maps.newHashMapWithExpectedSize(4444444);
+    boolean skipOneCharSets = true;
 
     public ItemsetTabCountProcessor(Map<Set<String>, Integer> fgCountMap,
         LinkedHashMap<Set<String>, LinkedList<Long>> fgIdsMap) {
@@ -72,6 +73,11 @@ public class DivergeBGMap {
 
 // mapBuilder.put(itemset, count);
       CopyOnWriteArraySet<String> itemset = Sets.newCopyOnWriteArraySet(comaSplitter.split(itemsetStr));
+      
+      if(skipOneCharSets && ((itemsetStr.length() - itemset.size() - 1 ) * 1.0 / itemset.size()) < 2){
+        return true;
+      }
+      
       fpCntMap.put(itemset, count);
 
       if (fpDocIdsMap != null) {
