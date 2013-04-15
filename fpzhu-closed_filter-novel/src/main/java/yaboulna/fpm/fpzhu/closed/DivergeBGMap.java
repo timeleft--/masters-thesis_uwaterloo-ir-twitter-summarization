@@ -119,7 +119,7 @@ public class DivergeBGMap {
 
   private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Overlap similarity
 
-  private static final double KLDIVERGENCE_MIN = 10; // this is multiplied by frequency not prob
+  private static final double KLDIVERGENCE_MIN = -10; // this is multiplied by frequency not prob
 
   private static final int MAX_LOOKBACK_FOR_PARENT = 1000;
 
@@ -175,8 +175,8 @@ public class DivergeBGMap {
     } else {
       options = "Buff-SimLow-AvoidNew-Ppj-IdfBg-EntBg";
     }
-    novelPfx += options + "_";
-    selectionPfx += options + "_";
+    novelPfx += options + "_KLD" + KLDIVERGENCE_MIN + "_";
+    selectionPfx += options + "_KLD" + KLDIVERGENCE_MIN + "_";
 
     // FIXMED: if there are any .out files, this will cause an error now... skip them
     IOFileFilter fpNotOutFilter = new IOFileFilter() {
