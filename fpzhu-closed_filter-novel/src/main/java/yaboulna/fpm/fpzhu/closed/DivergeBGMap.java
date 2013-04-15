@@ -101,7 +101,7 @@ public class DivergeBGMap {
   private static final int FG_MAX_NUM_ITEMSETS = 2700000;
 
   private static final double CLOSED_CONFIDENCE_THRESHOLD = 0.05; // upper bound
-  private static final double HIGH_CONFIDENCE_THRESHOLD = 0.05; // lower bound
+  private static final double HIGH_CONFIDENCE_THRESHOLD = 0.125; // lower bound
 
   private static final double ITEMSET_SIMILARITY_GOOD_THRESHOLD = 0.66; // Jaccard or Cosine similarity
   private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0.33; // Jaccard similarity
@@ -774,14 +774,16 @@ public class DivergeBGMap {
 // LOG.trace("it matches background");
           }
           klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
-
+          
+          double prob = unionDocId.size() * 1.0 / fgNumTweets;
+          
           selectionFormat.out().append(printMultiset(mergedItemset));
           selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
               confidence,
               klDiver,
               confidence * klDiver,
               unionDocId.size(),
-              confidence * unionDocId.size());
+              -prob * DoubleMath.log2(prob));
 
           Set<Long> headDocIds = Sets.newCopyOnWriteArraySet(fgIdsMap.get(e.getKey()));
           selectionFormat.out().append(headDocIds.toString().substring(1))
@@ -802,15 +804,16 @@ public class DivergeBGMap {
           double klDiver = e.getValue();
           int supp = docids.size();
           double confKLD;
-          double confSupp;
+          double entropy;
           if (confidentItemsets.containsKey(itemset)) {
             confidence = confidentItemsets.get(itemset);
             confKLD = confidence * klDiver;
-            confSupp = confidence * supp;
+            entropy = supp / fgNumTweets;
+            entropy *= -DoubleMath.log2(entropy);
           } else {
             confidence = -1;
             confKLD = -1;
-            confSupp = -1;
+            entropy = -1;
           }
 
           selectionFormat.out().append(printHashset(itemset)); // printMultiset(mergedItemset));
@@ -819,7 +822,7 @@ public class DivergeBGMap {
               klDiver,
               confKLD,
               supp,
-              confSupp);
+              entropy);
           selectionFormat.out().append(docids.toString().substring(1));
         }
         unalliedItemsets.clear();
