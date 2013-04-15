@@ -179,8 +179,8 @@ public class DivergeBGMap {
     }
     novelPfx += options + "_KLD" + KLDIVERGENCE_MIN + "_";
     selectionPfx += options + "_KLD" + KLDIVERGENCE_MIN + "_";
-    
-    if(GROW_ALLIANCES_ACROSS_EPOCHS){
+
+    if (GROW_ALLIANCES_ACROSS_EPOCHS) {
       novelPfx += "-Growing";
       selectionPfx += "-Growing";
     }
@@ -549,6 +549,9 @@ public class DivergeBGMap {
 
             Set<String> theOnlyOneIllMerge = null;
             int theOnlyOnesDifference = Integer.MIN_VALUE;
+            if (GROW_ALLIANCES_ACROSS_EPOCHS && allianceTransitive.containsKey(itemset)) {
+              mergeCandidates.addAll(allianceTransitive.get(itemset));
+            }
             for (Set<String> cand : mergeCandidates) {
               LinkedList<Long> candDocIds = fgIdsMap.get(cand);
               int differentDocs = 0;
@@ -724,13 +727,30 @@ public class DivergeBGMap {
             if (theOnlyOneIllMerge != null) {
               // /////////// Store that you joined this alliance
               Set<Set<String>> transHeads = allianceTransitive.get(itemset);
+              if (transHeads != null) {
+                if (GROW_ALLIANCES_ACROSS_EPOCHS) {
+                  if (transHeads.size() > 1) {
+                    LOG.warn("There should be a maximum of one alliance per itemset.. why do we have these:"
+                        + transHeads);
+                  }
+                  if (transHeads.contains(theOnlyOneIllMerge)) {
+                    // jolly
+                    LOG.debug("Itemset {} joining its only one {} in a continuing alliance: " + transHeads, itemset,
+                        theOnlyOneIllMerge);
+                  } else {
+                    // the new alliance will be better.. clear the one from earlier
+                    allianceTransitive.remove(transHeads);
+                    transHeads = null;
+                  }
+                } else {
+                  LOG.warn("I thought we will never find a cluster (alliance) head from earlier, " +
+                      "but the itemset {} already has {} while the current alleged onlyOneIllMerge is :"
+                      + theOnlyOneIllMerge, itemset, transHeads);
+                }
+              }
               if (transHeads == null) {
                 transHeads = Sets.newHashSet();
                 allianceTransitive.put(itemset, transHeads);
-              } else {
-                LOG.warn("I thought we will never find a cluster (alliance) head from earlier, " +
-                    "but the itemset {} already has {} while the current alleged onlyOneIllMerge is :"
-                    + theOnlyOneIllMerge, itemset, transHeads);
               }
               // Cannot happen with the hard clusters (since the only one)
 // if (transHeads.contains(theOnlyOneIllMerge)) {
