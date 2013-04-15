@@ -28,6 +28,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
+import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
@@ -73,12 +74,12 @@ public class DivergeBGMap {
 
 // mapBuilder.put(itemset, count);
       CopyOnWriteArraySet<String> itemset = Sets.newCopyOnWriteArraySet(comaSplitter.split(itemsetStr));
-      
-      if(skipOneCharSets && // itemset.size() > 1 && 
-          ((itemsetStr.length() - (itemset.size() - 1) ) * 1.0 / itemset.size()) < 2){
+
+      if (skipOneCharSets && // itemset.size() > 1 &&
+          ((itemsetStr.length() - (itemset.size() - 1)) * 1.0 / itemset.size()) < 2) {
         return true;
       }
-      
+
       fpCntMap.put(itemset, count);
 
       if (fpDocIdsMap != null) {
@@ -121,6 +122,8 @@ public class DivergeBGMap {
 
   private static final int MAX_LOOKBACK_FOR_PARENT = 1000;
 
+  private static final boolean RESEARCH_MODE = true;
+
   /**
    * @param args
    * @throws IOException
@@ -140,11 +143,15 @@ public class DivergeBGMap {
     boolean stopMatchingParentFSimLow = true;
     boolean avoidFormingNewAllianceIfPossible = true;
     boolean ppJoin = true;
+    boolean idfFromBG = true;
+    boolean entropyFromBg = true;
     if (args.length > 2) {
       stopMatchingLimitedBufferSize = args[2].contains("Buff");
       stopMatchingParentFSimLow = args[2].contains("SimLow");
       avoidFormingNewAllianceIfPossible = args[2].contains("AvoidNew");
-      ppJoin = args[2].contains("PPJ");
+      ppJoin = args[2].contains("Ppj");
+      idfFromBG = args[2].contains("IdfBg");
+      entropyFromBg = args[2].contains("EntBg");
     }
 
     int histLenSecs = 4 * 7 * 24 * 3600;
@@ -163,7 +170,7 @@ public class DivergeBGMap {
     if (args.length > 2) {
       options = args[2];
     } else {
-      options = "Buff-SimLow-AvoidNew-PPJ";
+      options = "Buff-SimLow-AvoidNew-Ppj-IdfBg-EntBg";
     }
     novelPfx += options + "_";
     selectionPfx += options + "_";
@@ -435,11 +442,19 @@ public class DivergeBGMap {
                       Double idf = bgIDFMap.get(interItem);
                       if (idf == null) {
 // Is this faster, or that:ImmutableSet.of(interItem) ?
-                        Integer bgCnt = bgCountMap.get(Collections.singleton(interItem));
-                        if (bgCnt == null) {
-                          bgCnt = 0;
+                        if (idfFromBG) {
+                          Integer bgCnt = bgCountMap.get(Collections.singleton(interItem));
+                          if (bgCnt == null) {
+                            bgCnt = 0;
+                          }
+                          idf = Math.log(bgNumTweets / (1.0 + bgCnt));
+                        } else {
+                          Integer fgCnt = fgCountMap.get(Collections.singleton(interItem));
+                          if (fgCnt == null) {
+                            fgCnt = 0;
+                          }
+                          idf = Math.log(fgNumTweets / (1.0 + fgCnt));
                         }
-                        idf = Math.log(bgNumTweets / (1.0 + bgCnt));
                         idf *= idf;
                         bgIDFMap.put(interItem, idf);
                       }
@@ -495,7 +510,7 @@ public class DivergeBGMap {
             if (parentItemset != null) {
               itemsetParentMap.put(itemset, parentItemset);
             }
-            
+
             double maxDiffCnt = Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
                 Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * iDocIds.size()));
 
@@ -655,7 +670,7 @@ public class DivergeBGMap {
                     if (existingHeadNonOverlap <= maxDiffCnt &&
                         ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
                         || (exitingAllianceHead.size() < bestAllianceHead.size()
-                            || existingHeadNonOverlap < currentBestDifference))) {
+                        || existingHeadNonOverlap < currentBestDifference))) {
                       // or equals prefers existing allinaces to forming new ones
 
                       currentBestDifference = existingHeadNonOverlap;
@@ -665,9 +680,9 @@ public class DivergeBGMap {
                   }
                 }
 
-                if ((theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size()) 
-                    || (currentBestDifference < theOnlyOnesDifference)){
-                    
+                if ((theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size())
+                    || (currentBestDifference < theOnlyOnesDifference)) {
+
                   theOnlyOneIllMerge = bestAllianceHead;
                   theOnlyOnesDifference = currentBestDifference;
                 }
@@ -766,7 +781,7 @@ public class DivergeBGMap {
           Set<Long> unionDocId = e.getValue().getValue();
           Set<String> parentItemset = itemsetParentMap.get(e.getKey());
           double confidence = unionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
-          if (confidence < HIGH_CONFIDENCE_THRESHOLD) {
+          if (confidence < HIGH_CONFIDENCE_THRESHOLD && !RESEARCH_MODE) {
             continue;
           }
           // The parent will be present in the final output within this itemset, so even if it
@@ -781,16 +796,17 @@ public class DivergeBGMap {
 // LOG.trace("it matches background");
           }
           klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
-          
-          double prob = unionDocId.size() * 1.0 / fgNumTweets;
-          
+
           selectionFormat.out().append(printMultiset(mergedItemset));
-          selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
+          selectionFormat.format(
+              "\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
               confidence,
               klDiver,
-              confidence * klDiver,
+              calcSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
+                  idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
               unionDocId.size(),
-              -prob * DoubleMath.log2(prob));
+              calcEntropy(mergedItemset.elementSet(), entropyFromBg ? bgCountMap : fgCountMap,
+                  entropyFromBg ? bgNumTweets : fgNumTweets));
 
           Set<Long> headDocIds = Sets.newCopyOnWriteArraySet(fgIdsMap.get(e.getKey()));
           selectionFormat.out().append(headDocIds.toString().substring(1))
@@ -804,32 +820,28 @@ public class DivergeBGMap {
         // those ones didn't prove to have any confident children, but we have to give them a chance
         for (java.util.Map.Entry<Set<String>, Double> e : unalliedItemsets.entrySet()) {
           Set<String> itemset = e.getKey();
-// Multiset<String> mergedItemset = HashMultiset.create(itemset);
+          Multiset<String> mergedItemset = HashMultiset.create(itemset);
           LinkedList<Long> docids = fgIdsMap.get(itemset);
 
           double confidence;
           double klDiver = e.getValue();
           int supp = docids.size();
-          double confKLD;
           double entropy;
           if (confidentItemsets.containsKey(itemset)) {
             confidence = confidentItemsets.get(itemset);
-            confKLD = confidence * klDiver;
-            entropy = supp / fgNumTweets;
-            entropy *= -DoubleMath.log2(entropy);
           } else {
             confidence = -1;
-            confKLD = -1;
-            entropy = -1;
           }
 
-          selectionFormat.out().append(printHashset(itemset)); // printMultiset(mergedItemset));
+          selectionFormat.out().append(printMultiset(mergedItemset));
           selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
               confidence,
               klDiver,
-              confKLD,
+              calcSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
+                  idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
               supp,
-              entropy);
+              calcEntropy(itemset, entropyFromBg ? bgCountMap : fgCountMap,
+                  entropyFromBg ? bgNumTweets : fgNumTweets));
           selectionFormat.out().append(docids.toString().substring(1));
         }
         unalliedItemsets.clear();
@@ -839,6 +851,33 @@ public class DivergeBGMap {
       }
     }
 
+  }
+
+  private static double calcEntropy(Set<String> itemset, Map<Set<String>, Integer> countMap, double numTweets) {
+    double e = 0;
+    for (String item : itemset) {
+      Integer itemCnt = countMap.get(Collections.singleton(item));
+      if (itemCnt == null) {
+        continue;
+      }
+      double itemP = itemCnt * 1.0 / numTweets;
+      e += itemP * DoubleMath.log2(itemP);
+    }
+    return -e;
+  }
+
+  private static double calcSumTfIdf(Multiset<String> mergedItemset, Map<Set<String>, Integer> countMap, double numTweets, Map<String, Double> cachedIDFMap) {
+    double retVal = 0;
+    for (Entry<String> e: mergedItemset.entrySet()) {
+      Double idf = cachedIDFMap.get(e.getElement()); 
+      Integer itemCnt = countMap.get(Collections.singleton(e.getElement()));
+      if (itemCnt == null) {
+        itemCnt = 0;
+      }
+      idf = Math.log(numTweets * 1.0 / (itemCnt + 1));
+      retVal += e.getCount() * idf;
+    }
+    return retVal;
   }
 
   private static CharSequence printHashset(Set<String> itemset) {
