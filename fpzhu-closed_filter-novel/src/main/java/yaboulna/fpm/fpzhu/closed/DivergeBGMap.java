@@ -179,6 +179,11 @@ public class DivergeBGMap {
     }
     novelPfx += options + "_KLD" + KLDIVERGENCE_MIN + "_";
     selectionPfx += options + "_KLD" + KLDIVERGENCE_MIN + "_";
+    
+    if(GROW_ALLIANCES_ACROSS_EPOCHS){
+      novelPfx += "-Growing";
+      selectionPfx += "-Growing";
+    }
 
     // FIXMED: if there are any .out files, this will cause an error now... skip them
     IOFileFilter fpNotOutFilter = new IOFileFilter() {
@@ -240,8 +245,11 @@ public class DivergeBGMap {
         }
       }
 
-      fgCountMap.clear();
-      fgIdsMap.clear();
+      if (!GROW_ALLIANCES_ACROSS_EPOCHS) {
+        growingAlliances.clear();
+        fgCountMap.clear();
+        fgIdsMap.clear();
+      }
       LOG.info("Loading foreground freqs from {}", fgF);
       Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgCountMap, fgIdsMap));
       LOG.info("Loaded foreground freqs - num itemsets: {}", fgCountMap.size());
@@ -261,9 +269,6 @@ public class DivergeBGMap {
 
       final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", selectionPfx));
 
-      if (!GROW_ALLIANCES_ACROSS_EPOCHS) {
-        growingAlliances.clear();
-      }
       unalliedItemsets.clear();
       confidentItemsets.clear();
       LinkedList<Set<String>> mergeCandidates = Lists.newLinkedList();
