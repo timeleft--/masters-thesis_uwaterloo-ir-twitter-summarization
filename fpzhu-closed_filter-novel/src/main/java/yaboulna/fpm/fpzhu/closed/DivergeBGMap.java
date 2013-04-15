@@ -106,6 +106,7 @@ public class DivergeBGMap {
 
   private static final double ITEMSET_SIMILARITY_GOOD_THRESHOLD = 0.66; // Jaccard or Cosine similarity
   private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0.33; // Jaccard similarity
+  private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
 
   private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Overlap similarity
@@ -132,10 +133,12 @@ public class DivergeBGMap {
     boolean stopMatchingLimitedBufferSize = true;
     boolean stopMatchingParentFSimLow = true;
     boolean avoidFormingNewAllianceIfPossible = true;
+    boolean ppJoin = true;
     if (args.length > 2) {
       stopMatchingLimitedBufferSize = args[2].contains("Buff");
       stopMatchingParentFSimLow = args[2].contains("SimLow");
       avoidFormingNewAllianceIfPossible = args[2].contains("AvoidNew");
+      ppJoin = args[2].contains("PPJ");
     }
 
     int histLenSecs = 4 * 7 * 24 * 3600;
@@ -154,7 +157,7 @@ public class DivergeBGMap {
     if (args.length > 2) {
       options = args[2];
     } else {
-      options = "Buff-SimLow-AvoidNew";
+      options = "Buff-SimLow-AvoidNew-PPJ";
     }
     novelPfx += options + "_";
     selectionPfx += options + "_";
@@ -290,7 +293,105 @@ public class DivergeBGMap {
             while (prevIter.hasNext()) { // there are more than one parent: && !foundParent
               Set<String> pis = prevIter.next();
 
-              SetView<String> interset = Sets.intersection(pis, itemset);
+              Set<String> interset;
+              Set<String> isPisUnion;
+
+              if (!ppJoin || pis.size() < ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH
+                  || itemset.size() < ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH) {
+                interset = Sets.intersection(itemset, pis);
+                isPisUnion = Sets.union(itemset, pis);
+              } else {
+
+// if (pis.size() < ITEMSET_SIMILARITY_PROMISING_THRESHOLD * itemset.size()) {
+// continue;
+// }
+
+                interset = Sets.newLinkedHashSet();
+                isPisUnion = Sets.newLinkedHashSet();
+
+                int minOverlap = (int) Math
+                    .ceil((ITEMSET_SIMILARITY_PROMISING_THRESHOLD / (1.0 + ITEMSET_SIMILARITY_PROMISING_THRESHOLD))
+                        * (pis.size() + itemset.size()));
+                int maxDiff = Math.min(pis.size(), itemset.size()) - minOverlap;
+                int currDiff = 0;
+                // TODONE: prefix filter ppjoin; using an adaptation to get maxAllDiffPos
+// int allDiffPfxLen = 0;
+// int maxAllDiffPfxIs = (int) (itemset.size()
+// - Math.ceil(ITEMSET_SIMILARITY_PROMISING_THRESHOLD * itemset.size()) + 1);
+// int maxAllDiffPfxP = (int) (pis.size() - Math.ceil(ITEMSET_SIMILARITY_PROMISING_THRESHOLD * pis.size()) + 1);
+// int maxAllDiffPfx = Math.min(maxAllDiffPfxP, maxAllDiffPfxIs);
+
+                Iterator<String> iIter = itemset.iterator();
+                Iterator<String> pIter = pis.iterator();
+                String iStr = iIter.next();
+                String pStr = pIter.next();
+
+                Iterator<String> remIter = null;
+                String remStr = null;
+
+// int allDiffPfxIncrement = 1;
+                while (currDiff <= maxDiff) {  // allDiffPfxLen <= maxAllDiffPfx
+                  int comparison = iStr.compareTo(pStr);
+                  if (comparison == 0) {
+                    interset.add(iStr);
+                    isPisUnion.add(iStr);
+                    if (!iIter.hasNext() && !pIter.hasNext()) {
+                      break;
+                    }
+                    if (iIter.hasNext()) {
+                      iStr = iIter.next();
+                    } else {
+                      remIter = pIter;
+                      remStr = pStr;
+                      break;
+                    }
+                    if (pIter.hasNext()) {
+                      pStr = pIter.next();
+                    } else {
+                      remIter = iIter;
+                      remStr = iStr;
+                      break;
+                    }
+// allDiffPfxIncrement = 0;
+                  } else if (comparison < 0) {
+                    ++currDiff;
+                    isPisUnion.add(iStr);
+                    if (iIter.hasNext()) {
+                      iStr = iIter.next();
+                    } else {
+                      remIter = pIter;
+                      remStr = pStr;
+                      break;
+                    }
+// allDiffPfxLen += allDiffPfxIncrement;
+                  } else {
+                    ++currDiff;
+                    isPisUnion.add(pStr);
+                    if (pIter.hasNext()) {
+                      pStr = pIter.next();
+                    } else {
+                      remIter = iIter;
+                      remStr = iStr;
+                      break;
+                    }
+// allDiffPfxLen += allDiffPfxIncrement;
+                  }
+                }
+
+                if (currDiff > maxDiff) {// allDiffPfxLen > maxAllDiffPfx) {
+                  continue;
+                }
+
+                while (remIter != null) {
+                  isPisUnion.add(remStr);
+                  if (remIter.hasNext()) {
+                    remStr = remIter.next();
+                  } else {
+                    break;
+                  }
+                }
+              }
+
               if (pis.size() == interset.size()) { // TODO: can the parent (shorter) come after?
                 // one of the parent itemset (in the closed patterns lattice)
 
@@ -307,10 +408,10 @@ public class DivergeBGMap {
 // break;
 // }
               } else {
-                // TODO: prefix filter ppjoin; using an adaptation to get maxAllDiffPos
+
                 // Itemset similiarity starts by a lightweight Jaccard Similarity similiarity,
                 // then if it is promising then the cosine similarity is calculated with IDF weights
-                SetView<String> isPisUnion = Sets.union(pis, itemset);
+
                 double isPisSim = interset.size() * 1.0 / isPisUnion.size();
                 if (isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
                   double pisNorm = 0;
@@ -407,19 +508,35 @@ public class DivergeBGMap {
                   Iterator<Long> iDidIter = iDocIds.iterator();
                   Iterator<Long> candDidIter = candDocIds.iterator();
                   long iDid = iDidIter.next(), candDid = candDidIter.next();
-                  while (differentDocs <= maxDiffCnt && iDidIter.hasNext() && candDidIter.hasNext()) {
+                  while (differentDocs <= maxDiffCnt) {
                     if (iDid == candDid) {
 // intersDocId.add(iDid);
 // unionDocId.add(iDid);
-                      iDid = iDidIter.next();
-                      candDid = candDidIter.next();
+                      if (iDidIter.hasNext()) {
+                        iDid = iDidIter.next();
+                      } else {
+                        break;
+                      }
+                      if (candDidIter.hasNext()) {
+                        candDid = candDidIter.next();
+                      } else {
+                        break;
+                      }
                     } else if (iDid < candDid) {
 // unionDocId.add(iDid);
-                      iDid = iDidIter.next();
                       ++differentDocs;
+                      if (iDidIter.hasNext()) {
+                        iDid = iDidIter.next();
+                      } else {
+                        break;
+                      }
                     } else {
 // unionDocId.add(candDid);
-                      candDid = candDidIter.next();
+                      if (candDidIter.hasNext()) {
+                        candDid = candDidIter.next();
+                      } else {
+                        break;
+                      }
                     }
                   }
                 }
@@ -492,9 +609,9 @@ public class DivergeBGMap {
                   }
 
                   if ((currentBestDifference > theOnlyOnesDifference) ||
-                      (currentBestDifference == theOnlyOnesDifference 
-                       && (theOnlyOneIllMerge == null //redundant because cannot be == while null
-                        || bestAllianceHead.size() < theOnlyOneIllMerge.size()))){
+                      (currentBestDifference == theOnlyOnesDifference
+                      && (theOnlyOneIllMerge == null // redundant because cannot be == while null
+                      || bestAllianceHead.size() < theOnlyOneIllMerge.size()))) {
                     theOnlyOneIllMerge = bestAllianceHead;
                     theOnlyOnesDifference = currentBestDifference;
                   }
@@ -669,7 +786,7 @@ public class DivergeBGMap {
     StringBuilder retVal = new StringBuilder();
     Arrays.sort(elts);
     for (String e : elts) {
-      retVal.append(","+ e + "(" + mset.count(e) + ")");
+      retVal.append("," + e + "(" + mset.count(e) + ")");
     }
     return retVal.substring(1);
   }
