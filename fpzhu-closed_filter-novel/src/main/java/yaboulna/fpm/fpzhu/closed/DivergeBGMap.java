@@ -127,6 +127,8 @@ public class DivergeBGMap {
 
   private static final boolean QUALITY_APPRECIATE_LARGE_ALLIANCES = false;
 
+  private static final boolean GROW_ALLIANCES_ACROSS_EPOCHS = true;
+
   /**
    * @param args
    * @throws IOException
@@ -836,8 +838,9 @@ public class DivergeBGMap {
 
           selectionFormat.out().append("\n");
         }
-        growingAlliances.clear();
-
+        if(!GROW_ALLIANCES_ACROSS_EPOCHS){
+          growingAlliances.clear();
+        }
         // Print the parents that were pending alliance with children to make sure they have conf
         // those ones didn't prove to have any confident children, but we have to give them a chance
         for (java.util.Map.Entry<Set<String>, Double> e : unalliedItemsets.entrySet()) {
