@@ -182,12 +182,12 @@ public class DivergeBGMap {
 
     // FIXMED: if there are any .out files, this will cause an error now... skip them
     IOFileFilter fpNotOutFilter = new IOFileFilter() {
-      
+
       @Override
       public boolean accept(File dir, String name) {
         return name.startsWith("fp_") && !name.endsWith(".out");
       }
-      
+
       @Override
       public boolean accept(File file) {
         return accept(file.getParentFile(), file.getName());
@@ -246,10 +246,10 @@ public class DivergeBGMap {
       Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgCountMap, fgIdsMap));
       LOG.info("Loaded foreground freqs - num itemsets: {}", fgCountMap.size());
 
-      if(fgCountMap.size() == 0){
+      if (fgCountMap.size() == 0) {
         continue;
       }
-      
+
       final double bgNumTweets = bgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
       final double fgNumTweets = fgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
       final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
@@ -261,7 +261,7 @@ public class DivergeBGMap {
 
       final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", selectionPfx));
 
-      if(!GROW_ALLIANCES_ACROSS_EPOCHS){
+      if (!GROW_ALLIANCES_ACROSS_EPOCHS) {
         growingAlliances.clear();
       }
       unalliedItemsets.clear();
@@ -275,8 +275,6 @@ public class DivergeBGMap {
 // unionDocId = Lists.newLinkedList();
 // intersDocId = Sets.newHashSet();
 
-     
-      
       LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
 
       Closer novelClose = Closer.create();
@@ -302,10 +300,12 @@ public class DivergeBGMap {
 // }
 
           double klDiver = fgFreq * (Math.log(fgFreq / bgCount) + bgFgLogP);
-// novelWr.append(itemset).append('\t').append(Doubles. String.format(klDiver)).append('\n');
-          highPrecFormat.format(itemset + "\t%.15f\t%s\n", klDiver,
-              (fgIdsMap.containsKey(itemset) ? fgIdsMap.get(itemset) : ""));
 
+          if (klDiver > KLDIVERGENCE_MIN) {
+// novelWr.append(itemset).append('\t').append(Doubles. String.format(klDiver)).append('\n');
+            highPrecFormat.format(itemset + "\t%.15f\t%s\n", klDiver,
+                (fgIdsMap.containsKey(itemset) ? fgIdsMap.get(itemset) : ""));
+          }
           // ////////////////////////////////////////////
 
           if (++counter % 10000 == 0) {
@@ -835,7 +835,7 @@ public class DivergeBGMap {
               unionDocId.size(),
               calcEntropy(mergedItemset.elementSet(), entropyFromBg ? bgCountMap : fgCountMap,
                   entropyFromBg ? bgNumTweets : fgNumTweets),
-              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap,bgNumTweets, fgNumTweets));
+              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets));
 
           Set<Long> headDocIds = Sets.newCopyOnWriteArraySet(fgIdsMap.get(e.getKey()));
           selectionFormat.out().append(headDocIds.toString().substring(1))
@@ -843,7 +843,7 @@ public class DivergeBGMap {
 
           selectionFormat.out().append("\n");
         }
-        
+
         // Print the parents that were pending alliance with children to make sure they have conf
         // those ones didn't prove to have any confident children, but we have to give them a chance
         for (java.util.Map.Entry<Set<String>, Double> e : unalliedItemsets.entrySet()) {
@@ -870,7 +870,7 @@ public class DivergeBGMap {
               supp,
               calcEntropy(itemset, entropyFromBg ? bgCountMap : fgCountMap,
                   entropyFromBg ? bgNumTweets : fgNumTweets),
-              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap,bgNumTweets, fgNumTweets));
+              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets));
           selectionFormat.out().append(docids.toString().substring(1));
         }
 
@@ -881,7 +881,8 @@ public class DivergeBGMap {
 
   }
 
-  private static double calcCrossEntropy(Set<String> itemset, Map<Set<String>, Integer> bgCountMap, Map<Set<String>, Integer> fgCountMap, double bgNumTweets, double fgNumTweets) {
+  private static double calcCrossEntropy(Set<String> itemset, Map<Set<String>, Integer> bgCountMap,
+      Map<Set<String>, Integer> fgCountMap, double bgNumTweets, double fgNumTweets) {
     double e = 0;
     for (String item : itemset) {
       Set<String> itemKey = Collections.singleton(item);
@@ -892,12 +893,12 @@ public class DivergeBGMap {
       }
       double bgItemP = bgItemCnt * 1.0 / bgNumTweets;
       double fgItemP = fgItemCnt * 1.0 / fgNumTweets;
-      
+
       e += fgItemP * DoubleMath.log2(bgItemP);
     }
-    return (QUALITY_APPRECIATE_LARGE_ALLIANCES ? -e : -e/itemset.size());
+    return (QUALITY_APPRECIATE_LARGE_ALLIANCES ? -e : -e / itemset.size());
   }
-  
+
   private static double calcEntropy(Set<String> itemset, Map<Set<String>, Integer> countMap, double numTweets) {
     double e = 0;
     for (String item : itemset) {
@@ -908,7 +909,7 @@ public class DivergeBGMap {
       double itemP = itemCnt * 1.0 / numTweets;
       e += itemP * DoubleMath.log2(itemP);
     }
-    return (QUALITY_APPRECIATE_LARGE_ALLIANCES ? -e : -e/itemset.size());
+    return (QUALITY_APPRECIATE_LARGE_ALLIANCES ? -e : -e / itemset.size());
   }
 
   private static double calcNormalizedSumTfIdf(Multiset<String> mergedItemset, Map<Set<String>, Integer> countMap,
