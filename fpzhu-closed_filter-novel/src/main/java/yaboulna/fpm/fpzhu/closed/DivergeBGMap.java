@@ -206,6 +206,8 @@ public class DivergeBGMap {
 
     Splitter underscoreSplit = Splitter.on('_');
 
+    Map<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> growingAlliances = Maps.newHashMap();
+    
     for (File fgF : fgFiles) {
       long windowStartUx = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 2));
       long idealBgStartUx = windowStartUx - histLenSecs;
@@ -260,7 +262,7 @@ public class DivergeBGMap {
 // unionDocId = Lists.newLinkedList();
 // intersDocId = Sets.newHashSet();
 
-      Map<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> growingAlliances = Maps.newHashMap();
+     
       Map<Set<String>, Set<String>> itemsetParentMap = Maps.newHashMap();
       Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
       Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
