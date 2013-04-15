@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -229,7 +228,7 @@ public class DivergeBGMap {
 // intersDocId = Sets.newHashSet();
 
       Map<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> growingAlliances = Maps.newHashMap();
-      Map<Set<String>, Set<String>> parentOfAllianceHead = Maps.newHashMap();
+      Map<Set<String>, Set<String>> itemsetParentMap = Maps.newHashMap();
       Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
       Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
       Map<Set<String>, Double> confidentItemsets = Maps.newHashMap();
@@ -482,72 +481,58 @@ public class DivergeBGMap {
 // grandUionDocId.clear();
 // grandIntersDocId.clear();
 
-            if (parentItemset == null) {
-              unalliedItemsets.put(itemset, klDiver);
-              continue;
-            } else { // if (maxConfidence < CLOSED_CONFIDENCE_THRESHOLD) {
+// if (parentItemset == null) {
+// unalliedItemsets.put(itemset, klDiver);
+// continue;
+// } else { // if (maxConfidence < CLOSED_CONFIDENCE_THRESHOLD) {
+            if (parentItemset != null) {
+              itemsetParentMap.put(itemset, parentItemset);
+            }
+            
+            double maxDiffCnt = Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * iDocIds.size()));
 
-              double maxDiffCnt = Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                  Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * iDocIds.size()));
-
-              Set<String> theOnlyOneIllMerge = null;
-              int theOnlyOnesDifference = Integer.MIN_VALUE;
-              for (Set<String> cand : mergeCandidates) {
-                LinkedList<Long> candDocIds = fgIdsMap.get(cand);
-                int differentDocs = 0;
-                if (parentItemset == cand) {
-                  // the (true) parent will necessarily be present in all documents of itemset
-                  differentDocs = candDocIds.size() - iDocIds.size();
-                } else {
+            Set<String> theOnlyOneIllMerge = null;
+            int theOnlyOnesDifference = Integer.MIN_VALUE;
+            for (Set<String> cand : mergeCandidates) {
+              LinkedList<Long> candDocIds = fgIdsMap.get(cand);
+              int differentDocs = 0;
+              if (parentItemset == cand) {
+                // the (true) parent will necessarily be present in all documents of itemset
+                differentDocs = candDocIds.size() - iDocIds.size();
+              } else {
 // unionDocId.clear();
 // intersDocId.clear();
 
-                  if (candDocIds == null || candDocIds.isEmpty()) {
-                    LOG.warn("Using a file with truncated inverted indexes");
-                    continue;
-                  }
+                if (candDocIds == null || candDocIds.isEmpty()) {
+                  LOG.warn("Using a file with truncated inverted indexes");
+                  continue;
+                }
 
-                  // Intersection and union calculation (depends on that docIds are sorted)
-                  // TODO: use a variation of this measure that calculates the time period covered by each itemset
-                  // TODONE: overlap of intersection with the current itemset's docids
+                // Intersection and union calculation (depends on that docIds are sorted)
+                // TODO: use a variation of this measure that calculates the time period covered by each itemset
+                // TODONE: overlap of intersection with the current itemset's docids
 
-                  Iterator<Long> iDidIter = iDocIds.iterator();
-                  Iterator<Long> candDidIter = candDocIds.iterator();
-                  long iDid = iDidIter.next(), candDid = candDidIter.next();
-                  while (differentDocs <= maxDiffCnt) {
-                    if (iDid == candDid) {
+                Iterator<Long> iDidIter = iDocIds.iterator();
+                Iterator<Long> candDidIter = candDocIds.iterator();
+                long iDid = iDidIter.next(), candDid = candDidIter.next();
+                while (differentDocs <= maxDiffCnt) {
+                  if (iDid == candDid) {
 // intersDocId.add(iDid);
 // unionDocId.add(iDid);
-                      if (iDidIter.hasNext()) {
-                        iDid = iDidIter.next();
-                      } else {
-                        iDid = -1;
-                        break;
-                      }
-                      if (candDidIter.hasNext()) {
-                        candDid = candDidIter.next();
-                      } else {
-                        break;
-                      }
-                    } else if (iDid < candDid) {
-// unionDocId.add(iDid);
-                      ++differentDocs;
-                      if (iDidIter.hasNext()) {
-                        iDid = iDidIter.next();
-                      } else {
-                        iDid = -1;
-                        break;
-                      }
+                    if (iDidIter.hasNext()) {
+                      iDid = iDidIter.next();
                     } else {
-// unionDocId.add(candDid);
-                      if (candDidIter.hasNext()) {
-                        candDid = candDidIter.next();
-                      } else {
-                        break;
-                      }
+                      iDid = -1;
+                      break;
                     }
-                  }
-                  while (iDid > 0 && differentDocs <= maxDiffCnt) {
+                    if (candDidIter.hasNext()) {
+                      candDid = candDidIter.next();
+                    } else {
+                      break;
+                    }
+                  } else if (iDid < candDid) {
+// unionDocId.add(iDid);
                     ++differentDocs;
                     if (iDidIter.hasNext()) {
                       iDid = iDidIter.next();
@@ -555,8 +540,25 @@ public class DivergeBGMap {
                       iDid = -1;
                       break;
                     }
+                  } else {
+// unionDocId.add(candDid);
+                    if (candDidIter.hasNext()) {
+                      candDid = candDidIter.next();
+                    } else {
+                      break;
+                    }
                   }
                 }
+                while (iDid > 0 && differentDocs <= maxDiffCnt) {
+                  ++differentDocs;
+                  if (iDidIter.hasNext()) {
+                    iDid = iDidIter.next();
+                  } else {
+                    iDid = -1;
+                    break;
+                  }
+                }
+              }
 
 // Iterator<Long> remainingIter;
 // if (iDidIter.hasNext()) {
@@ -579,61 +581,42 @@ public class DivergeBGMap {
 // grandIntersDocId = Sets.intersection(grandIntersDocId, intersDocId);
 //
 // }
-                // If similar enough, attach to the merge candidate and put both in pending queue
-                if (differentDocs <= maxDiffCnt) {
-                  // Try and join and existing alliance
-                  Set<String> bestAllianceHead = cand;
+              // If similar enough, attach to the merge candidate and put both in pending queue
+              if (differentDocs <= maxDiffCnt) {
+                // Try and join and existing alliance
+                Set<String> bestAllianceHead = cand;
 
-                  Set<Set<String>> existingAllainceHeads = allianceTransitive.get(cand);
-                  // what did the candidate do wrong to ignore it if it doesn't have earlier allies?
+                Set<Set<String>> existingAllainceHeads = allianceTransitive.get(cand);
+                // what did the candidate do wrong to ignore it if it doesn't have earlier allies?
 // if(existingAllainceHeads == null){
 // existingAllainceHeads = allianceTransitive.get(itemset);
 // } else {
 //
 // }
-                  int currentBestDifference = differentDocs;
-                  if (existingAllainceHeads != null) {
-                    for (Set<String> exitingAllianceHead : existingAllainceHeads) {
-                      int existingHeadNonOverlap = 0;
-                      Iterator<Long> iDidIter = iDocIds.iterator();
-                      Iterator<Long> existingDidIter = fgIdsMap.get(exitingAllianceHead).iterator();
-                      long iDid = iDidIter.next(), existingDid = existingDidIter.next();
-                      while (existingHeadNonOverlap <= maxDiffCnt) {
-                        if (iDid == existingDid) {
-                          // intersDocId.add(iDid);
-                          // unionDocId.add(iDid);
-                          if (iDidIter.hasNext()) {
-                            iDid = iDidIter.next();
-                          } else {
-                            iDid = -1;
-                            break;
-                          }
-                          if (existingDidIter.hasNext()) {
-                            existingDid = existingDidIter.next();
-                          } else {
-                            break;
-                          }
-                        } else if (iDid < existingDid) {
-                          // unionDocId.add(iDid);
-                          ++existingHeadNonOverlap;
-                          if (iDidIter.hasNext()) {
-                            iDid = iDidIter.next();
-                          } else {
-                            iDid = -1;
-                            break;
-                          }
-
+                int currentBestDifference = differentDocs;
+                if (existingAllainceHeads != null) {
+                  for (Set<String> exitingAllianceHead : existingAllainceHeads) {
+                    int existingHeadNonOverlap = 0;
+                    Iterator<Long> iDidIter = iDocIds.iterator();
+                    Iterator<Long> existingDidIter = fgIdsMap.get(exitingAllianceHead).iterator();
+                    long iDid = iDidIter.next(), existingDid = existingDidIter.next();
+                    while (existingHeadNonOverlap <= maxDiffCnt) {
+                      if (iDid == existingDid) {
+                        // intersDocId.add(iDid);
+                        // unionDocId.add(iDid);
+                        if (iDidIter.hasNext()) {
+                          iDid = iDidIter.next();
                         } else {
-                          // unionDocId.add(candDid);
-                          if (existingDidIter.hasNext()) {
-                            existingDid = existingDidIter.next();
-                          } else {
-                            break;
-                          }
+                          iDid = -1;
+                          break;
                         }
-                      }
-                      
-                      while (iDid > 0 && existingHeadNonOverlap <= maxDiffCnt) {
+                        if (existingDidIter.hasNext()) {
+                          existingDid = existingDidIter.next();
+                        } else {
+                          break;
+                        }
+                      } else if (iDid < existingDid) {
+                        // unionDocId.add(iDid);
                         ++existingHeadNonOverlap;
                         if (iDidIter.hasNext()) {
                           iDid = iDidIter.next();
@@ -641,73 +624,92 @@ public class DivergeBGMap {
                           iDid = -1;
                           break;
                         }
-                      }
 
-                      if (existingHeadNonOverlap <= maxDiffCnt &&
-                          ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
-                          || existingHeadNonOverlap >= currentBestDifference)) {
-                        // or equals prefers existing allinaces to forming new ones
-
-                        currentBestDifference = existingHeadNonOverlap;
-                        bestAllianceHead = exitingAllianceHead;
-
+                      } else {
+                        // unionDocId.add(candDid);
+                        if (existingDidIter.hasNext()) {
+                          existingDid = existingDidIter.next();
+                        } else {
+                          break;
+                        }
                       }
                     }
-                  }
 
-                  if ((currentBestDifference > theOnlyOnesDifference) ||
-                      (currentBestDifference == theOnlyOnesDifference
-                      && (theOnlyOneIllMerge == null // redundant because cannot be == while null
-                      || bestAllianceHead.size() < theOnlyOneIllMerge.size()))) {
-                    theOnlyOneIllMerge = bestAllianceHead;
-                    theOnlyOnesDifference = currentBestDifference;
+                    while (iDid > 0 && existingHeadNonOverlap <= maxDiffCnt) {
+                      ++existingHeadNonOverlap;
+                      if (iDidIter.hasNext()) {
+                        iDid = iDidIter.next();
+                      } else {
+                        iDid = -1;
+                        break;
+                      }
+                    }
+
+                    if (existingHeadNonOverlap <= maxDiffCnt &&
+                        ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
+                        || existingHeadNonOverlap >= currentBestDifference)) {
+                      // or equals prefers existing allinaces to forming new ones
+
+                      currentBestDifference = existingHeadNonOverlap;
+                      bestAllianceHead = exitingAllianceHead;
+
+                    }
                   }
+                }
+
+                if ((currentBestDifference > theOnlyOnesDifference) ||
+                    (currentBestDifference == theOnlyOnesDifference
+                    && (theOnlyOneIllMerge == null // redundant because cannot be == while null
+                    || bestAllianceHead.size() < theOnlyOneIllMerge.size()))) {
+                  theOnlyOneIllMerge = bestAllianceHead;
+                  theOnlyOnesDifference = currentBestDifference;
                 }
               }
-              if (theOnlyOneIllMerge != null) {
-                // /////////// Store that you joined this alliance
-                Set<Set<String>> existingAllainceHeads = allianceTransitive.get(itemset);
-                if (existingAllainceHeads == null) {
-                  existingAllainceHeads = Sets.newHashSet();
-                  allianceTransitive.put(itemset, existingAllainceHeads);
-                } else {
-                  LOG.warn("I thought we will never find a cluster (alliance) head from earlier, " +
-                      "but the itemset {} already has {} while the current alleged onlyOneIllMerge is :"
-                      + theOnlyOneIllMerge, itemset, existingAllainceHeads);
-                }
-                // Cannot happen with the hard clusters (since the only one)
+            }
+            if (theOnlyOneIllMerge != null) {
+              // /////////// Store that you joined this alliance
+              Set<Set<String>> existingAllainceHeads = allianceTransitive.get(itemset);
+              if (existingAllainceHeads == null) {
+                existingAllainceHeads = Sets.newHashSet();
+                allianceTransitive.put(itemset, existingAllainceHeads);
+              } else {
+                LOG.warn("I thought we will never find a cluster (alliance) head from earlier, " +
+                    "but the itemset {} already has {} while the current alleged onlyOneIllMerge is :"
+                    + theOnlyOneIllMerge, itemset, existingAllainceHeads);
+              }
+              // Cannot happen with the hard clusters (since the only one)
 // if (existingAllainceHeads.contains(theOnlyOneIllMerge)) {
 // // // this itemset is already part of the alliance, in an earlier iteration
 // continue;
 // }
-                existingAllainceHeads.add(theOnlyOneIllMerge);
+              existingAllainceHeads.add(theOnlyOneIllMerge);
 
-                java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
-                    .get(theOnlyOneIllMerge);
+              java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
+                  .get(theOnlyOneIllMerge);
 
-                if (alliedItemsets == null) {
-                  // ////// Create a new alliance
-                  LinkedList<Long> theOnlyOnesDocIds = fgIdsMap.get(theOnlyOneIllMerge);
-                  alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
-                      HashMultiset.create(theOnlyOneIllMerge), Sets.newHashSet(theOnlyOnesDocIds));
-                  growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
-                  if (theOnlyOneIllMerge.size() > parentItemset.size()
+              if (alliedItemsets == null) {
+                // ////// Create a new alliance
+                LinkedList<Long> theOnlyOnesDocIds = fgIdsMap.get(theOnlyOneIllMerge);
+                alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
+                    HashMultiset.create(theOnlyOneIllMerge), Sets.newHashSet(theOnlyOnesDocIds));
+                growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
+                if (!itemsetParentMap.containsKey(theOnlyOneIllMerge)) {
+                  if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
                       && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
-                    parentOfAllianceHead.put(theOnlyOneIllMerge, parentItemset);
+                    itemsetParentMap.put(theOnlyOneIllMerge, parentItemset);
                   } else {
-                    parentOfAllianceHead.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
+                    itemsetParentMap.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
                   }
-
-                  unalliedItemsets.remove(theOnlyOneIllMerge);
                 }
-                alliedItemsets.getKey().addAll(itemset);
-                alliedItemsets.getValue().addAll(iDocIds);
-
-                allied = true;
+                unalliedItemsets.remove(theOnlyOneIllMerge);
               }
+              alliedItemsets.getKey().addAll(itemset);
+              alliedItemsets.getValue().addAll(iDocIds);
+
+              allied = true;
+            }
 
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
-            }
 
             if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
               confidentItemsets.put(itemset, maxConfidence);
@@ -755,7 +757,7 @@ public class DivergeBGMap {
         for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
             .entrySet()) {
           Set<Long> unionDocId = e.getValue().getValue();
-          Set<String> parentItemset = parentOfAllianceHead.get(e.getKey());
+          Set<String> parentItemset = itemsetParentMap.get(e.getKey());
           double confidence = unionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
           if (confidence < HIGH_CONFIDENCE_THRESHOLD) {
             continue;
@@ -793,7 +795,7 @@ public class DivergeBGMap {
         // those ones didn't prove to have any confident children, but we have to give them a chance
         for (java.util.Map.Entry<Set<String>, Double> e : unalliedItemsets.entrySet()) {
           Set<String> itemset = e.getKey();
-//          Multiset<String> mergedItemset = HashMultiset.create(itemset);
+// Multiset<String> mergedItemset = HashMultiset.create(itemset);
           LinkedList<Long> docids = fgIdsMap.get(itemset);
 
           double confidence;
@@ -811,7 +813,7 @@ public class DivergeBGMap {
             confSupp = -1;
           }
 
-          selectionFormat.out().append(printHashset(itemset)); //printMultiset(mergedItemset));
+          selectionFormat.out().append(printHashset(itemset)); // printMultiset(mergedItemset));
           selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
               confidence,
               klDiver,
@@ -828,7 +830,7 @@ public class DivergeBGMap {
     }
 
   }
-  
+
   private static CharSequence printHashset(Set<String> itemset) {
     String[] elts = itemset.toArray(new String[itemset.size()]);
     StringBuilder retVal = new StringBuilder();
@@ -838,7 +840,7 @@ public class DivergeBGMap {
     }
     return retVal.substring(1);
   }
-  
+
   private static CharSequence printMultiset(Multiset<String> mset) {
     String[] elts = mset.elementSet().toArray(new String[mset.entrySet().size()]);
     StringBuilder retVal = new StringBuilder();
