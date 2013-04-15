@@ -522,6 +522,7 @@ public class DivergeBGMap {
                       if (iDidIter.hasNext()) {
                         iDid = iDidIter.next();
                       } else {
+                        iDid = -1;
                         break;
                       }
                       if (candDidIter.hasNext()) {
@@ -535,6 +536,7 @@ public class DivergeBGMap {
                       if (iDidIter.hasNext()) {
                         iDid = iDidIter.next();
                       } else {
+                        iDid = -1;
                         break;
                       }
                     } else {
@@ -546,7 +548,19 @@ public class DivergeBGMap {
                       }
                     }
                   }
+                  while(iDid > 0 && differentDocs <= maxDiffCnt){
+                    ++differentDocs;
+                    if (iDidIter.hasNext()) {
+                      iDid = iDidIter.next();
+                    } else {
+                      iDid = -1;
+                      break;
+                    }
+                  }
                 }
+                
+               
+                
 // Iterator<Long> remainingIter;
 // if (iDidIter.hasNext()) {
 // remainingIter = iDidIter;
