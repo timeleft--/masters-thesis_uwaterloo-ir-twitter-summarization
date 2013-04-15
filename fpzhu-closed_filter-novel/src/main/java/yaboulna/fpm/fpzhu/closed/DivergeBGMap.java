@@ -866,15 +866,18 @@ public class DivergeBGMap {
     return -e;
   }
 
-  private static double calcSumTfIdf(Multiset<String> mergedItemset, Map<Set<String>, Integer> countMap, double numTweets, Map<String, Double> cachedIDFMap) {
+  private static double calcSumTfIdf(Multiset<String> mergedItemset, Map<Set<String>, Integer> countMap,
+      double numTweets, Map<String, Double> cachedIDFMap) {
     double retVal = 0;
-    for (Entry<String> e: mergedItemset.entrySet()) {
-      Double idf = cachedIDFMap.get(e.getElement()); 
-      Integer itemCnt = countMap.get(Collections.singleton(e.getElement()));
-      if (itemCnt == null) {
-        itemCnt = 0;
+    for (Entry<String> e : mergedItemset.entrySet()) {
+      Double idf = cachedIDFMap.get(e.getElement());
+      if (idf == null) {
+        Integer itemCnt = countMap.get(Collections.singleton(e.getElement()));
+        if (itemCnt == null) {
+          itemCnt = 0;
+        }
+        idf = Math.log(numTweets * 1.0 / (itemCnt + 1));
       }
-      idf = Math.log(numTweets * 1.0 / (itemCnt + 1));
       retVal += e.getCount() * idf;
     }
     return retVal;
