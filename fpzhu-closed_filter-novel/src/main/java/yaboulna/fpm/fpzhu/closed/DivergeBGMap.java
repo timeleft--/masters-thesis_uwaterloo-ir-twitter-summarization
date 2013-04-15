@@ -814,14 +814,15 @@ public class DivergeBGMap {
 
           selectionFormat.out().append(printMultiset(mergedItemset));
           selectionFormat.format(
-              "\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
+              "\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
               confidence,
               klDiver,
               calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
                   idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
               unionDocId.size(),
               calcEntropy(mergedItemset.elementSet(), entropyFromBg ? bgCountMap : fgCountMap,
-                  entropyFromBg ? bgNumTweets : fgNumTweets));
+                  entropyFromBg ? bgNumTweets : fgNumTweets),
+              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap,bgNumTweets, fgNumTweets));
 
           Set<Long> headDocIds = Sets.newCopyOnWriteArraySet(fgIdsMap.get(e.getKey()));
           selectionFormat.out().append(headDocIds.toString().substring(1))
@@ -849,14 +850,15 @@ public class DivergeBGMap {
           }
 
           selectionFormat.out().append(printMultiset(mergedItemset));
-          selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
+          selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
               confidence,
               klDiver,
               calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
                   idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
               supp,
               calcEntropy(itemset, entropyFromBg ? bgCountMap : fgCountMap,
-                  entropyFromBg ? bgNumTweets : fgNumTweets));
+                  entropyFromBg ? bgNumTweets : fgNumTweets),
+              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap,bgNumTweets, fgNumTweets));
           selectionFormat.out().append(docids.toString().substring(1));
         }
         unalliedItemsets.clear();
@@ -868,6 +870,23 @@ public class DivergeBGMap {
 
   }
 
+  private static double calcCrossEntropy(Set<String> itemset, Map<Set<String>, Integer> bgCountMap, Map<Set<String>, Integer> fgCountMap, double bgNumTweets, double fgNumTweets) {
+    double e = 0;
+    for (String item : itemset) {
+      Set<String> itemKey = Collections.singleton(item);
+      Integer bgItemCnt = bgCountMap.get(itemKey);
+      Integer fgItemCnt = fgCountMap.get(itemKey);
+      if (bgItemCnt == null || fgItemCnt == null) {
+        continue;
+      }
+      double bgItemP = bgItemCnt * 1.0 / bgNumTweets;
+      double fgItemP = fgItemCnt * 1.0 / fgNumTweets;
+      
+      e += fgItemP * DoubleMath.log2(bgItemP);
+    }
+    return (QUALITY_APPRECIATE_LARGE_ALLIANCES ? -e : -e/itemset.size());
+  }
+  
   private static double calcEntropy(Set<String> itemset, Map<Set<String>, Integer> countMap, double numTweets) {
     double e = 0;
     for (String item : itemset) {
@@ -878,7 +897,7 @@ public class DivergeBGMap {
       double itemP = itemCnt * 1.0 / numTweets;
       e += itemP * DoubleMath.log2(itemP);
     }
-    return -e;
+    return (QUALITY_APPRECIATE_LARGE_ALLIANCES ? -e : -e/itemset.size());
   }
 
   private static double calcNormalizedSumTfIdf(Multiset<String> mergedItemset, Map<Set<String>, Integer> countMap,
