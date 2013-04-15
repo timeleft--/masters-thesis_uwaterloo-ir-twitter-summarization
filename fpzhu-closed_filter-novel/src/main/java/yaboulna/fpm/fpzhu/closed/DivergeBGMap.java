@@ -310,10 +310,9 @@ public class DivergeBGMap {
 
                 interset = preAllocatedSet1;
                 isPisUnion = preAllocatedSet2;
-                
+
                 interset.clear();
                 isPisUnion.clear();
-               
 
                 int minOverlap = (int) Math
                     .ceil((ITEMSET_SIMILARITY_PROMISING_THRESHOLD / (1.0 + ITEMSET_SIMILARITY_PROMISING_THRESHOLD))
@@ -548,7 +547,7 @@ public class DivergeBGMap {
                       }
                     }
                   }
-                  while(iDid > 0 && differentDocs <= maxDiffCnt){
+                  while (iDid > 0 && differentDocs <= maxDiffCnt) {
                     ++differentDocs;
                     if (iDidIter.hasNext()) {
                       iDid = iDidIter.next();
@@ -558,9 +557,7 @@ public class DivergeBGMap {
                     }
                   }
                 }
-                
-               
-                
+
 // Iterator<Long> remainingIter;
 // if (iDidIter.hasNext()) {
 // remainingIter = iDidIter;
@@ -601,25 +598,54 @@ public class DivergeBGMap {
                       Iterator<Long> iDidIter = iDocIds.iterator();
                       Iterator<Long> existingDidIter = fgIdsMap.get(exitingAllianceHead).iterator();
                       long iDid = iDidIter.next(), existingDid = existingDidIter.next();
-                      while (existingHeadNonOverlap <= maxDiffCnt && iDidIter.hasNext() && existingDidIter.hasNext()) {
+                      while (existingHeadNonOverlap <= maxDiffCnt) {
                         if (iDid == existingDid) {
                           // intersDocId.add(iDid);
                           // unionDocId.add(iDid);
-                          iDid = iDidIter.next();
-                          existingDid = existingDidIter.next();
+                          if (iDidIter.hasNext()) {
+                            iDid = iDidIter.next();
+                          } else {
+                            iDid = -1;
+                            break;
+                          }
+                          if (existingDidIter.hasNext()) {
+                            existingDid = existingDidIter.next();
+                          } else {
+                            break;
+                          }
                         } else if (iDid < existingDid) {
                           // unionDocId.add(iDid);
-                          iDid = iDidIter.next();
                           ++existingHeadNonOverlap;
+                          if (iDidIter.hasNext()) {
+                            iDid = iDidIter.next();
+                          } else {
+                            iDid = -1;
+                            break;
+                          }
+
                         } else {
                           // unionDocId.add(candDid);
-                          existingDid = existingDidIter.next();
+                          if (existingDidIter.hasNext()) {
+                            existingDid = existingDidIter.next();
+                          } else {
+                            break;
+                          }
+                        }
+                      }
+                      
+                      while (iDid > 0 && existingHeadNonOverlap <= maxDiffCnt) {
+                        ++existingHeadNonOverlap;
+                        if (iDidIter.hasNext()) {
+                          iDid = iDidIter.next();
+                        } else {
+                          iDid = -1;
+                          break;
                         }
                       }
 
                       if (existingHeadNonOverlap <= maxDiffCnt &&
-                          (avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
-                          || (existingHeadNonOverlap >= currentBestDifference)) {
+                          ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
+                          || existingHeadNonOverlap >= currentBestDifference)) {
                         // or equals prefers existing allinaces to forming new ones
 
                         currentBestDifference = existingHeadNonOverlap;
@@ -767,7 +793,7 @@ public class DivergeBGMap {
         // those ones didn't prove to have any confident children, but we have to give them a chance
         for (java.util.Map.Entry<Set<String>, Double> e : unalliedItemsets.entrySet()) {
           Set<String> itemset = e.getKey();
-          Multiset<String> mergedItemset = HashMultiset.create(itemset);
+//          Multiset<String> mergedItemset = HashMultiset.create(itemset);
           LinkedList<Long> docids = fgIdsMap.get(itemset);
 
           double confidence;
@@ -785,7 +811,7 @@ public class DivergeBGMap {
             confSupp = -1;
           }
 
-          selectionFormat.out().append(printMultiset(mergedItemset));
+          selectionFormat.out().append(printHashset(itemset)); //printMultiset(mergedItemset));
           selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
               confidence,
               klDiver,
@@ -802,6 +828,17 @@ public class DivergeBGMap {
     }
 
   }
+  
+  private static CharSequence printHashset(Set<String> itemset) {
+    String[] elts = itemset.toArray(new String[itemset.size()]);
+    StringBuilder retVal = new StringBuilder();
+    Arrays.sort(elts);
+    for (String e : elts) {
+      retVal.append("," + e + "(1)");
+    }
+    return retVal.substring(1);
+  }
+  
   private static CharSequence printMultiset(Multiset<String> mset) {
     String[] elts = mset.elementSet().toArray(new String[mset.entrySet().size()]);
     StringBuilder retVal = new StringBuilder();
