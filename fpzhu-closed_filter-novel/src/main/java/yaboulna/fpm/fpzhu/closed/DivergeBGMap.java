@@ -24,12 +24,12 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
@@ -233,6 +233,8 @@ public class DivergeBGMap {
       Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
       Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
       Map<Set<String>, Double> confidentItemsets = Maps.newHashMap();
+      Set<String> preAllocatedSet1 = Sets.newHashSet();
+      Set<String> preAllocatedSet2 = Sets.newHashSet();
 
       LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
 
@@ -306,8 +308,12 @@ public class DivergeBGMap {
 // continue;
 // }
 
-                interset = Sets.newLinkedHashSet();
-                isPisUnion = Sets.newLinkedHashSet();
+                interset = preAllocatedSet1;
+                isPisUnion = preAllocatedSet2;
+                
+                interset.clear();
+                isPisUnion.clear();
+               
 
                 int minOverlap = (int) Math
                     .ceil((ITEMSET_SIMILARITY_PROMISING_THRESHOLD / (1.0 + ITEMSET_SIMILARITY_PROMISING_THRESHOLD))
@@ -423,7 +429,8 @@ public class DivergeBGMap {
                       // IDF weights
                       Double idf = bgIDFMap.get(interItem);
                       if (idf == null) {
-                        Integer bgCnt = bgCountMap.get(Sets.newCopyOnWriteArraySet(Arrays.asList(interItem)));
+// Is this faster, or that:ImmutableSet.of(interItem) ?
+                        Integer bgCnt = bgCountMap.get(Collections.singleton(interItem));
                         if (bgCnt == null) {
                           bgCnt = 0;
                         }
