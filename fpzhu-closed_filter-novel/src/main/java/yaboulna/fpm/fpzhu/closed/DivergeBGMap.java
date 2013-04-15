@@ -586,16 +586,16 @@ public class DivergeBGMap {
                 // Try and join and existing alliance
                 Set<String> bestAllianceHead = cand;
 
-                Set<Set<String>> existingAllainceHeads = allianceTransitive.get(cand);
+                Set<Set<String>> candidateTransHeads = allianceTransitive.get(cand);
                 // what did the candidate do wrong to ignore it if it doesn't have earlier allies?
-// if(existingAllainceHeads == null){
-// existingAllainceHeads = allianceTransitive.get(itemset);
+// if(candidateTransHeads == null){
+// candidateTransHeads = allianceTransitive.get(itemset);
 // } else {
 //
 // }
                 int currentBestDifference = differentDocs;
-                if (existingAllainceHeads != null) {
-                  for (Set<String> exitingAllianceHead : existingAllainceHeads) {
+                if (candidateTransHeads != null) {
+                  for (Set<String> exitingAllianceHead : candidateTransHeads) {
                     int existingHeadNonOverlap = 0;
                     Iterator<Long> iDidIter = iDocIds.iterator();
                     Iterator<Long> existingDidIter = fgIdsMap.get(exitingAllianceHead).iterator();
@@ -647,7 +647,8 @@ public class DivergeBGMap {
 
                     if (existingHeadNonOverlap <= maxDiffCnt &&
                         ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
-                        || existingHeadNonOverlap >= currentBestDifference)) {
+                        || (exitingAllianceHead.size() < bestAllianceHead.size()
+                            || existingHeadNonOverlap < currentBestDifference))) {
                       // or equals prefers existing allinaces to forming new ones
 
                       currentBestDifference = existingHeadNonOverlap;
@@ -657,10 +658,9 @@ public class DivergeBGMap {
                   }
                 }
 
-                if ((currentBestDifference > theOnlyOnesDifference) ||
-                    (currentBestDifference == theOnlyOnesDifference
-                    && (theOnlyOneIllMerge == null // redundant because cannot be == while null
-                    || bestAllianceHead.size() < theOnlyOneIllMerge.size()))) {
+                if ((theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size()) 
+                    || (currentBestDifference < theOnlyOnesDifference)){
+                    
                   theOnlyOneIllMerge = bestAllianceHead;
                   theOnlyOnesDifference = currentBestDifference;
                 }
@@ -668,21 +668,21 @@ public class DivergeBGMap {
             }
             if (theOnlyOneIllMerge != null) {
               // /////////// Store that you joined this alliance
-              Set<Set<String>> existingAllainceHeads = allianceTransitive.get(itemset);
-              if (existingAllainceHeads == null) {
-                existingAllainceHeads = Sets.newHashSet();
-                allianceTransitive.put(itemset, existingAllainceHeads);
+              Set<Set<String>> transHeads = allianceTransitive.get(itemset);
+              if (transHeads == null) {
+                transHeads = Sets.newHashSet();
+                allianceTransitive.put(itemset, transHeads);
               } else {
                 LOG.warn("I thought we will never find a cluster (alliance) head from earlier, " +
                     "but the itemset {} already has {} while the current alleged onlyOneIllMerge is :"
-                    + theOnlyOneIllMerge, itemset, existingAllainceHeads);
+                    + theOnlyOneIllMerge, itemset, transHeads);
               }
               // Cannot happen with the hard clusters (since the only one)
-// if (existingAllainceHeads.contains(theOnlyOneIllMerge)) {
+// if (transHeads.contains(theOnlyOneIllMerge)) {
 // // // this itemset is already part of the alliance, in an earlier iteration
 // continue;
 // }
-              existingAllainceHeads.add(theOnlyOneIllMerge);
+              transHeads.add(theOnlyOneIllMerge);
 
               java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
                   .get(theOnlyOneIllMerge);
