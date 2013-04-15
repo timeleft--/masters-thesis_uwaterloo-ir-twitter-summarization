@@ -74,7 +74,7 @@ public class DivergeBGMap {
 // mapBuilder.put(itemset, count);
       CopyOnWriteArraySet<String> itemset = Sets.newCopyOnWriteArraySet(comaSplitter.split(itemsetStr));
       
-      if(skipOneCharSets && itemset.size() > 1 && 
+      if(skipOneCharSets && // itemset.size() > 1 && 
           ((itemsetStr.length() - (itemset.size() - 1) ) * 1.0 / itemset.size()) < 2){
         return true;
       }
