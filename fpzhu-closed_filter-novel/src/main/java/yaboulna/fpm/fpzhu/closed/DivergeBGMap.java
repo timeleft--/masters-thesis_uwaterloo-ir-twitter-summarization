@@ -124,6 +124,8 @@ public class DivergeBGMap {
 
   private static final boolean RESEARCH_MODE = true;
 
+  private static final boolean QUALITY_APPRECIATE_LARGE_ALLIANCES = false;
+
   /**
    * @param args
    * @throws IOException
@@ -802,7 +804,7 @@ public class DivergeBGMap {
               "\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
               confidence,
               klDiver,
-              calcSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
+              calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
                   idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
               unionDocId.size(),
               calcEntropy(mergedItemset.elementSet(), entropyFromBg ? bgCountMap : fgCountMap,
@@ -837,7 +839,7 @@ public class DivergeBGMap {
           selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t",
               confidence,
               klDiver,
-              calcSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
+              calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
                   idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
               supp,
               calcEntropy(itemset, entropyFromBg ? bgCountMap : fgCountMap,
@@ -866,9 +868,10 @@ public class DivergeBGMap {
     return -e;
   }
 
-  private static double calcSumTfIdf(Multiset<String> mergedItemset, Map<Set<String>, Integer> countMap,
+  private static double calcNormalizedSumTfIdf(Multiset<String> mergedItemset, Map<Set<String>, Integer> countMap,
       double numTweets, Map<String, Double> cachedIDFMap) {
     double retVal = 0;
+    int sumTf = 0;
     for (Entry<String> e : mergedItemset.entrySet()) {
       Double idf = cachedIDFMap.get(e.getElement());
       if (idf == null) {
@@ -878,9 +881,11 @@ public class DivergeBGMap {
         }
         idf = Math.log(numTweets * 1.0 / (itemCnt + 1));
       }
-      retVal += e.getCount() * idf;
+      int tf = (QUALITY_APPRECIATE_LARGE_ALLIANCES ? e.getCount() : 1);
+      sumTf += tf;
+      retVal += tf * idf;
     }
-    return retVal;
+    return retVal / sumTf;
   }
 
   private static CharSequence printHashset(Set<String> itemset) {
