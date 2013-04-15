@@ -209,7 +209,13 @@ public class DivergeBGMap {
     Splitter underscoreSplit = Splitter.on('_');
 
     Map<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> growingAlliances = Maps.newHashMap();
-    
+    Map<Set<String>, Set<String>> itemsetParentMap = Maps.newHashMap();
+    Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
+    Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
+    Map<Set<String>, Double> confidentItemsets = Maps.newHashMap();
+    Set<String> preAllocatedSet1 = Sets.newHashSet();
+    Set<String> preAllocatedSet2 = Sets.newHashSet();
+
     for (File fgF : fgFiles) {
       long windowStartUx = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 2));
       long idealBgStartUx = windowStartUx - histLenSecs;
@@ -255,6 +261,11 @@ public class DivergeBGMap {
 
       final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", selectionPfx));
 
+      if(!GROW_ALLIANCES_ACROSS_EPOCHS){
+        growingAlliances.clear();
+      }
+      unalliedItemsets.clear();
+      confidentItemsets.clear();
       LinkedList<Set<String>> mergeCandidates = Lists.newLinkedList();
 // Multiset<String> mergedItemset = HashMultiset.create();
 // Set<Long> grandUionDocId = Sets.newHashSet();
@@ -265,13 +276,7 @@ public class DivergeBGMap {
 // intersDocId = Sets.newHashSet();
 
      
-      Map<Set<String>, Set<String>> itemsetParentMap = Maps.newHashMap();
-      Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
-      Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
-      Map<Set<String>, Double> confidentItemsets = Maps.newHashMap();
-      Set<String> preAllocatedSet1 = Sets.newHashSet();
-      Set<String> preAllocatedSet2 = Sets.newHashSet();
-
+      
       LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
 
       Closer novelClose = Closer.create();
@@ -838,9 +843,7 @@ public class DivergeBGMap {
 
           selectionFormat.out().append("\n");
         }
-        if(!GROW_ALLIANCES_ACROSS_EPOCHS){
-          growingAlliances.clear();
-        }
+        
         // Print the parents that were pending alliance with children to make sure they have conf
         // those ones didn't prove to have any confident children, but we have to give them a chance
         for (java.util.Map.Entry<Set<String>, Double> e : unalliedItemsets.entrySet()) {
@@ -870,7 +873,6 @@ public class DivergeBGMap {
               calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap,bgNumTweets, fgNumTweets));
           selectionFormat.out().append(docids.toString().substring(1));
         }
-        unalliedItemsets.clear();
 
       } finally {
         novelClose.close();
