@@ -323,7 +323,7 @@ public class DivergeBGMap {
             if (!fallBackToItemsKLD) {
               bgCount = 1;
             } else {
-              klDiver = calcComponentsKLDiver(itemset, bgCountMap, fgCountMap, bgFgLogP, kldCache);
+              klDiver = calcComponentsKLDiver(itemset, fgFreq, bgCountMap, fgCountMap, bgFgLogP, kldCache);
             }
           }
           if (bgCount != null) {
@@ -871,7 +871,8 @@ public class DivergeBGMap {
             if (!fallBackToItemsKLD) {
               bgCount = 1;
             } else {
-              klDiver = calcComponentsKLDiver(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgFgLogP, kldCache);
+              klDiver = calcComponentsKLDiver(mergedItemset.elementSet(), unionDocId.size(),
+                  bgCountMap, fgCountMap, bgFgLogP, kldCache);
             }
           }
           if (bgCount != null) {
@@ -943,10 +944,9 @@ public class DivergeBGMap {
 
   }
 
-  private static double calcComponentsKLDiver(Set<String> itemset, Map<Set<String>, Integer> bgCountMap,
+  private static double calcComponentsKLDiver(Set<String> itemset, double itemsetCnt, Map<Set<String>, Integer> bgCountMap,
       Map<Set<String>, Integer> fgCountMap, double bgFgLogP, Map<String, Double> kldCache) {
     double retVal = 0;
-    int itemsetCnt = fgCountMap.get(itemset);
     for (String item : itemset) {
       Double itemKLD = kldCache.get(item);
       if (itemKLD == null) {
@@ -957,7 +957,7 @@ public class DivergeBGMap {
           continue; // this is very important because we don't want wierd words to get high scores
         }
         if (fgItemCnt == null) {
-          fgItemCnt = itemsetCnt;
+          fgItemCnt = (int)itemsetCnt;
         }
         // Multiplying by many hight numbers makes this value absolutlely high: fgItemCnt.doubleValue() *
         itemKLD = (Math.log(fgItemCnt.doubleValue() / bgItemCnt.doubleValue()) + bgFgLogP);
