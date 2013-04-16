@@ -161,6 +161,14 @@ public class DivergeBGMap {
       entropyFromBg = args[2].contains("EntBg");
       growAlliancesAcrossEpochs = args[2].contains("Grow");
     }
+    
+    LOG.info("stopMatchingLimitedBufferSize: " + stopMatchingLimitedBufferSize);
+    LOG.info("stopMatchingParentFSimLow: " + stopMatchingParentFSimLow);
+    LOG.info("avoidFormingNewAllianceIfPossible: " + avoidFormingNewAllianceIfPossible);
+    LOG.info("ppJoin: " + ppJoin);
+    LOG.info("idfFromBG: " + idfFromBG);
+    LOG.info("entropyFromBg: " + entropyFromBg);
+    LOG.info("growAlliancesAcrossEpochs: " + growAlliancesAcrossEpochs);
 
     int histLenSecs = 4 * 7 * 24 * 3600;
     if (args.length > 3) {
@@ -218,6 +226,16 @@ public class DivergeBGMap {
     Map<Set<String>, Double> confidentItemsets = Maps.newHashMap();
     Set<String> preAllocatedSet1 = Sets.newHashSet();
     Set<String> preAllocatedSet2 = Sets.newHashSet();
+    LinkedList<Set<String>> mergeCandidates = Lists.newLinkedList();
+ // Multiset<String> mergedItemset = HashMultiset.create();
+ // Set<Long> grandUionDocId = Sets.newHashSet();
+ // Set<Long> grandIntersDocId = Sets.newHashSet();
+ // LinkedList<Long> unionDocId;
+ // Set<Long> intersDocId;
+ // unionDocId = Lists.newLinkedList();
+ // intersDocId = Sets.newHashSet();
+
+       LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
 
     for (File fgF : fgFiles) {
       long windowStartUx = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 2));
@@ -245,9 +263,17 @@ public class DivergeBGMap {
 
       if (!growAlliancesAcrossEpochs) {
         growingAlliances.clear();
+        allianceTransitive.clear();
+        itemsetParentMap.clear();
         fgCountMap.clear();
         fgIdsMap.clear();
       }
+      unalliedItemsets.clear();
+      confidentItemsets.clear();
+      mergeCandidates.clear();
+      prevItemsets.clear();
+
+      
       LOG.info("Loading foreground freqs from {}", fgF);
       Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgCountMap, fgIdsMap));
       LOG.info("Loaded foreground freqs - num itemsets: {}", fgCountMap.size());
@@ -266,19 +292,6 @@ public class DivergeBGMap {
       }
 
       final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", selectionPfx));
-
-      unalliedItemsets.clear();
-      confidentItemsets.clear();
-      LinkedList<Set<String>> mergeCandidates = Lists.newLinkedList();
-// Multiset<String> mergedItemset = HashMultiset.create();
-// Set<Long> grandUionDocId = Sets.newHashSet();
-// Set<Long> grandIntersDocId = Sets.newHashSet();
-// LinkedList<Long> unionDocId;
-// Set<Long> intersDocId;
-// unionDocId = Lists.newLinkedList();
-// intersDocId = Sets.newHashSet();
-
-      LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
 
       Closer novelClose = Closer.create();
       try {
