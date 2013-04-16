@@ -128,8 +128,6 @@ public class DivergeBGMap {
 
   private static final boolean QUALITY_APPRECIATE_LARGE_ALLIANCES = false;
 
-  
-
   /**
    * @param args
    * @throws IOException
@@ -152,6 +150,8 @@ public class DivergeBGMap {
     boolean idfFromBG = true;
     boolean entropyFromBg = true;
     boolean growAlliancesAcrossEpochs = false;
+    boolean filterLowKLD = false;
+    boolean fallBackToItemsKLD = true;
     if (args.length > 2) {
       stopMatchingLimitedBufferSize = args[2].contains("Buff");
       stopMatchingParentFSimLow = args[2].contains("SimLow");
@@ -160,8 +160,9 @@ public class DivergeBGMap {
       idfFromBG = args[2].contains("IdfBg");
       entropyFromBg = args[2].contains("EntBg");
       growAlliancesAcrossEpochs = args[2].contains("Grow");
+      filterLowKLD = args[2].contains("FLKld");
     }
-    
+
     LOG.info("stopMatchingLimitedBufferSize: " + stopMatchingLimitedBufferSize);
     LOG.info("stopMatchingParentFSimLow: " + stopMatchingParentFSimLow);
     LOG.info("avoidFormingNewAllianceIfPossible: " + avoidFormingNewAllianceIfPossible);
@@ -169,6 +170,7 @@ public class DivergeBGMap {
     LOG.info("idfFromBG: " + idfFromBG);
     LOG.info("entropyFromBg: " + entropyFromBg);
     LOG.info("growAlliancesAcrossEpochs: " + growAlliancesAcrossEpochs);
+    LOG.info("filterLowKLD: " + filterLowKLD);
 
     int histLenSecs = 4 * 7 * 24 * 3600;
     if (args.length > 3) {
@@ -185,11 +187,14 @@ public class DivergeBGMap {
     String options;
     if (args.length > 2) {
       options = args[2];
+      if (args[2].contains("Kld")) {
+        options += "_KLD" + KLDIVERGENCE_MIN;
+      }
     } else {
       options = "Buff-SimLow-AvoidNew-Ppj-IdfBg-EntBg";
     }
-    novelPfx += options + "_KLD" + KLDIVERGENCE_MIN + "_";
-    selectionPfx += options + "_KLD" + KLDIVERGENCE_MIN + "_";
+    novelPfx += options + "_";
+    selectionPfx += options + "_";
 
     // FIXMED: if there are any .out files, this will cause an error now... skip them
     IOFileFilter fpNotOutFilter = new IOFileFilter() {
@@ -227,15 +232,18 @@ public class DivergeBGMap {
     Set<String> preAllocatedSet1 = Sets.newHashSet();
     Set<String> preAllocatedSet2 = Sets.newHashSet();
     LinkedList<Set<String>> mergeCandidates = Lists.newLinkedList();
- // Multiset<String> mergedItemset = HashMultiset.create();
- // Set<Long> grandUionDocId = Sets.newHashSet();
- // Set<Long> grandIntersDocId = Sets.newHashSet();
- // LinkedList<Long> unionDocId;
- // Set<Long> intersDocId;
- // unionDocId = Lists.newLinkedList();
- // intersDocId = Sets.newHashSet();
+    // Multiset<String> mergedItemset = HashMultiset.create();
+    // Set<Long> grandUionDocId = Sets.newHashSet();
+    // Set<Long> grandIntersDocId = Sets.newHashSet();
+    // LinkedList<Long> unionDocId;
+    // Set<Long> intersDocId;
+    // unionDocId = Lists.newLinkedList();
+    // intersDocId = Sets.newHashSet();
+    
+    Map<String, Double> kldCache = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS / 10);
 
-       LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
+    
+    LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
 
     for (File fgF : fgFiles) {
       long windowStartUx = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 2));
@@ -253,7 +261,9 @@ public class DivergeBGMap {
             LOG.info("Loading background freqs from {}", bgFiles.get(b));
             loadedBgStartUx = bgFileWinStart;
             bgCountMap.clear();
-            bgIDFMap.clear();
+            if (idfFromBG) {
+              bgIDFMap.clear();
+            }
             Files.readLines(bgFiles.get(b), Charsets.UTF_8, new ItemsetTabCountProcessor(bgCountMap, null));
             LOG.info("Loaded background freqs - num itemsets: {} ", bgCountMap.size());
           }
@@ -272,8 +282,11 @@ public class DivergeBGMap {
       confidentItemsets.clear();
       mergeCandidates.clear();
       prevItemsets.clear();
+      kldCache.clear();
+      if (!idfFromBG) {
+        bgIDFMap.clear();
+      }
 
-      
       LOG.info("Loading foreground freqs from {}", fgF);
       Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgCountMap, fgIdsMap));
       LOG.info("Loaded foreground freqs - num itemsets: {}", fgCountMap.size());
@@ -296,8 +309,6 @@ public class DivergeBGMap {
       Closer novelClose = Closer.create();
       try {
         Formatter highPrecFormat = novelClose.register(new Formatter(novelFile, Charsets.UTF_8.name()));
-// final Writer novelWr = novelClose.register(Channels.newWriter(FileUtils.openOutputStream(novelFile)
-// .getChannel(), Charsets.UTF_8.name()));
 
         Formatter selectionFormat = novelClose.register(new Formatter(selFile, Charsets.UTF_8.name()));
 
@@ -305,20 +316,21 @@ public class DivergeBGMap {
         for (Set<String> itemset : fgCountMap.keySet()) {
 
           double fgFreq = fgCountMap.get(itemset) + 1.0;
-// double fgLogP = Math.log(fgFreq / fgNumTweets);
 
           Integer bgCount = bgCountMap.get(itemset);
-          if (bgCount == null)
-            bgCount = 1;
-// bgLogP = 2 * fgLogP; // so that the final result will be the abs(fpLogP)
-// } else {
-// bgLogP = Math.log(bgCount / bgNumTweets);
-// }
+          double klDiver = Double.MIN_VALUE;
+          if (bgCount == null) {
+            if (!fallBackToItemsKLD) {
+              bgCount = 1;
+            } else {
+              klDiver = calcComponentsKLDiver(itemset, bgCountMap, fgCountMap, bgFgLogP, kldCache);
+            }
+          }
+          if (bgCount != null) {
+            klDiver = fgFreq * (Math.log(fgFreq / bgCount) + bgFgLogP);
+          }
 
-          double klDiver = fgFreq * (Math.log(fgFreq / bgCount) + bgFgLogP);
-
-          if (klDiver > KLDIVERGENCE_MIN) {
-// novelWr.append(itemset).append('\t').append(Doubles. String.format(klDiver)).append('\n');
+          if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
             highPrecFormat.format(itemset + "\t%.15f\t%s\n", klDiver,
                 (fgIdsMap.containsKey(itemset) ? fgIdsMap.get(itemset) : ""));
           }
@@ -332,7 +344,7 @@ public class DivergeBGMap {
 
           if (itemset.size() == 1) {
             prevItemsets.addLast(itemset);
-          } else if (klDiver > KLDIVERGENCE_MIN) {
+          } else if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
             LinkedList<Long> iDocIds = fgIdsMap.get(itemset);
             if (iDocIds == null || iDocIds.isEmpty()) {
               prevItemsets.addLast(itemset);
@@ -540,7 +552,7 @@ public class DivergeBGMap {
             }
 
             // Add to previous for next iterations to access it, regardless if it will get merged or not.. it can
-            prevItemsets.add(itemset);
+            prevItemsets.addLast(itemset);
 
 // mergedItemset.clear();
 
@@ -852,14 +864,28 @@ public class DivergeBGMap {
           // were pending alliance to get printed it can be removed now
           unalliedItemsets.remove(parentItemset);
           Multiset<String> mergedItemset = e.getValue().getKey();
-          double klDiver = unionDocId.size();
+
+          double klDiver = Double.MIN_VALUE;
           Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
           if (bgCount == null) {
-            bgCount = 1;
-          } else {
-// LOG.trace("it matches background");
+            if (!fallBackToItemsKLD) {
+              bgCount = 1;
+            } else {
+              klDiver = calcComponentsKLDiver(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgFgLogP, kldCache);
+            }
           }
-          klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+          if (bgCount != null) {
+            klDiver = unionDocId.size() * 1.0 * (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+          }
+
+// double klDiver = unionDocId.size();
+// Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
+// if (bgCount == null) {
+// bgCount = 1;
+// } else {
+// // LOG.trace("it matches background");
+// }
+// klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
 
           selectionFormat.out().append(printMultiset(mergedItemset));
           selectionFormat.format(
@@ -899,14 +925,14 @@ public class DivergeBGMap {
 
           selectionFormat.out().append(printMultiset(mergedItemset));
           selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
-              confidence, //2
-              klDiver, //3
+              confidence, // 2
+              klDiver, // 3
               calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
-                  idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap), //4
-              supp, //5
+                  idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap), // 4
+              supp, // 5
               calcEntropy(itemset, entropyFromBg ? bgCountMap : fgCountMap,
-                  entropyFromBg ? bgNumTweets : fgNumTweets), //6
-              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets)); //7
+                  entropyFromBg ? bgNumTweets : fgNumTweets), // 6
+              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets)); // 7
           selectionFormat.out().append(docids.toString().substring(1));
         }
 
@@ -915,6 +941,32 @@ public class DivergeBGMap {
       }
     }
 
+  }
+
+  private static double calcComponentsKLDiver(Set<String> itemset, Map<Set<String>, Integer> bgCountMap,
+      Map<Set<String>, Integer> fgCountMap, double bgFgLogP, Map<String, Double> kldCache) {
+    double retVal = 0;
+    int itemsetCnt = fgCountMap.get(itemset);
+    for (String item : itemset) {
+      Double itemKLD = kldCache.get(item);
+      if (itemKLD == null) {
+        Set<String> itemKey = Collections.singleton(item);
+        Integer bgItemCnt = bgCountMap.get(itemKey);
+        Integer fgItemCnt = fgCountMap.get(itemKey);
+        if (bgItemCnt == null) {
+          continue; // this is very important because we don't want wierd words to get high scores
+        }
+        if (fgItemCnt == null) {
+          fgItemCnt = itemsetCnt;
+        }
+        // Multiplying by many hight numbers makes this value absolutlely high: fgItemCnt.doubleValue() *
+        itemKLD = (Math.log(fgItemCnt.doubleValue() / bgItemCnt.doubleValue()) + bgFgLogP);
+        kldCache.put(item, itemKLD);
+      }
+      retVal += itemKLD;
+    }
+
+    return itemsetCnt * retVal;
   }
 
   private static double calcCrossEntropy(Set<String> itemset, Map<Set<String>, Integer> bgCountMap,
