@@ -349,6 +349,7 @@ public class DivergeBGMap {
           } else if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
             LinkedList<Long> iDocIds = fgIdsMap.get(itemset);
             if (iDocIds == null || iDocIds.isEmpty()) {
+              LOG.warn("Using a foreground file with truncated docids. No docids for itemset: " + iDocIds);
               prevItemsets.addLast(itemset);
               continue;
             }
@@ -473,11 +474,15 @@ public class DivergeBGMap {
 
                 mergeCandidates.add(pis);
                 if (parentItemset == null) {
+                  parentItemset = pis;
                   // first parent to encounter will be have the lowest support, thus gives highest confidence
                   double pisFreq = fgCountMap.get(pis);
                   maxConfidence = fgCountMap.get(itemset) / pisFreq;
+                  if(LOG.isTraceEnabled()) LOG.trace("{} found parent {}, with confidence: " + maxConfidence, itemset, pis);
+                } else {
+                  if(LOG.isTraceEnabled()) LOG.trace("{} found another parent {}", itemset, pis);
                 }
-                parentItemset = pis;
+                
 // if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
 // // it will get printed without alliances.. oh, it doesn't need alliance
 // allied = true;
@@ -490,9 +495,10 @@ public class DivergeBGMap {
 
                 double isPisSim = interset.size() * 1.0 / isPisUnion.size();
                 if (isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
+                  String simMeasure;
+                  if (isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
                   double pisNorm = 0;
                   double itemsetNormTemp = 0;
-                  if (isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
                     // calculate the cosine similarity only if the jaccard similarity isn't enough
                     isPisSim = 0;
                     for (String interItem : isPisUnion) {
@@ -534,9 +540,13 @@ public class DivergeBGMap {
                       itemsetNorm = Math.sqrt(itemsetNormTemp);
                     }
                     isPisSim /= Math.sqrt(pisNorm) * itemsetNorm;
+                    simMeasure = "Cosine";
+                  } else {
+                   simMeasure = "Jaccard";
                   }
                   if (isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD) {
                     mergeCandidates.add(pis);
+                    if(LOG.isTraceEnabled()) LOG.trace("{} " + simMeasure + "{} = " + isPisSim, itemset, pis);
                   }
                 }
 
@@ -577,6 +587,9 @@ public class DivergeBGMap {
             if (growAlliancesAcrossEpochs && allianceTransitive.containsKey(itemset)) {
               mergeCandidates.addAll(allianceTransitive.get(itemset));
             }
+            
+            if(LOG.isTraceEnabled()) LOG.trace(itemset + " merge candidates: " + mergeCandidates);
+            		
             for (Set<String> cand : mergeCandidates) {
               LinkedList<Long> candDocIds = fgIdsMap.get(cand);
               int differentDocs = 0;
@@ -749,7 +762,9 @@ public class DivergeBGMap {
                 }
               }
             }
+            
             if (theOnlyOneIllMerge != null) {
+              if(LOG.isTraceEnabled()) LOG.trace(itemset + " the only one to merge with: " + theOnlyOneIllMerge);
               // /////////// Store that you joined this alliance
               Set<Set<String>> transHeads = allianceTransitive.get(itemset);
               if (transHeads != null) {
@@ -807,6 +822,8 @@ public class DivergeBGMap {
               alliedItemsets.getValue().addAll(iDocIds);
 
               allied = true;
+            } else {
+              if(LOG.isTraceEnabled()) LOG.trace(itemset + " no one to merge with");
             }
 
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
