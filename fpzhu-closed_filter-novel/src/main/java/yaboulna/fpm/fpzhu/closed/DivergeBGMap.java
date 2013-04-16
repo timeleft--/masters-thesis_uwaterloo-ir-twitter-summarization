@@ -241,10 +241,9 @@ public class DivergeBGMap {
     // Set<Long> intersDocId;
     // unionDocId = Lists.newLinkedList();
     // intersDocId = Sets.newHashSet();
-    
+
     Map<String, Double> kldCache = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS / 10);
 
-    
     LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
 
     for (File fgF : fgFiles) {
@@ -353,6 +352,9 @@ public class DivergeBGMap {
               prevItemsets.addLast(itemset);
               continue;
             }
+
+            if (LOG.isTraceEnabled())
+              LOG.trace(itemset + " docids: " + iDocIds);
 
             Double itemsetNorm = null;
             mergeCandidates.clear();
@@ -478,11 +480,13 @@ public class DivergeBGMap {
                   // first parent to encounter will be have the lowest support, thus gives highest confidence
                   double pisFreq = fgCountMap.get(pis);
                   maxConfidence = fgCountMap.get(itemset) / pisFreq;
-                  if(LOG.isTraceEnabled()) LOG.trace("{} found parent {}, with confidence: " + maxConfidence, itemset, pis);
+                  if (LOG.isTraceEnabled())
+                    LOG.trace("{} found parent {}, with confidence: " + maxConfidence, itemset, pis);
                 } else {
-                  if(LOG.isTraceEnabled()) LOG.trace("{} found another parent {}", itemset, pis);
+                  if (LOG.isTraceEnabled())
+                    LOG.trace("{} found another parent {}", itemset, pis);
                 }
-                
+
 // if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
 // // it will get printed without alliances.. oh, it doesn't need alliance
 // allied = true;
@@ -497,8 +501,8 @@ public class DivergeBGMap {
                 if (isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
                   String simMeasure;
                   if (isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
-                  double pisNorm = 0;
-                  double itemsetNormTemp = 0;
+                    double pisNorm = 0;
+                    double itemsetNormTemp = 0;
                     // calculate the cosine similarity only if the jaccard similarity isn't enough
                     isPisSim = 0;
                     for (String interItem : isPisUnion) {
@@ -542,11 +546,12 @@ public class DivergeBGMap {
                     isPisSim /= Math.sqrt(pisNorm) * itemsetNorm;
                     simMeasure = "Cosine";
                   } else {
-                   simMeasure = "Jaccard";
+                    simMeasure = "Jaccard";
                   }
                   if (isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD) {
                     mergeCandidates.add(pis);
-                    if(LOG.isTraceEnabled()) LOG.trace("{} " + simMeasure + "{} = " + isPisSim, itemset, pis);
+                    if (LOG.isTraceEnabled())
+                      LOG.trace("{} " + simMeasure + "{} = " + isPisSim, itemset, pis);
                   }
                 }
 
@@ -587,9 +592,10 @@ public class DivergeBGMap {
             if (growAlliancesAcrossEpochs && allianceTransitive.containsKey(itemset)) {
               mergeCandidates.addAll(allianceTransitive.get(itemset));
             }
-            
-            if(LOG.isTraceEnabled()) LOG.trace(itemset + " merge candidates: " + mergeCandidates);
-            		
+
+            if (LOG.isTraceEnabled())
+              LOG.trace(itemset + " merge candidates: " + mergeCandidates);
+
             for (Set<String> cand : mergeCandidates) {
               LinkedList<Long> candDocIds = fgIdsMap.get(cand);
               int differentDocs = 0;
@@ -762,9 +768,10 @@ public class DivergeBGMap {
                 }
               }
             }
-            
+
             if (theOnlyOneIllMerge != null) {
-              if(LOG.isTraceEnabled()) LOG.trace(itemset + " the only one to merge with: " + theOnlyOneIllMerge);
+              if (LOG.isTraceEnabled())
+                LOG.trace(itemset + " the only one to merge with: " + theOnlyOneIllMerge);
               // /////////// Store that you joined this alliance
               Set<Set<String>> transHeads = allianceTransitive.get(itemset);
               if (transHeads != null) {
@@ -823,7 +830,8 @@ public class DivergeBGMap {
 
               allied = true;
             } else {
-              if(LOG.isTraceEnabled()) LOG.trace(itemset + " no one to merge with");
+              if (LOG.isTraceEnabled())
+                LOG.trace(itemset + " no one to merge with");
             }
 
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
@@ -873,16 +881,21 @@ public class DivergeBGMap {
 
         for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
             .entrySet()) {
+          Multiset<String> mergedItemset = e.getValue().getKey();
           Set<Long> unionDocId = e.getValue().getValue();
           Set<String> parentItemset = itemsetParentMap.get(e.getKey());
           double confidence = unionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
           if (confidence < HIGH_CONFIDENCE_THRESHOLD && !RESEARCH_MODE) {
             continue;
+          } else if (confidence >= 1) {
+            if (LOG.isTraceEnabled())
+              LOG.trace(mergedItemset + " is stronger alliance ({}) than its head's ({}) parent: " + 
+                  parentItemset + "@" + fgIdsMap.get(parentItemset).size(),
+                  unionDocId.size(), e.getKey());
           }
           // The parent will be present in the final output within this itemset, so even if it
           // were pending alliance to get printed it can be removed now
           unalliedItemsets.remove(parentItemset);
-          Multiset<String> mergedItemset = e.getValue().getKey();
 
           double klDiver = Double.MIN_VALUE;
           Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
@@ -963,7 +976,8 @@ public class DivergeBGMap {
 
   }
 
-  private static double calcComponentsKLDiver(Set<String> itemset, double itemsetCnt, Map<Set<String>, Integer> bgCountMap,
+  private static double calcComponentsKLDiver(Set<String> itemset, double itemsetCnt,
+      Map<Set<String>, Integer> bgCountMap,
       Map<Set<String>, Integer> fgCountMap, double bgFgLogP, Map<String, Double> kldCache) {
     double retVal = 0;
     for (String item : itemset) {
@@ -976,7 +990,7 @@ public class DivergeBGMap {
           continue; // this is very important because we don't want wierd words to get high scores
         }
         if (fgItemCnt == null) {
-          fgItemCnt = (int)itemsetCnt;
+          fgItemCnt = (int) itemsetCnt;
         }
         // Multiplying by many hight numbers makes this value absolutlely high: fgItemCnt.doubleValue() *
         itemKLD = (Math.log(fgItemCnt.doubleValue() / bgItemCnt.doubleValue()) + bgFgLogP);
