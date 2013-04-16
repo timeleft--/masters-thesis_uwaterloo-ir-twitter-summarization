@@ -112,7 +112,8 @@ public class DivergeBGMap {
   private static final double CLOSED_CONFIDENCE_THRESHOLD = 0.05; // upper bound
   private static final double HIGH_CONFIDENCE_THRESHOLD = 0.125; // lower bound
 
-  private static final double ITEMSET_SIMILARITY_GOOD_THRESHOLD = 0.66; // Jaccard or Cosine similarity
+  private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
+  private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.66; // Cosine similarity
   private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0.33; // Jaccard similarity
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
@@ -127,7 +128,7 @@ public class DivergeBGMap {
 
   private static final boolean QUALITY_APPRECIATE_LARGE_ALLIANCES = false;
 
-  private static final boolean GROW_ALLIANCES_ACROSS_EPOCHS = true;
+  
 
   /**
    * @param args
@@ -150,6 +151,7 @@ public class DivergeBGMap {
     boolean ppJoin = true;
     boolean idfFromBG = true;
     boolean entropyFromBg = true;
+    boolean growAlliancesAcrossEpochs = false;
     if (args.length > 2) {
       stopMatchingLimitedBufferSize = args[2].contains("Buff");
       stopMatchingParentFSimLow = args[2].contains("SimLow");
@@ -157,6 +159,7 @@ public class DivergeBGMap {
       ppJoin = args[2].contains("Ppj");
       idfFromBG = args[2].contains("IdfBg");
       entropyFromBg = args[2].contains("EntBg");
+      growAlliancesAcrossEpochs = args[2].contains("Grow");
     }
 
     int histLenSecs = 4 * 7 * 24 * 3600;
@@ -179,11 +182,6 @@ public class DivergeBGMap {
     }
     novelPfx += options + "_KLD" + KLDIVERGENCE_MIN + "_";
     selectionPfx += options + "_KLD" + KLDIVERGENCE_MIN + "_";
-
-    if (GROW_ALLIANCES_ACROSS_EPOCHS) {
-      novelPfx += "-Growing";
-      selectionPfx += "-Growing";
-    }
 
     // FIXMED: if there are any .out files, this will cause an error now... skip them
     IOFileFilter fpNotOutFilter = new IOFileFilter() {
@@ -245,7 +243,7 @@ public class DivergeBGMap {
         }
       }
 
-      if (!GROW_ALLIANCES_ACROSS_EPOCHS) {
+      if (!growAlliancesAcrossEpochs) {
         growingAlliances.clear();
         fgCountMap.clear();
         fgIdsMap.clear();
@@ -467,7 +465,7 @@ public class DivergeBGMap {
                 if (isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
                   double pisNorm = 0;
                   double itemsetNormTemp = 0;
-                  if (isPisSim < ITEMSET_SIMILARITY_GOOD_THRESHOLD) {
+                  if (isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
                     // calculate the cosine similarity only if the jaccard similarity isn't enough
                     isPisSim = 0;
                     for (String interItem : isPisUnion) {
@@ -510,7 +508,7 @@ public class DivergeBGMap {
                     }
                     isPisSim /= Math.sqrt(pisNorm) * itemsetNorm;
                   }
-                  if (isPisSim >= ITEMSET_SIMILARITY_GOOD_THRESHOLD) {
+                  if (isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD) {
                     mergeCandidates.add(pis);
                   }
                 }
@@ -549,7 +547,7 @@ public class DivergeBGMap {
 
             Set<String> theOnlyOneIllMerge = null;
             int theOnlyOnesDifference = Integer.MIN_VALUE;
-            if (GROW_ALLIANCES_ACROSS_EPOCHS && allianceTransitive.containsKey(itemset)) {
+            if (growAlliancesAcrossEpochs && allianceTransitive.containsKey(itemset)) {
               mergeCandidates.addAll(allianceTransitive.get(itemset));
             }
             for (Set<String> cand : mergeCandidates) {
@@ -728,7 +726,7 @@ public class DivergeBGMap {
               // /////////// Store that you joined this alliance
               Set<Set<String>> transHeads = allianceTransitive.get(itemset);
               if (transHeads != null) {
-                if (GROW_ALLIANCES_ACROSS_EPOCHS) {
+                if (growAlliancesAcrossEpochs) {
                   if (transHeads.size() > 1) {
                     LOG.warn("There should be a maximum of one alliance per itemset.. why do we have these:"
                         + transHeads);
@@ -888,14 +886,14 @@ public class DivergeBGMap {
 
           selectionFormat.out().append(printMultiset(mergedItemset));
           selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
-              confidence,
-              klDiver,
+              confidence, //2
+              klDiver, //3
               calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
-                  idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
-              supp,
+                  idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap), //4
+              supp, //5
               calcEntropy(itemset, entropyFromBg ? bgCountMap : fgCountMap,
-                  entropyFromBg ? bgNumTweets : fgNumTweets),
-              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets));
+                  entropyFromBg ? bgNumTweets : fgNumTweets), //6
+              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets)); //7
           selectionFormat.out().append(docids.toString().substring(1));
         }
 
