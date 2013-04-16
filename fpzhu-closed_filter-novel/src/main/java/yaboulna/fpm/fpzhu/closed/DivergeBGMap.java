@@ -151,7 +151,7 @@ public class DivergeBGMap {
     boolean entropyFromBg = true;
     boolean growAlliancesAcrossEpochs = false;
     boolean filterLowKLD = false;
-    boolean fallBackToItemsKLD = true;
+    boolean fallBackToItemsKLD = false;
     if (args.length > 2) {
       stopMatchingLimitedBufferSize = args[2].contains("Buff");
       stopMatchingParentFSimLow = args[2].contains("SimLow");
@@ -161,6 +161,7 @@ public class DivergeBGMap {
       entropyFromBg = args[2].contains("EntBg");
       growAlliancesAcrossEpochs = args[2].contains("Grow");
       filterLowKLD = args[2].contains("FLKld");
+      fallBackToItemsKLD = args[2].contains("ITKld");
     }
 
     LOG.info("stopMatchingLimitedBufferSize: " + stopMatchingLimitedBufferSize);
@@ -171,6 +172,7 @@ public class DivergeBGMap {
     LOG.info("entropyFromBg: " + entropyFromBg);
     LOG.info("growAlliancesAcrossEpochs: " + growAlliancesAcrossEpochs);
     LOG.info("filterLowKLD: " + filterLowKLD);
+    LOG.info("fallBackToItemsKLD: " + fallBackToItemsKLD);
 
     int histLenSecs = 4 * 7 * 24 * 3600;
     if (args.length > 3) {
