@@ -69,12 +69,12 @@ public class DivergeBGMap {
 
 // Builder<String, Integer> mapBuilder = ImmutableMap.builder();
     final Map<Set<String>, Integer> fpCntMap;
-    final LinkedHashMap<Set<String>, LinkedList<Long>> fpDocIdsMap;
+    final Map<Set<String>, LinkedList<Long>> fpDocIdsMap;
 // Avoid copying this from one frame to another = Maps.newHashMapWithExpectedSize(4444444);
     boolean skipOneCharSets = true;
 
     public ItemsetTabCountProcessor(Map<Set<String>, Integer> fgCountMap,
-        LinkedHashMap<Set<String>, LinkedList<Long>> fgIdsMap) {
+        Map<Set<String>, LinkedList<Long>> fgIdsMap) {
       this.fpCntMap = fgCountMap;
       this.fpDocIdsMap = fgIdsMap;
     }
@@ -252,8 +252,8 @@ public class DivergeBGMap {
     List<File> fgFiles = (List<File>) FileUtils.listFiles(fgDir, fpNotOutFilter,
         FileFilterUtils.trueFileFilter());
     Collections.sort(fgFiles, NameFileComparator.NAME_COMPARATOR);
-    Map<Set<String>, Integer> fgCountMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
-    LinkedHashMap<Set<String>, LinkedList<Long>> fgIdsMap = Maps.newLinkedHashMap();
+    LinkedHashMap<Set<String>, Integer> fgCountMap = Maps.newLinkedHashMap(); 
+    Map<Set<String>, LinkedList<Long>> fgIdsMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
 
     List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, fpNotOutFilter,
         FileFilterUtils.trueFileFilter());
