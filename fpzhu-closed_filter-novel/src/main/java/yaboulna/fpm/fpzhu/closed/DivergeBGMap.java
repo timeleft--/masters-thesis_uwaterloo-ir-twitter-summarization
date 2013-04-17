@@ -203,6 +203,9 @@ public class DivergeBGMap {
       histLenSecs = Integer.parseInt(args[3]);
     }
 
+    int absMaxDiff = 100;
+    //TODO arg
+    
     String novelPfx = "novel_";
 // if (args.length > 3) {
 // novelPfx = args[3];
@@ -296,6 +299,7 @@ public class DivergeBGMap {
         }
       }
 
+      double hrsPerEpoch = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 1)) / 3600;
       if (!growAlliancesAcrossEpochs) {
         growingAlliances.clear();
         allianceTransitive.clear();
@@ -583,7 +587,7 @@ public class DivergeBGMap {
                   if (isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD) {
                     mergeCandidates.add(pis);
                     if (LOG.isTraceEnabled())
-                      LOG.trace("{} " + simMeasure + "{} = " + isPisSim, itemset, pis);
+                      LOG.trace("{} " + simMeasure + " {} = " + isPisSim, itemset, pis);
                   }
                 }
 
@@ -616,8 +620,9 @@ public class DivergeBGMap {
               itemsetParentMap.put(itemset, parentItemset);
             }
 
-            double maxDiffCnt = Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * iDocIds.size()));
+            double maxDiffCnt = Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                    Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * iDocIds.size())));
 
             Set<String> theOnlyOneIllMerge = null;
             int theOnlyOnesDifference = Integer.MIN_VALUE;
@@ -729,9 +734,10 @@ public class DivergeBGMap {
 // }
                 int currentBestDifference = differentDocs;
                 if (candidateTransHeads != null) {
-                  if(LOG.isTraceEnabled())
-                    LOG.trace(itemset + " offered more merge options {} through candidate {}", candidateTransHeads, cand);
-                  
+                  if (LOG.isTraceEnabled())
+                    LOG.trace(itemset + " offered more merge options {} through candidate {}", candidateTransHeads,
+                        cand);
+
                   for (Set<String> exitingAllianceHead : candidateTransHeads) {
                     int existingHeadNonOverlap = 0;
                     Iterator<Long> iDidIter = iDocIds.iterator();
@@ -806,7 +812,8 @@ public class DivergeBGMap {
 
             if (theOnlyOneIllMerge != null) {
               if (LOG.isTraceEnabled())
-                LOG.trace(itemset + " overlaps in {}% of its documents with the only one to merge with: " + theOnlyOneIllMerge, (iDocIds.size() - theOnlyOnesDifference) * 100.0 / iDocIds.size());
+                LOG.trace(itemset + " overlaps in {}% of its documents with the only one to merge with: "
+                    + theOnlyOneIllMerge, (iDocIds.size() - theOnlyOnesDifference) * 100.0 / iDocIds.size());
               // /////////// Store that you joined this alliance
               Set<Set<String>> transHeads = allianceTransitive.get(itemset);
               if (transHeads != null) {
