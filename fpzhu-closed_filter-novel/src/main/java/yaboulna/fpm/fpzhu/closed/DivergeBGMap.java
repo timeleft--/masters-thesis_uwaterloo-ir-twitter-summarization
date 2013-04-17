@@ -878,7 +878,7 @@ public class DivergeBGMap {
               alliedItemsets.getValue().addAll(iDocIds);
 
               allied = true;
-            } else {
+            } else if(!mergeCandidates.isEmpty()){
               if (LOG.isTraceEnabled())
                 LOG.trace(itemset + " no one to merge with, best candidate {} had only {}% of overlap",
                     bestUnofficialCandidate, (iDocIds.size() - bestUnofficialCandidateDiff) * 100.0 / iDocIds.size());
