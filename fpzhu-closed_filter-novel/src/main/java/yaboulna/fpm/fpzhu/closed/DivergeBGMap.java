@@ -686,7 +686,7 @@ public class DivergeBGMap {
                 if (honorTemporalSimilarity) {
                   waitSecsTillCooc = new SummaryStatistics();
                 }
-                long lastCooc = (candDid >>> 22); 
+                long lastCooc = Math.max(iDid, candDid) >>> 22; 
                 while ((candDid > 0 && iDid > 0) &&
                      ((honorTemporalSimilarity &&
                     (waitSecsTillCooc.getN() == 0 || waitSecsTillCooc.getMean() < temporalSimilarityThreshold))
@@ -756,21 +756,21 @@ public class DivergeBGMap {
                   }
                 }
                 if (honorTemporalSimilarity && LOG.isTraceEnabled())
-                  LOG.debug(itemset.toString() + iDocIds.size()
+                  LOG.trace(itemset.toString() + iDocIds.size()
                       + " differs in at least {} docs from {} with seconds till coocurrence of: " +
                       waitSecsTillCooc.toString().replace('\n', '|'), differentDocs,
                       cand.toString() + candDocIds.size());
                 if (differentDocs <= maxDiffCnt) {
-                  LOG.debug("Similar docids");
+                  LOG.trace("Similar docids");
                 } else {
-                  LOG.debug("Dissimilar docids");
+                  LOG.trace("Dissimilar docids");
                 }
                 if ((waitSecsTillCooc.getN() != 0 && waitSecsTillCooc.getMean() < temporalSimilarityThreshold)) {
-                  LOG.debug("Similar in time");
+                  LOG.trace("Similar in time");
                 } else {
-                  LOG.debug("Dissimilar in time");
+                  LOG.trace("Dissimilar in time");
                   if (differentDocs <= maxDiffCnt) {
-                    LOG.debug("Dissimilar in time but not in DocIds.. woaaahh!!");
+                    LOG.trace("Dissimilar in time but not in DocIds.. woaaahh!!");
                   }
                 }
 
