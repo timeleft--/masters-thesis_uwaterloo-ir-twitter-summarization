@@ -3,9 +3,12 @@ package yaboulna.fpm.fpzhu.closed;
 import java.io.File;
 import java.io.IOException;
 import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Enumeration;
 import java.util.Formatter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -19,6 +22,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.NameFileComparator;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.log4j.Appender;
+import org.apache.log4j.FileAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +43,20 @@ import com.google.common.math.DoubleMath;
 
 public class DivergeBGMap {
   private final static Logger LOG = LoggerFactory.getLogger(DivergeBGMap.class);
+  static SimpleDateFormat logFileNameFmt = new SimpleDateFormat("MMdd-HHmmss");
+  static {
+    org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
+    @SuppressWarnings("unchecked")
+    Enumeration<Appender> appenders = rootLogger.getAllAppenders();
+    while (appenders.hasMoreElements()) {
+      Appender fileAppender = (Appender) appenders.nextElement();
+      if (fileAppender instanceof FileAppender) {
+        ((FileAppender) fileAppender).setFile(logFileNameFmt.format(new Date()) + "_" +
+            ((FileAppender) fileAppender).getFile());
+        ((FileAppender) fileAppender).activateOptions();
+      }
+    }
+  }
 
   private static final Splitter comaSplitter = Splitter.on(',');
   static class ItemsetTabCountProcessor implements LineProcessor<Map<String, Integer>> {
@@ -484,7 +503,8 @@ public class DivergeBGMap {
                     LOG.trace("{} found parent {}, with confidence: " + maxConfidence, itemset, pis);
                 } else {
                   if (LOG.isTraceEnabled())
-                    LOG.trace("{} found another parent {}", itemset, pis);
+                    LOG.trace("{} found another parent {}, with confidence: " + fgCountMap.get(itemset).doubleValue()
+                        / fgCountMap.get(pis).doubleValue(), itemset, pis);
                 }
 
 // if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
@@ -889,7 +909,7 @@ public class DivergeBGMap {
             continue;
           } else if (confidence >= 1) {
             if (LOG.isTraceEnabled())
-              LOG.trace(mergedItemset + " is stronger alliance ({}) than its head's ({}) parent: " + 
+              LOG.trace(mergedItemset + " is stronger alliance ({}) than its head's ({}) parent: " +
                   parentItemset + "@" + fgIdsMap.get(parentItemset).size(),
                   unionDocId.size(), e.getKey());
           }
