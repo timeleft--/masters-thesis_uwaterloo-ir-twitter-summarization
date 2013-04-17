@@ -169,14 +169,15 @@ public class DivergeBGMap {
     }
 
     boolean stopMatchingLimitedBufferSize = true;
-    boolean stopMatchingParentFSimLow = true;
+    boolean stopMatchingParentFSimLow = false;
     boolean avoidFormingNewAllianceIfPossible = true;
-    boolean ppJoin = true;
-    boolean idfFromBG = true;
-    boolean entropyFromBg = true;
+    boolean ppJoin = false;
+    boolean idfFromBG = false;
+    boolean entropyFromBg = false;
     boolean growAlliancesAcrossEpochs = false;
     boolean filterLowKLD = false;
     boolean fallBackToItemsKLD = false;
+    boolean selMaximal = false;
     if (args.length > 2) {
       stopMatchingLimitedBufferSize = args[2].contains("Buff");
       stopMatchingParentFSimLow = args[2].contains("SimLow");
@@ -187,6 +188,7 @@ public class DivergeBGMap {
       growAlliancesAcrossEpochs = args[2].contains("Grow");
       filterLowKLD = args[2].contains("FLKld");
       fallBackToItemsKLD = args[2].contains("ITKld");
+      selMaximal = args[2].contains("Max");
     }
 
     LOG.info("stopMatchingLimitedBufferSize: " + stopMatchingLimitedBufferSize);
@@ -198,6 +200,7 @@ public class DivergeBGMap {
     LOG.info("growAlliancesAcrossEpochs: " + growAlliancesAcrossEpochs);
     LOG.info("filterLowKLD: " + filterLowKLD);
     LOG.info("fallBackToItemsKLD: " + fallBackToItemsKLD);
+    LOG.info("selMaximal: " + selMaximal);
 
     int histLenSecs = 4 * 7 * 24 * 3600;
     if (args.length > 3) {
@@ -217,11 +220,11 @@ public class DivergeBGMap {
     String options;
     if (args.length > 2) {
       options = args[2];
-      if (args[2].contains("Kld")) {
+      if (args[2].contains("FLKld")) {
         options += "_KLD" + KLDIVERGENCE_MIN;
       }
     } else {
-      options = "Buff-SimLow-AvoidNew-Ppj-IdfBg-EntBg";
+      options = "default_Buff-AvoidNew";
     }
     novelPfx += options + "_";
     selectionPfx += options + "_";
@@ -518,20 +521,20 @@ public class DivergeBGMap {
                     double pisFreq = fgCountMap.get(pis);
                     maxConfidence = fgCountMap.get(itemset) / pisFreq;
                     if (LOG.isTraceEnabled())
-                      LOG.trace("{} found parent {}, with confidence: " + maxConfidence, 
+                      LOG.trace("{} found parent {}, with confidence: " + maxConfidence,
                           itemset.toString() + fgCountMap.get(itemset), pis.toString() + pisFreq);
                   } else {
                     if (LOG.isTraceEnabled())
                       LOG.trace("{} found another parent {}, with confidence: " + fgCountMap.get(itemset).doubleValue()
-                          / fgCountMap.get(pis).doubleValue(), 
+                          / fgCountMap.get(pis).doubleValue(),
                           itemset.toString() + fgCountMap.get(itemset), pis.toString() + fgCountMap.get(pis));
                   }
                 } else {
                   if (LOG.isTraceEnabled())
                     LOG.trace("{} is NOT longer that its 'parent' {}, with confidence: "
                         + fgCountMap.get(itemset).doubleValue()
-                        / fgCountMap.get(pis).doubleValue(), 
-                        itemset.toString() + fgCountMap.get(itemset), 
+                        / fgCountMap.get(pis).doubleValue(),
+                        itemset.toString() + fgCountMap.get(itemset),
                         pis.toString() + fgCountMap.get(pis));
                 }
 // if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
@@ -598,8 +601,8 @@ public class DivergeBGMap {
                   if (isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD) {
                     mergeCandidates.add(pis);
                     if (LOG.isTraceEnabled())
-                      LOG.trace("{} " + simMeasure + " {} = " + isPisSim, 
-                          itemset.toString() + fgCountMap.get(itemset), 
+                      LOG.trace("{} " + simMeasure + " {} = " + isPisSim,
+                          itemset.toString() + fgCountMap.get(itemset),
                           pis.toString() + fgCountMap.get(pis));
                   }
                 }
@@ -942,12 +945,14 @@ public class DivergeBGMap {
 // // }
 // selectionFormat.out().append("\n");
 
-              // TODO: are you sure about that?
-              // The parent will be present in the final output within this itemset, so even if it
-              // were pending alliance to get printed it can be removed now
+              // TODONE: are you sure about that?
+              if (selMaximal) {
+                // The parent will be present in the final output within this itemset, so even if it
+                // were pending alliance to get printed it can be removed now
 // unalliedItemsets.remove(parentItemset);
-              for (Set<String> pis : ancestorItemsets) {
-                unalliedItemsets.remove(pis);
+                for (Set<String> pis : ancestorItemsets) {
+                  unalliedItemsets.remove(pis);
+                }
               }
             }
 
@@ -967,7 +972,8 @@ public class DivergeBGMap {
             continue;
           } else if (confidence >= 1) {
             if (LOG.isTraceEnabled())
-              LOG.trace(mergedItemset.toString() + unionDocId.size() + " is stronger alliance ({}) than its head's ({}) parent: " +
+              LOG.trace(mergedItemset.toString() + unionDocId.size()
+                  + " is stronger alliance ({}) than its head's ({}) parent: " +
                   parentItemset.toString() + fgIdsMap.get(parentItemset).size(),
                   e.getKey().toString() + fgIdsMap.get(e.getKey()).size());
           }
