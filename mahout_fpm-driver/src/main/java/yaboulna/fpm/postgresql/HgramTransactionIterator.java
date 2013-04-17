@@ -354,13 +354,14 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 // }
         String sql;
         if (includeHashtags) {
-          sql = "with tokens as (select id,htag as ngram from hashtags where " + timeSql
+          sql = "with tokens as (select id,htag as ngram from hashtags where " + timeSql 
+              + " order by id,pos,ngramlen "
               + " UNION ALL "
               + " select id,ngram from " + tablename + " where "
               + timeSql
-              + " and ngramlen <= " + maxHgramLen + ")"
+              + " and ngramlen <= " + maxHgramLen + " order by id,pos,ngramlen )"
               + " select " + dedupe + " string_agg(ngram,?),id from tokens "
-              + " group by id order by id,pos,ngramlen ";
+              + " group by id  ";
         } else {
           sql = "select " + dedupe + " string_agg(ngram,?),id from " + tablename + " where "
               + timeSql
