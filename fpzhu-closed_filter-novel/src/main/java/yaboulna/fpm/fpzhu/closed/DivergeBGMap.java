@@ -93,20 +93,21 @@ public class DivergeBGMap {
       int count = DoubleMath.roundToInt(Double.parseDouble(line.substring(tabIx1 + 1, tabIx2)), RoundingMode.UP);
 
       String ids = (tabIx2 < line.length() ? line.substring(tabIx2 + 1) : "");
-      
+
 // mapBuilder.put(itemset, count);
       CopyOnWriteArraySet<String> itemset = Sets.newCopyOnWriteArraySet(comaSplitter.split(itemsetStr));
 
       if (skipOneCharSets && // itemset.size() > 1 &&
           ((itemsetStr.length() - (itemset.size() - 1)) * 1.0 / itemset.size()) < 2) {
-        LOG.debug("Filtering out itemset {} with average item length of {}, appearing in docs: " + ids.substring(0,Math.min(ids.length(), 189)));
+        LOG.debug("Filtering out itemset {} with average item length of {}, appearing in docs: "
+            + ids.substring(0, Math.min(ids.length(), 189)));
         return true;
       }
 
       fpCntMap.put(itemset, count);
 
       if (fpDocIdsMap != null) {
-        
+
         if (ids.length() > 0) {
 
           LinkedList<Long> docIds = Lists.newLinkedList();
@@ -493,23 +494,29 @@ public class DivergeBGMap {
                 }
               }
 
-              if (pis.size() == interset.size()) { // TODO: can the parent (shorter) come after?
+              if (Math.min(pis.size(), itemset.size()) == interset.size()) { // TODONE: can the parent (shorter) come
+// after?
                 // one of the parent itemset (in the closed patterns lattice)
 
                 mergeCandidates.add(pis);
-                if (parentItemset == null) {
-                  parentItemset = pis;
-                  // first parent to encounter will be have the lowest support, thus gives highest confidence
-                  double pisFreq = fgCountMap.get(pis);
-                  maxConfidence = fgCountMap.get(itemset) / pisFreq;
-                  if (LOG.isTraceEnabled())
-                    LOG.trace("{} found parent {}, with confidence: " + maxConfidence, itemset, pis);
+                if (pis.size() < itemset.size()) {
+                  if (parentItemset == null) {
+                    parentItemset = pis;
+                    // first parent to encounter will be have the lowest support, thus gives highest confidence
+                    double pisFreq = fgCountMap.get(pis);
+                    maxConfidence = fgCountMap.get(itemset) / pisFreq;
+                    if (LOG.isTraceEnabled())
+                      LOG.trace("{} found parent {}, with confidence: " + maxConfidence, itemset, pis);
+                  } else {
+                    if (LOG.isTraceEnabled())
+                      LOG.trace("{} found another parent {}, with confidence: " + fgCountMap.get(itemset).doubleValue()
+                          / fgCountMap.get(pis).doubleValue(), itemset, pis);
+                  }
                 } else {
                   if (LOG.isTraceEnabled())
-                    LOG.trace("{} found another parent {}, with confidence: " + fgCountMap.get(itemset).doubleValue()
+                    LOG.trace("{} is NOT longer that its 'parent' {}, with confidence: " + fgCountMap.get(itemset).doubleValue()
                         / fgCountMap.get(pis).doubleValue(), itemset, pis);
                 }
-
 // if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
 // // it will get printed without alliances.. oh, it doesn't need alliance
 // allied = true;
