@@ -204,8 +204,8 @@ public class DivergeBGMap {
     }
 
     int absMaxDiff = 100;
-    //TODO arg
-    
+    // TODO arg
+
     String novelPfx = "novel_";
 // if (args.length > 3) {
 // novelPfx = args[3];
@@ -633,6 +633,8 @@ public class DivergeBGMap {
             if (LOG.isTraceEnabled())
               LOG.trace(itemset + " merge candidates: " + mergeCandidates);
 
+            int bestUnofficialCandidateDiff = Integer.MAX_VALUE;
+            Set<String> bestUnofficialCandidate = null;
             for (Set<String> cand : mergeCandidates) {
               LinkedList<Long> candDocIds = fgIdsMap.get(cand);
               int differentDocs = 0;
@@ -807,6 +809,11 @@ public class DivergeBGMap {
                   theOnlyOneIllMerge = bestAllianceHead;
                   theOnlyOnesDifference = currentBestDifference;
                 }
+              } else if (LOG.isTraceEnabled()) {
+                if (differentDocs < bestUnofficialCandidateDiff) {
+                  bestUnofficialCandidateDiff = differentDocs;
+                  bestUnofficialCandidate = cand;
+                }
               }
             }
 
@@ -873,7 +880,8 @@ public class DivergeBGMap {
               allied = true;
             } else {
               if (LOG.isTraceEnabled())
-                LOG.trace(itemset + " no one to merge with");
+                LOG.trace(itemset + " no one to merge with, best candidate {} had only {}% of overlap",
+                    bestUnofficialCandidate, (iDocIds.size() - bestUnofficialCandidateDiff) * 100.0 / iDocIds.size());
             }
 
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
