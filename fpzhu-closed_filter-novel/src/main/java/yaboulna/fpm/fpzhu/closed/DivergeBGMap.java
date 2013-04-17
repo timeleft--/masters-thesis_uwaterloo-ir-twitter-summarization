@@ -729,6 +729,9 @@ public class DivergeBGMap {
 // }
                 int currentBestDifference = differentDocs;
                 if (candidateTransHeads != null) {
+                  if(LOG.isTraceEnabled())
+                    LOG.trace(itemset + " offered more merge options {} through candidate {}", candidateTransHeads, cand);
+                  
                   for (Set<String> exitingAllianceHead : candidateTransHeads) {
                     int existingHeadNonOverlap = 0;
                     Iterator<Long> iDidIter = iDocIds.iterator();
@@ -803,7 +806,7 @@ public class DivergeBGMap {
 
             if (theOnlyOneIllMerge != null) {
               if (LOG.isTraceEnabled())
-                LOG.trace(itemset + " the only one to merge with: " + theOnlyOneIllMerge);
+                LOG.trace(itemset + " overlaps in {}% of its documents with the only one to merge with: " + theOnlyOneIllMerge, (iDocIds.size() - theOnlyOnesDifference) * 100.0 / iDocIds.size());
               // /////////// Store that you joined this alliance
               Set<Set<String>> transHeads = allianceTransitive.get(itemset);
               if (transHeads != null) {
