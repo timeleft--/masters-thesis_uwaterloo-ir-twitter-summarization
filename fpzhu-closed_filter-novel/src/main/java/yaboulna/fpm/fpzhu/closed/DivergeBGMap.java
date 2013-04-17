@@ -252,7 +252,7 @@ public class DivergeBGMap {
     List<File> fgFiles = (List<File>) FileUtils.listFiles(fgDir, fpNotOutFilter,
         FileFilterUtils.trueFileFilter());
     Collections.sort(fgFiles, NameFileComparator.NAME_COMPARATOR);
-    LinkedHashMap<Set<String>, Integer> fgCountMap = Maps.newLinkedHashMap(); 
+    LinkedHashMap<Set<String>, Integer> fgCountMap = Maps.newLinkedHashMap();
     Map<Set<String>, LinkedList<Long>> fgIdsMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
 
     List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, fpNotOutFilter,
@@ -686,9 +686,9 @@ public class DivergeBGMap {
                 if (honorTemporalSimilarity) {
                   waitSecsTillCooc = new SummaryStatistics();
                 }
-                long lastCooc = Math.max(iDid, candDid) >>> 22; 
+                long lastCooc = Math.max(iDid, candDid) >>> 22;
                 while ((candDid > 0 && iDid > 0) &&
-                     ((honorTemporalSimilarity &&
+                    ((honorTemporalSimilarity &&
                     (waitSecsTillCooc.getN() == 0 || waitSecsTillCooc.getMean() < temporalSimilarityThreshold))
                     || differentDocs <= maxDiffCnt)) {
                   if (iDid == candDid) {
@@ -701,7 +701,7 @@ public class DivergeBGMap {
                       iDid = iDidIter.next();
                     } else {
                       iDid = -1;
-//                      break;
+// break;
                     }
                     if (candDidIter.hasNext()) {
                       candDid = candDidIter.next();
@@ -711,9 +711,9 @@ public class DivergeBGMap {
                       }
                     } else {
                       candDid = -1;
-//                      break;
+// break;
                     }
-                    
+
                   } else if (iDid < candDid) {
 // unionDocId.add(iDid);
                     ++differentDocs;
@@ -721,7 +721,7 @@ public class DivergeBGMap {
                       iDid = iDidIter.next();
                     } else {
                       iDid = -1;
-//                      break;
+// break;
                     }
                   } else {
 // unionDocId.add(candDid);
@@ -729,20 +729,20 @@ public class DivergeBGMap {
                       candDid = candDidIter.next();
                     } else {
                       candDid = -1;
-//                      break;
+// break;
                     }
-//                    if (honorTemporalSimilarity) {
-//                      // Poor cand came but I didn't overlap.. how long will it wait for me?
-//                      lastCooc = candDid >>> 22;
-//                    }
+// if (honorTemporalSimilarity) {
+// // Poor cand came but I didn't overlap.. how long will it wait for me?
+// lastCooc = candDid >>> 22;
+// }
                   }
                 }
                 if (honorTemporalSimilarity && (iDid > 0 || candDid > 0)) {
-                  long minMaxIDid = Math.min(iDocIds.getLast(),candDocIds.getLast());
-                  // Assume that I would have come the next second if there were more docs in both, 
-                  //or after the average wait time, whichever is longer
+                  long minMaxIDid = Math.min(iDocIds.getLast(), candDocIds.getLast());
+                  // Assume that I would have come the next second if there were more docs in both,
+                  // or after the average wait time, whichever is longer
                   waitSecsTillCooc.addValue(Math.max(
-                      (waitSecsTillCooc.getN() > 0 ? waitSecsTillCooc.getMean(): -1),
+                      (waitSecsTillCooc.getN() > 0 ? waitSecsTillCooc.getMean() : -1),
                       ((((minMaxIDid >>> 22)) - lastCooc) / 1000) + 1));
 
                 }
@@ -755,22 +755,23 @@ public class DivergeBGMap {
                     break;
                   }
                 }
-                if (honorTemporalSimilarity && LOG.isTraceEnabled())
+                if (honorTemporalSimilarity && LOG.isTraceEnabled()) {
                   LOG.trace(itemset.toString() + iDocIds.size()
                       + " differs in at least {} docs from {} with seconds till coocurrence of: " +
                       waitSecsTillCooc.toString().replace('\n', '|'), differentDocs,
                       cand.toString() + candDocIds.size());
-                if (differentDocs <= maxDiffCnt) {
-                  LOG.trace("Similar docids");
-                } else {
-                  LOG.trace("Dissimilar docids");
-                }
-                if ((waitSecsTillCooc.getN() != 0 && waitSecsTillCooc.getMean() < temporalSimilarityThreshold)) {
-                  LOG.trace("Similar in time");
-                } else {
-                  LOG.trace("Dissimilar in time");
                   if (differentDocs <= maxDiffCnt) {
-                    LOG.trace("Dissimilar in time but not in DocIds.. woaaahh!!");
+                    LOG.trace("Similar docids");
+                  } else {
+                    LOG.trace("Dissimilar docids");
+                  }
+                  if ((waitSecsTillCooc.getN() != 0 && waitSecsTillCooc.getMean() < temporalSimilarityThreshold)) {
+                    LOG.trace("Similar in time");
+                  } else {
+                    LOG.trace("Dissimilar in time");
+                    if (differentDocs <= maxDiffCnt) {
+                      LOG.trace("Dissimilar in time but not in DocIds.. woaaahh!!");
+                    }
                   }
                 }
 
