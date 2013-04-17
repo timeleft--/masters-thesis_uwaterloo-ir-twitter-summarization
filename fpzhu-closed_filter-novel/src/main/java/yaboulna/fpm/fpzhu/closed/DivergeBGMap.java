@@ -22,6 +22,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.NameFileComparator;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
 import org.slf4j.Logger;
@@ -260,6 +261,7 @@ public class DivergeBGMap {
     Map<Set<String>, Double> confidentItemsets = Maps.newHashMap();
     Set<String> preAllocatedSet1 = Sets.newHashSet();
     Set<String> preAllocatedSet2 = Sets.newHashSet();
+    Set<Set<String>> ancestorItemsets = Sets.newHashSet();
     LinkedList<Set<String>> mergeCandidates = Lists.newLinkedList();
     // Multiset<String> mergedItemset = HashMultiset.create();
     // Set<Long> grandUionDocId = Sets.newHashSet();
@@ -382,12 +384,13 @@ public class DivergeBGMap {
             }
 
             if (LOG.isTraceEnabled())
-              LOG.trace(itemset.toString() + iDocIds.size()  + " docids: " + iDocIds);
+              LOG.trace(itemset.toString() + iDocIds.size() + " docids: " + iDocIds);
 
             Double itemsetNorm = null;
             mergeCandidates.clear();
 
             Set<String> parentItemset = null;
+            ancestorItemsets.clear();
             Iterator<Set<String>> prevIter = prevItemsets.descendingIterator();
             double maxConfidence = -1.0; // if there is no parent, then this is the first from these items
             boolean allied = false;
@@ -504,24 +507,32 @@ public class DivergeBGMap {
                 // one of the parent itemset (in the closed patterns lattice)
 
                 mergeCandidates.add(pis);
+
                 if (pis.size() < itemset.size()) {
+
+                  ancestorItemsets.add(pis);
+
                   if (parentItemset == null) {
                     parentItemset = pis;
                     // first parent to encounter will be have the lowest support, thus gives highest confidence
                     double pisFreq = fgCountMap.get(pis);
                     maxConfidence = fgCountMap.get(itemset) / pisFreq;
                     if (LOG.isTraceEnabled())
-                      LOG.trace("{} found parent {}, with confidence: " + maxConfidence, itemset, pis);
+                      LOG.trace("{} found parent {}, with confidence: " + maxConfidence, 
+                          itemset.toString() + fgCountMap.get(itemset), pis.toString() + pisFreq);
                   } else {
                     if (LOG.isTraceEnabled())
                       LOG.trace("{} found another parent {}, with confidence: " + fgCountMap.get(itemset).doubleValue()
-                          / fgCountMap.get(pis).doubleValue(), itemset, pis);
+                          / fgCountMap.get(pis).doubleValue(), 
+                          itemset.toString() + fgCountMap.get(itemset), pis.toString() + fgCountMap.get(pis));
                   }
                 } else {
                   if (LOG.isTraceEnabled())
                     LOG.trace("{} is NOT longer that its 'parent' {}, with confidence: "
                         + fgCountMap.get(itemset).doubleValue()
-                        / fgCountMap.get(pis).doubleValue(), itemset, pis);
+                        / fgCountMap.get(pis).doubleValue(), 
+                        itemset.toString() + fgCountMap.get(itemset), 
+                        pis.toString() + fgCountMap.get(pis));
                 }
 // if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
 // // it will get printed without alliances.. oh, it doesn't need alliance
@@ -587,7 +598,9 @@ public class DivergeBGMap {
                   if (isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD) {
                     mergeCandidates.add(pis);
                     if (LOG.isTraceEnabled())
-                      LOG.trace("{} " + simMeasure + " {} = " + isPisSim, itemset, pis);
+                      LOG.trace("{} " + simMeasure + " {} = " + isPisSim, 
+                          itemset.toString() + fgCountMap.get(itemset), 
+                          pis.toString() + fgCountMap.get(pis));
                   }
                 }
 
@@ -631,14 +644,15 @@ public class DivergeBGMap {
             }
 
             if (LOG.isTraceEnabled())
-              LOG.trace(itemset.toString() + iDocIds.size()  + " merge candidates: " + mergeCandidates);
+              LOG.trace(itemset.toString() + iDocIds.size() + " merge candidates: " + mergeCandidates);
 
             int bestUnofficialCandidateDiff = Integer.MAX_VALUE;
             Set<String> bestUnofficialCandidate = null;
             for (Set<String> cand : mergeCandidates) {
+
               LinkedList<Long> candDocIds = fgIdsMap.get(cand);
               int differentDocs = 0;
-              if (parentItemset == cand) {
+              if (ancestorItemsets.contains(cand)) {
                 // the (true) parent will necessarily be present in all documents of itemset
                 differentDocs = candDocIds.size() - iDocIds.size();
               } else {
@@ -737,7 +751,9 @@ public class DivergeBGMap {
                 int currentBestDifference = differentDocs;
                 if (candidateTransHeads != null) {
                   if (LOG.isTraceEnabled())
-                    LOG.trace(itemset.toString() + iDocIds.size()  + " offered more merge options {} through candidate {}", candidateTransHeads, //.toString() + fgIdsMap.get(candidateTransHeads).size(),
+                    LOG.trace(itemset.toString() + iDocIds.size()
+                        + " offered more merge options {} through candidate {}", candidateTransHeads, // .toString() +
+// fgIdsMap.get(candidateTransHeads).size(),
                         cand);
 
                   for (Set<String> exitingAllianceHead : candidateTransHeads) {
@@ -819,8 +835,10 @@ public class DivergeBGMap {
 
             if (theOnlyOneIllMerge != null) {
               if (LOG.isTraceEnabled())
-                LOG.trace(itemset.toString() + iDocIds.size() + " overlaps in {} = {}% of its documents with the only one to merge with: "
-                    + theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size() , (iDocIds.size() - theOnlyOnesDifference),
+                LOG.trace(itemset.toString() + iDocIds.size()
+                    + " overlaps in {} = {}% of its documents with the only one to merge with: "
+                    + theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size(),
+                    (iDocIds.size() - theOnlyOnesDifference),
                     (iDocIds.size() - theOnlyOnesDifference) * 100.0 / iDocIds.size());
               // /////////// Store that you joined this alliance
               Set<Set<String>> transHeads = allianceTransitive.get(itemset);
@@ -833,8 +851,10 @@ public class DivergeBGMap {
                   if (transHeads.contains(theOnlyOneIllMerge)) {
                     // jolly
                     if (LOG.isTraceEnabled())
-                      LOG.trace(itemset.toString() + iDocIds.size() + " joining its only one {} in a continuing alliance: " + transHeads.toString() + fgIdsMap.get(transHeads).size() , 
-                        theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size() );
+                      LOG.trace(itemset.toString() + iDocIds.size()
+                          + " joining its only one {} in a continuing alliance: " + transHeads.toString()
+                          + fgIdsMap.get(transHeads).size(),
+                          theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
                   } else {
                     // the new alliance will be better.. clear the one from earlier
                     allianceTransitive.remove(transHeads);
@@ -882,7 +902,8 @@ public class DivergeBGMap {
               allied = true;
             } else if (!mergeCandidates.isEmpty()) {
               if (LOG.isTraceEnabled())
-                LOG.trace(itemset.toString() + iDocIds.size()  + " no one to merge with, had only {} = {}% of overlap with its best candidate: " +
+                LOG.trace(itemset.toString() + iDocIds.size()
+                    + " no one to merge with, had only {} = {}% of overlap with its best candidate: " +
                     bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size(),
                     (iDocIds.size() - bestUnofficialCandidateDiff),
                     (iDocIds.size() - bestUnofficialCandidateDiff) * 100.0 / iDocIds.size());
@@ -924,7 +945,10 @@ public class DivergeBGMap {
               // TODO: are you sure about that?
               // The parent will be present in the final output within this itemset, so even if it
               // were pending alliance to get printed it can be removed now
-              unalliedItemsets.remove(parentItemset);
+// unalliedItemsets.remove(parentItemset);
+              for (Set<String> pis : ancestorItemsets) {
+                unalliedItemsets.remove(pis);
+              }
             }
 
             if (!allied) {
@@ -943,9 +967,9 @@ public class DivergeBGMap {
             continue;
           } else if (confidence >= 1) {
             if (LOG.isTraceEnabled())
-              LOG.trace(mergedItemset + " is stronger alliance ({}) than its head's ({}) parent: " +
-                  parentItemset + "@" + fgIdsMap.get(parentItemset).size(),
-                  unionDocId.size(), e.getKey());
+              LOG.trace(mergedItemset.toString() + unionDocId.size() + " is stronger alliance ({}) than its head's ({}) parent: " +
+                  parentItemset.toString() + fgIdsMap.get(parentItemset).size(),
+                  e.getKey().toString() + fgIdsMap.get(e.getKey()).size());
           }
           // The parent will be present in the final output within this itemset, so even if it
           // were pending alliance to get printed it can be removed now
