@@ -354,19 +354,20 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 // }
         String sql;
         if (includeHashtags) {
-          sql = "with tokens as (select id,htag as ngram from hashtags where " + timeSql 
-              + " order by id,pos,ngramlen "
+          sql = "with tokens as ((select id,htag as ngram from hashtags where " + timeSql 
+              + " ) "
               + " UNION ALL "
-              + " select id,ngram from " + tablename + " where "
+              + " (select id,ngram from " + tablename + " where "
               + timeSql
-              + " and ngramlen <= " + maxHgramLen + " order by id,pos,ngramlen )"
+              + " and ngramlen <= " + maxHgramLen + " order by id,pos,ngramlen ))"
               + " select " + dedupe + " string_agg(ngram,?),id from tokens "
-              + " group by id  ";
+              + " group by id order by id ";
         } else {
           sql = "select " + dedupe + " string_agg(ngram,?),id from " + tablename + " where "
               + timeSql
               + " and ngramlen <= " + maxHgramLen
               + " group by id order by id,pos,ngramlen ";
+          throw new UnsupportedOperationException("Order by pos,ngram needs more elaborate sql, TODO!");
         }
         stmt = conn.prepareStatement(sql);
         stmt.setString(1, "" + TOKEN_DELIMETER);
