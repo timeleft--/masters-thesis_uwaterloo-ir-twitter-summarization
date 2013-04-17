@@ -99,9 +99,9 @@ public class DivergeBGMap {
 
       if (skipOneCharSets && // itemset.size() > 1 &&
           ((itemsetStr.length() - (itemset.size() - 1)) * 1.0 / itemset.size()) < 2) {
-        if (LOG.isErrorEnabled())
-          LOG.trace("Filtering out itemset {} with average item length of {}, appearing in docs: "
-              + ids.substring(0, Math.min(ids.length(), 189)), itemset, "[less than 2]");
+//        if (LOG.isTraceEnabled())
+//          LOG.trace("Filtering out itemset {} with average item length of {}, appearing in docs: "
+//              + ids.substring(0, Math.min(ids.length(), 189)), itemset, "[less than 2]");
         return true;
       }
 
