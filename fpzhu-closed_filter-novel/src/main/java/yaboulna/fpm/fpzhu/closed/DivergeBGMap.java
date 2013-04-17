@@ -99,9 +99,9 @@ public class DivergeBGMap {
 
       if (skipOneCharSets && // itemset.size() > 1 &&
           ((itemsetStr.length() - (itemset.size() - 1)) * 1.0 / itemset.size()) < 2) {
-//        if (LOG.isTraceEnabled())
-//          LOG.trace("Filtering out itemset {} with average item length of {}, appearing in docs: "
-//              + ids.substring(0, Math.min(ids.length(), 189)), itemset, "[less than 2]");
+// if (LOG.isTraceEnabled())
+// LOG.trace("Filtering out itemset {} with average item length of {}, appearing in docs: "
+// + ids.substring(0, Math.min(ids.length(), 189)), itemset, "[less than 2]");
         return true;
       }
 
@@ -819,8 +819,9 @@ public class DivergeBGMap {
 
             if (theOnlyOneIllMerge != null) {
               if (LOG.isTraceEnabled())
-                LOG.trace(itemset + " overlaps in {}% of its documents with the only one to merge with: "
-                    + theOnlyOneIllMerge, (iDocIds.size() - theOnlyOnesDifference) * 100.0 / iDocIds.size());
+                LOG.trace(itemset + " overlaps in {} = {}% of its documents with the only one to merge with: "
+                    + theOnlyOneIllMerge, (iDocIds.size() - theOnlyOnesDifference),
+                    (iDocIds.size() - theOnlyOnesDifference) * 100.0 / iDocIds.size());
               // /////////// Store that you joined this alliance
               Set<Set<String>> transHeads = allianceTransitive.get(itemset);
               if (transHeads != null) {
@@ -878,10 +879,11 @@ public class DivergeBGMap {
               alliedItemsets.getValue().addAll(iDocIds);
 
               allied = true;
-            } else if(!mergeCandidates.isEmpty()){
+            } else if (!mergeCandidates.isEmpty()) {
               if (LOG.isTraceEnabled())
-                LOG.trace(itemset + " no one to merge with, best candidate {} had only {}% of overlap",
-                    bestUnofficialCandidate, (iDocIds.size() - bestUnofficialCandidateDiff) * 100.0 / iDocIds.size());
+                LOG.trace(itemset + " no one to merge with, had only {} = {}% of overlap with its best candidate: " +
+                    bestUnofficialCandidate, (iDocIds.size() - bestUnofficialCandidateDiff),
+                    (iDocIds.size() - bestUnofficialCandidateDiff) * 100.0 / iDocIds.size());
             }
 
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
