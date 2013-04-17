@@ -92,18 +92,21 @@ public class DivergeBGMap {
       }
       int count = DoubleMath.roundToInt(Double.parseDouble(line.substring(tabIx1 + 1, tabIx2)), RoundingMode.UP);
 
+      String ids = (tabIx2 < line.length() ? line.substring(tabIx2 + 1) : "");
+      
 // mapBuilder.put(itemset, count);
       CopyOnWriteArraySet<String> itemset = Sets.newCopyOnWriteArraySet(comaSplitter.split(itemsetStr));
 
       if (skipOneCharSets && // itemset.size() > 1 &&
           ((itemsetStr.length() - (itemset.size() - 1)) * 1.0 / itemset.size()) < 2) {
+        LOG.debug("Filtering out itemset {} with average item length of {}, appearing in docs: " + ids.substring(0,Math.min(ids.length(), 189)));
         return true;
       }
 
       fpCntMap.put(itemset, count);
 
       if (fpDocIdsMap != null) {
-        String ids = (tabIx2 < line.length() ? line.substring(tabIx2 + 1) : "");
+        
         if (ids.length() > 0) {
 
           LinkedList<Long> docIds = Lists.newLinkedList();
