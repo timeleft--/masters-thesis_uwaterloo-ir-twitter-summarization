@@ -686,29 +686,34 @@ public class DivergeBGMap {
                 if (honorTemporalSimilarity) {
                   waitSecsTillCooc = new SummaryStatistics();
                 }
-                long lastCooc = (iDid >>> 22); // Math.min(iDid, candDid); //Or should it be max?
-
-                while ((honorTemporalSimilarity &&
+                long lastCooc = (candDid >>> 22); 
+                while ((candDid > 0 && iDid > 0) &&
+                     ((honorTemporalSimilarity &&
                     (waitSecsTillCooc.getN() == 0 || waitSecsTillCooc.getMean() < temporalSimilarityThreshold))
-                    || differentDocs <= maxDiffCnt) {
+                    || differentDocs <= maxDiffCnt)) {
                   if (iDid == candDid) {
 // intersDocId.add(iDid);
 // unionDocId.add(iDid);
                     if (honorTemporalSimilarity) {
                       waitSecsTillCooc.addValue(((iDid >>> 22) - lastCooc) / 1000);
-                      lastCooc = iDid >>> 22;
                     }
                     if (iDidIter.hasNext()) {
                       iDid = iDidIter.next();
                     } else {
                       iDid = -1;
-                      break;
+//                      break;
                     }
                     if (candDidIter.hasNext()) {
                       candDid = candDidIter.next();
+                      if (honorTemporalSimilarity) {
+                        // how long will it wait for me this time?
+                        lastCooc = candDid >>> 22;
+                      }
                     } else {
-                      break;
+                      candDid = -1;
+//                      break;
                     }
+                    
                   } else if (iDid < candDid) {
 // unionDocId.add(iDid);
                     ++differentDocs;
@@ -716,22 +721,30 @@ public class DivergeBGMap {
                       iDid = iDidIter.next();
                     } else {
                       iDid = -1;
-                      break;
+//                      break;
                     }
                   } else {
 // unionDocId.add(candDid);
                     if (candDidIter.hasNext()) {
                       candDid = candDidIter.next();
                     } else {
-                      break;
+                      candDid = -1;
+//                      break;
                     }
+//                    if (honorTemporalSimilarity) {
+//                      // Poor cand came but I didn't overlap.. how long will it wait for me?
+//                      lastCooc = candDid >>> 22;
+//                    }
                   }
                 }
-                if (honorTemporalSimilarity) {
-                  long maxIDid = iDocIds.getLast();
-                  // Estimate the waiting time after the last document we saw until cand would have come
-                  waitSecsTillCooc.addValue((waitSecsTillCooc.getN() > 0 ? waitSecsTillCooc.getMean() : 1) +
-                      ((((maxIDid >>> 22)) - lastCooc) / 1000));
+                if (honorTemporalSimilarity && (iDid > 0 || candDid > 0)) {
+                  long minMaxIDid = Math.min(iDocIds.getLast(),candDocIds.getLast());
+                  // Assume that I would have come the next second if there were more docs in both, 
+                  //or after the average wait time, whichever is longer
+                  waitSecsTillCooc.addValue(Math.max(
+                      (waitSecsTillCooc.getN() > 0 ? waitSecsTillCooc.getMean(): -1),
+                      ((((minMaxIDid >>> 22)) - lastCooc) / 1000) + 1));
+
                 }
                 while (iDid > 0 && differentDocs <= maxDiffCnt) {
                   ++differentDocs;
@@ -756,6 +769,9 @@ public class DivergeBGMap {
                   LOG.debug("Similar in time");
                 } else {
                   LOG.debug("Dissimilar in time");
+                  if (differentDocs <= maxDiffCnt) {
+                    LOG.debug("Dissimilar in time but not in DocIds.. woaaahh!!");
+                  }
                 }
 
               }
@@ -1101,7 +1117,6 @@ public class DivergeBGMap {
     }
 
   }
-
   private static double calcComponentsKLDiver(Set<String> itemset, double itemsetCnt,
       Map<Set<String>, Integer> bgCountMap,
       Map<Set<String>, Integer> fgCountMap, double bgFgLogP, Map<String, Double> kldCache) {
