@@ -178,6 +178,8 @@ public class DivergeBGMap {
     boolean filterLowKLD = false;
     boolean fallBackToItemsKLD = false;
     boolean selMaximal = false;
+    boolean honorTemporalSimilarity = false;
+    int temporalSimilarityThreshold = 60; // seconds
     if (args.length > 2) {
       stopMatchingLimitedBufferSize = args[2].contains("Buff");
       stopMatchingParentFSimLow = args[2].contains("SimLow");
@@ -189,6 +191,7 @@ public class DivergeBGMap {
       filterLowKLD = args[2].contains("FLKld");
       fallBackToItemsKLD = args[2].contains("ITKld");
       selMaximal = args[2].contains("Max");
+      honorTemporalSimilarity = args[2].contains("Temporal");
     }
 
     LOG.info("stopMatchingLimitedBufferSize: " + stopMatchingLimitedBufferSize);
@@ -201,6 +204,7 @@ public class DivergeBGMap {
     LOG.info("filterLowKLD: " + filterLowKLD);
     LOG.info("fallBackToItemsKLD: " + fallBackToItemsKLD);
     LOG.info("selMaximal: " + selMaximal);
+    LOG.info("honorTemporalSimilarity: " + honorTemporalSimilarity);
 
     int histLenSecs = 4 * 7 * 24 * 3600;
     if (args.length > 3) {
@@ -222,6 +226,9 @@ public class DivergeBGMap {
       options = args[2];
       if (args[2].contains("FLKld")) {
         options += "_KLD" + KLDIVERGENCE_MIN;
+      }
+      if (args[2].contains("Temporal")) {
+        options += "_Secs" + temporalSimilarityThreshold;
       }
     } else {
       options = "default_Buff-AvoidNew";
@@ -668,16 +675,29 @@ public class DivergeBGMap {
                 }
 
                 // Intersection and union calculation (depends on that docIds are sorted)
-                // TODO: use a variation of this measure that calculates the time period covered by each itemset
+                // TODONE: use a variation of this measure that calculates the time period covered by each itemset
                 // TODONE: overlap of intersection with the current itemset's docids
 
                 Iterator<Long> iDidIter = iDocIds.iterator();
                 Iterator<Long> candDidIter = candDocIds.iterator();
                 long iDid = iDidIter.next(), candDid = candDidIter.next();
-                while (differentDocs <= maxDiffCnt) {
+
+                SummaryStatistics waitSecsTillCooc = null;
+                if (honorTemporalSimilarity) {
+                  waitSecsTillCooc = new SummaryStatistics();
+                }
+                long lastCooc = (iDid >>> 22); // Math.min(iDid, candDid); //Or should it be max?
+
+                while ((honorTemporalSimilarity &&
+                    (waitSecsTillCooc.getN() == 0 || waitSecsTillCooc.getMean() < temporalSimilarityThreshold))
+                    || differentDocs <= maxDiffCnt) {
                   if (iDid == candDid) {
 // intersDocId.add(iDid);
 // unionDocId.add(iDid);
+                    if (honorTemporalSimilarity) {
+                      waitSecsTillCooc.addValue(((iDid >>> 22) - lastCooc) / 1000);
+                      lastCooc = iDid >>> 22;
+                    }
                     if (iDidIter.hasNext()) {
                       iDid = iDidIter.next();
                     } else {
@@ -707,6 +727,12 @@ public class DivergeBGMap {
                     }
                   }
                 }
+                if (honorTemporalSimilarity) {
+                  long maxIDid = iDocIds.getLast();
+                  // Estimate the waiting time after the last document we saw until cand would have come
+                  waitSecsTillCooc.addValue((waitSecsTillCooc.getN() > 0 ? waitSecsTillCooc.getMean() : 1) +
+                      ((((maxIDid >>> 22)) - lastCooc) / 1000));
+                }
                 while (iDid > 0 && differentDocs <= maxDiffCnt) {
                   ++differentDocs;
                   if (iDidIter.hasNext()) {
@@ -716,6 +742,22 @@ public class DivergeBGMap {
                     break;
                   }
                 }
+                if (honorTemporalSimilarity && LOG.isTraceEnabled())
+                  LOG.debug(itemset.toString() + iDocIds.size()
+                      + " differs in at least {} docs from {} with seconds till coocurrence of: " +
+                      waitSecsTillCooc.toString().replace('\n', '|'), differentDocs,
+                      cand.toString() + candDocIds.size());
+                if (differentDocs <= maxDiffCnt) {
+                  LOG.debug("Similar docids");
+                } else {
+                  LOG.debug("Dissimilar docids");
+                }
+                if ((waitSecsTillCooc.getN() != 0 && waitSecsTillCooc.getMean() < temporalSimilarityThreshold)) {
+                  LOG.debug("Similar in time");
+                } else {
+                  LOG.debug("Dissimilar in time");
+                }
+
               }
 
 // Iterator<Long> remainingIter;
