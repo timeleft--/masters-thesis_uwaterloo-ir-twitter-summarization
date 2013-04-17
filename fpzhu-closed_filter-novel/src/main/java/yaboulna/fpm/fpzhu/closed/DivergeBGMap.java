@@ -382,7 +382,7 @@ public class DivergeBGMap {
             }
 
             if (LOG.isTraceEnabled())
-              LOG.trace(itemset + " docids: " + iDocIds);
+              LOG.trace(itemset.toString() + iDocIds.size()  + " docids: " + iDocIds);
 
             Double itemsetNorm = null;
             mergeCandidates.clear();
@@ -631,7 +631,7 @@ public class DivergeBGMap {
             }
 
             if (LOG.isTraceEnabled())
-              LOG.trace(itemset + " merge candidates: " + mergeCandidates);
+              LOG.trace(itemset.toString() + iDocIds.size()  + " merge candidates: " + mergeCandidates);
 
             int bestUnofficialCandidateDiff = Integer.MAX_VALUE;
             Set<String> bestUnofficialCandidate = null;
@@ -737,7 +737,7 @@ public class DivergeBGMap {
                 int currentBestDifference = differentDocs;
                 if (candidateTransHeads != null) {
                   if (LOG.isTraceEnabled())
-                    LOG.trace(itemset + " offered more merge options {} through candidate {}", candidateTransHeads,
+                    LOG.trace(itemset.toString() + iDocIds.size()  + " offered more merge options {} through candidate {}", candidateTransHeads, //.toString() + fgIdsMap.get(candidateTransHeads).size(),
                         cand);
 
                   for (Set<String> exitingAllianceHead : candidateTransHeads) {
@@ -819,8 +819,8 @@ public class DivergeBGMap {
 
             if (theOnlyOneIllMerge != null) {
               if (LOG.isTraceEnabled())
-                LOG.trace(itemset + " overlaps in {} = {}% of its documents with the only one to merge with: "
-                    + theOnlyOneIllMerge, (iDocIds.size() - theOnlyOnesDifference),
+                LOG.trace(itemset.toString() + iDocIds.size() + " overlaps in {} = {}% of its documents with the only one to merge with: "
+                    + theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size() , (iDocIds.size() - theOnlyOnesDifference),
                     (iDocIds.size() - theOnlyOnesDifference) * 100.0 / iDocIds.size());
               // /////////// Store that you joined this alliance
               Set<Set<String>> transHeads = allianceTransitive.get(itemset);
@@ -832,8 +832,9 @@ public class DivergeBGMap {
                   }
                   if (transHeads.contains(theOnlyOneIllMerge)) {
                     // jolly
-                    LOG.debug("Itemset {} joining its only one {} in a continuing alliance: " + transHeads, itemset,
-                        theOnlyOneIllMerge);
+                    if (LOG.isTraceEnabled())
+                      LOG.trace(itemset.toString() + iDocIds.size() + " joining its only one {} in a continuing alliance: " + transHeads.toString() + fgIdsMap.get(transHeads).size() , 
+                        theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size() );
                   } else {
                     // the new alliance will be better.. clear the one from earlier
                     allianceTransitive.remove(transHeads);
@@ -881,8 +882,9 @@ public class DivergeBGMap {
               allied = true;
             } else if (!mergeCandidates.isEmpty()) {
               if (LOG.isTraceEnabled())
-                LOG.trace(itemset + " no one to merge with, had only {} = {}% of overlap with its best candidate: " +
-                    bestUnofficialCandidate, (iDocIds.size() - bestUnofficialCandidateDiff),
+                LOG.trace(itemset.toString() + iDocIds.size()  + " no one to merge with, had only {} = {}% of overlap with its best candidate: " +
+                    bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size(),
+                    (iDocIds.size() - bestUnofficialCandidateDiff),
                     (iDocIds.size() - bestUnofficialCandidateDiff) * 100.0 / iDocIds.size());
             }
 
