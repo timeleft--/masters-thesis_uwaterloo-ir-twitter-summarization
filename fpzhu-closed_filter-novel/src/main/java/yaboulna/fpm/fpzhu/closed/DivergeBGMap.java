@@ -24,6 +24,7 @@ import org.apache.commons.io.comparator.NameFileComparator;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
 import org.slf4j.Logger;
@@ -62,10 +63,22 @@ public class DivergeBGMap {
     boolean skipOneCharSets = true;
     int ignoredCount = 0;
 
+    private SummaryStatistics unigramCountStats;
+
     public ItemsetTabCountProcessor(Map<Set<String>, Integer> fgCountMap,
         Map<Set<String>, LinkedList<Long>> fgIdsMap) {
+      this(fgCountMap, fgIdsMap, null);
+    }
+
+    public ItemsetTabCountProcessor(Map<Set<String>, Integer> bgCountMap) {
+      this(bgCountMap, null);
+    }
+
+    public ItemsetTabCountProcessor(Map<Set<String>, Integer> fgCountMap,
+        Map<Set<String>, LinkedList<Long>> fgIdsMap, SummaryStatistics unigramCountStats) {
       this.fpCntMap = fgCountMap;
       this.fpDocIdsMap = fgIdsMap;
+      this.unigramCountStats = unigramCountStats;
     }
 
     @Override
@@ -95,7 +108,9 @@ public class DivergeBGMap {
         ++ignoredCount;
         return true;
       }
-
+      if (unigramCountStats != null && itemset.size() == 1) {
+        unigramCountStats.addValue(count);
+      }
       fpCntMap.put(itemset, count);
 
       if (fpDocIdsMap != null) {
@@ -114,7 +129,7 @@ public class DivergeBGMap {
     }
     @Override
     public Integer getResult() {
-      return ignoredCount; 
+      return ignoredCount;
     }
   }
 
@@ -145,7 +160,7 @@ public class DivergeBGMap {
   private static final boolean ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE = false;
   private static final boolean ALLIANCE_PREFER_SHORTER_ITEMSETS = false;
   private static final boolean ALLIANCE_PREFER_LONGER_ITEMSETS = false;
-  private static final boolean TOTALLY_IGNORE_1ITEMSETS = true;
+  private static final boolean TOTALLY_IGNORE_1ITEMSETS = false;
 
   /**
    * @param args
@@ -247,6 +262,7 @@ public class DivergeBGMap {
         FileFilterUtils.trueFileFilter());
     Collections.sort(fgFiles, NameFileComparator.NAME_COMPARATOR);
     LinkedHashMap<Set<String>, Integer> fgCountMap = Maps.newLinkedHashMap();
+    SummaryStatistics unigramCountStats = new SummaryStatistics();
     Map<Set<String>, LinkedList<Long>> fgIdsMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
 
     List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, fpNotOutFilter,
@@ -316,7 +332,7 @@ public class DivergeBGMap {
             if (idfFromBG) {
               bgIDFMap.clear();
             }
-            Files.readLines(bgFiles.get(b), Charsets.UTF_8, new ItemsetTabCountProcessor(bgCountMap, null));
+            Files.readLines(bgFiles.get(b), Charsets.UTF_8, new ItemsetTabCountProcessor(bgCountMap));
             LOG.info("Loaded background freqs - num itemsets: {} ", bgCountMap.size());
           }
           break;
@@ -329,6 +345,7 @@ public class DivergeBGMap {
         allianceTransitive.clear();
         itemsetParentMap.clear();
         fgCountMap.clear();
+        unigramCountStats.clear();
         fgIdsMap.clear();
       }
       unalliedItemsets.clear();
@@ -341,13 +358,15 @@ public class DivergeBGMap {
       }
 
       LOG.info("Loading foreground freqs from {}", fgF);
-      int ignoredItemsets = Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgCountMap, fgIdsMap));
+      int ignoredItemsets = Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgCountMap, fgIdsMap,
+          unigramCountStats));
       LOG.info("Loaded foreground freqs - num itemsets: {}", fgCountMap.size());
 
       if (fgCountMap.size() == 0) {
         continue;
       }
 
+      final double stopWordsThreshold = unigramCountStats.getMean() + unigramCountStats.getStandardDeviation();
       final double bgNumTweets = bgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
       final double fgNumTweets = fgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
       final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
@@ -361,14 +380,17 @@ public class DivergeBGMap {
         int counter = 0;
         for (Set<String> itemset : fgCountMap.keySet()) {
 
+          double fgFreq = fgCountMap.get(itemset) + 1.0;
+
           if (itemset.size() == 1) {
             ++ignoredItemsets;
-            if (!TOTALLY_IGNORE_1ITEMSETS)
-              prevItemsets.addLast(itemset);
-            
+            if (!TOTALLY_IGNORE_1ITEMSETS) {
+              if (fgFreq < stopWordsThreshold) {
+                prevItemsets.addLast(itemset);
+              }
+            }
             continue;
           }
-          double fgFreq = fgCountMap.get(itemset) + 1.0;
 
           Integer bgCount = bgCountMap.get(itemset);
           double klDiver = Double.MIN_VALUE;
@@ -1189,7 +1211,8 @@ public class DivergeBGMap {
       } finally {
         novelClose.close();
       }
-      LOG.info("Net itemsets after subtracting ignored: {} out of {} itemsets from file: " + fgF.getName(), fgCountMap.size() - ignoredItemsets, fgCountMap.size());
+      LOG.info("Net itemsets after subtracting ignored: {} out of {} itemsets from file: " + fgF.getName(),
+          fgCountMap.size() - ignoredItemsets, fgCountMap.size());
     }
 
   }
