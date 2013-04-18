@@ -45,19 +45,6 @@ import com.google.common.math.DoubleMath;
 public class DivergeBGMap {
   private final static Logger LOG = LoggerFactory.getLogger(DivergeBGMap.class);
   static SimpleDateFormat logFileNameFmt = new SimpleDateFormat("MMdd-HHmmss");
-  static {
-    org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
-    @SuppressWarnings("unchecked")
-    Enumeration<Appender> appenders = rootLogger.getAllAppenders();
-    while (appenders.hasMoreElements()) {
-      Appender fileAppender = (Appender) appenders.nextElement();
-      if (fileAppender instanceof FileAppender) {
-        ((FileAppender) fileAppender).setFile(logFileNameFmt.format(new Date()) + "_" +
-            ((FileAppender) fileAppender).getFile());
-        ((FileAppender) fileAppender).activateOptions();
-      }
-    }
-  }
 
   private static final Splitter comaSplitter = Splitter.on(',');
   static class ItemsetTabCountProcessor implements LineProcessor<Map<String, Integer>> {
@@ -143,7 +130,8 @@ public class DivergeBGMap {
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
 
-  private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Overlap similarity
+// private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Overlap similarity
+  private static final double DOCID_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.75;
 
   private static final double KLDIVERGENCE_MIN = 0; // this is multiplied by frequency not prob
 
@@ -286,6 +274,24 @@ public class DivergeBGMap {
     LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
 
     for (File fgF : fgFiles) {
+      final File novelFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", novelPfx)); // "novel_"));
+      if (novelFile.exists()) {
+        // TODO: skip output that already exists
+      }
+
+      final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", selectionPfx));
+
+      org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
+      @SuppressWarnings("unchecked")
+      Enumeration<Appender> appenders = rootLogger.getAllAppenders();
+      while (appenders.hasMoreElements()) {
+        Appender fileAppender = (Appender) appenders.nextElement();
+        if (fileAppender instanceof FileAppender) {
+          ((FileAppender) fileAppender).setFile(selFile.getAbsolutePath() + "_"
+              + logFileNameFmt.format(new Date()) + ".log");
+          ((FileAppender) fileAppender).activateOptions();
+        }
+      }
       long windowStartUx = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 2));
       long idealBgStartUx = windowStartUx - histLenSecs;
 
@@ -339,13 +345,6 @@ public class DivergeBGMap {
       final double bgNumTweets = bgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
       final double fgNumTweets = fgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
       final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
-
-      final File novelFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", novelPfx)); // "novel_"));
-      if (novelFile.exists()) {
-        // TODO: skip output that already exists
-      }
-
-      final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", selectionPfx));
 
       Closer novelClose = Closer.create();
       try {
@@ -643,9 +642,9 @@ public class DivergeBGMap {
               itemsetParentMap.put(itemset, parentItemset);
             }
 
-            double maxDiffCnt = Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-                Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                    Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * iDocIds.size())));
+// double maxDiffCnt = Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+// Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+// Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * iDocIds.size())));
 
             Set<String> theOnlyOneIllMerge = null;
             int theOnlyOnesDifference = Integer.MIN_VALUE;
@@ -661,6 +660,12 @@ public class DivergeBGMap {
             for (Set<String> cand : mergeCandidates) {
 
               LinkedList<Long> candDocIds = fgIdsMap.get(cand);
+
+              // Jaccard similarity to overlap similirity threshold transformation according to ppjoin
+              int maxDiffCnt = (int) Math
+                  .ceil((DOCID_SIMILARITY_JACCARD_GOOD_THRESHOLD / (1.0 + DOCID_SIMILARITY_JACCARD_GOOD_THRESHOLD))
+                  * (iDocIds.size() + candDocIds.size()));
+
               int differentDocs = 0;
               if (ancestorItemsets.contains(cand)) {
                 // the (true) parent will necessarily be present in all documents of itemset
@@ -668,6 +673,7 @@ public class DivergeBGMap {
               } else {
 // unionDocId.clear();
 // intersDocId.clear();
+
 
                 if (candDocIds == null || candDocIds.isEmpty()) {
                   LOG.warn("Using a file with truncated inverted indexes");
@@ -725,6 +731,7 @@ public class DivergeBGMap {
                     }
                   } else {
 // unionDocId.add(candDid);
+                    ++differentDocs;
                     if (candDidIter.hasNext()) {
                       candDid = candDidIter.next();
                     } else {
@@ -746,13 +753,19 @@ public class DivergeBGMap {
                       ((((minMaxIDid >>> 22)) - lastCooc) / 1000) + 1));
 
                 }
-                while (iDid > 0 && differentDocs <= maxDiffCnt) {
+                while ((iDid > 0 || candDid > 0) && differentDocs <= maxDiffCnt) {
                   ++differentDocs;
                   if (iDidIter.hasNext()) {
                     iDid = iDidIter.next();
                   } else {
                     iDid = -1;
-                    break;
+// break;
+                  }
+                  if (candDidIter.hasNext()) {
+                    candDid = candDidIter.next();
+                  } else {
+                    candDid = -1;
+// break;
                   }
                 }
                 if (honorTemporalSimilarity && LOG.isTraceEnabled()) {
@@ -798,8 +811,10 @@ public class DivergeBGMap {
 // grandIntersDocId = Sets.intersection(grandIntersDocId, intersDocId);
 //
 // }
+              double docIdsIntersctionCnt = (iDocIds.size() + candDocIds.size() - differentDocs) / 2.0;
+              double docIdsJaccard = docIdsIntersctionCnt / (iDocIds.size() + candDocIds.size() - docIdsIntersctionCnt);
               // If similar enough, attach to the merge candidate and put both in pending queue
-              if (differentDocs <= maxDiffCnt) {
+              if (docIdsJaccard >= DOCID_SIMILARITY_JACCARD_GOOD_THRESHOLD) { // differentDocs <= maxDiffCnt) {
                 // Try and join and existing alliance
                 Set<String> bestAllianceHead = cand;
 
@@ -819,11 +834,14 @@ public class DivergeBGMap {
                         cand);
 
                   for (Set<String> exitingAllianceHead : candidateTransHeads) {
+                    if(mergeCandidates.contains(exitingAllianceHead)){
+                      continue; //will be checked out anyway
+                    }
                     int existingHeadNonOverlap = 0;
                     Iterator<Long> iDidIter = iDocIds.iterator();
                     Iterator<Long> existingDidIter = fgIdsMap.get(exitingAllianceHead).iterator();
                     long iDid = iDidIter.next(), existingDid = existingDidIter.next();
-                    while (existingHeadNonOverlap <= maxDiffCnt) {
+                    while (existingHeadNonOverlap <= -1 ) { //TODO: maxDiffCnt here after testing
                       if (iDid == existingDid) {
                         // intersDocId.add(iDid);
                         // unionDocId.add(iDid);
@@ -858,7 +876,7 @@ public class DivergeBGMap {
                       }
                     }
 
-                    while (iDid > 0 && existingHeadNonOverlap <= maxDiffCnt) {
+                    while (iDid > 0 && existingHeadNonOverlap <= -1) { //TODO: maxDiffCnt) {
                       ++existingHeadNonOverlap;
                       if (iDidIter.hasNext()) {
                         iDid = iDidIter.next();
@@ -868,7 +886,7 @@ public class DivergeBGMap {
                       }
                     }
 
-                    if (existingHeadNonOverlap <= maxDiffCnt &&
+                    if (existingHeadNonOverlap <= -1 &&  //TODO maxDiffCnt &&
                         ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
                         || (exitingAllianceHead.size() < bestAllianceHead.size()
                         || existingHeadNonOverlap < currentBestDifference))) {
