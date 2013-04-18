@@ -130,8 +130,7 @@ public class DivergeBGMap {
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
 
-// private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Overlap similarity
-  private static final double DOCID_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.75;
+  private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Overlap similarity
 
   private static final double KLDIVERGENCE_MIN = 0; // this is multiplied by frequency not prob
 
@@ -140,6 +139,7 @@ public class DivergeBGMap {
   private static final boolean RESEARCH_MODE = true;
 
   private static final boolean QUALITY_APPRECIATE_LARGE_ALLIANCES = false;
+  private static final boolean ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE = true;
 
   /**
    * @param args
@@ -626,8 +626,8 @@ public class DivergeBGMap {
               }
             }
 
-            // Add to previous for next iterations to access it, regardless if it will get merged or not.. it can
-            prevItemsets.addLast(itemset);
+// // Add to previous for next iterations to access it, regardless if it will get merged or not.. it can
+// prevItemsets.addLast(itemset);
 
 // mergedItemset.clear();
 
@@ -641,10 +641,6 @@ public class DivergeBGMap {
             if (parentItemset != null) {
               itemsetParentMap.put(itemset, parentItemset);
             }
-
-// double maxDiffCnt = Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-// Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-// Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * iDocIds.size())));
 
             Set<String> theOnlyOneIllMerge = null;
             int theOnlyOnesDifference = Integer.MIN_VALUE;
@@ -660,25 +656,34 @@ public class DivergeBGMap {
             for (Set<String> cand : mergeCandidates) {
 
               LinkedList<Long> candDocIds = fgIdsMap.get(cand);
+              if (candDocIds == null || candDocIds.isEmpty()) {
+                LOG.warn("Using a file with truncated inverted indexes");
+                continue;
+              }
 
-              // Jaccard similarity to overlap similirity threshold transformation according to ppjoin
-              int maxDiffCnt = (int) Math
-                  .ceil((DOCID_SIMILARITY_JACCARD_GOOD_THRESHOLD / (1.0 + DOCID_SIMILARITY_JACCARD_GOOD_THRESHOLD))
-                  * (iDocIds.size() + candDocIds.size()));
+              int differentDocs = Math.max(candDocIds.size(), iDocIds.size())
+                  - Math.min(candDocIds.size(), iDocIds.size());
 
-              int differentDocs = 0;
-              if (ancestorItemsets.contains(cand)) {
-                // the (true) parent will necessarily be present in all documents of itemset
-                differentDocs = candDocIds.size() - iDocIds.size();
+              LinkedList<Long> longer, shorter;
+
+              if (candDocIds.size() >= iDocIds.size()) {
+                longer = candDocIds;
+                shorter = iDocIds;
               } else {
-// unionDocId.clear();
-// intersDocId.clear();
+                longer = iDocIds;
+                shorter = candDocIds;
+              }
 
+              double maxDiffCnt = Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                  Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                      Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * longer.size())));
 
-                if (candDocIds == null || candDocIds.isEmpty()) {
-                  LOG.warn("Using a file with truncated inverted indexes");
-                  continue;
-                }
+              if (!ancestorItemsets.contains(cand)) {
+                // the (true) parent will necessarily be present in all documents of itemset
+// differentDocs = candDocIds.size() - iDocIds.size();
+// } else {
+// // unionDocId.clear();
+// // intersDocId.clear();
 
                 // Intersection and union calculation (depends on that docIds are sorted)
                 // TODONE: use a variation of this measure that calculates the time period covered by each itemset
@@ -753,21 +758,16 @@ public class DivergeBGMap {
                       ((((minMaxIDid >>> 22)) - lastCooc) / 1000) + 1));
 
                 }
-                while ((iDid > 0 || candDid > 0) && differentDocs <= maxDiffCnt) {
-                  ++differentDocs;
-                  if (iDidIter.hasNext()) {
-                    iDid = iDidIter.next();
-                  } else {
-                    iDid = -1;
+                // Residsue already accounted for in the Max - Min equation
+// while (iDid > 0 && differentDocs <= maxDiffCnt) {
+// ++differentDocs;
+// if (iDidIter.hasNext()) {
+// iDid = iDidIter.next();
+// } else {
+// iDid = -1;
 // break;
-                  }
-                  if (candDidIter.hasNext()) {
-                    candDid = candDidIter.next();
-                  } else {
-                    candDid = -1;
-// break;
-                  }
-                }
+// }
+// }
                 if (honorTemporalSimilarity && LOG.isTraceEnabled()) {
                   LOG.trace(itemset.toString() + iDocIds.size()
                       + " differs in at least {} docs from {} with seconds till coocurrence of: " +
@@ -811,53 +811,74 @@ public class DivergeBGMap {
 // grandIntersDocId = Sets.intersection(grandIntersDocId, intersDocId);
 //
 // }
-              double docIdsIntersctionCnt = (iDocIds.size() + candDocIds.size() - differentDocs) / 2.0;
-              double docIdsJaccard = docIdsIntersctionCnt / (iDocIds.size() + candDocIds.size() - docIdsIntersctionCnt);
               // If similar enough, attach to the merge candidate and put both in pending queue
-              if (docIdsJaccard >= DOCID_SIMILARITY_JACCARD_GOOD_THRESHOLD) { // differentDocs <= maxDiffCnt) {
+              if (differentDocs <= maxDiffCnt) {
                 // Try and join and existing alliance
                 Set<String> bestAllianceHead = cand;
+                int currentBestDifference = differentDocs;
 
-                Set<Set<String>> candidateTransHeads = allianceTransitive.get(cand);
-                // what did the candidate do wrong to ignore it if it doesn't have earlier allies?
+                if (!ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE) {
+                  Set<Set<String>> candidateTransHeads = allianceTransitive.get(cand);
+                  // what did the candidate do wrong to ignore it if it doesn't have earlier allies?
 // if(candidateTransHeads == null){
 // candidateTransHeads = allianceTransitive.get(itemset);
 // } else {
 //
 // }
-                int currentBestDifference = differentDocs;
-                if (candidateTransHeads != null) {
-                  if (LOG.isTraceEnabled())
-                    LOG.trace(itemset.toString() + iDocIds.size()
-                        + " offered more merge options {} through candidate {}", candidateTransHeads, // .toString() +
-// fgIdsMap.get(candidateTransHeads).size(),
-                        cand);
 
-                  for (Set<String> exitingAllianceHead : candidateTransHeads) {
-                    if(mergeCandidates.contains(exitingAllianceHead)){
-                      continue; //will be checked out anyway
+                  if (candidateTransHeads != null) {
+                    if (LOG.isTraceEnabled())
+                      LOG.trace(itemset.toString() + iDocIds.size()
+                          + " offered more merge options {} through candidate {}", candidateTransHeads, // .toString() +
+// fgIdsMap.get(candidateTransHeads).size(),
+                          cand);
+
+                    if (mergeCandidates.contains(candidateTransHeads)) {
+                      continue; // checked out later anyway
                     }
-                    int existingHeadNonOverlap = 0;
-                    Iterator<Long> iDidIter = iDocIds.iterator();
-                    Iterator<Long> existingDidIter = fgIdsMap.get(exitingAllianceHead).iterator();
-                    long iDid = iDidIter.next(), existingDid = existingDidIter.next();
-                    while (existingHeadNonOverlap <= -1 ) { //TODO: maxDiffCnt here after testing
-                      if (iDid == existingDid) {
-                        // intersDocId.add(iDid);
-                        // unionDocId.add(iDid);
-                        if (iDidIter.hasNext()) {
-                          iDid = iDidIter.next();
+                    for (Set<String> exitingAllianceHead : candidateTransHeads) {
+                      int existingHeadNonOverlap = 0;
+                      Iterator<Long> iDidIter = iDocIds.iterator();
+                      Iterator<Long> existingDidIter = fgIdsMap.get(exitingAllianceHead).iterator();
+                      long iDid = iDidIter.next(), existingDid = existingDidIter.next();
+                      // FIXME: this maxDiffCnt is from earlier.. use another variable for the comparison with alliance
+// head
+                      while (existingHeadNonOverlap <= maxDiffCnt) {
+                        if (iDid == existingDid) {
+                          // intersDocId.add(iDid);
+                          // unionDocId.add(iDid);
+                          if (iDidIter.hasNext()) {
+                            iDid = iDidIter.next();
+                          } else {
+                            iDid = -1;
+                            break;
+                          }
+                          if (existingDidIter.hasNext()) {
+                            existingDid = existingDidIter.next();
+                          } else {
+                            break;
+                          }
+                        } else if (iDid < existingDid) {
+                          // unionDocId.add(iDid);
+                          ++existingHeadNonOverlap;
+                          if (iDidIter.hasNext()) {
+                            iDid = iDidIter.next();
+                          } else {
+                            iDid = -1;
+                            break;
+                          }
+
                         } else {
-                          iDid = -1;
-                          break;
+                          // unionDocId.add(candDid);
+                          if (existingDidIter.hasNext()) {
+                            existingDid = existingDidIter.next();
+                          } else {
+                            break;
+                          }
                         }
-                        if (existingDidIter.hasNext()) {
-                          existingDid = existingDidIter.next();
-                        } else {
-                          break;
-                        }
-                      } else if (iDid < existingDid) {
-                        // unionDocId.add(iDid);
+                      }
+
+                      while (iDid > 0 && existingHeadNonOverlap <= maxDiffCnt) {
                         ++existingHeadNonOverlap;
                         if (iDidIter.hasNext()) {
                           iDid = iDidIter.next();
@@ -865,40 +886,21 @@ public class DivergeBGMap {
                           iDid = -1;
                           break;
                         }
-
-                      } else {
-                        // unionDocId.add(candDid);
-                        if (existingDidIter.hasNext()) {
-                          existingDid = existingDidIter.next();
-                        } else {
-                          break;
-                        }
                       }
-                    }
 
-                    while (iDid > 0 && existingHeadNonOverlap <= -1) { //TODO: maxDiffCnt) {
-                      ++existingHeadNonOverlap;
-                      if (iDidIter.hasNext()) {
-                        iDid = iDidIter.next();
-                      } else {
-                        iDid = -1;
-                        break;
+                      if (existingHeadNonOverlap <= maxDiffCnt &&
+                          ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
+                          || (exitingAllianceHead.size() < bestAllianceHead.size()
+                          || existingHeadNonOverlap < currentBestDifference))) {
+                        // or equals prefers existing allinaces to forming new ones
+
+                        currentBestDifference = existingHeadNonOverlap;
+                        bestAllianceHead = exitingAllianceHead;
+
                       }
-                    }
-
-                    if (existingHeadNonOverlap <= -1 &&  //TODO maxDiffCnt &&
-                        ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
-                        || (exitingAllianceHead.size() < bestAllianceHead.size()
-                        || existingHeadNonOverlap < currentBestDifference))) {
-                      // or equals prefers existing allinaces to forming new ones
-
-                      currentBestDifference = existingHeadNonOverlap;
-                      bestAllianceHead = exitingAllianceHead;
-
                     }
                   }
                 }
-
                 if ((theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size())
                     || (currentBestDifference < theOnlyOnesDifference)) {
 
@@ -1035,6 +1037,14 @@ public class DivergeBGMap {
 
             if (!allied) {
               unalliedItemsets.put(itemset, klDiver);
+            }
+
+            if (allied || !ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE) {
+              prevItemsets.addLast(itemset);
+            } else {
+              if (LOG.isTraceEnabled())
+                LOG.trace(itemset.toString() + iDocIds.size()
+                    + " doesn't exist outside of its alliance with head " + allianceTransitive.get(itemset));
             }
           }
         }
