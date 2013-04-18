@@ -48,7 +48,7 @@ public class DivergeBGMap {
   static SimpleDateFormat logFileNameFmt = new SimpleDateFormat("MMdd-HHmmss");
 
   private static final Splitter comaSplitter = Splitter.on(',');
-  static class ItemsetTabCountProcessor implements LineProcessor<Map<String, Integer>> {
+  static class ItemsetTabCountProcessor implements LineProcessor<Integer> {
 
     private static final String NUM_TWEETS_STR = "NUMTWEETS";
 
@@ -60,6 +60,7 @@ public class DivergeBGMap {
     final Map<Set<String>, LinkedList<Long>> fpDocIdsMap;
 // Avoid copying this from one frame to another = Maps.newHashMapWithExpectedSize(4444444);
     boolean skipOneCharSets = true;
+    int ignoredCount = 0;
 
     public ItemsetTabCountProcessor(Map<Set<String>, Integer> fgCountMap,
         Map<Set<String>, LinkedList<Long>> fgIdsMap) {
@@ -91,6 +92,7 @@ public class DivergeBGMap {
 // if (LOG.isTraceEnabled())
 // LOG.trace("Filtering out itemset {} with average item length of {}, appearing in docs: "
 // + ids.substring(0, Math.min(ids.length(), 189)), itemset, "[less than 2]");
+        ++ignoredCount;
         return true;
       }
 
@@ -111,8 +113,8 @@ public class DivergeBGMap {
       return true;
     }
     @Override
-    public Map<String, Integer> getResult() {
-      return null; // fpCntMap avoid unneccesary copying.. am I thinking in C or R?? whatever!
+    public Integer getResult() {
+      return ignoredCount; 
     }
   }
 
@@ -143,6 +145,7 @@ public class DivergeBGMap {
   private static final boolean ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE = false;
   private static final boolean ALLIANCE_PREFER_SHORTER_ITEMSETS = false;
   private static final boolean ALLIANCE_PREFER_LONGER_ITEMSETS = false;
+  private static final boolean TOTALLY_IGNORE_1ITEMSETS = false;
 
   /**
    * @param args
@@ -338,7 +341,7 @@ public class DivergeBGMap {
       }
 
       LOG.info("Loading foreground freqs from {}", fgF);
-      Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgCountMap, fgIdsMap));
+      int ignoredItemsets = Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgCountMap, fgIdsMap));
       LOG.info("Loaded foreground freqs - num itemsets: {}", fgCountMap.size());
 
       if (fgCountMap.size() == 0) {
@@ -358,6 +361,13 @@ public class DivergeBGMap {
         int counter = 0;
         for (Set<String> itemset : fgCountMap.keySet()) {
 
+          if (itemset.size() == 1) {
+            ++ignoredItemsets;
+            if (!TOTALLY_IGNORE_1ITEMSETS)
+              prevItemsets.addLast(itemset);
+            
+            continue;
+          }
           double fgFreq = fgCountMap.get(itemset) + 1.0;
 
           Integer bgCount = bgCountMap.get(itemset);
@@ -385,9 +395,7 @@ public class DivergeBGMap {
 
           // ////////////////////////////////////////////
 
-          if (itemset.size() == 1) {
-            prevItemsets.addLast(itemset);
-          } else if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
+          if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
             LinkedList<Long> iDocIds = fgIdsMap.get(itemset);
             if (iDocIds == null || iDocIds.isEmpty()) {
               LOG.warn("Using a foreground file with truncated docids. No docids for itemset: " + iDocIds);
@@ -1181,6 +1189,7 @@ public class DivergeBGMap {
       } finally {
         novelClose.close();
       }
+      LOG.info("Ignored {} out of {} itemsets from file: " + fgF, ignoredItemsets, fgCountMap.size());
     }
 
   }
