@@ -122,7 +122,7 @@ public class DivergeBGMap {
   // max num of itemsets was 2688780 fp_3600_1352260800 in the folder lcm_closed/1hr+30min...1-abs5
   private static final int FG_MAX_NUM_ITEMSETS = 2700000;
 
-//  private static final double CONFIDENCE_LOW_THRESHOLD = 0.1; // upper bound to ??? 
+// private static final double CONFIDENCE_LOW_THRESHOLD = 0.1; // upper bound to ???
   private static final double CONFIDENCE_HIGH_THRESHOLD = 0.1; // lower bound
 
   private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
@@ -671,13 +671,13 @@ public class DivergeBGMap {
                   ((ancestorItemsets.contains(cand)) ?
                       // the (true) parent will necessarily be present in all documents of itemset
 // differentDocs = candDocIds.size() - iDocIds.size();
-                      Math.floor((1-CONFIDENCE_HIGH_THRESHOLD) * candDocIds.size())
+                      Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * candDocIds.size())
                       :
                       Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                           Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                              Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * 
+                              Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) *
                                   Math.max(candDocIds.size(), iDocIds.size())))));
-              
+
               if (!ancestorItemsets.contains(cand)) {
 // // unionDocId.clear();
 // // intersDocId.clear();
@@ -903,7 +903,11 @@ public class DivergeBGMap {
                               || existingHeadNonOverlap < currentBestDifference))) {
                         // or equals prefers existing allinaces to forming new ones
 
-                        currentBestDifference = existingHeadNonOverlap;
+                        if (!avoidFormingNewAllianceIfPossible) { // TODO: this needs tweaking if more than one existing
+                          currentBestDifference = existingHeadNonOverlap;
+                        } // else: keeping the difference of cand, which should be better, so that
+                        // other candidates have harder time beating the existing alliance
+
                         bestAllianceHead = exitingAllianceHead;
 
                       }
