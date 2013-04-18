@@ -1189,7 +1189,7 @@ public class DivergeBGMap {
       } finally {
         novelClose.close();
       }
-      LOG.info("Ignored {} out of {} itemsets from file: " + fgF, ignoredItemsets, fgCountMap.size());
+      LOG.info("Net itemsets after subtracting ignored: {} out of {} itemsets from file: " + fgF.getName(), fgCountMap.size() - ignoredItemsets, fgCountMap.size());
     }
 
   }
