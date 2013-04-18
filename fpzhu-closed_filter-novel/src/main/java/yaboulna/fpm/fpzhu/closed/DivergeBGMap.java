@@ -121,8 +121,8 @@ public class DivergeBGMap {
   // max num of itemsets was 2688780 fp_3600_1352260800 in the folder lcm_closed/1hr+30min...1-abs5
   private static final int FG_MAX_NUM_ITEMSETS = 2700000;
 
-  private static final double CLOSED_CONFIDENCE_THRESHOLD = 0.05; // upper bound
-  private static final double HIGH_CONFIDENCE_THRESHOLD = 0.125; // lower bound
+  private static final double CONFIDENCE_LOW_THRESHOLD = 0.1; // upper bound
+  private static final double CONFIDENCE_HIGH_THRESHOLD = 0.125; // lower bound
 
   private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
   private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.66; // Cosine similarity
@@ -645,7 +645,7 @@ public class DivergeBGMap {
             }
 
             Set<String> theOnlyOneIllMerge = null;
-            int theOnlyOnesDifference = Integer.MIN_VALUE;
+            int theOnlyOnesDifference = Integer.MAX_VALUE;
             if (growAlliancesAcrossEpochs && allianceTransitive.containsKey(itemset)) {
               mergeCandidates.addAll(allianceTransitive.get(itemset));
             }
@@ -676,14 +676,16 @@ public class DivergeBGMap {
                 shorter = candDocIds;
               }
 
-              double maxDiffCnt = Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-                  Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                      Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * longer.size())));
-
-              if (!ancestorItemsets.contains(cand)) {
-                // the (true) parent will necessarily be present in all documents of itemset
+              double maxDiffCnt;
+              if (ancestorItemsets.contains(cand)) {
+// the (true) parent will necessarily be present in all documents of itemset
 // differentDocs = candDocIds.size() - iDocIds.size();
-// } else {
+                maxDiffCnt = Math.floor(CONFIDENCE_LOW_THRESHOLD * candDocIds.size());
+              } else {
+                maxDiffCnt = Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                    Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                        Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * longer.size())));
+
 // // unionDocId.clear();
 // // intersDocId.clear();
 
@@ -905,8 +907,8 @@ public class DivergeBGMap {
                 }
                 if ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
                     (theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size()))
-                    ||(ALLIANCE_PREFER_LONGER_ITEMSETS &&
-                        (theOnlyOneIllMerge == null || bestAllianceHead.size() > theOnlyOneIllMerge.size()))
+                    || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
+                    (theOnlyOneIllMerge == null || bestAllianceHead.size() > theOnlyOneIllMerge.size()))
                     || (currentBestDifference < theOnlyOnesDifference)) {
 
                   theOnlyOneIllMerge = bestAllianceHead;
@@ -988,7 +990,7 @@ public class DivergeBGMap {
 
               allied = true;
             } else if (!mergeCandidates.isEmpty()) {
-              if (LOG.isTraceEnabled() && bestUnofficialCandidate != null) // why would it be null.. dunno, but it happens
+              if (LOG.isTraceEnabled()) 
                 LOG.trace(itemset.toString() + iDocIds.size()
                     + " no one to merge with, had only {} = {}% of overlap with its best candidate: " +
                     bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size(),
@@ -998,7 +1000,7 @@ public class DivergeBGMap {
 
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
 
-            if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
+            if (maxConfidence >= CONFIDENCE_HIGH_THRESHOLD) {
               confidentItemsets.put(itemset, maxConfidence);
 // // write out the itemset (orig or merged) into selection file(s),
 // // because it is high confidence either from the beginning or after merging
@@ -1060,7 +1062,7 @@ public class DivergeBGMap {
           Set<Long> unionDocId = e.getValue().getValue();
           Set<String> parentItemset = itemsetParentMap.get(e.getKey());
           double confidence = unionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
-          if (confidence < HIGH_CONFIDENCE_THRESHOLD && !RESEARCH_MODE) {
+          if (confidence < CONFIDENCE_HIGH_THRESHOLD && !RESEARCH_MODE) {
             continue;
           } else if (confidence >= 1) {
             if (LOG.isTraceEnabled())
