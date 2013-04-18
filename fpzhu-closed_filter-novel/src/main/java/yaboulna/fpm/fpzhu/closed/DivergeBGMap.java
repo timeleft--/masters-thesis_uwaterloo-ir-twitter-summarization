@@ -824,25 +824,27 @@ public class DivergeBGMap {
 // }
 
                   if (candidateTransHeads != null && !mergeCandidates.contains(candidateTransHeads)) {
-                    if (LOG.isTraceEnabled())
-                      LOG.trace(itemset.toString() + iDocIds.size()
-                          + " offered more merge options {} through candidate {}", candidateTransHeads.toString()
-                          + fgIdsMap.get(candidateTransHeads).size(),
-                          cand);
 
                     for (Set<String> exitingAllianceHead : candidateTransHeads) {
+
+                      LinkedList<Long> existingDocIds = fgIdsMap.get(exitingAllianceHead);
+                      if (LOG.isTraceEnabled())
+                        LOG.trace(itemset.toString() + iDocIds.size()
+                            + " offered one more merge option {} through candidate {}",
+                            exitingAllianceHead.toString() + existingDocIds.size(),
+                            cand + "diff" + differentDocs);
 
                       int existingHeadNonOverlap = Integer.MAX_VALUE;
                       int existingMaxDiffCnt = 0;
                       if (!avoidFormingNewAllianceIfPossible) {
                         Iterator<Long> iDidIter = iDocIds.iterator();
-                        LinkedList<Long> existingDocIds = fgIdsMap.get(exitingAllianceHead);
+
                         Iterator<Long> existingDidIter = existingDocIds.iterator();
                         long iDid = iDidIter.next(), existingDid = existingDidIter.next();
 
                         existingHeadNonOverlap = Math.max(existingDocIds.size(), iDocIds.size())
                             - Math.min(existingDocIds.size(), iDocIds.size());
-                        existingMaxDiffCnt = (int)Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to
+                        existingMaxDiffCnt = (int) Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to
 // allow a merger
                             Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
                                 Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) *
