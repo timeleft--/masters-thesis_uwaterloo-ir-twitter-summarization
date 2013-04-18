@@ -56,6 +56,10 @@ public class DivergeBGMap {
     public static final CopyOnWriteArraySet<String> NUM_TWEETS_KEY = Sets.newCopyOnWriteArraySet(Arrays
         .asList(NUM_TWEETS_STR));
 
+    private static final int ENFORCED_SUPPORT = 33;
+
+    private static final boolean ENFORCE_HIGHER_SUPPORT = true;
+
 // Builder<String, Integer> mapBuilder = ImmutableMap.builder();
     final Map<Set<String>, Integer> fpCntMap;
     final Map<Set<String>, LinkedList<Long>> fpDocIdsMap;
@@ -95,6 +99,10 @@ public class DivergeBGMap {
       }
       int count = DoubleMath.roundToInt(Double.parseDouble(line.substring(tabIx1 + 1, tabIx2)), RoundingMode.UP);
 
+      if(ENFORCE_HIGHER_SUPPORT && count < ENFORCED_SUPPORT){
+        return true;
+      }
+      
       String ids = (tabIx2 < line.length() ? line.substring(tabIx2 + 1) : "");
 
 // mapBuilder.put(itemset, count);
@@ -359,14 +367,17 @@ public class DivergeBGMap {
 
       LOG.info("Loading foreground freqs from {}", fgF);
       int ignoredItemsets = Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgCountMap, fgIdsMap,
-          unigramCountStats));
+          (TOTALLY_IGNORE_1ITEMSETS?null:unigramCountStats)));
       LOG.info("Loaded foreground freqs - num itemsets: {}", fgCountMap.size());
 
       if (fgCountMap.size() == 0) {
         continue;
       }
 
-      final double stopWordsThreshold = unigramCountStats.getMean() + unigramCountStats.getStandardDeviation();
+      final double stopWordsThreshold;
+      if (!TOTALLY_IGNORE_1ITEMSETS) {
+        stopWordsThreshold = unigramCountStats.getMean() + unigramCountStats.getStandardDeviation();
+      }
       final double bgNumTweets = bgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
       final double fgNumTweets = fgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
       final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
