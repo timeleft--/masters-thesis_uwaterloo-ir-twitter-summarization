@@ -1039,7 +1039,7 @@ public class DivergeBGMap {
               unalliedItemsets.put(itemset, klDiver);
             }
 
-            if (allied || !ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE) {
+            if (!ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE || !allied) {
               prevItemsets.addLast(itemset);
             } else {
               if (LOG.isTraceEnabled())
