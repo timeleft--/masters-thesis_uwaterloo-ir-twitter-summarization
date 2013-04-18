@@ -140,6 +140,8 @@ public class DivergeBGMap {
 
   private static final boolean QUALITY_APPRECIATE_LARGE_ALLIANCES = false;
   private static final boolean ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE = true;
+  private static final boolean ALLIANCE_PREFER_SHORTER_ITEMSETS = false;
+  private static final boolean ALLIANCE_PREFER_LONGER_ITEMSETS = false;
 
   /**
    * @param args
@@ -901,7 +903,10 @@ public class DivergeBGMap {
                     }
                   }
                 }
-                if ((theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size())
+                if ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
+                    (theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size()))
+                    ||(ALLIANCE_PREFER_LONGER_ITEMSETS &&
+                        (theOnlyOneIllMerge == null || bestAllianceHead.size() > theOnlyOneIllMerge.size()))
                     || (currentBestDifference < theOnlyOnesDifference)) {
 
                   theOnlyOneIllMerge = bestAllianceHead;
@@ -983,7 +988,7 @@ public class DivergeBGMap {
 
               allied = true;
             } else if (!mergeCandidates.isEmpty()) {
-              if (LOG.isTraceEnabled())
+              if (LOG.isTraceEnabled() && bestUnofficialCandidate != null) // why would it be null.. dunno, but it happens
                 LOG.trace(itemset.toString() + iDocIds.size()
                     + " no one to merge with, had only {} = {}% of overlap with its best candidate: " +
                     bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size(),
