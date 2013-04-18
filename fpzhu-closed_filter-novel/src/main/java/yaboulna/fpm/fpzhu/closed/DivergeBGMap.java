@@ -122,8 +122,8 @@ public class DivergeBGMap {
   // max num of itemsets was 2688780 fp_3600_1352260800 in the folder lcm_closed/1hr+30min...1-abs5
   private static final int FG_MAX_NUM_ITEMSETS = 2700000;
 
-  private static final double CONFIDENCE_LOW_THRESHOLD = 0.1; // upper bound
-  private static final double CONFIDENCE_HIGH_THRESHOLD = 0.125; // lower bound
+//  private static final double CONFIDENCE_LOW_THRESHOLD = 0.1; // upper bound to ??? 
+  private static final double CONFIDENCE_HIGH_THRESHOLD = 0.1; // lower bound
 
   private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
   private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.66; // Cosine similarity
@@ -202,7 +202,7 @@ public class DivergeBGMap {
       histLenSecs = Integer.parseInt(args[3]);
     }
 
-    int absMaxDiff = 100;
+    int absMaxDiff = 150;
     // TODO arg
 
     String novelPfx = "novel_";
@@ -263,7 +263,7 @@ public class DivergeBGMap {
     Set<String> preAllocatedSet1 = Sets.newHashSet();
     Set<String> preAllocatedSet2 = Sets.newHashSet();
     Set<Set<String>> ancestorItemsets = Sets.newHashSet();
-    HashSet<Set<String>> mergeCandidates = Sets.newHashSet(); //Lists.newLinkedList();
+    HashSet<Set<String>> mergeCandidates = Sets.newHashSet(); // Lists.newLinkedList();
     // Multiset<String> mergedItemset = HashMultiset.create();
     // Set<Long> grandUionDocId = Sets.newHashSet();
     // Set<Long> grandIntersDocId = Sets.newHashSet();
@@ -667,26 +667,18 @@ public class DivergeBGMap {
               int differentDocs = Math.max(candDocIds.size(), iDocIds.size())
                   - Math.min(candDocIds.size(), iDocIds.size());
 
-              LinkedList<Long> longer, shorter;
-
-              if (candDocIds.size() >= iDocIds.size()) {
-                longer = candDocIds;
-                shorter = iDocIds;
-              } else {
-                longer = iDocIds;
-                shorter = candDocIds;
-              }
-
-              double maxDiffCnt;
-              if (ancestorItemsets.contains(cand)) {
-// the (true) parent will necessarily be present in all documents of itemset
+              double maxDiffCnt =
+                  ((ancestorItemsets.contains(cand)) ?
+                      // the (true) parent will necessarily be present in all documents of itemset
 // differentDocs = candDocIds.size() - iDocIds.size();
-                maxDiffCnt = Math.floor(CONFIDENCE_LOW_THRESHOLD * candDocIds.size());
-              } else {
-                maxDiffCnt = Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-                    Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                        Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * longer.size())));
-
+                      Math.floor((1-CONFIDENCE_HIGH_THRESHOLD) * candDocIds.size())
+                      :
+                      Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                          Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                              Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * 
+                                  Math.max(candDocIds.size(), iDocIds.size())))));
+              
+              if (!ancestorItemsets.contains(cand)) {
 // // unionDocId.clear();
 // // intersDocId.clear();
 
@@ -838,22 +830,22 @@ public class DivergeBGMap {
 // fgIdsMap.get(candidateTransHeads).size(),
                           cand);
 
-                   
                     for (Set<String> exitingAllianceHead : candidateTransHeads) {
-                      
+
                       Iterator<Long> iDidIter = iDocIds.iterator();
                       LinkedList<Long> existingDocIds = fgIdsMap.get(exitingAllianceHead);
                       Iterator<Long> existingDidIter = existingDocIds.iterator();
                       long iDid = iDidIter.next(), existingDid = existingDidIter.next();
-                      
+
                       int existingHeadNonOverlap = Math.max(existingDocIds.size(), iDocIds.size())
                           - Math.min(existingDocIds.size(), iDocIds.size());
-                      double existingMaxDiffCnt = Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                      double existingMaxDiffCnt = Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to
+// allow a merger
                           Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                              Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) * 
-                                  Math.max(existingDocIds.size(), iDocIds.size()) ) ) );
+                              Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) *
+                                  Math.max(existingDocIds.size(), iDocIds.size()))));
 
-                      while ((existingDid > 0 && iDid > 0) 
+                      while ((existingDid > 0 && iDid > 0)
                           && (existingHeadNonOverlap <= existingMaxDiffCnt)) {
                         if (iDid == existingDid) {
                           // intersDocId.add(iDid);
@@ -862,13 +854,13 @@ public class DivergeBGMap {
                             iDid = iDidIter.next();
                           } else {
                             iDid = -1;
-//                            break;
+// break;
                           }
                           if (existingDidIter.hasNext()) {
                             existingDid = existingDidIter.next();
                           } else {
                             existingDid = -1;
-//                            break;
+// break;
                           }
                         } else if (iDid < existingDid) {
                           // unionDocId.add(iDid);
@@ -877,7 +869,7 @@ public class DivergeBGMap {
                             iDid = iDidIter.next();
                           } else {
                             iDid = -1;
-//                            break;
+// break;
                           }
 
                         } else {
@@ -887,28 +879,28 @@ public class DivergeBGMap {
                             existingDid = existingDidIter.next();
                           } else {
                             existingDid = -1;
-//                            break;
+// break;
                           }
                         }
                       }
 
-//                      while (iDid > 0 && existingHeadNonOverlap <= existingMaxDiffCnt) {
-//                        ++existingHeadNonOverlap;
-//                        if (iDidIter.hasNext()) {
-//                          iDid = iDidIter.next();
-//                        } else {
-//                          iDid = -1;
-//                          break;
-//                        }
-//                      }
+// while (iDid > 0 && existingHeadNonOverlap <= existingMaxDiffCnt) {
+// ++existingHeadNonOverlap;
+// if (iDidIter.hasNext()) {
+// iDid = iDidIter.next();
+// } else {
+// iDid = -1;
+// break;
+// }
+// }
 
                       if (existingHeadNonOverlap <= existingMaxDiffCnt &&
                           ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
-                          || ((ALLIANCE_PREFER_SHORTER_ITEMSETS && 
+                          || ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
                               (exitingAllianceHead.size() < bestAllianceHead.size()))
-                            || (ALLIANCE_PREFER_LONGER_ITEMSETS && 
+                              || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
                               (exitingAllianceHead.size() > bestAllianceHead.size()))
-                            || existingHeadNonOverlap < currentBestDifference))) {
+                              || existingHeadNonOverlap < currentBestDifference))) {
                         // or equals prefers existing allinaces to forming new ones
 
                         currentBestDifference = existingHeadNonOverlap;
@@ -938,10 +930,18 @@ public class DivergeBGMap {
             if (theOnlyOneIllMerge != null) {
               if (LOG.isTraceEnabled())
                 LOG.trace(itemset.toString() + iDocIds.size()
-                    + " overlaps in {} = {}% of its documents with the only one to merge with: "
-                    + theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size(),
-                    (iDocIds.size() - theOnlyOnesDifference),
-                    (iDocIds.size() - theOnlyOnesDifference) * 100.0 / iDocIds.size());
+                    + " had diff of {} documents with the only one to merge with {}, while the max is: " +
+                    ((ancestorItemsets.contains(theOnlyOneIllMerge)) ?
+                        // the (true) parent will necessarily be present in all documents of itemset
+                        // differentDocs = candDocIds.size() - iDocIds.size();
+                        Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * fgIdsMap.get(theOnlyOneIllMerge).size())
+                        :
+                        Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                            Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD)
+                                    * Math.max(fgIdsMap.get(theOnlyOneIllMerge).size(), iDocIds.size()))))),
+                    theOnlyOnesDifference,
+                    theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
               // /////////// Store that you joined this alliance
               Set<Set<String>> transHeads = allianceTransitive.get(itemset);
               if (transHeads != null) {
@@ -1003,12 +1003,20 @@ public class DivergeBGMap {
 
               allied = true;
             } else if (!mergeCandidates.isEmpty()) {
-              if (LOG.isTraceEnabled()) 
+              if (LOG.isTraceEnabled())
                 LOG.trace(itemset.toString() + iDocIds.size()
-                    + " no one to merge with, had only {} = {}% of overlap with its best candidate: " +
-                    bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size(),
-                    (iDocIds.size() - bestUnofficialCandidateDiff),
-                    (iDocIds.size() - bestUnofficialCandidateDiff) * 100.0 / iDocIds.size());
+                    + " no one to merge with, had {} different docs with its best candidate {} while max diff is: "
+                    + ((ancestorItemsets.contains(bestUnofficialCandidate)) ?
+                        // the (true) parent will necessarily be present in all documents of itemset
+                        // differentDocs = candDocIds.size() - iDocIds.size();
+                        Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * fgIdsMap.get(bestUnofficialCandidate).size())
+                        :
+                        Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                            Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD)
+                                    * Math.max(fgIdsMap.get(bestUnofficialCandidate).size(), iDocIds.size()))))),
+                    bestUnofficialCandidateDiff,
+                    bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size());
             }
 
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
