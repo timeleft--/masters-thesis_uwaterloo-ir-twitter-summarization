@@ -6,9 +6,12 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +49,7 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.common.io.Closer;
+import com.google.common.io.Files;
 
 public class HgramsWindow {
   private static Logger LOG = LoggerFactory.getLogger(HgramsWindow.class);
@@ -345,10 +349,27 @@ public class HgramsWindow {
           cmd += " " + tmpFile.getAbsolutePath()
               + " " + support + " " + epochOutLocal;
 
-          Runtime rt = Runtime.getRuntime();
+          final String finalCmd = cmd;
 
           LOG.info("Executing command: " + cmd);
-          Process proc = rt.exec(cmd);
+
+          class CmdRunnable implements Runnable {
+            Process proc;
+            Exception error = null;
+            @Override
+            public void run() {
+              Runtime rt = Runtime.getRuntime();
+              try {
+                proc = rt.exec(finalCmd);
+              } catch (IOException e) {
+                error = e;
+              }
+            }
+          };
+          CmdRunnable cmdRunnable = new CmdRunnable();
+          Thread cmdThread = new Thread(cmdRunnable);
+
+          Process proc = cmdRunnable.proc;
 
           LOG.info("Piping to output and error from the command to stdout and stderr");
           ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -431,10 +452,10 @@ public class HgramsWindow {
               }
 
               String[] codes = ln.split(" ");
-//              if (codes.length == 2) {
-//                // only the ogram and its frequency
-//                continue;
-//              }
+// if (codes.length == 2) {
+// // only the ogram and its frequency
+// continue;
+// }
               int c;
               for (c = 0; c < codes.length - 1; ++c) {
                 String item = decodeMap.get(Integer.parseInt(codes[c]));
@@ -507,6 +528,25 @@ public class HgramsWindow {
               epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
           epochOutLocal.delete();
 
+          long cmdCPUTime = -1;
+          if (cmdRunnable.error != null) {
+            ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
+            cmdCPUTime = tmxb.getThreadCpuTime(cmdThread.getId());
+            LOG.info("The cmd " + finalCmd + " executed in {} nanosecs = {}", cmdCPUTime, cmdCPUTime / 1e9);
+          } else {
+            LOG.error("Error while executing cmd: " + cmdRunnable.error);
+          }
+
+          File perfFile = new File(HgramsWindow.class.getName() + "_" + Joiner.on("_").join(args) + ".perf");
+          Files
+              .append(HgramsWindow.class.getName() + "=\"" + Arrays.toString(args) + "\"", perfFile, Charsets.US_ASCII);
+          Files.append("RowsRead=" + transIter.getRowsRead(), perfFile, Charsets.US_ASCII);
+          Files.append("RowsSkipped=" + transIter.getRowsSkipped(), perfFile, Charsets.US_ASCII);
+          Files
+              .append("RowsNet=" + (transIter.getRowsRead() - transIter.getRowsSkipped()), perfFile, Charsets.US_ASCII);
+          Files.append("CPUNanosMining=" + cmdCPUTime, perfFile, Charsets.US_ASCII);
+          Files.append("CPUSecsMining=" + (cmdCPUTime / 1e9), perfFile, Charsets.US_ASCII);
+
         } else { // if (!USE_RELIABLE_ALGO || stdUnigrams)
 
           SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, epochOut, Text.class,
@@ -540,7 +580,6 @@ public class HgramsWindow {
 // windowStartUx += stepSec;
     }
   }
-
   private static long snowFlakeAtUxtime(long uxTime) {
     long msecs = 0;
     return (((uxTime * 1000L + msecs) - 1288834974657L) << 22); // TWEET_EPOCH_MAGIC_NUM

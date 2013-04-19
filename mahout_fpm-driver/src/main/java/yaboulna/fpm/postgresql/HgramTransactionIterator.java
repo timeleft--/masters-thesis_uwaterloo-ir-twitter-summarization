@@ -99,6 +99,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   StringBuilder posBld = new StringBuilder();
 
   long nRowsRead;
+  long rowsSkipped;
 
   private int currDayIx = 0;
 
@@ -199,6 +200,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     conn = DriverManager.getConnection(url, props);
 
     nRowsRead = 0;
+    rowsSkipped = 0;
   }
 
   public int getAbsSupport(double suppPct) throws SQLException {
@@ -454,6 +456,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         ogramList.add(ogram);
 
         if (skipTransaction || (removeIdenticalTweets && couldBeRepeated && !isARetweet)) {
+          ++rowsSkipped;
           continue;
         }
 
@@ -490,6 +493,10 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   public long getRowsRead() {
     return nRowsRead;
+  }
+  
+  public long getRowsSkipped(){
+    return rowsSkipped;
   }
 
   public void setTopicUnigrams(Set<String> topicUnigrams) {
