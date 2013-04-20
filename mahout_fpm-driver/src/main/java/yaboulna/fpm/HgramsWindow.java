@@ -357,8 +357,16 @@ public class HgramsWindow {
               Runtime rt = Runtime.getRuntime();
               try {
                 proc = rt.exec(finalCmd);
+                proc.waitFor();
+                while(true){
+                  // don't die
+                  Thread.sleep(999999999);
+                }
               } catch (IOException e) {
                 error = e;
+              } catch (InterruptedException e) {
+               // ok.. I'll die now
+                LOG.debug("Bye bye");
               }
             }
           };
@@ -398,6 +406,16 @@ public class HgramsWindow {
           }
 
           executor.shutdown();
+          
+          long cmdCPUTime = -1;
+          if (cmdRunnable.error == null) {
+            ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
+            cmdCPUTime = tmxb.getThreadCpuTime(cmdThread.getId());
+            LOG.info("The cmd " + finalCmd + " executed in {} nanosecs = {}", cmdCPUTime, cmdCPUTime / 1e9);
+            cmdThread.interrupt();
+          } else {
+            LOG.error("Error while executing cmd: " + cmdRunnable.error);
+          }
 
           File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()) + "_supp" + support);
 
@@ -532,14 +550,7 @@ public class HgramsWindow {
               epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
           epochOutLocal.delete();
 
-          long cmdCPUTime = -1;
-          if (cmdRunnable.error == null) {
-            ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
-            cmdCPUTime = tmxb.getThreadCpuTime(cmdThread.getId());
-            LOG.info("The cmd " + finalCmd + " executed in {} nanosecs = {}", cmdCPUTime, cmdCPUTime / 1e9);
-          } else {
-            LOG.error("Error while executing cmd: " + cmdRunnable.error);
-          }
+          
 
           Closer closer = Closer.create();
           try {

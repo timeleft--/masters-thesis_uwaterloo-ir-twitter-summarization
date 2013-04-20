@@ -165,7 +165,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
       // avg
       // ----------------------
       // 1025471.020816967793
-      windowBloom = BloomFilter.create(Funnels.stringFunnel(), (int) (((windowEndUx - windowStartUx) / 3600) * 100000));
+      windowBloom = BloomFilter.create(Funnels.stringFunnel(), (int)Math.ceil( (windowEndUx - windowStartUx) / 3600.0) * 100000);
     }
     this.excludeRetweets = excludeRetweets;
 
