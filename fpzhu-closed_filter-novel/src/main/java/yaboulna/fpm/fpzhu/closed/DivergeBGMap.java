@@ -240,28 +240,46 @@ public class DivergeBGMap {
       histLenSecs = Integer.parseInt(args[3]);
     }
 
-    String novelPfx = "novel_";
-// if (args.length > 3) {
-// novelPfx = args[3];
-// }
-
-    String selectionPfx = "sel_";
+// String novelPfx = "novel_";
+// // if (args.length > 3) {
+// // novelPfx = args[3];
+// // }
+//
+// String selectionPfx = "sel_";
 
     String options;
     if (args.length > 2) {
       options = args[2];
-      if (!args[2].contains("NFLKld")) {
-        options += "_KLD" + KLDIVERGENCE_MIN;
-      }
-      if (args[2].contains("Temporal")) {
-        options += "_Secs" + temporalSimilarityThreshold;
-      }
     } else {
-      options = "default_Buff-AvoidNew";
+      options = "defaultOpts";
     }
-    novelPfx += options + "_";
-    selectionPfx += options + "_";
+// options += options + "_";
+// options += options + "_";
 
+    if (filterLowKLD) {
+      options += "_KLD" + KLDIVERGENCE_MIN;
+    }
+    if (honorTemporalSimilarity) {
+      options += "_Secs" + temporalSimilarityThreshold;
+    }
+    if (!unLimitedBufferSize) {
+      options += "_Buff" + MAX_LOOKBACK_FOR_PARENT;
+    }
+    String thresholds = "";
+    thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD="+ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
+    thresholds += " ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD="+ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD;
+    thresholds += " ITEMSET_SIMILARITY_PROMISING_THRESHOLD="+ITEMSET_SIMILARITY_PROMISING_THRESHOLD;
+    thresholds += " ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH="+ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH;
+    thresholds += " ITEMSET_SIMILARITY_BAD_THRESHOLD="+ITEMSET_SIMILARITY_BAD_THRESHOLD;
+    thresholds += " DOCID_SIMILARITY_GOOD_THRESHOLD="+DOCID_SIMILARITY_GOOD_THRESHOLD;
+    thresholds += " CONFIDENCE_HIGH_THRESHOLD="+CONFIDENCE_HIGH_THRESHOLD;
+  
+    args = Arrays.copyOf(args, 4);
+    
+    args[2] = options;
+
+    args[3] = thresholds;
+    
     // FIXMED: if there are any .out files, this will cause an error now... skip them
     IOFileFilter fpNotOutFilter = new IOFileFilter() {
 
@@ -320,13 +338,13 @@ public class DivergeBGMap {
       PerfMonKeyValueStore perfMon = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
           Arrays.toString(args)));
       for (File fgF : fgFiles) {
-        final File novelFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", novelPfx)); // "novel_"));
+        final File novelFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", "novel_" + options + "_")); 
         if (novelFile.exists()) {
           // TODO: skip output that already exists
         }
 
-        final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", selectionPfx));
-
+        final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", "sel_" + options + "_"));
+        
         org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
         if (PERFORMANCE_CALC_MODE_LESS_LOGGING) {
           rootLogger.setLevel(Level.INFO);
@@ -409,6 +427,7 @@ public class DivergeBGMap {
 
           private boolean done;
           private int numLen1Itemsets = 0;
+          private int absMaxDiffEnforced = 0;
 
           public void run() {
             int counter = 0;
@@ -743,6 +762,9 @@ public class DivergeBGMap {
                                   Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) *
                                       Math.max(candDocIds.size(), iDocIds.size())))));
 
+                  if(maxDiffCnt == absMaxDiff * hrsPerEpoch){
+                    ++absMaxDiffEnforced;
+                  }
                   if (!ancestorItemsets.contains(cand)) {
 // // unionDocId.clear();
 // // intersDocId.clear();
@@ -924,6 +946,9 @@ public class DivergeBGMap {
                                   Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
                                       Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) *
                                           Math.max(existingDocIds.size(), iDocIds.size()))));
+                              if(existingMaxDiffCnt == absMaxDiff * hrsPerEpoch){
+                                ++absMaxDiffEnforced;
+                              }
 
                               while ((existingDid > 0 && iDid > 0)
                                   && (existingHeadNonOverlap <= existingMaxDiffCnt)) {
@@ -1199,15 +1224,16 @@ public class DivergeBGMap {
         int overConfident = 0;
         Closer novelClose = Closer.create();
         try {
-          Formatter highPrecFormat = novelClose.register(new Formatter(novelFile, Charsets.UTF_8.name()));
-
-          Formatter selectionFormat = novelClose.register(new Formatter(selFile, Charsets.UTF_8.name()));
+          Formatter novelFormat = novelClose.register(new Formatter(novelFile, Charsets.UTF_8.name()));
 
           for (java.util.Map.Entry<Set<String>, Double> positiveKLDEntry : positiveKLDivergence.entrySet()) {
             Set<String> itemset = positiveKLDEntry.getKey();
-            highPrecFormat.format(itemset + "\t%.15f\t%s\n", positiveKLDEntry.getValue(), // klDiver,
+            novelFormat.format(itemset + "\t%.15f\t%s\n", positiveKLDEntry.getValue(), // klDiver,
                 (fgIdsMap.containsKey(itemset) ? fgIdsMap.get(itemset) : ""));
           }
+
+          
+          Formatter selectionFormat = novelClose.register(new Formatter(selFile, Charsets.UTF_8.name()));
 
           for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
               .entrySet()) {
@@ -1344,6 +1370,8 @@ public class DivergeBGMap {
         perfMon.storeKeyValue("UnalliedUnMaximal", unMaximalIS.intValue());
         perfMon.storeKeyValue("AlliedLowConf", alliedLowConf);
         perfMon.storeKeyValue("OverConfident", overConfident);
+        perfMon.storeKeyValue("absMaxDiffEnforced", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
+       
 
         LOG.info("CPUNanosFilter: {}", filteringCPUTime);
         LOG.info("TotalItemsets: {}", fgCountMap.size() + itemsetsOfShortAverageLen);
@@ -1358,6 +1386,7 @@ public class DivergeBGMap {
         LOG.info("UnalliedUnMaximal: {}", unMaximalIS.intValue());
         LOG.info("AlliedLowConf: {}", alliedLowConf);
         LOG.info("OverConfident: {}", overConfident);
+        LOG.info("absMaxDiffEnforced: {}", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
 
       }
     } catch (InterruptedException e) {
