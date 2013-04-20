@@ -1319,6 +1319,16 @@ public class DivergeBGMap {
             selectionFormat.out().append("\n");
           }
 
+          final File hcFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", "highConf_" + options + "_"));
+          
+          Formatter hcFormat = novelClose.register(new Formatter(hcFile, Charsets.UTF_8.name()));
+
+          for(java.util.Map.Entry<Set<String>,Double> hcEntry: confidentItemsets.entrySet()){
+            Set<String> itemset = hcEntry.getKey();
+            Double conf = hcEntry.getValue();
+            hcFormat.format(itemset + "\t%.15f\t%s\n", conf,
+                (fgIdsMap.containsKey(itemset) ? fgIdsMap.get(itemset) : ""));
+          }
           // // Print the parents that were pending alliance with children to make sure they have conf
 // // those ones didn't prove to have any confident children, but we have to give them a chance
 // for (java.util.Map.Entry<Set<String>, Double> e : unalliedItemsets.entrySet()) {
