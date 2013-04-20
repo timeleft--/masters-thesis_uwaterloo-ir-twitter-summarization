@@ -9,7 +9,6 @@ import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.nio.charset.Charset;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Formatter;
@@ -50,7 +49,6 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.common.io.Closer;
-import com.google.common.io.Files;
 
 public class HgramsWindow {
   private static Logger LOG = LoggerFactory.getLogger(HgramsWindow.class);
@@ -77,12 +75,9 @@ public class HgramsWindow {
    *          [weightTweetsByAge] if anything but false this will turn on the weighting of tweets (for use with lcm5)
    *          [all/sel] all (default) is the only recognized word and otherwise only selected features
    *          [historyDays] defaults to 30
-   * 
-   * @throws IOException
-   * @throws SQLException
-   * @throws ClassNotFoundException
+   * @throws Exception 
    */
-  public static void main(String[] args) throws IOException, SQLException, ClassNotFoundException {
+  public static void main(String[] args) throws Exception {
 
     long windowStartUx = Long.parseLong(args[0]);
 
@@ -226,7 +221,7 @@ public class HgramsWindow {
         transIter2.init();
 
         if (relSupp) {
-          support = transIter.getAbsSupport(suppPct);
+          support = Math.max(3, transIter.getAbsSupport(suppPct));
         }
         int maxNumIdsToWriteOut = 200000 * support; // To avoid writing out ids for language itemsets FIXME: 2 is arbitrary
         LOG.info("Window support: {}", support);
@@ -369,8 +364,16 @@ public class HgramsWindow {
           };
           CmdRunnable cmdRunnable = new CmdRunnable();
           Thread cmdThread = new Thread(cmdRunnable);
+          cmdThread.start();
 
           Process proc = cmdRunnable.proc;
+          while(proc == null){
+            Thread.sleep(1000);
+            proc = cmdRunnable.proc;
+          }
+          if(cmdRunnable.error != null){
+            throw cmdRunnable.error;
+          }
 
           LOG.info("Piping to output and error from the command to stdout and stderr");
           ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -530,7 +533,7 @@ public class HgramsWindow {
           epochOutLocal.delete();
 
           long cmdCPUTime = -1;
-          if (cmdRunnable.error != null) {
+          if (cmdRunnable.error == null) {
             ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
             cmdCPUTime = tmxb.getThreadCpuTime(cmdThread.getId());
             LOG.info("The cmd " + finalCmd + " executed in {} nanosecs = {}", cmdCPUTime, cmdCPUTime / 1e9);
@@ -542,11 +545,11 @@ public class HgramsWindow {
           try {
             PerfMonKeyValueStore perfMonKV = closer.register(new PerfMonKeyValueStore(HgramsWindow.class.getName(),
                 Arrays.toString(args)));
-            perfMonKV.storeKeyValue("TweetsVolume", "" + transIter.getRowsRead());
-            perfMonKV.storeKeyValue("TweetsSkipped", "" + transIter.getRowsSkipped());
-            perfMonKV.storeKeyValue("TweetsNet", "" + (transIter.getRowsRead() - transIter.getRowsSkipped()));
-            perfMonKV.storeKeyValue("DistinctTerms", "" + tokenIdMapping.size());
-            perfMonKV.storeKeyValue("CPUNanosMining", "" + cmdCPUTime);
+            perfMonKV.storeKeyValue("TweetsVolume", transIter.getRowsRead());
+            perfMonKV.storeKeyValue("TweetsSkipped", transIter.getRowsSkipped());
+            perfMonKV.storeKeyValue("TweetsNet", (transIter.getRowsRead() - transIter.getRowsSkipped()));
+            perfMonKV.storeKeyValue("DistinctTerms", tokenIdMapping.size());
+            perfMonKV.storeKeyValue("CPUNanosMining", cmdCPUTime);
 // perfMonKV.storeKeyValue("CPUSecsMining", "" + (cmdCPUTime / 1e9));
           } finally {
             closer.close();

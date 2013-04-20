@@ -53,9 +53,9 @@ public class PerfMonKeyValueStore implements Closeable {
     }
   }
 
-  public void storeKeyValue(String key, String value) throws SQLException {
+  public void storeKeyValue(String key, double value) throws SQLException {
     insertStmt.setString(1, key);
-    insertStmt.setString(2, value);
+    insertStmt.setDouble(2, value);
     insertStmt.addBatch();
     if (++batchCounter % 10 == 0) {
       insertStmt.executeBatch();
