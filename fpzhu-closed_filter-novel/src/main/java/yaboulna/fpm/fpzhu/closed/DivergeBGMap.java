@@ -365,7 +365,7 @@ public class DivergeBGMap {
           }
         }
 
-        final double hrsPerEpoch = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 1)) / 3600;
+        final double hrsPerEpoch = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 1)) / 3600.0;
         if (!growAlliancesAcrossEpochs) {
           growingAlliances.clear();
           allianceTransitive.clear();
