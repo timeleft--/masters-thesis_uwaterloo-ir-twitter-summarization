@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import yaboulna.fpm.postgresql.HgramTransactionIterator;
+import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -537,15 +538,29 @@ public class HgramsWindow {
             LOG.error("Error while executing cmd: " + cmdRunnable.error);
           }
 
-          File perfFile = new File(HgramsWindow.class.getName() + "_" + Joiner.on("_").join(args) + ".perf");
-          Files
-              .append(HgramsWindow.class.getName() + "=\"" + Arrays.toString(args) + "\"", perfFile, Charsets.US_ASCII);
-          Files.append("RowsRead=" + transIter.getRowsRead(), perfFile, Charsets.US_ASCII);
-          Files.append("RowsSkipped=" + transIter.getRowsSkipped(), perfFile, Charsets.US_ASCII);
-          Files
-              .append("RowsNet=" + (transIter.getRowsRead() - transIter.getRowsSkipped()), perfFile, Charsets.US_ASCII);
-          Files.append("CPUNanosMining=" + cmdCPUTime, perfFile, Charsets.US_ASCII);
-          Files.append("CPUSecsMining=" + (cmdCPUTime / 1e9), perfFile, Charsets.US_ASCII);
+          Closer closer = Closer.create();
+          try {
+            PerfMonKeyValueStore perfMonKV = closer.register(new PerfMonKeyValueStore(HgramsWindow.class.getName(),
+                Arrays.toString(args)));
+            perfMonKV.storeKeyValue("TweetsVolume", "" + transIter.getRowsRead());
+            perfMonKV.storeKeyValue("TweetsSkipped", "" + transIter.getRowsSkipped());
+            perfMonKV.storeKeyValue("TweetsNet", "" + (transIter.getRowsRead() - transIter.getRowsSkipped()));
+            perfMonKV.storeKeyValue("DistinctTerms", "" + tokenIdMapping.size());
+            perfMonKV.storeKeyValue("CPUNanosMining", "" + cmdCPUTime);
+// perfMonKV.storeKeyValue("CPUSecsMining", "" + (cmdCPUTime / 1e9));
+          } finally {
+            closer.close();
+          }
+
+// File perfFile = new File(HgramsWindow.class.getName() + "_" + Joiner.on("_").join(args) + ".perf");
+// Files
+// .append(HgramsWindow.class.getName() + "=\"" + Arrays.toString(args) + "\"", perfFile, Charsets.US_ASCII);
+// Files.append("RowsRead=" + transIter.getRowsRead(), perfFile, Charsets.US_ASCII);
+// Files.append("RowsSkipped=" + transIter.getRowsSkipped(), perfFile, Charsets.US_ASCII);
+// Files
+// .append("RowsNet=" + (transIter.getRowsRead() - transIter.getRowsSkipped()), perfFile, Charsets.US_ASCII);
+// Files.append("CPUNanosMining=" + cmdCPUTime, perfFile, Charsets.US_ASCII);
+// Files.append("CPUSecsMining=" + (cmdCPUTime / 1e9), perfFile, Charsets.US_ASCII);
 
         } else { // if (!USE_RELIABLE_ALGO || stdUnigrams)
 
