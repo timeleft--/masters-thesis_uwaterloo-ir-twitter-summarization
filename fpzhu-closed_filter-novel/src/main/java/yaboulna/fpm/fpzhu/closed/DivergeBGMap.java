@@ -1180,9 +1180,24 @@ public class DivergeBGMap {
 // unalliedItemsets.remove(parentItemset);
                     for (Set<String> pis : ancestorItemsets) {
 // unalliedItemsets.remove(HashMultiset.create(pis));
-                      if (unalliedItemsets.containsKey(pis)) {
-                        unMaximalIS.increment();
+//                      if (unalliedItemsets.containsKey(pis)) {
+//                        unMaximalIS.increment();
+//                      }
+                      
+                      Set<String> origParent = pis;
+                      while (pis != null) {
+      // unalliedItemsets.remove(parentItemset);
+                        if (unalliedItemsets.containsKey(pis)) {
+                          unMaximalIS.increment();
+                        }
+                        Set<String> grandParentItemset = itemsetParentMap.get(pis);
+                        if (grandParentItemset == pis) {
+                          break;
+                        } else {
+                          pis = grandParentItemset;
+                        }
                       }
+                      pis = origParent;
                     }
                   }
                 }
@@ -1377,7 +1392,9 @@ public class DivergeBGMap {
             fgCountMap.size() - (stronglyClosedItemsetsFilter.numLen1Itemsets + itemsetsOfShortAverageLen),
             fgCountMap.size());
 
-        perfMon.storeKeyValue("CPUNanosFilter", filteringCPUTime);
+        
+        perfMon.storeKeyValue("Timestamp", System.currentTimeMillis());
+        perfMon.storeKeyValue("CPUMillisFilter", filteringCPUTime / 1e6);
         perfMon.storeKeyValue("TotalItemsets", fgCountMap.size() + itemsetsOfShortAverageLen);
         perfMon.storeKeyValue("Avg-2CharsItemsets", itemsetsOfShortAverageLen);
         perfMon.storeKeyValue("EnoughCharsItemsets", fgCountMap.size());

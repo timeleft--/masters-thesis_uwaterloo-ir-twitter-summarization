@@ -559,6 +559,7 @@ public class HgramsWindow {
                 epochOutLocal.getAbsolutePath(), epochOutText.getAbsolutePath());
             epochOutLocal.delete();
 
+            perfMonKV.storeKeyValue("Timestamp", System.currentTimeMillis());
             perfMonKV.storeKeyValue("TweetsVolume", transIter.getRowsRead());
             perfMonKV.storeKeyValue("TweetsSkipped", transIter.getRowsSkipped());
             perfMonKV.storeKeyValue("TweetsNet", (transIter.getRowsRead() - transIter.getRowsSkipped()));
