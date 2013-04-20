@@ -151,7 +151,7 @@ public class DivergeBGMap {
   private static final int FG_MAX_NUM_ITEMSETS = 2700000;
 
 // private static final double CONFIDENCE_LOW_THRESHOLD = 0.1; // upper bound to ???
-  private static final double CONFIDENCE_HIGH_THRESHOLD = 0.1; // lower bound
+  private static final double CONFIDENCE_DEFAULT_THRESHOLD = 0.1; // lower bound
 
   private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
   private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.66; // Cosine similarity
@@ -209,18 +209,25 @@ public class DivergeBGMap {
       throw new IllegalArgumentException("Path doesn't exist: " + fgDir.getAbsolutePath());
     }
 
-    if (args.length > 2) {
-      unLimitedBufferSize = args[2].contains("ULBuff");
-      stopMatchingParentFSimLow = args[2].contains("SimLow");
-      allowFormingMultipleAlliances = args[2].contains("MultiAlli");
-      ppJoin = args[2].contains("Ppj");
-      idfFromBG = args[2].contains("IdfBg");
-      entropyFromBg = args[2].contains("EntBg");
-      growAlliancesAcrossEpochs = args[2].contains("Grow");
-      filterLowKLD = !args[2].contains("NFLKld");
-      fallBackToItemsKLD = args[2].contains("ITKld");
-      cntUnMaximal = !args[2].contains("MaxOnly");
-      honorTemporalSimilarity = args[2].contains("Temporal");
+    final double confThreshold;
+    if(args.length > 2){
+      confThreshold = Double.parseDouble(args[2]);
+    } else {
+      confThreshold = CONFIDENCE_DEFAULT_THRESHOLD;
+    }
+    
+    if (args.length > 3) {
+      unLimitedBufferSize = args[3].contains("ULBuff");
+      stopMatchingParentFSimLow = args[3].contains("SimLow");
+      allowFormingMultipleAlliances = args[3].contains("MultiAlli");
+      ppJoin = args[3].contains("Ppj");
+      idfFromBG = args[3].contains("IdfBg");
+      entropyFromBg = args[3].contains("EntBg");
+      growAlliancesAcrossEpochs = args[3].contains("Grow");
+      filterLowKLD = !args[3].contains("NFLKld");
+      fallBackToItemsKLD = args[3].contains("ITKld");
+      cntUnMaximal = !args[3].contains("MaxOnly");
+      honorTemporalSimilarity = args[3].contains("Temporal");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -234,11 +241,22 @@ public class DivergeBGMap {
     LOG.info("fallBackToItemsKLD: " + fallBackToItemsKLD);
     LOG.info("cntUnMaximal: " + cntUnMaximal);
     LOG.info("honorTemporalSimilarity: " + honorTemporalSimilarity);
+    
+    String thresholds = "";
+    thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD="+ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
+    thresholds += " ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD="+ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD;
+    thresholds += " ITEMSET_SIMILARITY_PROMISING_THRESHOLD="+ITEMSET_SIMILARITY_PROMISING_THRESHOLD;
+    thresholds += " ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH="+ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH;
+    thresholds += " ITEMSET_SIMILARITY_BAD_THRESHOLD="+ITEMSET_SIMILARITY_BAD_THRESHOLD;
+    thresholds += " DOCID_SIMILARITY_GOOD_THRESHOLD="+DOCID_SIMILARITY_GOOD_THRESHOLD;
+    thresholds += " CONFIDENCE_HIGH_THRESHOLD="+confThreshold;
+    
+    LOG.info("Thresholds: " + thresholds);
 
     int histLenSecs = 4 * 7 * 24 * 3600;
-    if (args.length > 3) {
-      histLenSecs = Integer.parseInt(args[3]);
-    }
+//    if (args.length > 3) {
+//      histLenSecs = Integer.parseInt(args[3]);
+//    }
 
 // String novelPfx = "novel_";
 // // if (args.length > 3) {
@@ -248,14 +266,14 @@ public class DivergeBGMap {
 // String selectionPfx = "sel_";
 
     String options;
-    if (args.length > 2) {
-      options = args[2];
+    if (args.length > 3) {
+      options = args[3];
     } else {
       options = "defaultOpts";
     }
-// options += options + "_";
-// options += options + "_";
 
+    options += "_conf" + confThreshold;
+    
     if (filterLowKLD) {
       options += "_KLD" + KLDIVERGENCE_MIN;
     }
@@ -265,15 +283,7 @@ public class DivergeBGMap {
     if (!unLimitedBufferSize) {
       options += "_Buff" + MAX_LOOKBACK_FOR_PARENT;
     }
-    String thresholds = "";
-    thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD="+ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
-    thresholds += " ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD="+ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD;
-    thresholds += " ITEMSET_SIMILARITY_PROMISING_THRESHOLD="+ITEMSET_SIMILARITY_PROMISING_THRESHOLD;
-    thresholds += " ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH="+ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH;
-    thresholds += " ITEMSET_SIMILARITY_BAD_THRESHOLD="+ITEMSET_SIMILARITY_BAD_THRESHOLD;
-    thresholds += " DOCID_SIMILARITY_GOOD_THRESHOLD="+DOCID_SIMILARITY_GOOD_THRESHOLD;
-    thresholds += " CONFIDENCE_HIGH_THRESHOLD="+CONFIDENCE_HIGH_THRESHOLD;
-  
+    
     args = Arrays.copyOf(args, 4);
     
     args[2] = options;
@@ -755,7 +765,7 @@ public class DivergeBGMap {
                       ((ancestorItemsets.contains(cand)) ?
                           // the (true) parent will necessarily be present in all documents of itemset
 // differentDocs = candDocIds.size() - iDocIds.size();
-                          Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * candDocIds.size())
+                          Math.floor((1 - confThreshold) * candDocIds.size())
                           :
                           Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                               Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
@@ -1045,7 +1055,7 @@ public class DivergeBGMap {
                         ((ancestorItemsets.contains(theOnlyOneIllMerge)) ?
                             // the (true) parent will necessarily be present in all documents of itemset
                             // differentDocs = candDocIds.size() - iDocIds.size();
-                            Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * fgIdsMap.get(theOnlyOneIllMerge).size())
+                            Math.floor((1 - confThreshold) * fgIdsMap.get(theOnlyOneIllMerge).size())
                             :
                             Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                 Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
@@ -1120,7 +1130,7 @@ public class DivergeBGMap {
                         + ((ancestorItemsets.contains(bestUnofficialCandidate)) ?
                             // the (true) parent will necessarily be present in all documents of itemset
                             // differentDocs = candDocIds.size() - iDocIds.size();
-                            Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * fgIdsMap.get(bestUnofficialCandidate).size())
+                            Math.floor((1 - confThreshold) * fgIdsMap.get(bestUnofficialCandidate).size())
                             :
                             Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                 Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
@@ -1132,7 +1142,7 @@ public class DivergeBGMap {
 
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
 
-                if (maxConfidence >= CONFIDENCE_HIGH_THRESHOLD) {
+                if (maxConfidence >= confThreshold) {
                   confidentItemsets.put(itemset, maxConfidence);
 // // write out the itemset (orig or merged) into selection file(s),
 // // because it is high confidence either from the beginning or after merging
@@ -1241,7 +1251,7 @@ public class DivergeBGMap {
             Set<Long> unionDocId = e.getValue().getValue();
             Set<String> parentItemset = itemsetParentMap.get(e.getKey());
             double confidence = unionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
-            if (confidence < CONFIDENCE_HIGH_THRESHOLD) {
+            if (confidence < confThreshold) {
               if (!RESEARCH_MODE) {
                 continue;
               }
@@ -1373,30 +1383,29 @@ public class DivergeBGMap {
         perfMon.storeKeyValue("EnoughCharsItemsets", fgCountMap.size());
         perfMon.storeKeyValue("Len1Itemsets", stronglyClosedItemsetsFilter.numLen1Itemsets);
         perfMon.storeKeyValue("Len2+Itemsets", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
-        perfMon.storeKeyValue("KLD+Itemsets", positiveKLDivergence.size());
-        perfMon.storeKeyValue("StrongClosedIS", growingAlliances.keySet().size());
-        perfMon.storeKeyValue("HighConfidenceIS", confidentItemsets.size());
         perfMon.storeKeyValue("UnalliedIS", unalliedItemsets.size());
         perfMon.storeKeyValue("UnalliedUnMaximal", unMaximalIS.intValue());
         perfMon.storeKeyValue("AlliedLowConf", alliedLowConf);
         perfMon.storeKeyValue("OverConfident", overConfident);
         perfMon.storeKeyValue("absMaxDiffEnforced", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
-       
+        perfMon.storeKeyValue("KLD+Itemsets", positiveKLDivergence.size());
+        perfMon.storeKeyValue("HighConfidenceIS", confidentItemsets.size());
+        perfMon.storeKeyValue("StrongClosedIS", growingAlliances.keySet().size());
 
-        LOG.info("CPUNanosFilter: {}", filteringCPUTime);
+        LOG.info("CPUMillisFilter: {}", filteringCPUTime / 1e6);
         LOG.info("TotalItemsets: {}", fgCountMap.size() + itemsetsOfShortAverageLen);
         LOG.info("Avg-2CharsItemsets: {}", itemsetsOfShortAverageLen);
         LOG.info("EnoughCharsItemsets: {}", fgCountMap.size());
         LOG.info("Len1Itemsets: {}", stronglyClosedItemsetsFilter.numLen1Itemsets);
         LOG.info("Len2+Itemsets: {}", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
-        LOG.info("KLD+Itemsets: {}", positiveKLDivergence.size());
-        LOG.info("StrongClosedIS: {}", growingAlliances.keySet().size());
-        LOG.info("HighConfidenceIS: {}", confidentItemsets.size());
         LOG.info("UnalliedIS: {}", unalliedItemsets.size());
         LOG.info("UnalliedUnMaximal: {}", unMaximalIS.intValue());
         LOG.info("AlliedLowConf: {}", alliedLowConf);
         LOG.info("OverConfident: {}", overConfident);
         LOG.info("absMaxDiffEnforced: {}", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
+        LOG.info("KLD+Itemsets: {}", positiveKLDivergence.size());
+        LOG.info("HighConfidenceIS: {}", confidentItemsets.size());
+        LOG.info("StrongClosedIS: {}", growingAlliances.keySet().size());
 
       }
     } catch (InterruptedException e) {
