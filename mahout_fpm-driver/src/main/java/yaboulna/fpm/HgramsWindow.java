@@ -564,6 +564,7 @@ public class HgramsWindow {
             perfMonKV.storeKeyValue("TweetsSkipped", transIter.getRowsSkipped());
             perfMonKV.storeKeyValue("TweetsNet", (transIter.getRowsRead() - transIter.getRowsSkipped()));
             perfMonKV.storeKeyValue("DistinctTerms", tokenIdMapping.size());
+            perfMonKV.storeKeyValue("Support", support);
             perfMonKV.storeKeyValue("WallMillisMining", cmdWallTime / 1e6);
 //            perfMonKV.storeKeyValue("CPUNanosMining", cmdCPUTime);
             
