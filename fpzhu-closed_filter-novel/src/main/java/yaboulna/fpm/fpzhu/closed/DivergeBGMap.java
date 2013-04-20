@@ -2,7 +2,10 @@ package yaboulna.fpm.fpzhu.closed;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.math.RoundingMode;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
 import java.util.Arrays;
@@ -13,6 +16,7 @@ import java.util.Formatter;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -24,11 +28,13 @@ import org.apache.commons.io.comparator.NameFileComparator;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
@@ -55,10 +61,6 @@ public class DivergeBGMap {
 
     public static final CopyOnWriteArraySet<String> NUM_TWEETS_KEY = Sets.newCopyOnWriteArraySet(Arrays
         .asList(NUM_TWEETS_STR));
-
-    private static final int ENFORCED_SUPPORT = 33;
-
-    private static final boolean ENFORCE_HIGHER_SUPPORT = true;
 
 // Builder<String, Integer> mapBuilder = ImmutableMap.builder();
     final Map<Set<String>, Integer> fpCntMap;
@@ -99,10 +101,10 @@ public class DivergeBGMap {
       }
       int count = DoubleMath.roundToInt(Double.parseDouble(line.substring(tabIx1 + 1, tabIx2)), RoundingMode.UP);
 
-      if(ENFORCE_HIGHER_SUPPORT && count < ENFORCED_SUPPORT){
+      if (ENFORCE_HIGHER_SUPPORT && count < ENFORCED_SUPPORT) {
         return true;
       }
-      
+
       String ids = (tabIx2 < line.length() ? line.substring(tabIx2 + 1) : "");
 
 // mapBuilder.put(itemset, count);
@@ -169,12 +171,33 @@ public class DivergeBGMap {
   private static final boolean ALLIANCE_PREFER_SHORTER_ITEMSETS = false;
   private static final boolean ALLIANCE_PREFER_LONGER_ITEMSETS = false;
   private static final boolean TOTALLY_IGNORE_1ITEMSETS = false;
+  private static final boolean IGNORE_1ITEMSETS_VERY_HIGH_CNT = false;
+  private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
+
+  private static final boolean ENFORCE_HIGHER_SUPPORT = false;
+  private static final int ENFORCED_SUPPORT = 33;
+
+  static boolean stopMatchingLimitedBufferSize = true;
+  static boolean stopMatchingParentFSimLow = false;
+  static boolean avoidFormingNewAllianceIfPossible = true;
+  static boolean ppJoin = false;
+  static boolean idfFromBG = false;
+  static boolean entropyFromBg = false;
+  static boolean growAlliancesAcrossEpochs = false;
+  static boolean filterLowKLD = true;
+  static boolean fallBackToItemsKLD = false;
+  static boolean selMaximal = false;
+  static boolean honorTemporalSimilarity = false;
+  static int temporalSimilarityThreshold = 60; // seconds
+  static int absMaxDiff = 150; // TODO arg
 
   /**
    * @param args
    * @throws IOException
+   * @throws SQLException
+   * @throws ClassNotFoundException
    */
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException {
     File bgDir = new File(args[0]);
     if (!bgDir.exists()) {
       throw new IllegalArgumentException("Path doesn't exist: " + bgDir.getAbsolutePath());
@@ -185,18 +208,6 @@ public class DivergeBGMap {
       throw new IllegalArgumentException("Path doesn't exist: " + fgDir.getAbsolutePath());
     }
 
-    boolean stopMatchingLimitedBufferSize = true;
-    boolean stopMatchingParentFSimLow = false;
-    boolean avoidFormingNewAllianceIfPossible = true;
-    boolean ppJoin = false;
-    boolean idfFromBG = false;
-    boolean entropyFromBg = false;
-    boolean growAlliancesAcrossEpochs = false;
-    boolean filterLowKLD = false;
-    boolean fallBackToItemsKLD = false;
-    boolean selMaximal = false;
-    boolean honorTemporalSimilarity = false;
-    int temporalSimilarityThreshold = 60; // seconds
     if (args.length > 2) {
       stopMatchingLimitedBufferSize = args[2].contains("Buff");
       stopMatchingParentFSimLow = args[2].contains("SimLow");
@@ -205,7 +216,7 @@ public class DivergeBGMap {
       idfFromBG = args[2].contains("IdfBg");
       entropyFromBg = args[2].contains("EntBg");
       growAlliancesAcrossEpochs = args[2].contains("Grow");
-      filterLowKLD = args[2].contains("FLKld");
+      filterLowKLD = !args[2].contains("NFLKld");
       fallBackToItemsKLD = args[2].contains("ITKld");
       selMaximal = args[2].contains("Max");
       honorTemporalSimilarity = args[2].contains("Temporal");
@@ -228,9 +239,6 @@ public class DivergeBGMap {
       histLenSecs = Integer.parseInt(args[3]);
     }
 
-    int absMaxDiff = 150;
-    // TODO arg
-
     String novelPfx = "novel_";
 // if (args.length > 3) {
 // novelPfx = args[3];
@@ -241,7 +249,7 @@ public class DivergeBGMap {
     String options;
     if (args.length > 2) {
       options = args[2];
-      if (args[2].contains("FLKld")) {
+      if (!args[2].contains("NFLKld")) {
         options += "_KLD" + KLDIVERGENCE_MIN;
       }
       if (args[2].contains("Temporal")) {
@@ -266,31 +274,33 @@ public class DivergeBGMap {
         return accept(file.getParentFile(), file.getName());
       }
     };
-    List<File> fgFiles = (List<File>) FileUtils.listFiles(fgDir, fpNotOutFilter,
+    final List<File> fgFiles = (List<File>) FileUtils.listFiles(fgDir, fpNotOutFilter,
         FileFilterUtils.trueFileFilter());
     Collections.sort(fgFiles, NameFileComparator.NAME_COMPARATOR);
-    LinkedHashMap<Set<String>, Integer> fgCountMap = Maps.newLinkedHashMap();
-    SummaryStatistics unigramCountStats = new SummaryStatistics();
-    Map<Set<String>, LinkedList<Long>> fgIdsMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
+    final LinkedHashMap<Set<String>, Integer> fgCountMap = Maps.newLinkedHashMap();
+    final SummaryStatistics unigramCountStats = new SummaryStatistics();
+    final Map<Set<String>, LinkedList<Long>> fgIdsMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
+    final Map<Set<String>, Double> positiveKLDivergence = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
 
-    List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, fpNotOutFilter,
+    final List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, fpNotOutFilter,
         FileFilterUtils.trueFileFilter());
     Collections.sort(bgFiles, NameFileComparator.NAME_COMPARATOR);
     long loadedBgStartUx = -1;
-    Map<Set<String>, Integer> bgCountMap = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS);
-    Map<String, Double> bgIDFMap = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS / 10);
+    final Map<Set<String>, Integer> bgCountMap = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS);
+    final Map<String, Double> bgIDFMap = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS / 10);
 
     Splitter underscoreSplit = Splitter.on('_');
 
-    Map<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> growingAlliances = Maps.newHashMap();
-    Map<Set<String>, Set<String>> itemsetParentMap = Maps.newHashMap();
-    Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
-    Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
-    Map<Set<String>, Double> confidentItemsets = Maps.newHashMap();
-    Set<String> preAllocatedSet1 = Sets.newHashSet();
-    Set<String> preAllocatedSet2 = Sets.newHashSet();
-    Set<Set<String>> ancestorItemsets = Sets.newHashSet();
-    HashSet<Set<String>> mergeCandidates = Sets.newHashSet(); // Lists.newLinkedList();
+    final Map<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> growingAlliances = Maps.newHashMap();
+    final LinkedList<Set<String>> lowConfidence = Lists.newLinkedList();
+    final Map<Set<String>, LinkedHashSet<Set<String>>> itemsetParentMap = Maps.newHashMap();
+    final Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
+    final Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
+    final Map<Multiset<String>, Double> confidentItemsets = Maps.newHashMap();
+    final Set<String> preAllocatedSet1 = Sets.newHashSet();
+    final Set<String> preAllocatedSet2 = Sets.newHashSet();
+    final LinkedHashSet<Set<String>> ancestorItemsets = Sets.newLinkedHashSet();
+    final HashSet<Set<String>> mergeCandidates = Sets.newHashSet(); // Lists.newLinkedList();
     // Multiset<String> mergedItemset = HashMultiset.create();
     // Set<Long> grandUionDocId = Sets.newHashSet();
     // Set<Long> grandIntersDocId = Sets.newHashSet();
@@ -299,376 +309,388 @@ public class DivergeBGMap {
     // unionDocId = Lists.newLinkedList();
     // intersDocId = Sets.newHashSet();
 
-    Map<String, Double> kldCache = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS / 10);
+    final Map<String, Double> kldCache = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS / 10);
 
-    LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
+    final LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
 
-    for (File fgF : fgFiles) {
-      final File novelFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", novelPfx)); // "novel_"));
-      if (novelFile.exists()) {
-        // TODO: skip output that already exists
-      }
+    Closer perfMonCloser = Closer.create();
 
-      final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", selectionPfx));
-
-      org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
-      @SuppressWarnings("unchecked")
-      Enumeration<Appender> appenders = rootLogger.getAllAppenders();
-      while (appenders.hasMoreElements()) {
-        Appender fileAppender = (Appender) appenders.nextElement();
-        if (fileAppender instanceof FileAppender) {
-          ((FileAppender) fileAppender).setFile(selFile.getAbsolutePath() + "_"
-              + logFileNameFmt.format(new Date()) + ".log");
-          ((FileAppender) fileAppender).activateOptions();
+    try {
+      PerfMonKeyValueStore perfMon = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
+          Arrays.toString(args)));
+      for (File fgF : fgFiles) {
+        final File novelFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", novelPfx)); // "novel_"));
+        if (novelFile.exists()) {
+          // TODO: skip output that already exists
         }
-      }
-      long windowStartUx = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 2));
-      long idealBgStartUx = windowStartUx - histLenSecs;
 
-      // Load the appropriate background file
-      for (int b = 0; b < bgFiles.size(); ++b) {
-        long bgFileWinStart = Long.parseLong(Iterables.get(underscoreSplit.split(bgFiles.get(b).getName()), 2));
-        long nextBgFileWinStart = Long.MAX_VALUE;
-        if (b < bgFiles.size() - 1) {
-          nextBgFileWinStart = Long.parseLong(Iterables.get(underscoreSplit.split(bgFiles.get(b + 1).getName()), 2));
+        final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", selectionPfx));
+
+        org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
+        if (PERFORMANCE_CALC_MODE_LESS_LOGGING) {
+          rootLogger.setLevel(Level.INFO);
         }
-        if (b == bgFiles.size() - 1 || (idealBgStartUx >= bgFileWinStart && idealBgStartUx < nextBgFileWinStart)) {
-          if (loadedBgStartUx != bgFileWinStart) {
-            LOG.info("Loading background freqs from {}", bgFiles.get(b));
-            loadedBgStartUx = bgFileWinStart;
-            bgCountMap.clear();
-            if (idfFromBG) {
-              bgIDFMap.clear();
-            }
-            Files.readLines(bgFiles.get(b), Charsets.UTF_8, new ItemsetTabCountProcessor(bgCountMap));
-            LOG.info("Loaded background freqs - num itemsets: {} ", bgCountMap.size());
+        @SuppressWarnings("unchecked")
+        Enumeration<Appender> appenders = rootLogger.getAllAppenders();
+        while (appenders.hasMoreElements()) {
+          Appender fileAppender = (Appender) appenders.nextElement();
+          if (fileAppender instanceof FileAppender) {
+            ((FileAppender) fileAppender).setFile(selFile.getAbsolutePath() + "_"
+                + logFileNameFmt.format(new Date()) + ".log");
+            ((FileAppender) fileAppender).activateOptions();
           }
-          break;
         }
-      }
+        long windowStartUx = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 2));
+        long idealBgStartUx = windowStartUx - histLenSecs;
 
-      double hrsPerEpoch = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 1)) / 3600;
-      if (!growAlliancesAcrossEpochs) {
-        growingAlliances.clear();
-        allianceTransitive.clear();
-        itemsetParentMap.clear();
-        fgCountMap.clear();
-        unigramCountStats.clear();
-        fgIdsMap.clear();
-      }
-      unalliedItemsets.clear();
-      confidentItemsets.clear();
-      mergeCandidates.clear();
-      prevItemsets.clear();
-      kldCache.clear();
-      if (!idfFromBG) {
-        bgIDFMap.clear();
-      }
-
-      LOG.info("Loading foreground freqs from {}", fgF);
-      int ignoredItemsets = Files.readLines(fgF, Charsets.UTF_8, new ItemsetTabCountProcessor(fgCountMap, fgIdsMap,
-          (TOTALLY_IGNORE_1ITEMSETS?null:unigramCountStats)));
-      LOG.info("Loaded foreground freqs - num itemsets: {}", fgCountMap.size());
-
-      if (fgCountMap.size() == 0) {
-        continue;
-      }
-
-      final double stopWordsThreshold;
-      if (!TOTALLY_IGNORE_1ITEMSETS) {
-        stopWordsThreshold = unigramCountStats.getMean() + unigramCountStats.getStandardDeviation();
-      }
-      final double bgNumTweets = bgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
-      final double fgNumTweets = fgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
-      final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
-
-      Closer novelClose = Closer.create();
-      try {
-        Formatter highPrecFormat = novelClose.register(new Formatter(novelFile, Charsets.UTF_8.name()));
-
-        Formatter selectionFormat = novelClose.register(new Formatter(selFile, Charsets.UTF_8.name()));
-
-        int counter = 0;
-        for (Set<String> itemset : fgCountMap.keySet()) {
-
-          double fgFreq = fgCountMap.get(itemset) + 1.0;
-
-          if (itemset.size() == 1) {
-            ++ignoredItemsets;
-            if (!TOTALLY_IGNORE_1ITEMSETS) {
-              if (fgFreq < stopWordsThreshold) {
-                prevItemsets.addLast(itemset);
+        // Load the appropriate background file
+        for (int b = 0; b < bgFiles.size(); ++b) {
+          long bgFileWinStart = Long.parseLong(Iterables.get(underscoreSplit.split(bgFiles.get(b).getName()), 2));
+          long nextBgFileWinStart = Long.MAX_VALUE;
+          if (b < bgFiles.size() - 1) {
+            nextBgFileWinStart = Long.parseLong(Iterables.get(underscoreSplit.split(bgFiles.get(b + 1).getName()), 2));
+          }
+          if (b == bgFiles.size() - 1 || (idealBgStartUx >= bgFileWinStart && idealBgStartUx < nextBgFileWinStart)) {
+            if (loadedBgStartUx != bgFileWinStart) {
+              LOG.info("Loading background freqs from {}", bgFiles.get(b));
+              loadedBgStartUx = bgFileWinStart;
+              bgCountMap.clear();
+              if (idfFromBG) {
+                bgIDFMap.clear();
               }
+              Files.readLines(bgFiles.get(b), Charsets.UTF_8, new ItemsetTabCountProcessor(bgCountMap));
+              LOG.info("Loaded background freqs - num itemsets: {} ", bgCountMap.size());
             }
-            continue;
+            break;
           }
+        }
 
-          Integer bgCount = bgCountMap.get(itemset);
-          double klDiver = Double.MIN_VALUE;
-          if (bgCount == null) {
-            if (!fallBackToItemsKLD) {
-              bgCount = 1;
-            } else {
-              klDiver = calcComponentsKLDiver(itemset, fgFreq, bgCountMap, fgCountMap, bgFgLogP, kldCache);
-            }
-          }
-          if (bgCount != null) {
-            klDiver = fgFreq * (Math.log(fgFreq / bgCount) + bgFgLogP);
-          }
+        final double hrsPerEpoch = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 1)) / 3600;
+        if (!growAlliancesAcrossEpochs) {
+          growingAlliances.clear();
+          allianceTransitive.clear();
+          itemsetParentMap.clear();
+          fgCountMap.clear();
+          unigramCountStats.clear();
+          fgIdsMap.clear();
+        }
+        positiveKLDivergence.clear();
+        unalliedItemsets.clear();
+        confidentItemsets.clear();
+        lowConfidence.clear();
+        mergeCandidates.clear();
+        prevItemsets.clear();
+        kldCache.clear();
+        if (!idfFromBG) {
+          bgIDFMap.clear();
+        }
 
-          if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
-            highPrecFormat.format(itemset + "\t%.15f\t%s\n", klDiver,
-                (fgIdsMap.containsKey(itemset) ? fgIdsMap.get(itemset) : ""));
-          }
-          // ////////////////////////////////////////////
+        LOG.info("Loading foreground freqs from {}", fgF);
+        int itemsetsOfShortAverageLen = Files.readLines(fgF, Charsets.UTF_8,
+            new ItemsetTabCountProcessor(fgCountMap, fgIdsMap,
+                (TOTALLY_IGNORE_1ITEMSETS || !IGNORE_1ITEMSETS_VERY_HIGH_CNT ? null : unigramCountStats)));
+        LOG.info("Loaded foreground freqs - num itemsets: {}", fgCountMap.size());
 
-          if (++counter % 10000 == 0) {
-            LOG.info("Processed {} itemsets. Last one: {}", counter, itemset + "=" + klDiver);
-          }
+        if (fgCountMap.size() == 0) {
+          continue;
+        }
 
-          // ////////////////////////////////////////////
+        final double stopWordsThreshold = (TOTALLY_IGNORE_1ITEMSETS || !IGNORE_1ITEMSETS_VERY_HIGH_CNT ?
+            Double.MAX_VALUE :
+            unigramCountStats.getMean() + 2 * unigramCountStats.getStandardDeviation()
+            );
+        final double bgNumTweets = bgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
+        final double fgNumTweets = fgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
+        final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
 
-          if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
-            LinkedList<Long> iDocIds = fgIdsMap.get(itemset);
-            if (iDocIds == null || iDocIds.isEmpty()) {
-              LOG.warn("Using a foreground file with truncated docids. No docids for itemset: " + iDocIds);
-              prevItemsets.addLast(itemset);
-              continue;
-            }
+        class StronglyClosedItemsetsFilter implements Runnable {
 
-            if (LOG.isTraceEnabled())
-              LOG.trace(itemset.toString() + iDocIds.size() + " docids: " + iDocIds);
+          private boolean done;
+          private int numLen1Itemsets = 0;
 
-            Double itemsetNorm = null;
-            mergeCandidates.clear();
+          public void run() {
+            int counter = 0;
+            for (Set<String> itemset : fgCountMap.keySet()) {
 
-            Set<String> parentItemset = null;
-            ancestorItemsets.clear();
-            Iterator<Set<String>> prevIter = prevItemsets.descendingIterator();
-            double maxConfidence = -1.0; // if there is no parent, then this is the first from these items
-            boolean allied = false;
+              double fgFreq = fgCountMap.get(itemset) + 1.0;
 
-            int lookBackRecords = 0;
+              if (itemset.size() == 1) {
+                ++numLen1Itemsets; // .increment();
+                if (!TOTALLY_IGNORE_1ITEMSETS) {
+                  if (!IGNORE_1ITEMSETS_VERY_HIGH_CNT || fgFreq < stopWordsThreshold) {
+                    prevItemsets.addLast(itemset);
+                  }
+                }
+                continue;
+              }
 
-            while (prevIter.hasNext()) { // there are more than one parent: && !foundParent
-              Set<String> pis = prevIter.next();
+              Integer bgCount = bgCountMap.get(itemset);
+              double klDiver = Double.MIN_VALUE;
+              if (bgCount == null) {
+                if (!fallBackToItemsKLD) {
+                  bgCount = 1;
+                } else {
+                  klDiver = calcComponentsKLDiver(itemset, fgFreq, bgCountMap, fgCountMap, bgFgLogP, kldCache);
+                }
+              }
+              if (bgCount != null) {
+                klDiver = fgFreq * (Math.log(fgFreq / bgCount) + bgFgLogP);
+              }
 
-              Set<String> interset;
-              Set<String> isPisUnion;
+              if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
+                positiveKLDivergence.put(itemset, klDiver);
 
-              if (!ppJoin || pis.size() < ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH
-                  || itemset.size() < ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH) {
-                interset = Sets.intersection(itemset, pis);
-                isPisUnion = Sets.union(itemset, pis);
-              } else {
+              }
+              // ////////////////////////////////////////////
+
+              if (++counter % 10000 == 0) {
+                LOG.info("Processed {} itemsets. Last one: {}", counter, itemset + "=" + klDiver);
+              }
+
+              // ////////////////////////////////////////////
+
+              if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
+                LinkedList<Long> iDocIds = fgIdsMap.get(itemset);
+                if (iDocIds == null || iDocIds.isEmpty()) {
+                  LOG.warn("Using a foreground file with truncated docids. No docids for itemset: " + iDocIds);
+                  prevItemsets.addLast(itemset);
+                  continue;
+                }
+
+                if (LOG.isTraceEnabled())
+                  LOG.trace(itemset.toString() + iDocIds.size() + " docids: " + iDocIds);
+
+                Double itemsetNorm = null;
+                mergeCandidates.clear();
+
+                Set<String> parentItemset = null;
+                ancestorItemsets.clear();
+                Iterator<Set<String>> prevIter = prevItemsets.descendingIterator();
+                double maxConfidence = -1.0; // if there is no parent, then this is the first from these items
+                boolean allied = false;
+
+                int lookBackRecords = 0;
+
+                while (prevIter.hasNext()) { // there are more than one parent: && !foundParent
+                  Set<String> pis = prevIter.next();
+
+                  Set<String> interset;
+                  Set<String> isPisUnion;
+
+                  if (!ppJoin || pis.size() < ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH
+                      || itemset.size() < ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH) {
+                    interset = Sets.intersection(itemset, pis);
+                    isPisUnion = Sets.union(itemset, pis);
+                  } else {
 
 // if (pis.size() < ITEMSET_SIMILARITY_PROMISING_THRESHOLD * itemset.size()) {
 // continue;
 // }
 
-                interset = preAllocatedSet1;
-                isPisUnion = preAllocatedSet2;
+                    interset = preAllocatedSet1;
+                    isPisUnion = preAllocatedSet2;
 
-                interset.clear();
-                isPisUnion.clear();
+                    interset.clear();
+                    isPisUnion.clear();
 
-                int minOverlap = (int) Math
-                    .ceil((ITEMSET_SIMILARITY_PROMISING_THRESHOLD / (1.0 + ITEMSET_SIMILARITY_PROMISING_THRESHOLD))
-                        * (pis.size() + itemset.size()));
-                int maxDiff = Math.min(pis.size(), itemset.size()) - minOverlap;
-                int currDiff = 0;
-                // TODONE: prefix filter ppjoin; using an adaptation to get maxAllDiffPos
+                    int minOverlap = (int) Math
+                        .ceil((ITEMSET_SIMILARITY_PROMISING_THRESHOLD / (1.0 + ITEMSET_SIMILARITY_PROMISING_THRESHOLD))
+                            * (pis.size() + itemset.size()));
+                    int maxDiff = Math.min(pis.size(), itemset.size()) - minOverlap;
+                    int currDiff = 0;
+                    // TODONE: prefix filter ppjoin; using an adaptation to get maxAllDiffPos
 // int allDiffPfxLen = 0;
 // int maxAllDiffPfxIs = (int) (itemset.size()
 // - Math.ceil(ITEMSET_SIMILARITY_PROMISING_THRESHOLD * itemset.size()) + 1);
 // int maxAllDiffPfxP = (int) (pis.size() - Math.ceil(ITEMSET_SIMILARITY_PROMISING_THRESHOLD * pis.size()) + 1);
 // int maxAllDiffPfx = Math.min(maxAllDiffPfxP, maxAllDiffPfxIs);
 
-                Iterator<String> iIter = itemset.iterator();
-                Iterator<String> pIter = pis.iterator();
-                String iStr = iIter.next();
-                String pStr = pIter.next();
+                    Iterator<String> iIter = itemset.iterator();
+                    Iterator<String> pIter = pis.iterator();
+                    String iStr = iIter.next();
+                    String pStr = pIter.next();
 
-                Iterator<String> remIter = null;
-                String remStr = null;
+                    Iterator<String> remIter = null;
+                    String remStr = null;
 
 // int allDiffPfxIncrement = 1;
-                while (currDiff <= maxDiff) {  // allDiffPfxLen <= maxAllDiffPfx
-                  int comparison = iStr.compareTo(pStr);
-                  if (comparison == 0) {
-                    interset.add(iStr);
-                    isPisUnion.add(iStr);
-                    if (!iIter.hasNext() && !pIter.hasNext()) {
-                      break;
-                    }
-                    if (iIter.hasNext()) {
-                      iStr = iIter.next();
-                    } else {
-                      remIter = pIter;
-                      remStr = pStr;
-                      break;
-                    }
-                    if (pIter.hasNext()) {
-                      pStr = pIter.next();
-                    } else {
-                      remIter = iIter;
-                      remStr = iStr;
-                      break;
-                    }
+                    while (currDiff <= maxDiff) {  // allDiffPfxLen <= maxAllDiffPfx
+                      int comparison = iStr.compareTo(pStr);
+                      if (comparison == 0) {
+                        interset.add(iStr);
+                        isPisUnion.add(iStr);
+                        if (!iIter.hasNext() && !pIter.hasNext()) {
+                          break;
+                        }
+                        if (iIter.hasNext()) {
+                          iStr = iIter.next();
+                        } else {
+                          remIter = pIter;
+                          remStr = pStr;
+                          break;
+                        }
+                        if (pIter.hasNext()) {
+                          pStr = pIter.next();
+                        } else {
+                          remIter = iIter;
+                          remStr = iStr;
+                          break;
+                        }
 // allDiffPfxIncrement = 0;
-                  } else if (comparison < 0) {
-                    ++currDiff;
-                    isPisUnion.add(iStr);
-                    if (iIter.hasNext()) {
-                      iStr = iIter.next();
-                    } else {
-                      remIter = pIter;
-                      remStr = pStr;
-                      break;
-                    }
+                      } else if (comparison < 0) {
+                        ++currDiff;
+                        isPisUnion.add(iStr);
+                        if (iIter.hasNext()) {
+                          iStr = iIter.next();
+                        } else {
+                          remIter = pIter;
+                          remStr = pStr;
+                          break;
+                        }
 // allDiffPfxLen += allDiffPfxIncrement;
-                  } else {
-                    ++currDiff;
-                    isPisUnion.add(pStr);
-                    if (pIter.hasNext()) {
-                      pStr = pIter.next();
-                    } else {
-                      remIter = iIter;
-                      remStr = iStr;
-                      break;
-                    }
+                      } else {
+                        ++currDiff;
+                        isPisUnion.add(pStr);
+                        if (pIter.hasNext()) {
+                          pStr = pIter.next();
+                        } else {
+                          remIter = iIter;
+                          remStr = iStr;
+                          break;
+                        }
 // allDiffPfxLen += allDiffPfxIncrement;
+                      }
+                    }
+
+                    if (currDiff > maxDiff) {// allDiffPfxLen > maxAllDiffPfx) {
+                      continue;
+                    }
+
+                    while (remIter != null) {
+                      isPisUnion.add(remStr);
+                      if (remIter.hasNext()) {
+                        remStr = remIter.next();
+                      } else {
+                        break;
+                      }
+                    }
                   }
-                }
 
-                if (currDiff > maxDiff) {// allDiffPfxLen > maxAllDiffPfx) {
-                  continue;
-                }
-
-                while (remIter != null) {
-                  isPisUnion.add(remStr);
-                  if (remIter.hasNext()) {
-                    remStr = remIter.next();
-                  } else {
-                    break;
-                  }
-                }
-              }
-
-              if (Math.min(pis.size(), itemset.size()) == interset.size()) { // TODONE: can the parent (shorter) come
+                  if (Math.min(pis.size(), itemset.size()) == interset.size()) { // TODONE: can the parent (shorter) come
 // after?
-                // one of the parent itemset (in the closed patterns lattice)
+                    // one of the parent itemset (in the closed patterns lattice)
 
-                mergeCandidates.add(pis);
+                    mergeCandidates.add(pis);
 
-                if (pis.size() < itemset.size()) {
+                    if (pis.size() < itemset.size()) {
 
-                  ancestorItemsets.add(pis);
+                      ancestorItemsets.add(pis);
 
-                  if (parentItemset == null) {
-                    parentItemset = pis;
-                    // first parent to encounter will be have the lowest support, thus gives highest confidence
-                    double pisFreq = fgCountMap.get(pis);
-                    maxConfidence = fgCountMap.get(itemset) / pisFreq;
-                    if (LOG.isTraceEnabled())
-                      LOG.trace("{} found parent {}, with confidence: " + maxConfidence,
-                          itemset.toString() + fgCountMap.get(itemset), pis.toString() + pisFreq);
-                  } else {
-                    if (LOG.isTraceEnabled())
-                      LOG.trace("{} found another parent {}, with confidence: " + fgCountMap.get(itemset).doubleValue()
-                          / fgCountMap.get(pis).doubleValue(),
-                          itemset.toString() + fgCountMap.get(itemset), pis.toString() + fgCountMap.get(pis));
-                  }
-                } else {
-                  if (LOG.isTraceEnabled())
-                    LOG.trace("{} is NOT longer that its 'parent' {}, with confidence: "
-                        + fgCountMap.get(itemset).doubleValue()
-                        / fgCountMap.get(pis).doubleValue(),
-                        itemset.toString() + fgCountMap.get(itemset),
-                        pis.toString() + fgCountMap.get(pis));
-                }
+                      if (parentItemset == null) {
+                        parentItemset = pis;
+                        // first parent to encounter will be have the lowest support, thus gives highest confidence
+                        double pisFreq = fgCountMap.get(pis);
+                        maxConfidence = fgCountMap.get(itemset) / pisFreq;
+                        if (LOG.isTraceEnabled())
+                          LOG.trace("{} found parent {}, with confidence: " + maxConfidence,
+                              itemset.toString() + fgCountMap.get(itemset), pis.toString() + pisFreq);
+                      } else {
+                        if (LOG.isTraceEnabled())
+                          LOG.trace("{} found another parent {}, with confidence: "
+                              + fgCountMap.get(itemset).doubleValue()
+                              / fgCountMap.get(pis).doubleValue(),
+                              itemset.toString() + fgCountMap.get(itemset), pis.toString() + fgCountMap.get(pis));
+                      }
+                    } else {
+                      if (LOG.isTraceEnabled())
+                        LOG.trace("{} is NOT longer that its 'parent' {}, with confidence: "
+                            + fgCountMap.get(itemset).doubleValue()
+                            / fgCountMap.get(pis).doubleValue(),
+                            itemset.toString() + fgCountMap.get(itemset),
+                            pis.toString() + fgCountMap.get(pis));
+                    }
 // if (maxConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
 // // it will get printed without alliances.. oh, it doesn't need alliance
 // allied = true;
 // break;
 // }
-              } else {
-
-                // Itemset similiarity starts by a lightweight Jaccard Similarity similiarity,
-                // then if it is promising then the cosine similarity is calculated with IDF weights
-
-                double isPisSim = interset.size() * 1.0 / isPisUnion.size();
-                if (isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
-                  String simMeasure;
-                  if (isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
-                    double pisNorm = 0;
-                    double itemsetNormTemp = 0;
-                    // calculate the cosine similarity only if the jaccard similarity isn't enough
-                    isPisSim = 0;
-                    for (String interItem : isPisUnion) {
-                      // IDF weights
-                      Double idf = bgIDFMap.get(interItem);
-                      if (idf == null) {
-// Is this faster, or that:ImmutableSet.of(interItem) ?
-                        if (idfFromBG) {
-                          Integer bgCnt = bgCountMap.get(Collections.singleton(interItem));
-                          if (bgCnt == null) {
-                            bgCnt = 0;
-                          }
-                          idf = Math.log(bgNumTweets / (1.0 + bgCnt));
-                        } else {
-                          Integer fgCnt = fgCountMap.get(Collections.singleton(interItem));
-                          if (fgCnt == null) {
-                            fgCnt = 0;
-                          }
-                          idf = Math.log(fgNumTweets / (1.0 + fgCnt));
-                        }
-                        idf *= idf;
-                        bgIDFMap.put(interItem, idf);
-                      }
-
-                      if (interset.contains(interItem)) {
-                        isPisSim += idf; // * idf;
-                        pisNorm += idf; // * idf;
-                        if (itemsetNorm == null) {
-                          itemsetNormTemp += idf; // * idf;
-                        }
-                      } else if (pis.contains(interItem)) {
-                        pisNorm += idf; // * idf;
-                      } else if (itemsetNorm == null && itemset.contains(interItem)) {
-                        itemsetNormTemp += idf; // * idf;
-                      }
-
-                    }
-                    if (itemsetNorm == null) {
-                      itemsetNorm = Math.sqrt(itemsetNormTemp);
-                    }
-                    isPisSim /= Math.sqrt(pisNorm) * itemsetNorm;
-                    simMeasure = "Cosine";
                   } else {
-                    simMeasure = "Jaccard";
-                  }
-                  if (isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD) {
-                    mergeCandidates.add(pis);
-                    if (LOG.isTraceEnabled())
-                      LOG.trace("{} " + simMeasure + " {} = " + isPisSim,
-                          itemset.toString() + fgCountMap.get(itemset),
-                          pis.toString() + fgCountMap.get(pis));
-                  }
-                }
 
-                if ((stopMatchingParentFSimLow && parentItemset != null &&
-                    isPisSim < ITEMSET_SIMILARITY_BAD_THRESHOLD)
-                    || (stopMatchingLimitedBufferSize && ++lookBackRecords > MAX_LOOKBACK_FOR_PARENT)) {
-                  // TODONE: could this also work without checking foundParent -> NO, very few alliances happen
-                  // TODO: are we losing anything by breaking on the first bad similarity
+                    // Itemset similiarity starts by a lightweight Jaccard Similarity similiarity,
+                    // then if it is promising then the cosine similarity is calculated with IDF weights
+
+                    double isPisSim = interset.size() * 1.0 / isPisUnion.size();
+                    if (isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
+                      String simMeasure;
+                      if (isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
+                        double pisNorm = 0;
+                        double itemsetNormTemp = 0;
+                        // calculate the cosine similarity only if the jaccard similarity isn't enough
+                        isPisSim = 0;
+                        for (String interItem : isPisUnion) {
+                          // IDF weights
+                          Double idf = bgIDFMap.get(interItem);
+                          if (idf == null) {
+// Is this faster, or that:ImmutableSet.of(interItem) ?
+                            if (idfFromBG) {
+                              Integer bgCnt = bgCountMap.get(Collections.singleton(interItem));
+                              if (bgCnt == null) {
+                                bgCnt = 0;
+                              }
+                              idf = Math.log(bgNumTweets / (1.0 + bgCnt));
+                            } else {
+                              Integer fgCnt = fgCountMap.get(Collections.singleton(interItem));
+                              if (fgCnt == null) {
+                                fgCnt = 0;
+                              }
+                              idf = Math.log(fgNumTweets / (1.0 + fgCnt));
+                            }
+                            idf *= idf;
+                            bgIDFMap.put(interItem, idf);
+                          }
+
+                          if (interset.contains(interItem)) {
+                            isPisSim += idf; // * idf;
+                            pisNorm += idf; // * idf;
+                            if (itemsetNorm == null) {
+                              itemsetNormTemp += idf; // * idf;
+                            }
+                          } else if (pis.contains(interItem)) {
+                            pisNorm += idf; // * idf;
+                          } else if (itemsetNorm == null && itemset.contains(interItem)) {
+                            itemsetNormTemp += idf; // * idf;
+                          }
+
+                        }
+                        if (itemsetNorm == null) {
+                          itemsetNorm = Math.sqrt(itemsetNormTemp);
+                        }
+                        isPisSim /= Math.sqrt(pisNorm) * itemsetNorm;
+                        simMeasure = "Cosine";
+                      } else {
+                        simMeasure = "Jaccard";
+                      }
+                      if (isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD) {
+                        mergeCandidates.add(pis);
+                        if (LOG.isTraceEnabled())
+                          LOG.trace("{} " + simMeasure + " {} = " + isPisSim,
+                              itemset.toString() + fgCountMap.get(itemset),
+                              pis.toString() + fgCountMap.get(pis));
+                      }
+                    }
+
+                    if ((stopMatchingParentFSimLow && parentItemset != null &&
+                        isPisSim < ITEMSET_SIMILARITY_BAD_THRESHOLD)
+                        || (stopMatchingLimitedBufferSize && ++lookBackRecords > MAX_LOOKBACK_FOR_PARENT)) {
+                      // TODONE: could this also work without checking foundParent -> NO, very few alliances happen
+                      // TODO: are we losing anything by breaking on the first bad similarity
 // if (LOG.isTraceEnabled())
 // LOG.trace("Decided there won't be any more candidates for itemset {} when we encountered {}.",
 // itemset, pis);
-                  break; // the cluster of itemsets from these items is consumed
+                      break; // the cluster of itemsets from these items is consumed
+                    }
+                  }
                 }
-              }
-            }
 
 // // Add to previous for next iterations to access it, regardless if it will get merged or not.. it can
 // prevItemsets.addLast(itemset);
@@ -682,121 +704,121 @@ public class DivergeBGMap {
 // unalliedItemsets.put(itemset, klDiver);
 // continue;
 // } else { // if (maxConfidence < CLOSED_CONFIDENCE_THRESHOLD) {
-            if (parentItemset != null) {
-              itemsetParentMap.put(itemset, parentItemset);
-            }
+                if (parentItemset != null) {
+                  itemsetParentMap.put(itemset, ancestorItemsets); // parentItemset);
+                }
 
-            Set<String> theOnlyOneIllMerge = null;
-            int theOnlyOnesDifference = Integer.MAX_VALUE;
-            if (growAlliancesAcrossEpochs && allianceTransitive.containsKey(itemset)) {
-              mergeCandidates.addAll(allianceTransitive.get(itemset));
-            }
+                Set<String> theOnlyOneIllMerge = null;
+                int theOnlyOnesDifference = Integer.MAX_VALUE;
+                if (growAlliancesAcrossEpochs && allianceTransitive.containsKey(itemset)) {
+                  mergeCandidates.addAll(allianceTransitive.get(itemset));
+                }
 
-            if (LOG.isTraceEnabled())
-              LOG.trace(itemset.toString() + iDocIds.size() + " merge candidates: " + mergeCandidates);
+                if (LOG.isTraceEnabled())
+                  LOG.trace(itemset.toString() + iDocIds.size() + " merge candidates: " + mergeCandidates);
 
-            int bestUnofficialCandidateDiff = Integer.MAX_VALUE;
-            Set<String> bestUnofficialCandidate = null;
-            for (Set<String> cand : mergeCandidates) {
+                int bestUnofficialCandidateDiff = Integer.MAX_VALUE;
+                Set<String> bestUnofficialCandidate = null;
+                for (Set<String> cand : mergeCandidates) {
 
-              LinkedList<Long> candDocIds = fgIdsMap.get(cand);
-              if (candDocIds == null || candDocIds.isEmpty()) {
-                LOG.warn("Using a file with truncated inverted indexes");
-                continue;
-              }
+                  LinkedList<Long> candDocIds = fgIdsMap.get(cand);
+                  if (candDocIds == null || candDocIds.isEmpty()) {
+                    LOG.warn("Using a file with truncated inverted indexes");
+                    continue;
+                  }
 
-              int differentDocs = Math.max(candDocIds.size(), iDocIds.size())
-                  - Math.min(candDocIds.size(), iDocIds.size());
+                  int differentDocs = Math.max(candDocIds.size(), iDocIds.size())
+                      - Math.min(candDocIds.size(), iDocIds.size());
 
-              double maxDiffCnt =
-                  ((ancestorItemsets.contains(cand)) ?
-                      // the (true) parent will necessarily be present in all documents of itemset
+                  double maxDiffCnt =
+                      ((ancestorItemsets.contains(cand)) ?
+                          // the (true) parent will necessarily be present in all documents of itemset
 // differentDocs = candDocIds.size() - iDocIds.size();
-                      Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * candDocIds.size())
-                      :
-                      Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-                          Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                              Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) *
-                                  Math.max(candDocIds.size(), iDocIds.size())))));
+                          Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * candDocIds.size())
+                          :
+                          Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                              Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                  Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) *
+                                      Math.max(candDocIds.size(), iDocIds.size())))));
 
-              if (!ancestorItemsets.contains(cand)) {
+                  if (!ancestorItemsets.contains(cand)) {
 // // unionDocId.clear();
 // // intersDocId.clear();
 
-                // Intersection and union calculation (depends on that docIds are sorted)
-                // TODONE: use a variation of this measure that calculates the time period covered by each itemset
-                // TODONE: overlap of intersection with the current itemset's docids
+                    // Intersection and union calculation (depends on that docIds are sorted)
+                    // TODONE: use a variation of this measure that calculates the time period covered by each itemset
+                    // TODONE: overlap of intersection with the current itemset's docids
 
-                Iterator<Long> iDidIter = iDocIds.iterator();
-                Iterator<Long> candDidIter = candDocIds.iterator();
-                long iDid = iDidIter.next(), candDid = candDidIter.next();
+                    Iterator<Long> iDidIter = iDocIds.iterator();
+                    Iterator<Long> candDidIter = candDocIds.iterator();
+                    long iDid = iDidIter.next(), candDid = candDidIter.next();
 
-                SummaryStatistics waitSecsTillCooc = null;
-                if (honorTemporalSimilarity) {
-                  waitSecsTillCooc = new SummaryStatistics();
-                }
-                long lastCooc = Math.max(iDid, candDid) >>> 22;
-                while ((candDid > 0 && iDid > 0) &&
-                    ((honorTemporalSimilarity &&
-                    (waitSecsTillCooc.getN() == 0 || waitSecsTillCooc.getMean() < temporalSimilarityThreshold))
-                    || differentDocs <= maxDiffCnt)) {
-                  if (iDid == candDid) {
+                    SummaryStatistics waitSecsTillCooc = null;
+                    if (honorTemporalSimilarity) {
+                      waitSecsTillCooc = new SummaryStatistics();
+                    }
+                    long lastCooc = Math.max(iDid, candDid) >>> 22;
+                    while ((candDid > 0 && iDid > 0) &&
+                        ((honorTemporalSimilarity &&
+                        (waitSecsTillCooc.getN() == 0 || waitSecsTillCooc.getMean() < temporalSimilarityThreshold))
+                        || differentDocs <= maxDiffCnt)) {
+                      if (iDid == candDid) {
 // intersDocId.add(iDid);
 // unionDocId.add(iDid);
-                    if (honorTemporalSimilarity) {
-                      waitSecsTillCooc.addValue(((iDid >>> 22) - lastCooc) / 1000);
-                    }
-                    if (iDidIter.hasNext()) {
-                      iDid = iDidIter.next();
-                    } else {
-                      iDid = -1;
+                        if (honorTemporalSimilarity) {
+                          waitSecsTillCooc.addValue(((iDid >>> 22) - lastCooc) / 1000);
+                        }
+                        if (iDidIter.hasNext()) {
+                          iDid = iDidIter.next();
+                        } else {
+                          iDid = -1;
 // break;
-                    }
-                    if (candDidIter.hasNext()) {
-                      candDid = candDidIter.next();
-                      if (honorTemporalSimilarity) {
-                        // how long will it wait for me this time?
-                        lastCooc = candDid >>> 22;
-                      }
-                    } else {
-                      candDid = -1;
+                        }
+                        if (candDidIter.hasNext()) {
+                          candDid = candDidIter.next();
+                          if (honorTemporalSimilarity) {
+                            // how long will it wait for me this time?
+                            lastCooc = candDid >>> 22;
+                          }
+                        } else {
+                          candDid = -1;
 // break;
-                    }
+                        }
 
-                  } else if (iDid < candDid) {
+                      } else if (iDid < candDid) {
 // unionDocId.add(iDid);
-                    ++differentDocs;
-                    if (iDidIter.hasNext()) {
-                      iDid = iDidIter.next();
-                    } else {
-                      iDid = -1;
+                        ++differentDocs;
+                        if (iDidIter.hasNext()) {
+                          iDid = iDidIter.next();
+                        } else {
+                          iDid = -1;
 // break;
-                    }
-                  } else {
+                        }
+                      } else {
 // unionDocId.add(candDid);
-                    ++differentDocs;
-                    if (candDidIter.hasNext()) {
-                      candDid = candDidIter.next();
-                    } else {
-                      candDid = -1;
+                        ++differentDocs;
+                        if (candDidIter.hasNext()) {
+                          candDid = candDidIter.next();
+                        } else {
+                          candDid = -1;
 // break;
-                    }
+                        }
 // if (honorTemporalSimilarity) {
 // // Poor cand came but I didn't overlap.. how long will it wait for me?
 // lastCooc = candDid >>> 22;
 // }
-                  }
-                }
-                if (honorTemporalSimilarity && (iDid > 0 || candDid > 0)) {
-                  long minMaxIDid = Math.min(iDocIds.getLast(), candDocIds.getLast());
-                  // Assume that I would have come the next second if there were more docs in both,
-                  // or after the average wait time, whichever is longer
-                  waitSecsTillCooc.addValue(Math.max(
-                      (waitSecsTillCooc.getN() > 0 ? waitSecsTillCooc.getMean() : -1),
-                      ((((minMaxIDid >>> 22)) - lastCooc) / 1000) + 1));
+                      }
+                    }
+                    if (honorTemporalSimilarity && (iDid > 0 || candDid > 0)) {
+                      long minMaxIDid = Math.min(iDocIds.getLast(), candDocIds.getLast());
+                      // Assume that I would have come the next second if there were more docs in both,
+                      // or after the average wait time, whichever is longer
+                      waitSecsTillCooc.addValue(Math.max(
+                          (waitSecsTillCooc.getN() > 0 ? waitSecsTillCooc.getMean() : -1),
+                          ((((minMaxIDid >>> 22)) - lastCooc) / 1000) + 1));
 
-                }
-                // Residsue already accounted for in the Max - Min equation
+                    }
+                    // Residsue already accounted for in the Max - Min equation
 // while (iDid > 0 && differentDocs <= maxDiffCnt) {
 // ++differentDocs;
 // if (iDidIter.hasNext()) {
@@ -806,27 +828,27 @@ public class DivergeBGMap {
 // break;
 // }
 // }
-                if (honorTemporalSimilarity && LOG.isTraceEnabled()) {
-                  LOG.trace(itemset.toString() + iDocIds.size()
-                      + " differs in at least {} docs from {} with seconds till coocurrence of: " +
-                      waitSecsTillCooc.toString().replace('\n', '|'), differentDocs,
-                      cand.toString() + candDocIds.size());
-                  if (differentDocs <= maxDiffCnt) {
-                    LOG.trace("Similar docids");
-                  } else {
-                    LOG.trace("Dissimilar docids");
-                  }
-                  if ((waitSecsTillCooc.getN() != 0 && waitSecsTillCooc.getMean() < temporalSimilarityThreshold)) {
-                    LOG.trace("Similar in time");
-                  } else {
-                    LOG.trace("Dissimilar in time");
-                    if (differentDocs <= maxDiffCnt) {
-                      LOG.trace("Dissimilar in time but not in DocIds.. woaaahh!!");
+                    if (honorTemporalSimilarity && LOG.isTraceEnabled()) {
+                      LOG.trace(itemset.toString() + iDocIds.size()
+                          + " differs in at least {} docs from {} with seconds till coocurrence of: " +
+                          waitSecsTillCooc.toString().replace('\n', '|'), differentDocs,
+                          cand.toString() + candDocIds.size());
+                      if (differentDocs <= maxDiffCnt) {
+                        LOG.trace("Similar docids");
+                      } else {
+                        LOG.trace("Dissimilar docids");
+                      }
+                      if ((waitSecsTillCooc.getN() != 0 && waitSecsTillCooc.getMean() < temporalSimilarityThreshold)) {
+                        LOG.trace("Similar in time");
+                      } else {
+                        LOG.trace("Dissimilar in time");
+                        if (differentDocs <= maxDiffCnt) {
+                          LOG.trace("Dissimilar in time but not in DocIds.. woaaahh!!");
+                        }
+                      }
                     }
-                  }
-                }
 
-              }
+                  }
 
 // Iterator<Long> remainingIter;
 // if (iDidIter.hasNext()) {
@@ -849,86 +871,87 @@ public class DivergeBGMap {
 // grandIntersDocId = Sets.intersection(grandIntersDocId, intersDocId);
 //
 // }
-              // If similar enough, attach to the merge candidate and put both in pending queue
-              if (differentDocs <= maxDiffCnt) {
-                // Try and join and existing alliance
-                Set<String> bestAllianceHead = cand;
-                int currentBestDifference = differentDocs;
+                  // If similar enough, attach to the merge candidate and put both in pending queue
+                  if (differentDocs <= maxDiffCnt) {
+                    // Try and join and existing alliance
+                    Set<String> bestAllianceHead = cand;
+                    int currentBestDifference = differentDocs;
 
-                if (!ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE) {
-                  Set<Set<String>> candidateTransHeads = allianceTransitive.get(cand);
-                  // what did the candidate do wrong to ignore it if it doesn't have earlier allies?
+                    if (!ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE) {
+                      Set<Set<String>> candidateTransHeads = allianceTransitive.get(cand);
+                      // what did the candidate do wrong to ignore it if it doesn't have earlier allies?
 // if(candidateTransHeads == null){
 // candidateTransHeads = allianceTransitive.get(itemset);
 // } else {
 //
 // }
 
-                  if (candidateTransHeads != null && !mergeCandidates.contains(candidateTransHeads)) {
+                      if (candidateTransHeads != null && !mergeCandidates.contains(candidateTransHeads)) {
 
-                    for (Set<String> exitingAllianceHead : candidateTransHeads) {
+                        for (Set<String> exitingAllianceHead : candidateTransHeads) {
 
-                      LinkedList<Long> existingDocIds = fgIdsMap.get(exitingAllianceHead);
-                      if (LOG.isTraceEnabled())
-                        LOG.trace(itemset.toString() + iDocIds.size()
-                            + " offered one more merge option {} through candidate {}",
-                            exitingAllianceHead.toString() + existingDocIds.size(),
-                            cand + "diff" + differentDocs);
+                          LinkedList<Long> existingDocIds = fgIdsMap.get(exitingAllianceHead);
+                          if (LOG.isTraceEnabled())
+                            LOG.trace(itemset.toString() + iDocIds.size()
+                                + " offered one more merge option {} through candidate {}",
+                                exitingAllianceHead.toString() + existingDocIds.size(),
+                                cand + "diff" + differentDocs);
 
-                      int existingHeadNonOverlap = Integer.MAX_VALUE;
-                      int existingMaxDiffCnt = 0;
-                      if (!avoidFormingNewAllianceIfPossible) {
-                        Iterator<Long> iDidIter = iDocIds.iterator();
+                          int existingHeadNonOverlap = Integer.MAX_VALUE;
+                          int existingMaxDiffCnt = 0;
+                          if (!avoidFormingNewAllianceIfPossible) {
+                            Iterator<Long> iDidIter = iDocIds.iterator();
 
-                        Iterator<Long> existingDidIter = existingDocIds.iterator();
-                        long iDid = iDidIter.next(), existingDid = existingDidIter.next();
+                            Iterator<Long> existingDidIter = existingDocIds.iterator();
+                            long iDid = iDidIter.next(), existingDid = existingDidIter.next();
 
-                        existingHeadNonOverlap = Math.max(existingDocIds.size(), iDocIds.size())
-                            - Math.min(existingDocIds.size(), iDocIds.size());
-                        existingMaxDiffCnt = (int) Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to
+                            existingHeadNonOverlap = Math.max(existingDocIds.size(), iDocIds.size())
+                                - Math.min(existingDocIds.size(), iDocIds.size());
+                            existingMaxDiffCnt = (int) Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets
+// to
 // allow a merger
-                            Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) *
-                                    Math.max(existingDocIds.size(), iDocIds.size()))));
+                                Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                    Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) *
+                                        Math.max(existingDocIds.size(), iDocIds.size()))));
 
-                        while ((existingDid > 0 && iDid > 0)
-                            && (existingHeadNonOverlap <= existingMaxDiffCnt)) {
-                          if (iDid == existingDid) {
-                            // intersDocId.add(iDid);
-                            // unionDocId.add(iDid);
-                            if (iDidIter.hasNext()) {
-                              iDid = iDidIter.next();
-                            } else {
-                              iDid = -1;
+                            while ((existingDid > 0 && iDid > 0)
+                                && (existingHeadNonOverlap <= existingMaxDiffCnt)) {
+                              if (iDid == existingDid) {
+                                // intersDocId.add(iDid);
+                                // unionDocId.add(iDid);
+                                if (iDidIter.hasNext()) {
+                                  iDid = iDidIter.next();
+                                } else {
+                                  iDid = -1;
 // break;
-                            }
-                            if (existingDidIter.hasNext()) {
-                              existingDid = existingDidIter.next();
-                            } else {
-                              existingDid = -1;
+                                }
+                                if (existingDidIter.hasNext()) {
+                                  existingDid = existingDidIter.next();
+                                } else {
+                                  existingDid = -1;
 // break;
-                            }
-                          } else if (iDid < existingDid) {
-                            // unionDocId.add(iDid);
-                            ++existingHeadNonOverlap;
-                            if (iDidIter.hasNext()) {
-                              iDid = iDidIter.next();
-                            } else {
-                              iDid = -1;
+                                }
+                              } else if (iDid < existingDid) {
+                                // unionDocId.add(iDid);
+                                ++existingHeadNonOverlap;
+                                if (iDidIter.hasNext()) {
+                                  iDid = iDidIter.next();
+                                } else {
+                                  iDid = -1;
 // break;
-                            }
+                                }
 
-                          } else {
-                            // unionDocId.add(candDid);
-                            ++existingHeadNonOverlap;
-                            if (existingDidIter.hasNext()) {
-                              existingDid = existingDidIter.next();
-                            } else {
-                              existingDid = -1;
+                              } else {
+                                // unionDocId.add(candDid);
+                                ++existingHeadNonOverlap;
+                                if (existingDidIter.hasNext()) {
+                                  existingDid = existingDidIter.next();
+                                } else {
+                                  existingDid = -1;
 // break;
+                                }
+                              }
                             }
-                          }
-                        }
 
 // while (iDid > 0 && existingHeadNonOverlap <= existingMaxDiffCnt) {
 // ++existingHeadNonOverlap;
@@ -939,141 +962,143 @@ public class DivergeBGMap {
 // break;
 // }
 // }
-                      } // else: no nees to calculate, since we will be biased to the alliance anyway
-                      // just as if the current candidate does not exist; it is only a proxy to find
-                      if ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
-                          || (existingHeadNonOverlap <= existingMaxDiffCnt &&
-                          ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
-                              (exitingAllianceHead.size() < bestAllianceHead.size()))
-                              || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
-                              (exitingAllianceHead.size() > bestAllianceHead.size()))
-                              || existingHeadNonOverlap < currentBestDifference))) {
-                        // or equals prefers existing allinaces to forming new ones
+                          } // else: no nees to calculate, since we will be biased to the alliance anyway
+                          // just as if the current candidate does not exist; it is only a proxy to find
+                          if ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
+                              || (existingHeadNonOverlap <= existingMaxDiffCnt &&
+                              ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
+                                  (exitingAllianceHead.size() < bestAllianceHead.size()))
+                                  || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
+                                  (exitingAllianceHead.size() > bestAllianceHead.size()))
+                                  || existingHeadNonOverlap < currentBestDifference))) {
+                            // or equals prefers existing allinaces to forming new ones
 
-                        if (!avoidFormingNewAllianceIfPossible) { // TODO: this needs tweaking if more than one existing
-                          currentBestDifference = existingHeadNonOverlap;
-                        } // else: keeping the difference of cand, which should be better, so that
-                        // other candidates have harder time beating the existing alliance
+                            if (!avoidFormingNewAllianceIfPossible) { // TODO: this needs tweaking if more than one
+// existing
+                              currentBestDifference = existingHeadNonOverlap;
+                            } // else: keeping the difference of cand, which should be better, so that
+                            // other candidates have harder time beating the existing alliance
 
-                        bestAllianceHead = exitingAllianceHead;
+                            bestAllianceHead = exitingAllianceHead;
 
+                          }
+                        }
                       }
+                    }
+                    if ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
+                        (theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size()))
+                        || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
+                        (theOnlyOneIllMerge == null || bestAllianceHead.size() > theOnlyOneIllMerge.size()))
+                        || (currentBestDifference < theOnlyOnesDifference)) {
+
+                      theOnlyOneIllMerge = bestAllianceHead;
+                      theOnlyOnesDifference = currentBestDifference;
+                    }
+                  } else if (LOG.isTraceEnabled()) {
+                    if (differentDocs < bestUnofficialCandidateDiff) {
+                      bestUnofficialCandidateDiff = differentDocs;
+                      bestUnofficialCandidate = cand;
                     }
                   }
                 }
-                if ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
-                    (theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size()))
-                    || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
-                    (theOnlyOneIllMerge == null || bestAllianceHead.size() > theOnlyOneIllMerge.size()))
-                    || (currentBestDifference < theOnlyOnesDifference)) {
 
-                  theOnlyOneIllMerge = bestAllianceHead;
-                  theOnlyOnesDifference = currentBestDifference;
-                }
-              } else if (LOG.isTraceEnabled()) {
-                if (differentDocs < bestUnofficialCandidateDiff) {
-                  bestUnofficialCandidateDiff = differentDocs;
-                  bestUnofficialCandidate = cand;
-                }
-              }
-            }
-
-            if (theOnlyOneIllMerge != null) {
-              if (LOG.isTraceEnabled())
-                LOG.trace(itemset.toString() + iDocIds.size()
-                    + " had diff of {} documents with the only one to merge with {}, while the max is: " +
-                    ((ancestorItemsets.contains(theOnlyOneIllMerge)) ?
-                        // the (true) parent will necessarily be present in all documents of itemset
-                        // differentDocs = candDocIds.size() - iDocIds.size();
-                        Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * fgIdsMap.get(theOnlyOneIllMerge).size())
-                        :
-                        Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-                            Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD)
-                                    * Math.max(fgIdsMap.get(theOnlyOneIllMerge).size(), iDocIds.size()))))),
-                    theOnlyOnesDifference,
-                    theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
-              // /////////// Store that you joined this alliance
-              Set<Set<String>> transHeads = allianceTransitive.get(itemset);
-              if (transHeads != null) {
-                if (growAlliancesAcrossEpochs) {
-                  if (transHeads.size() > 1) {
-                    LOG.warn("There should be a maximum of one alliance per itemset.. why do we have these:"
-                        + transHeads);
+                if (theOnlyOneIllMerge != null) {
+                  if (LOG.isTraceEnabled())
+                    LOG.trace(itemset.toString() + iDocIds.size()
+                        + " had diff of {} documents with the only one to merge with {}, while the max is: " +
+                        ((ancestorItemsets.contains(theOnlyOneIllMerge)) ?
+                            // the (true) parent will necessarily be present in all documents of itemset
+                            // differentDocs = candDocIds.size() - iDocIds.size();
+                            Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * fgIdsMap.get(theOnlyOneIllMerge).size())
+                            :
+                            Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                                Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                    Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD)
+                                        * Math.max(fgIdsMap.get(theOnlyOneIllMerge).size(), iDocIds.size()))))),
+                        theOnlyOnesDifference,
+                        theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
+                  // /////////// Store that you joined this alliance
+                  Set<Set<String>> transHeads = allianceTransitive.get(itemset);
+                  if (transHeads != null) {
+                    if (growAlliancesAcrossEpochs) {
+                      if (transHeads.size() > 1) {
+                        LOG.warn("There should be a maximum of one alliance per itemset.. why do we have these:"
+                            + transHeads);
+                      }
+                      if (transHeads.contains(theOnlyOneIllMerge)) {
+                        // jolly
+                        if (LOG.isTraceEnabled())
+                          LOG.trace(itemset.toString() + iDocIds.size()
+                              + " joining its only one {} in a continuing alliance: " + transHeads.toString()
+                              + fgIdsMap.get(transHeads).size(),
+                              theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
+                      } else {
+                        // the new alliance will be better.. clear the one from earlier
+                        allianceTransitive.remove(transHeads);
+                        transHeads = null;
+                      }
+                    } else {
+                      LOG.warn("I thought we will never find a cluster (alliance) head from earlier, " +
+                          "but the itemset {} already has {} while the current alleged onlyOneIllMerge is :"
+                          + theOnlyOneIllMerge, itemset, transHeads);
+                    }
                   }
-                  if (transHeads.contains(theOnlyOneIllMerge)) {
-                    // jolly
-                    if (LOG.isTraceEnabled())
-                      LOG.trace(itemset.toString() + iDocIds.size()
-                          + " joining its only one {} in a continuing alliance: " + transHeads.toString()
-                          + fgIdsMap.get(transHeads).size(),
-                          theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
-                  } else {
-                    // the new alliance will be better.. clear the one from earlier
-                    allianceTransitive.remove(transHeads);
-                    transHeads = null;
+                  if (transHeads == null) {
+                    transHeads = Sets.newHashSet();
+                    allianceTransitive.put(itemset, transHeads);
                   }
-                } else {
-                  LOG.warn("I thought we will never find a cluster (alliance) head from earlier, " +
-                      "but the itemset {} already has {} while the current alleged onlyOneIllMerge is :"
-                      + theOnlyOneIllMerge, itemset, transHeads);
-                }
-              }
-              if (transHeads == null) {
-                transHeads = Sets.newHashSet();
-                allianceTransitive.put(itemset, transHeads);
-              }
-              // Cannot happen with the hard clusters (since the only one)
+                  // Cannot happen with the hard clusters (since the only one)
 // if (transHeads.contains(theOnlyOneIllMerge)) {
 // // // this itemset is already part of the alliance, in an earlier iteration
 // continue;
 // }
-              transHeads.add(theOnlyOneIllMerge);
+                  transHeads.add(theOnlyOneIllMerge);
 
-              java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
-                  .get(theOnlyOneIllMerge);
+                  java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
+                      .get(theOnlyOneIllMerge);
 
-              if (alliedItemsets == null) {
-                // ////// Create a new alliance
-                LinkedList<Long> theOnlyOnesDocIds = fgIdsMap.get(theOnlyOneIllMerge);
-                alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
-                    HashMultiset.create(theOnlyOneIllMerge), Sets.newHashSet(theOnlyOnesDocIds));
-                growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
-                if (!itemsetParentMap.containsKey(theOnlyOneIllMerge)) {
-                  if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
-                      && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
-                    itemsetParentMap.put(theOnlyOneIllMerge, parentItemset);
-                  } else {
-                    itemsetParentMap.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
+                  if (alliedItemsets == null) {
+                    // ////// Create a new alliance
+                    LinkedList<Long> theOnlyOnesDocIds = fgIdsMap.get(theOnlyOneIllMerge);
+                    alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
+                        HashMultiset.create(theOnlyOneIllMerge), Sets.newHashSet(theOnlyOnesDocIds));
+                    growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
+                    if (!itemsetParentMap.containsKey(theOnlyOneIllMerge)) {
+                      if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
+                          && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
+                        itemsetParentMap.put(theOnlyOneIllMerge, ancestorItemsets); // parentItemset);
+                      } else {
+                        itemsetParentMap.put(theOnlyOneIllMerge,
+                            Sets.newLinkedHashSet(Arrays.asList(theOnlyOneIllMerge)));
+                      }
+                    }
+                    unalliedItemsets.remove(theOnlyOneIllMerge);
                   }
-                }
-                unalliedItemsets.remove(theOnlyOneIllMerge);
-              }
-              alliedItemsets.getKey().addAll(itemset);
-              alliedItemsets.getValue().addAll(iDocIds);
+                  alliedItemsets.getKey().addAll(itemset);
+                  alliedItemsets.getValue().addAll(iDocIds);
 
-              allied = true;
-            } else if (!mergeCandidates.isEmpty()) {
-              if (LOG.isTraceEnabled())
-                LOG.trace(itemset.toString() + iDocIds.size()
-                    + " no one to merge with, had {} different docs with its best candidate {} while max diff is: "
-                    + ((ancestorItemsets.contains(bestUnofficialCandidate)) ?
-                        // the (true) parent will necessarily be present in all documents of itemset
-                        // differentDocs = candDocIds.size() - iDocIds.size();
-                        Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * fgIdsMap.get(bestUnofficialCandidate).size())
-                        :
-                        Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-                            Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD)
-                                    * Math.max(fgIdsMap.get(bestUnofficialCandidate).size(), iDocIds.size()))))),
-                    bestUnofficialCandidateDiff,
-                    bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size());
-            }
+                  allied = true;
+                } else if (!mergeCandidates.isEmpty()) {
+                  if (LOG.isTraceEnabled())
+                    LOG.trace(itemset.toString() + iDocIds.size()
+                        + " no one to merge with, had {} different docs with its best candidate {} while max diff is: "
+                        + ((ancestorItemsets.contains(bestUnofficialCandidate)) ?
+                            // the (true) parent will necessarily be present in all documents of itemset
+                            // differentDocs = candDocIds.size() - iDocIds.size();
+                            Math.floor((1 - CONFIDENCE_HIGH_THRESHOLD) * fgIdsMap.get(bestUnofficialCandidate).size())
+                            :
+                            Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                                Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                    Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD)
+                                        * Math.max(fgIdsMap.get(bestUnofficialCandidate).size(), iDocIds.size()))))),
+                        bestUnofficialCandidateDiff,
+                        bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size());
+                }
 
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
 
-            if (maxConfidence >= CONFIDENCE_HIGH_THRESHOLD) {
-              confidentItemsets.put(itemset, maxConfidence);
+                if (maxConfidence >= CONFIDENCE_HIGH_THRESHOLD) {
+                  confidentItemsets.put(HashMultiset.create(itemset), maxConfidence);
 // // write out the itemset (orig or merged) into selection file(s),
 // // because it is high confidence either from the beginning or after merging
 // // This is originally a high confidence itemset, we didnt increase conf yet: if (mergedItemset.isEmpty()) {
@@ -1103,129 +1128,270 @@ public class DivergeBGMap {
 // // }
 // selectionFormat.out().append("\n");
 
-              // TODONE: are you sure about that?
-              if (selMaximal) {
-                // The parent will be present in the final output within this itemset, so even if it
-                // were pending alliance to get printed it can be removed now
+                  // TODONE: are you sure about that?
+                  if (selMaximal) {
+                    // The parent will be present in the final output within this itemset, so even if it
+                    // were pending alliance to get printed it can be removed now
 // unalliedItemsets.remove(parentItemset);
-                for (Set<String> pis : ancestorItemsets) {
-                  unalliedItemsets.remove(pis);
+                    for (Set<String> pis : ancestorItemsets) {
+                      confidentItemsets.remove(HashMultiset.create(pis));
+                    }
+                  }
+                }
+
+                if (!allied) {
+                  unalliedItemsets.put(itemset, klDiver);
+                }
+
+                if (!ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE || !allied) {
+                  prevItemsets.addLast(itemset);
+                } else {
+                  if (LOG.isTraceEnabled())
+                    LOG.trace(itemset.toString() + iDocIds.size()
+                        + " doesn't exist outside of its alliance with head " + allianceTransitive.get(itemset));
                 }
               }
             }
 
-            if (!allied) {
-              unalliedItemsets.put(itemset, klDiver);
-            }
+// lowConfidence.clear();
+            for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
+                .entrySet()) {
+              Multiset<String> mergedItemset = e.getValue().getKey();
+              Set<Long> unionDocId = e.getValue().getValue();
+              LinkedHashSet<Set<String>> parentItemsets = itemsetParentMap.get(e.getKey());
+              Set<String> parent0 = parentItemsets.iterator().next();
+              double confidence = unionDocId.size() * 1.0 / fgIdsMap.get(parent0).size();
+              if (confidence >= CONFIDENCE_HIGH_THRESHOLD) {
 
-            if (!ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE || !allied) {
-              prevItemsets.addLast(itemset);
-            } else {
-              if (LOG.isTraceEnabled())
-                LOG.trace(itemset.toString() + iDocIds.size()
-                    + " doesn't exist outside of its alliance with head " + allianceTransitive.get(itemset));
+                fgIdsMap.put(mergedItemset.elementSet(), Lists.newLinkedList(unionDocId));
+
+                confidentItemsets.put(mergedItemset, confidence);
+
+                // The parent will be present in the final output within this itemset, so even if it
+                // were pending alliance to get printed it can be removed now
+// unalliedItemsets.remove(parentItemset);
+                if (selMaximal) {
+                  for (Set<String> pis : parentItemsets) {
+                    confidentItemsets.remove(HashMultiset.create(pis));
+                  }
+                }
+
+                if (confidence >= 1) {
+                  if (LOG.isTraceEnabled())
+                    LOG.trace(mergedItemset.toString() + unionDocId.size()
+                        + " is stronger alliance ({}) than its head's ({}) parent: " +
+                        parent0.toString() + fgIdsMap.get(parent0).size(),
+                        e.getKey().toString() + fgIdsMap.get(e.getKey()).size());
+                }
+              } else {
+                lowConfidence.add(e.getKey());
+              }
+
+            }
+// for (Set<String> key : lowConfidence) {
+// growingAlliances.remove(key);
+// }
+// lowConfidence.clear();
+
+            done = true;
+
+            try {
+              while (true)
+                Thread.sleep(Long.MAX_VALUE); // never die
+            } catch (InterruptedException e) {
+              LOG.debug("Bye bye");
             }
           }
         }
+        StronglyClosedItemsetsFilter stronglyClosedItemsetsFilter = new StronglyClosedItemsetsFilter();
+        Thread stronglyClosedThread = new Thread(stronglyClosedItemsetsFilter);
+        stronglyClosedThread.start();
 
-        for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
-            .entrySet()) {
-          Multiset<String> mergedItemset = e.getValue().getKey();
-          Set<Long> unionDocId = e.getValue().getValue();
-          Set<String> parentItemset = itemsetParentMap.get(e.getKey());
-          double confidence = unionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
-          if (confidence < CONFIDENCE_HIGH_THRESHOLD && !RESEARCH_MODE) {
-            continue;
-          } else if (confidence >= 1) {
-            if (LOG.isTraceEnabled())
-              LOG.trace(mergedItemset.toString() + unionDocId.size()
-                  + " is stronger alliance ({}) than its head's ({}) parent: " +
-                  parentItemset.toString() + fgIdsMap.get(parentItemset).size(),
-                  e.getKey().toString() + fgIdsMap.get(e.getKey()).size());
-          }
-          // The parent will be present in the final output within this itemset, so even if it
-          // were pending alliance to get printed it can be removed now
-          unalliedItemsets.remove(parentItemset);
+        while (!stronglyClosedItemsetsFilter.done && stronglyClosedThread.isAlive()) {
+          Thread.sleep(1000);
+        }
 
-          double klDiver = Double.MIN_VALUE;
-          Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
-          if (bgCount == null) {
-            if (!fallBackToItemsKLD) {
-              bgCount = 1;
-            } else {
-              klDiver = calcComponentsKLDiver(mergedItemset.elementSet(), unionDocId.size(),
-                  bgCountMap, fgCountMap, bgFgLogP, kldCache);
-            }
-          }
-          if (bgCount != null) {
-            klDiver = unionDocId.size() * 1.0 * (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+        long filteringCPUTime = -1;
+        if (stronglyClosedThread.isAlive()) {
+          ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
+          filteringCPUTime = tmxb.getThreadCpuTime(stronglyClosedThread.getId());
+          LOG.info("Filtering took {} nanoseconds = {} seconds", filteringCPUTime, filteringCPUTime / 1e9);
+
+          stronglyClosedThread.interrupt();
+        } else {
+          LOG.error("The thread for calculating CPU time died :(.");
+        }
+        perfMon.storeKeyValue("CPUNanosFilter", filteringCPUTime);
+        perfMon.storeKeyValue("TotalItemsets", fgCountMap.size() + itemsetsOfShortAverageLen);
+        perfMon.storeKeyValue("Avg-2CharsItemsets", itemsetsOfShortAverageLen);
+        perfMon.storeKeyValue("EnoughCharsItemsets", fgCountMap.size());
+        perfMon.storeKeyValue("Len1Itemsets", stronglyClosedItemsetsFilter.numLen1Itemsets);
+        perfMon.storeKeyValue("Len2+Itemsets", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
+        perfMon.storeKeyValue("KLD+Itemsets", positiveKLDivergence.size());
+        perfMon.storeKeyValue("StrongClosedIS", confidentItemsets.size()); // growingAlliances.keySet().size());
+        perfMon.storeKeyValue("UnalliedIS", unalliedItemsets.size());
+        perfMon.storeKeyValue("AlliedLowConfIS", lowConfidence.size());
+
+        LOG.info("CPUNanosFilter: {}", filteringCPUTime);
+        LOG.info("TotalItemsets: {}", fgCountMap.size() + itemsetsOfShortAverageLen);
+        LOG.info("Avg-2CharsItemsets: {}", itemsetsOfShortAverageLen);
+        LOG.info("EnoughCharsItemsets: {}", fgCountMap.size());
+        LOG.info("Len1Itemsets: {}", stronglyClosedItemsetsFilter.numLen1Itemsets);
+        LOG.info("Len2+Itemsets: {}", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
+        LOG.info("KLD+Itemsets: {}", positiveKLDivergence.size());
+        LOG.info("StrongClosedIS: {}", confidentItemsets.size()); // growingAlliances.keySet().size());
+        LOG.info("UnalliedIS: {}", unalliedItemsets.size());
+        LOG.info("AlliedLowConfIS: {}", lowConfidence.size());
+
+        Closer novelClose = Closer.create();
+        try {
+          Formatter highPrecFormat = novelClose.register(new Formatter(novelFile, Charsets.UTF_8.name()));
+
+          Formatter selectionFormat = novelClose.register(new Formatter(selFile, Charsets.UTF_8.name()));
+
+          for (java.util.Map.Entry<Set<String>, Double> positiveKLDEntry : positiveKLDivergence.entrySet()) {
+            Set<String> itemset = positiveKLDEntry.getKey();
+            highPrecFormat.format(itemset + "\t%.15f\t%s\n", positiveKLDEntry.getValue(), // klDiver,
+                (fgIdsMap.containsKey(itemset) ? fgIdsMap.get(itemset) : ""));
           }
 
-// double klDiver = unionDocId.size();
+// for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
+// .entrySet()) {
+// Multiset<String> mergedItemset = e.getValue().getKey();
+// Set<Long> unionDocId = e.getValue().getValue();
+// double klDiver = Double.MIN_VALUE;
 // Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
 // if (bgCount == null) {
+// if (!fallBackToItemsKLD) {
 // bgCount = 1;
 // } else {
-// // LOG.trace("it matches background");
+// klDiver = calcComponentsKLDiver(mergedItemset.elementSet(), unionDocId.size(),
+// bgCountMap, fgCountMap, bgFgLogP, kldCache);
 // }
-// klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+// }
+// if (bgCount != null) {
+// klDiver = unionDocId.size() * 1.0 * (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+// }
+//
+// // double klDiver = unionDocId.size();
+// // Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
+// // if (bgCount == null) {
+// // bgCount = 1;
+// // } else {
+// // // LOG.trace("it matches background");
+// // }
+// // klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+//
+// selectionFormat.out().append(printMultiset(mergedItemset));
+// selectionFormat.format(
+// "\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+// confidentItemsets.get(mergedItemset.elementSet()),
+// klDiver,
+// calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
+// idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
+// unionDocId.size(),
+// calcEntropy(mergedItemset.elementSet(), entropyFromBg ? bgCountMap : fgCountMap,
+// entropyFromBg ? bgNumTweets : fgNumTweets),
+// calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets));
+//
+// Set<Long> headDocIds = Sets.newCopyOnWriteArraySet(fgIdsMap.get(e.getKey()));
+// selectionFormat.out().append(headDocIds.toString().substring(1))
+// .append(Sets.difference(unionDocId, headDocIds).toString().substring(1));
+//
+// selectionFormat.out().append("\n");
+// }
+//
+// // Print the parents that were pending alliance with children to make sure they have conf
+// // those ones didn't prove to have any confident children, but we have to give them a chance
+// for (java.util.Map.Entry<Set<String>, Double> e : unalliedItemsets.entrySet()) {
+// Set<String> itemset = e.getKey();
+// Multiset<String> mergedItemset = HashMultiset.create(itemset);
+// LinkedList<Long> docids = fgIdsMap.get(itemset);
+//
+// double confidence;
+// double klDiver = e.getValue();
+// int supp = docids.size();
+// double entropy;
+// if (confidentItemsets.containsKey(itemset)) {
+// confidence = confidentItemsets.get(itemset);
+// } else {
+// confidence = -1;
+// }
+//
+// selectionFormat.out().append(printMultiset(mergedItemset));
+// selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+// confidence, // 2
+// klDiver, // 3
+// calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
+// idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap), // 4
+// supp, // 5
+// calcEntropy(itemset, entropyFromBg ? bgCountMap : fgCountMap,
+// entropyFromBg ? bgNumTweets : fgNumTweets), // 6
+// calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets)); // 7
+// selectionFormat.out().append(docids.toString().substring(1));
+//          selectionFormat.out().append("\n");
+// }
 
-          selectionFormat.out().append(printMultiset(mergedItemset));
-          selectionFormat.format(
-              "\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
-              confidence,
-              klDiver,
-              calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
-                  idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
-              unionDocId.size(),
-              calcEntropy(mergedItemset.elementSet(), entropyFromBg ? bgCountMap : fgCountMap,
-                  entropyFromBg ? bgNumTweets : fgNumTweets),
-              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets));
+          // print out the confident itemsets
+          for (java.util.Map.Entry<Multiset<String>, Double> e : confidentItemsets.entrySet()) {
 
-          Set<Long> headDocIds = Sets.newCopyOnWriteArraySet(fgIdsMap.get(e.getKey()));
-          selectionFormat.out().append(headDocIds.toString().substring(1))
-              .append(Sets.difference(unionDocId, headDocIds).toString().substring(1));
+            Multiset<String> mergedItemset = e.getKey();
+            Set<String> itemset = mergedItemset.elementSet();
+            LinkedList<Long> docids = fgIdsMap.get(itemset);
 
-          selectionFormat.out().append("\n");
-        }
+            double confidence = e.getValue();
+            int supp = docids.size();
 
-        // Print the parents that were pending alliance with children to make sure they have conf
-        // those ones didn't prove to have any confident children, but we have to give them a chance
-        for (java.util.Map.Entry<Set<String>, Double> e : unalliedItemsets.entrySet()) {
-          Set<String> itemset = e.getKey();
-          Multiset<String> mergedItemset = HashMultiset.create(itemset);
-          LinkedList<Long> docids = fgIdsMap.get(itemset);
+            double klDiver = Double.MIN_VALUE;
+            Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
+            if (bgCount == null) {
+              if (!fallBackToItemsKLD) {
+                bgCount = 1;
+              } else {
+                klDiver = calcComponentsKLDiver(mergedItemset.elementSet(), docids.size(),
+                    bgCountMap, fgCountMap, bgFgLogP, kldCache);
+              }
+            }
+            if (bgCount != null) {
+              klDiver = docids.size() * 1.0 * (Math.log(docids.size() * 1.0 / bgCount) + bgFgLogP);
+            }
 
-          double confidence;
-          double klDiver = e.getValue();
-          int supp = docids.size();
-          double entropy;
-          if (confidentItemsets.containsKey(itemset)) {
-            confidence = confidentItemsets.get(itemset);
-          } else {
-            confidence = -1;
+            // double klDiver = unionDocId.size();
+            // Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
+            // if (bgCount == null) {
+            // bgCount = 1;
+            // } else {
+            // // LOG.trace("it matches background");
+            // }
+            // klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+
+            selectionFormat.out().append(printMultiset(mergedItemset));
+            selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+                confidence, // 2
+                klDiver, // 3
+                calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
+                    idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap), // 4
+                supp, // 5
+                calcEntropy(itemset, entropyFromBg ? bgCountMap : fgCountMap,
+                    entropyFromBg ? bgNumTweets : fgNumTweets), // 6
+                calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets)); // 7
+            selectionFormat.out().append(docids.toString().substring(1));
+            selectionFormat.out().append("\n");
           }
 
-          selectionFormat.out().append(printMultiset(mergedItemset));
-          selectionFormat.format("\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
-              confidence, // 2
-              klDiver, // 3
-              calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
-                  idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap), // 4
-              supp, // 5
-              calcEntropy(itemset, entropyFromBg ? bgCountMap : fgCountMap,
-                  entropyFromBg ? bgNumTweets : fgNumTweets), // 6
-              calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets)); // 7
-          selectionFormat.out().append(docids.toString().substring(1));
+        } finally {
+          novelClose.close();
         }
+        LOG.info("Net itemsets after subtracting ignored: {} out of {} itemsets from file: " + fgF.getName(),
+            fgCountMap.size() - (stronglyClosedItemsetsFilter.numLen1Itemsets + itemsetsOfShortAverageLen),
+            fgCountMap.size());
 
-      } finally {
-        novelClose.close();
       }
-      LOG.info("Net itemsets after subtracting ignored: {} out of {} itemsets from file: " + fgF.getName(),
-          fgCountMap.size() - ignoredItemsets, fgCountMap.size());
+    } catch (InterruptedException e) {
+      // ok
+    } finally {
+      perfMonCloser.close();
     }
-
   }
   private static double calcComponentsKLDiver(Set<String> itemset, double itemsetCnt,
       Map<Set<String>, Integer> bgCountMap,
