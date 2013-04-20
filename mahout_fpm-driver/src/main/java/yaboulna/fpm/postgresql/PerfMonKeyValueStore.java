@@ -2,6 +2,7 @@ package yaboulna.fpm.postgresql;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -49,11 +50,16 @@ public class PerfMonKeyValueStore implements Closeable {
         conn.close();
       }
     } catch (SQLException e) {
+      if(e instanceof BatchUpdateException){
+        e = e.getNextException();
+      }
+      
       throw new IOException(e);
     }
   }
 
   public void storeKeyValue(String key, double value) throws SQLException {
+    try{
     insertStmt.setString(1, key);
     insertStmt.setDouble(2, value);
     insertStmt.addBatch();
@@ -61,6 +67,9 @@ public class PerfMonKeyValueStore implements Closeable {
       insertStmt.executeBatch();
       insertStmt.clearBatch();
       insertStmt.clearParameters();
+    }
+    }catch(BatchUpdateException e){
+      throw e.getNextException();
     }
   }
 

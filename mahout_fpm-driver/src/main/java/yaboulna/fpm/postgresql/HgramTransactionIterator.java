@@ -58,7 +58,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   }
 
-//  private static final Long ONE = 1L;
+// private static final Long ONE = 1L;
 
   static final char TOKEN_DELIMETER = '|'; // must be a char
   static final char UNIGRAM_DELIMETER = ','; // must be a char
@@ -79,6 +79,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
   protected static final int DEFAULT_minPerHourFreq = 1;
   protected static final int DEFAULT_minHoursInHistory = 3;
+  private static final boolean IDENTICAL_REMOVAL_WITH_BLOOM = false;
 
   final String url;
   final Properties props;
@@ -160,12 +161,14 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
     this.minHoursInHistory = minHoursInHistory;
 
     this.removeIdenticalTweets = removeIdenticalTweets;
-    if (removeIdenticalTweets) {
+    if (removeIdenticalTweets && IDENTICAL_REMOVAL_WITH_BLOOM) {
       // 100,000 comes from select avg(totalcnt) from volume_1hr1;
       // avg
       // ----------------------
       // 1025471.020816967793
-      windowBloom = BloomFilter.create(Funnels.stringFunnel(), (int)Math.ceil( (windowEndUx - windowStartUx) / 3600.0) * 100000);
+      windowBloom = BloomFilter.create(Funnels.stringFunnel(),
+          (int) Math.ceil((windowEndUx - windowStartUx) / 3600.0) * 100000,
+          1e-6);
     }
     this.excludeRetweets = excludeRetweets;
 
@@ -351,12 +354,12 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
         // DISTINCT FOR DEDUPE of spam tweets
         String dedupe = "";
-// if (removeIdenticalTweets) {
-// dedupe = "DISTINCT";
-// }
+        if (removeIdenticalTweets && !IDENTICAL_REMOVAL_WITH_BLOOM) {
+          dedupe = "DISTINCT";
+        }
         String sql;
         if (includeHashtags) {
-          sql = "with tokens as ((select id,htag as ngram from hashtags where " + timeSql 
+          sql = "with tokens as ((select id,htag as ngram from hashtags where " + timeSql
               + " ) "
               + " UNION ALL "
               + " (select id,ngram from " + tablename + " where "
@@ -385,7 +388,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         boolean couldBeRepeated = false;
         boolean isARetweet = false;
 
-        if (removeIdenticalTweets) {
+        if (removeIdenticalTweets && IDENTICAL_REMOVAL_WITH_BLOOM) {
           // See if this is a novel tweet
           couldBeRepeated = windowBloom.mightContain(tweet);
           windowBloom.put(tweet);
@@ -494,8 +497,8 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   public long getRowsRead() {
     return nRowsRead;
   }
-  
-  public long getRowsSkipped(){
+
+  public long getRowsSkipped() {
     return rowsSkipped;
   }
 
