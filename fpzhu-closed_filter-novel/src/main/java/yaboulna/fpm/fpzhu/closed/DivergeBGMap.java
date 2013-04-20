@@ -27,6 +27,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.NameFileComparator;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.lang.mutable.MutableInt;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
@@ -186,7 +187,7 @@ public class DivergeBGMap {
   static boolean growAlliancesAcrossEpochs = false;
   static boolean filterLowKLD = true;
   static boolean fallBackToItemsKLD = false;
-  static boolean selMaximal = false;
+  static boolean cntUnMaximal = true;
   static boolean honorTemporalSimilarity = false;
   static int temporalSimilarityThreshold = 60; // seconds
   static int absMaxDiff = 1000; // TODO arg
@@ -218,7 +219,7 @@ public class DivergeBGMap {
       growAlliancesAcrossEpochs = args[2].contains("Grow");
       filterLowKLD = !args[2].contains("NFLKld");
       fallBackToItemsKLD = args[2].contains("ITKld");
-      selMaximal = args[2].contains("Max");
+      cntUnMaximal = !args[2].contains("MaxOnly");
       honorTemporalSimilarity = args[2].contains("Temporal");
     }
 
@@ -231,7 +232,7 @@ public class DivergeBGMap {
     LOG.info("growAlliancesAcrossEpochs: " + growAlliancesAcrossEpochs);
     LOG.info("filterLowKLD: " + filterLowKLD);
     LOG.info("fallBackToItemsKLD: " + fallBackToItemsKLD);
-    LOG.info("selMaximal: " + selMaximal);
+    LOG.info("cntUnMaximal: " + cntUnMaximal);
     LOG.info("honorTemporalSimilarity: " + honorTemporalSimilarity);
 
     int histLenSecs = 4 * 7 * 24 * 3600;
@@ -401,6 +402,8 @@ public class DivergeBGMap {
         final double bgNumTweets = bgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
         final double fgNumTweets = fgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
         final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
+
+        final MutableInt unMaximalIS = new MutableInt(0);
 
         class StronglyClosedItemsetsFilter implements Runnable {
 
@@ -904,8 +907,9 @@ public class DivergeBGMap {
 
                             int existingHeadNonOverlap = Integer.MAX_VALUE;
                             int existingMaxDiffCnt = 0;
-                            if (allowFormingMultipleAlliances) { 
-                              // This way the alliance will get the score of the current cand, should be better than score of its alliance head
+                            if (allowFormingMultipleAlliances) {
+                              // This way the alliance will get the score of the current cand, should be better than score
+// of its alliance head
                               Iterator<Long> iDidIter = iDocIds.iterator();
 
                               Iterator<Long> existingDidIter = existingDocIds.iterator();
@@ -1135,12 +1139,15 @@ public class DivergeBGMap {
 // selectionFormat.out().append("\n");
 
                   // TODONE: are you sure about that?
-                  if (selMaximal) {
+                  if (cntUnMaximal) {
                     // The parent will be present in the final output within this itemset, so even if it
                     // were pending alliance to get printed it can be removed now
 // unalliedItemsets.remove(parentItemset);
                     for (Set<String> pis : ancestorItemsets) {
-                      unalliedItemsets.remove(HashMultiset.create(pis));
+// unalliedItemsets.remove(HashMultiset.create(pis));
+                      if (unalliedItemsets.containsKey(pis)) {
+                        unMaximalIS.increment();
+                      }
                     }
                   }
                 }
@@ -1187,28 +1194,9 @@ public class DivergeBGMap {
         } else {
           LOG.error("The thread for calculating CPU time died :(.");
         }
-        perfMon.storeKeyValue("CPUNanosFilter", filteringCPUTime);
-        perfMon.storeKeyValue("TotalItemsets", fgCountMap.size() + itemsetsOfShortAverageLen);
-        perfMon.storeKeyValue("Avg-2CharsItemsets", itemsetsOfShortAverageLen);
-        perfMon.storeKeyValue("EnoughCharsItemsets", fgCountMap.size());
-        perfMon.storeKeyValue("Len1Itemsets", stronglyClosedItemsetsFilter.numLen1Itemsets);
-        perfMon.storeKeyValue("Len2+Itemsets", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
-        perfMon.storeKeyValue("KLD+Itemsets", positiveKLDivergence.size());
-        perfMon.storeKeyValue("StrongClosedIS", growingAlliances.keySet().size());
-        perfMon.storeKeyValue("HighConfidenceIS", confidentItemsets.size());
-        perfMon.storeKeyValue("UnalliedIS", unalliedItemsets.size());
 
-        LOG.info("CPUNanosFilter: {}", filteringCPUTime);
-        LOG.info("TotalItemsets: {}", fgCountMap.size() + itemsetsOfShortAverageLen);
-        LOG.info("Avg-2CharsItemsets: {}", itemsetsOfShortAverageLen);
-        LOG.info("EnoughCharsItemsets: {}", fgCountMap.size());
-        LOG.info("Len1Itemsets: {}", stronglyClosedItemsetsFilter.numLen1Itemsets);
-        LOG.info("Len2+Itemsets: {}", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
-        LOG.info("KLD+Itemsets: {}", positiveKLDivergence.size());
-        LOG.info("StrongClosedIS: {}", growingAlliances.keySet().size());
-        LOG.info("HighConfidenceIS: {}", confidentItemsets.size());
-        LOG.info("UnalliedIS: {}", unalliedItemsets.size());
-
+        int alliedLowConf = 0;
+        int overConfident = 0;
         Closer novelClose = Closer.create();
         try {
           Formatter highPrecFormat = novelClose.register(new Formatter(novelFile, Charsets.UTF_8.name()));
@@ -1220,29 +1208,53 @@ public class DivergeBGMap {
             highPrecFormat.format(itemset + "\t%.15f\t%s\n", positiveKLDEntry.getValue(), // klDiver,
                 (fgIdsMap.containsKey(itemset) ? fgIdsMap.get(itemset) : ""));
           }
+
           for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
               .entrySet()) {
             Multiset<String> mergedItemset = e.getValue().getKey();
             Set<Long> unionDocId = e.getValue().getValue();
             Set<String> parentItemset = itemsetParentMap.get(e.getKey());
             double confidence = unionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
-            if (confidence < CONFIDENCE_HIGH_THRESHOLD && !RESEARCH_MODE) {
-              continue;
-            } else if (confidence >= 1) {
-              if (LOG.isTraceEnabled())
-                LOG.trace(mergedItemset.toString() + unionDocId.size()
-                    + " is stronger alliance ({}) than its head's ({}) parent: " +
-                    parentItemset.toString() + fgIdsMap.get(parentItemset).size(),
-                    e.getKey().toString() + fgIdsMap.get(e.getKey()).size());
-            }
-            // The parent will be present in the final output within this itemset, so even if it
-            // were pending alliance to get printed it can be removed now
-            if (selMaximal) {
+            if (confidence < CONFIDENCE_HIGH_THRESHOLD) {
+              if (!RESEARCH_MODE) {
+                continue;
+              }
+              ++alliedLowConf;
+            } else {
               // The parent will be present in the final output within this itemset, so even if it
               // were pending alliance to get printed it can be removed now
+              if (cntUnMaximal) {
+                // The parent will be present in the final output within this itemset, so even if it
+                // were pending alliance to get printed it can be removed now
+
+                // TODO: should really remove all of parents, ideally:
+// for (Set<String> pis : ancestorItemsets) {
+// unalliedItemsets.remove(HashMultiset.create(pis));
+// }
+                // Since this is just to produce some number
+                Set<String> origParent = parentItemset;
+                while (parentItemset != null) {
 // unalliedItemsets.remove(parentItemset);
-              for (Set<String> pis : ancestorItemsets) {
-                unalliedItemsets.remove(HashMultiset.create(pis));
+                  if (unalliedItemsets.containsKey(parentItemset)) {
+                    unMaximalIS.increment();
+                  }
+                  Set<String> grandParentItemset = itemsetParentMap.get(parentItemset);
+                  if (grandParentItemset == parentItemset) {
+                    break;
+                  } else {
+                    parentItemset = grandParentItemset;
+                  }
+                }
+                parentItemset = origParent;
+              }
+
+              if (confidence > 1) {
+                ++overConfident;
+                if (LOG.isTraceEnabled())
+                  LOG.trace(mergedItemset.toString() + unionDocId.size()
+                      + " is stronger alliance ({}) than its head's ({}) parent: " +
+                      parentItemset.toString() + fgIdsMap.get(parentItemset).size(),
+                      e.getKey().toString() + fgIdsMap.get(e.getKey()).size());
               }
             }
 
@@ -1318,6 +1330,34 @@ public class DivergeBGMap {
         LOG.info("Net itemsets after subtracting ignored: {} out of {} itemsets from file: " + fgF.getName(),
             fgCountMap.size() - (stronglyClosedItemsetsFilter.numLen1Itemsets + itemsetsOfShortAverageLen),
             fgCountMap.size());
+
+        perfMon.storeKeyValue("CPUNanosFilter", filteringCPUTime);
+        perfMon.storeKeyValue("TotalItemsets", fgCountMap.size() + itemsetsOfShortAverageLen);
+        perfMon.storeKeyValue("Avg-2CharsItemsets", itemsetsOfShortAverageLen);
+        perfMon.storeKeyValue("EnoughCharsItemsets", fgCountMap.size());
+        perfMon.storeKeyValue("Len1Itemsets", stronglyClosedItemsetsFilter.numLen1Itemsets);
+        perfMon.storeKeyValue("Len2+Itemsets", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
+        perfMon.storeKeyValue("KLD+Itemsets", positiveKLDivergence.size());
+        perfMon.storeKeyValue("StrongClosedIS", growingAlliances.keySet().size());
+        perfMon.storeKeyValue("HighConfidenceIS", confidentItemsets.size());
+        perfMon.storeKeyValue("UnalliedIS", unalliedItemsets.size());
+        perfMon.storeKeyValue("UnalliedUnMaximal", unMaximalIS.intValue());
+        perfMon.storeKeyValue("AlliedLowConf", alliedLowConf);
+        perfMon.storeKeyValue("OverConfident", overConfident);
+
+        LOG.info("CPUNanosFilter: {}", filteringCPUTime);
+        LOG.info("TotalItemsets: {}", fgCountMap.size() + itemsetsOfShortAverageLen);
+        LOG.info("Avg-2CharsItemsets: {}", itemsetsOfShortAverageLen);
+        LOG.info("EnoughCharsItemsets: {}", fgCountMap.size());
+        LOG.info("Len1Itemsets: {}", stronglyClosedItemsetsFilter.numLen1Itemsets);
+        LOG.info("Len2+Itemsets: {}", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
+        LOG.info("KLD+Itemsets: {}", positiveKLDivergence.size());
+        LOG.info("StrongClosedIS: {}", growingAlliances.keySet().size());
+        LOG.info("HighConfidenceIS: {}", confidentItemsets.size());
+        LOG.info("UnalliedIS: {}", unalliedItemsets.size());
+        LOG.info("UnalliedUnMaximal: {}", unMaximalIS.intValue());
+        LOG.info("AlliedLowConf: {}", alliedLowConf);
+        LOG.info("OverConfident: {}", overConfident);
 
       }
     } catch (InterruptedException e) {
