@@ -177,9 +177,9 @@ public class DivergeBGMap {
   private static final boolean ENFORCE_HIGHER_SUPPORT = false;
   private static final int ENFORCED_SUPPORT = 33;
 
-  static boolean stopMatchingLimitedBufferSize = true;
+  static boolean unLimitedBufferSize = false;
   static boolean stopMatchingParentFSimLow = false;
-  static boolean avoidFormingNewAllianceIfPossible = true;
+  static boolean allowFormingMultipleAlliances = false;
   static boolean ppJoin = false;
   static boolean idfFromBG = false;
   static boolean entropyFromBg = false;
@@ -189,7 +189,7 @@ public class DivergeBGMap {
   static boolean selMaximal = false;
   static boolean honorTemporalSimilarity = false;
   static int temporalSimilarityThreshold = 60; // seconds
-  static int absMaxDiff = 150; // TODO arg
+  static int absMaxDiff = 1000; // TODO arg
 
   /**
    * @param args
@@ -209,9 +209,9 @@ public class DivergeBGMap {
     }
 
     if (args.length > 2) {
-      stopMatchingLimitedBufferSize = args[2].contains("Buff");
+      unLimitedBufferSize = args[2].contains("ULBuff");
       stopMatchingParentFSimLow = args[2].contains("SimLow");
-      avoidFormingNewAllianceIfPossible = args[2].contains("AvoidNew");
+      allowFormingMultipleAlliances = args[2].contains("MultiAlli");
       ppJoin = args[2].contains("Ppj");
       idfFromBG = args[2].contains("IdfBg");
       entropyFromBg = args[2].contains("EntBg");
@@ -222,9 +222,9 @@ public class DivergeBGMap {
       honorTemporalSimilarity = args[2].contains("Temporal");
     }
 
-    LOG.info("stopMatchingLimitedBufferSize: " + stopMatchingLimitedBufferSize);
+    LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
     LOG.info("stopMatchingParentFSimLow: " + stopMatchingParentFSimLow);
-    LOG.info("avoidFormingNewAllianceIfPossible: " + avoidFormingNewAllianceIfPossible);
+    LOG.info("allowFormingMultipleAlliances: " + allowFormingMultipleAlliances);
     LOG.info("ppJoin: " + ppJoin);
     LOG.info("idfFromBG: " + idfFromBG);
     LOG.info("entropyFromBg: " + entropyFromBg);
@@ -680,7 +680,7 @@ public class DivergeBGMap {
 
                     if ((stopMatchingParentFSimLow && parentItemset != null &&
                         isPisSim < ITEMSET_SIMILARITY_BAD_THRESHOLD)
-                        || (stopMatchingLimitedBufferSize && ++lookBackRecords > MAX_LOOKBACK_FOR_PARENT)) {
+                        || (!unLimitedBufferSize && ++lookBackRecords > MAX_LOOKBACK_FOR_PARENT)) {
                       // TODONE: could this also work without checking foundParent -> NO, very few alliances happen
                       // TODO: are we losing anything by breaking on the first bad similarity
 // if (LOG.isTraceEnabled())
@@ -887,7 +887,7 @@ public class DivergeBGMap {
 
                       if (candidateTransHeads != null) {
                         if (mergeCandidates.contains(candidateTransHeads)) {
-                          if (avoidFormingNewAllianceIfPossible) {
+                          if (!allowFormingMultipleAlliances) {
                             // pretend that you are a very bad candidate.. so that your head wins the alliance:
                             currentBestDifference = Integer.MAX_VALUE;
                           }
@@ -904,7 +904,8 @@ public class DivergeBGMap {
 
                             int existingHeadNonOverlap = Integer.MAX_VALUE;
                             int existingMaxDiffCnt = 0;
-                            if (!avoidFormingNewAllianceIfPossible) {
+                            if (allowFormingMultipleAlliances) { 
+                              // This way the alliance will get the score of the current cand, should be better than score of its alliance head
                               Iterator<Long> iDidIter = iDocIds.iterator();
 
                               Iterator<Long> existingDidIter = existingDocIds.iterator();
@@ -970,7 +971,7 @@ public class DivergeBGMap {
 // }
                             } // else: no need to calculate, since we will be biased to the alliance anyway
                             // just as if the current candidate does not exist; it is only a proxy to find
-                            if ((avoidFormingNewAllianceIfPossible && bestAllianceHead == cand)
+                            if ((!allowFormingMultipleAlliances && bestAllianceHead == cand)
                                 || (existingHeadNonOverlap <= existingMaxDiffCnt &&
                                 ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
                                     (exitingAllianceHead.size() < bestAllianceHead.size()))
@@ -979,7 +980,7 @@ public class DivergeBGMap {
                                     || existingHeadNonOverlap < currentBestDifference))) {
                               // or equals prefers existing allinaces to forming new ones
 
-                              if (!avoidFormingNewAllianceIfPossible) { // TODO: this needs tweaking if more than one
+                              if (allowFormingMultipleAlliances) { // TODO: this needs tweaking if more than one
 // existing
                                 currentBestDifference = existingHeadNonOverlap;
                               } // else: keeping the difference of cand, which should be better, so that
@@ -1236,7 +1237,14 @@ public class DivergeBGMap {
             }
             // The parent will be present in the final output within this itemset, so even if it
             // were pending alliance to get printed it can be removed now
-            unalliedItemsets.remove(parentItemset);
+            if (selMaximal) {
+              // The parent will be present in the final output within this itemset, so even if it
+              // were pending alliance to get printed it can be removed now
+// unalliedItemsets.remove(parentItemset);
+              for (Set<String> pis : ancestorItemsets) {
+                unalliedItemsets.remove(HashMultiset.create(pis));
+              }
+            }
 
             double klDiver = Double.MIN_VALUE;
             Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
@@ -1272,7 +1280,6 @@ public class DivergeBGMap {
 
             selectionFormat.out().append("\n");
           }
-
 
           // // Print the parents that were pending alliance with children to make sure they have conf
 // // those ones didn't prove to have any confident children, but we have to give them a chance
