@@ -389,8 +389,8 @@ public class HgramsWindow {
             Runtime rt = Runtime.getRuntime();
             long cmdWallTime = System.nanoTime();
             Process proc = rt.exec(cmd);
-            proc.waitFor();
-            cmdWallTime = System.nanoTime() - cmdWallTime;
+//            proc.waitFor();
+//            cmdWallTime = System.nanoTime() - cmdWallTime;
             
             LOG.info("Piping to output and error from the command to stdout and stderr");
             ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -414,8 +414,11 @@ public class HgramsWindow {
               e.printStackTrace();
             }
 
+            cmdWallTime = System.nanoTime() - cmdWallTime;
+            
             executor.shutdown();
-
+            
+            
 //            long cmdCPUTime = -1;
 //            if (cmdRunnable.error == null) {
 //              ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
