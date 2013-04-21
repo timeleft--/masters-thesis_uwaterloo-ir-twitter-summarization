@@ -76,10 +76,11 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
   protected static final boolean DEFAULT_EXLUDE_RETWEETS = false;
   protected static final boolean DEFAULT_PREVENT_REPEATED_HGRAMS_IN_TWEET = true;
   protected static final boolean DEFAULT_removeIdenticalTweets = true;
-
+  private static final boolean IDENTICAL_REMOVAL_WITH_BLOOM = true;
+  
   protected static final int DEFAULT_minPerHourFreq = 1;
   protected static final int DEFAULT_minHoursInHistory = 3;
-  private static final boolean IDENTICAL_REMOVAL_WITH_BLOOM = false;
+  
 
   final String url;
   final Properties props;
@@ -356,6 +357,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
         String dedupe = "";
         if (removeIdenticalTweets && !IDENTICAL_REMOVAL_WITH_BLOOM) {
           dedupe = "DISTINCT";
+          throw new UnsupportedOperationException("Can't preserve ordering with SQL while using DISTINCT");
         }
         String sql;
         if (includeHashtags) {
