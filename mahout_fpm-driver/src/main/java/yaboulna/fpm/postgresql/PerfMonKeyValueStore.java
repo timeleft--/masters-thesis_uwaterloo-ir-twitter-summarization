@@ -21,7 +21,8 @@ public class PerfMonKeyValueStore implements Closeable {
   private final String args;
   private final Connection conn;
   private final PreparedStatement insertStmt;
-  private int batchCounter = 0;
+  private long batchCounter = 0;
+  public int batchSizeToWrite = 105;
 
   public PerfMonKeyValueStore(String pMonitoredClassName, String pArgs) throws ClassNotFoundException, SQLException {
     monitoredClassName = pMonitoredClassName;
@@ -63,7 +64,7 @@ public class PerfMonKeyValueStore implements Closeable {
     insertStmt.setString(1, key);
     insertStmt.setDouble(2, value);
     insertStmt.addBatch();
-    if (++batchCounter % 10 == 0) {
+    if (++batchCounter % batchSizeToWrite == 0) {
       insertStmt.executeBatch();
       insertStmt.clearBatch();
       insertStmt.clearParameters();
@@ -73,7 +74,7 @@ public class PerfMonKeyValueStore implements Closeable {
     }
   }
 
-  public int getStoredKeyValuePairs() {
+  public long getNumStoredKeyValuePairs() {
     return batchCounter;
   }
 }
