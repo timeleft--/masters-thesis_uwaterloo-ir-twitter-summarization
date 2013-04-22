@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -16,7 +17,6 @@ import java.util.Formatter;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -435,6 +435,7 @@ public class DivergeBGMap {
 
         class StronglyClosedItemsetsFilter implements Runnable {
 
+          private static final boolean ALLIANCES_MERGE_WITH_HEAD = false;
           private boolean done;
           private int numLen1Itemsets = 0;
           private int absMaxDiffEnforced = 0;
@@ -930,11 +931,14 @@ public class DivergeBGMap {
 
                           for (Set<String> exitingAllianceHead : candidateTransHeads) {
 
-                            LinkedList<Long> existingDocIds = fgIdsMap.get(exitingAllianceHead);
+                            Collection<Long> existingDocIds = (ALLIANCES_MERGE_WITH_HEAD ? fgIdsMap.get(exitingAllianceHead) :
+                              growingAlliances.get(exitingAllianceHead).getValue());
                             if (LOG.isTraceEnabled())
                               LOG.trace(itemset.toString() + iDocIds.size()
                                   + " offered one more merge option {} through candidate {}",
-                                  exitingAllianceHead.toString() + existingDocIds.size(),
+                                  (ALLIANCES_MERGE_WITH_HEAD ? exitingAllianceHead.toString() :
+                              growingAlliances.get(exitingAllianceHead).getKey().toString())
+                                  + existingDocIds.size(),
                                   cand + "diff" + differentDocs);
 
                             int existingHeadNonOverlap = Integer.MAX_VALUE;
