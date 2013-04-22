@@ -159,7 +159,7 @@ public class DivergeBGMap {
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
 
-  private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Overlap similarity
+//  private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Overlap similarity
 
   private static final double KLDIVERGENCE_MIN = 0; // this is multiplied by frequency not prob
 
@@ -173,7 +173,7 @@ public class DivergeBGMap {
   private static final boolean ALLIANCE_PREFER_LONGER_ITEMSETS = false;
   private static final boolean TOTALLY_IGNORE_1ITEMSETS = false;
   private static final boolean IGNORE_1ITEMSETS_VERY_HIGH_CNT = false;
-  private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
+  private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = false;
 
   private static final boolean ENFORCE_HIGHER_SUPPORT = false;
   private static final int ENFORCED_SUPPORT = 33;
@@ -248,7 +248,7 @@ public class DivergeBGMap {
     thresholds += " ITEMSET_SIMILARITY_PROMISING_THRESHOLD="+ITEMSET_SIMILARITY_PROMISING_THRESHOLD;
     thresholds += " ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH="+ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH;
     thresholds += " ITEMSET_SIMILARITY_BAD_THRESHOLD="+ITEMSET_SIMILARITY_BAD_THRESHOLD;
-    thresholds += " DOCID_SIMILARITY_GOOD_THRESHOLD="+DOCID_SIMILARITY_GOOD_THRESHOLD;
+//    thresholds += " DOCID_SIMILARITY_GOOD_THRESHOLD="+DOCID_SIMILARITY_GOOD_THRESHOLD;
     thresholds += " CONFIDENCE_HIGH_THRESHOLD="+confThreshold;
     
     LOG.info("Thresholds: " + thresholds);
@@ -770,7 +770,7 @@ public class DivergeBGMap {
                           :
                           Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                               Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                  Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) *
+                                  Math.floor((1 - confThreshold) * //DOCID_SIMILARITY_GOOD_THRESHOLD) *
                                       Math.max(candDocIds.size(), iDocIds.size())))));
 
                   if(maxDiffCnt == absMaxDiff * hrsPerEpoch){
@@ -958,7 +958,7 @@ public class DivergeBGMap {
 // to
 // allow a merger
                                   Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                      Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD) *
+                                      Math.floor((1 -  confThreshold) * //DOCID_SIMILARITY_GOOD_THRESHOLD) *
                                           Math.max(existingDocIds.size(), iDocIds.size()))));
                               if(existingMaxDiffCnt == absMaxDiff * hrsPerEpoch){
                                 ++absMaxDiffEnforced;
@@ -1063,8 +1063,8 @@ public class DivergeBGMap {
                             :
                             Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                 Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                    Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD)
-                                        * Math.max(fgIdsMap.get(theOnlyOneIllMerge).size(), iDocIds.size()))))),
+                                    Math.floor((1 -  confThreshold) * //DOCID_SIMILARITY_GOOD_THRESHOLD)
+                                        Math.max(fgIdsMap.get(theOnlyOneIllMerge).size(), iDocIds.size()))))),
                         theOnlyOnesDifference,
                         theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
                   // /////////// Store that you joined this alliance
@@ -1138,8 +1138,8 @@ public class DivergeBGMap {
                             :
                             Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                 Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                    Math.floor((1 - DOCID_SIMILARITY_GOOD_THRESHOLD)
-                                        * Math.max(fgIdsMap.get(bestUnofficialCandidate).size(), iDocIds.size()))))),
+                                    Math.floor((1 -  confThreshold) * //DOCID_SIMILARITY_GOOD_THRESHOLD)
+                                        Math.max(fgIdsMap.get(bestUnofficialCandidate).size(), iDocIds.size()))))),
                         bestUnofficialCandidateDiff,
                         bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size());
                 }
