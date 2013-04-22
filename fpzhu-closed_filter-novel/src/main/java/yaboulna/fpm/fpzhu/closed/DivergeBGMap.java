@@ -173,7 +173,7 @@ public class DivergeBGMap {
   private static final boolean ALLIANCE_PREFER_LONGER_ITEMSETS = false;
   private static final boolean TOTALLY_IGNORE_1ITEMSETS = false;
   private static final boolean IGNORE_1ITEMSETS_VERY_HIGH_CNT = false;
-  private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = false;
+  private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
 
   private static final boolean ENFORCE_HIGHER_SUPPORT = false;
   private static final int ENFORCED_SUPPORT = 33;
