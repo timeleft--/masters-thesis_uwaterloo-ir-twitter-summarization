@@ -361,7 +361,7 @@ public class DivergeBGMap {
     try {
       PerfMonKeyValueStore perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
           Arrays.toString(args)));
-      perfMonKV.batchSizeToWrite = 15;
+      perfMonKV.batchSizeToWrite = 16;
       for (File fgF : fgFiles) {
         final File novelFile = new File(fgF.getParentFile(), fgF.getName()
             .replaceFirst("fp_", "novel_" + options + "_"));
@@ -1469,24 +1469,6 @@ public class DivergeBGMap {
             fgCountMap.size() - (stronglyClosedItemsetsFilter.numLen1Itemsets + itemsetsOfShortAverageLen),
             fgCountMap.size());
 
-        if (perfMon) {
-          perfMonKV.storeKeyValue("Timestamp", System.currentTimeMillis());
-          perfMonKV.storeKeyValue("CPUMillisFilter", filteringCPUTime / 1e6);
-          perfMonKV.storeKeyValue("TotalItemsets", fgCountMap.size() + itemsetsOfShortAverageLen);
-          perfMonKV.storeKeyValue("Avg-2CharsItemsets", itemsetsOfShortAverageLen);
-          perfMonKV.storeKeyValue("EnoughCharsItemsets", fgCountMap.size());
-          perfMonKV.storeKeyValue("Len1Itemsets", stronglyClosedItemsetsFilter.numLen1Itemsets);
-          perfMonKV.storeKeyValue("Len2+Itemsets", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
-          perfMonKV.storeKeyValue("UnalliedIS", unalliedItemsets.size());
-          perfMonKV.storeKeyValue("UnalliedUnMaximal", unMaximalIS.intValue());
-          perfMonKV.storeKeyValue("AlliedLowConf", alliedLowConf);
-          perfMonKV.storeKeyValue("OverConfident", overConfident);
-          perfMonKV.storeKeyValue("absMaxDiffEnforced", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
-          perfMonKV.storeKeyValue("KLD+Itemsets", positiveKLDivergence.size());
-          perfMonKV.storeKeyValue("HighConfidenceIS", confidentItemsets.size());
-          perfMonKV.storeKeyValue("StrongClosedIS", growingAlliances.keySet().size());
-        }
-        
         LOG.info("CPUMillisFilter: {}", filteringCPUTime / 1e6);
         LOG.info("TotalItemsets: {}", fgCountMap.size() + itemsetsOfShortAverageLen);
         LOG.info("Avg-2CharsItemsets: {}", itemsetsOfShortAverageLen);
@@ -1501,6 +1483,32 @@ public class DivergeBGMap {
         LOG.info("KLD+Itemsets: {}", positiveKLDivergence.size());
         LOG.info("HighConfidenceIS: {}", confidentItemsets.size());
         LOG.info("StrongClosedIS: {}", growingAlliances.keySet().size());
+        
+        if (perfMon) {
+          perfMonKV.storeKeyValue("Timestamp", System.currentTimeMillis());
+          perfMonKV.storeKeyValue("CPUMillisFilter", filteringCPUTime / 1e6);
+          
+          perfMonKV.storeKeyValue("TotalItemsets", fgCountMap.size() + itemsetsOfShortAverageLen);
+          perfMonKV.storeKeyValue("Avg-2CharsItemsets", itemsetsOfShortAverageLen);
+          perfMonKV.storeKeyValue("EnoughCharsItemsets", fgCountMap.size());
+          perfMonKV.storeKeyValue("Len1Itemsets", stronglyClosedItemsetsFilter.numLen1Itemsets);
+          perfMonKV.storeKeyValue("Len2+Itemsets", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
+          perfMonKV.storeKeyValue("UnalliedIS", unalliedItemsets.size());
+          perfMonKV.storeKeyValue("UnalliedUnMaximal", unMaximalIS.intValue());
+          perfMonKV.storeKeyValue("AlliedLowConf", alliedLowConf);
+          perfMonKV.storeKeyValue("OverConfident", overConfident);
+          perfMonKV.storeKeyValue("absMaxDiffEnforced", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
+          perfMonKV.storeKeyValue("KLD+Itemsets", positiveKLDivergence.size());
+          perfMonKV.storeKeyValue("HighConfidenceIS", confidentItemsets.size());
+          perfMonKV.storeKeyValue("StrongClosedIS", growingAlliances.keySet().size());
+          
+          positiveKLDivergence.clear();
+          confidentItemsets.clear();
+          System.gc();
+          
+          perfMonKV.storeKeyValue("MemoryMBUsed", Runtime.getRuntime().totalMemory() / (1<<20));
+        }
+        
 
       }
     } catch (InterruptedException e) {

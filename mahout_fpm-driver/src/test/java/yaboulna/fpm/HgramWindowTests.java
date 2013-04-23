@@ -19,6 +19,7 @@ public class HgramWindowTests {
    * @throws IOException
    */
   public static void main(String[] args) throws IOException {
+    System.out.println("1<<20 = " +  (1<<20));
     File epochOutLocal = new File(args[0]);
     File epochOutText = new File(args[0] + ".txt");
     BufferedReader decodeReader = new BufferedReader(new FileReader(epochOutLocal));
