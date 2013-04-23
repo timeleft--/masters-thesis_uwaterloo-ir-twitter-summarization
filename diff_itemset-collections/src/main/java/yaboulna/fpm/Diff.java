@@ -1,0 +1,131 @@
+package yaboulna.fpm;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Formatter;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.slf4j.Logger;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.io.Closer;
+import com.google.common.io.Files;
+import com.google.common.io.LineProcessor;
+
+public class Diff {
+  private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(Diff.class);
+
+  static abstract class AbstractLineProcessor implements LineProcessor<Void> {
+    Pattern tabSplitPattern = Pattern.compile("\\t");
+
+    Pattern commaSplitPattern = Pattern.compile("\\,");
+    Pattern commaSpaceSplitPattern = Pattern.compile("\\, ");
+    // TODO handle the ] character that splits documents common to all patterns in an alliance from those in some only
+
+    public boolean processLine(String line) throws IOException {
+      String[] fields = tabSplitPattern.split(line);
+      Pattern[] splitPatterns = new Pattern[fields.length];
+      for (int f = 0; f < 1; ++f) { // <fields.length
+        if (fields[f].charAt(0) == '[') {
+          fields[f] = fields[f].substring(0, fields[f].length() - 1).substring(1);
+          splitPatterns[f] = commaSpaceSplitPattern;
+        } else {
+          splitPatterns[f] = commaSplitPattern;
+        }
+      }
+      
+      fields[0] = fields[0].replaceAll("\\([0-9]+\\)", "");
+
+      Set<String> itemset = Sets.newHashSet(splitPatterns[0].split(fields[0]));
+
+      doSomethingUseful(itemset);
+
+      return true;
+    }
+
+    public Void getResult() {
+      return null;
+    }
+
+    abstract void doSomethingUseful(Set<String> itemset);
+  }
+
+  public static void main(String[] args) throws IOException {
+
+    File dataDir = new File(args[0]);
+    String selPfx = args[1];
+    String origPfx = args[2];
+
+    final Set<String> keywords = Sets.newHashSet(Arrays.copyOfRange(args, 3, args.length));
+
+    List<File> selFiles = (List<File>) FileUtils.listFiles(dataDir,
+        FileFilterUtils.and(FileFilterUtils.prefixFileFilter(selPfx),
+            FileFilterUtils.notFileFilter(FileFilterUtils.prefixFileFilter("diff")),
+            FileFilterUtils.notFileFilter(FileFilterUtils.suffixFileFilter("log"))),
+        FileFilterUtils.trueFileFilter());
+    Collections.sort(selFiles);
+
+    final Set<Set<String>> selSet = Sets.newHashSetWithExpectedSize(10000);
+    // Map = Maps.newHashMapWithExpectedSize(10000);
+
+    for (File selF : selFiles) {
+
+      selSet.clear();
+
+      File origFile = new File(selF.getParentFile(), selF.getName().replaceFirst(selPfx, origPfx));
+      if (!origFile.exists()) {
+        LOG.debug("Orig file {} does not exist for selection file {}", origFile, selF);
+        continue;
+      }
+
+      Closer diffClose = Closer.create();
+      try {
+        File diffFile = new File(selF.getParentFile(), selF.getName().replaceFirst(selPfx, "diff_" + origPfx + "-" + selPfx));
+        final Formatter diffFmt = diffClose.register(new Formatter(diffFile));
+        
+        Files.readLines(selF, Charsets.UTF_8, new AbstractLineProcessor() {
+
+          void doSomethingUseful(Set<String> itemset) {
+            if (!Sets.intersection(keywords, itemset).isEmpty()) {
+              selSet.add(itemset); // , null);
+            }
+          }
+
+        });
+
+        Files.readLines(origFile, Charsets.UTF_8, new AbstractLineProcessor() {
+
+          @Override
+          void doSomethingUseful(Set<String> itemset) {
+            if (Sets.intersection(keywords, itemset).isEmpty()) {
+              return;
+            }
+
+            for (Set<String> selected : selSet) {
+              if (Sets.intersection(selected, itemset).equals(itemset)) {
+                return;
+              }
+            }
+            
+            diffFmt.format("%s\n", itemset.toString());
+            LOG.info("{}", itemset);
+          }
+
+        });
+
+      } finally {
+        diffClose.close();
+      }
+    }
+  }
+}
