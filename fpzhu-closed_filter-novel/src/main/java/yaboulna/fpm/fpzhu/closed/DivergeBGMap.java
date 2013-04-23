@@ -1280,9 +1280,17 @@ public class DivergeBGMap {
 
           final File trendingFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_",
               "trending_" + options + "_"));
+          
+          final File notTrendingFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_",
+              "notTrending_" + options + "_"));
 
-          Formatter trendingFmt = novelClose.register(new Formatter(trendingFile, Charsets.UTF_8.name()));
+          Formatter trendingFmt = null;
 
+          Formatter notTrendingFmt = null;
+          if(trending){
+            trendingFmt= novelClose.register(new Formatter(trendingFile, Charsets.UTF_8.name()));
+            notTrendingFmt = novelClose.register(new Formatter(notTrendingFile, Charsets.UTF_8.name()));
+          }
           
           for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
               .entrySet()) {
@@ -1301,7 +1309,9 @@ public class DivergeBGMap {
 
               double fgProb = unionDocId.size() * 1.0 / fgNumTweets;
               if (fgProb > historyAvg2StdDev) {
-                trendingFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%s\n", fgProb, unionDocId);
+                trendingFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); //,unionDocId);
+              }  else {
+                notTrendingFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); //unionDocId);
               }
               
               hs.addValue(fgProb);
