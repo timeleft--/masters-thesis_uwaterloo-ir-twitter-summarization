@@ -2,6 +2,7 @@ package yaboulna.fpm;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Formatter;
@@ -13,6 +14,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.slf4j.Logger;
 
+import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
@@ -23,7 +26,10 @@ import com.google.common.io.LineProcessor;
 public class Diff {
   private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(Diff.class);
 
-  static abstract class AbstractLineProcessor implements LineProcessor<Void> {
+  static abstract class AbstractLineProcessor implements LineProcessor<Integer> {
+    
+    Integer retval = 0;
+    
     Pattern tabSplitPattern = Pattern.compile("\\t");
 
     Pattern commaSplitPattern = Pattern.compile("\\,");
@@ -51,14 +57,14 @@ public class Diff {
       return true;
     }
 
-    public Void getResult() {
-      return null;
+    public Integer getResult() {
+      return retval;
     }
 
     abstract void doSomethingUseful(Set<String> itemset);
   }
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException {
 
     File dataDir = new File(args[0]);
     String selPfx = args[1];
@@ -90,6 +96,7 @@ public class Diff {
       try {
         File diffFile = new File(selF.getParentFile(), selF.getName().replaceFirst(selPfx,
             "diff_" + Joiner.on("-").join(keywords) + "_" + origPfx + "-" + selPfx));
+        final PerfMonKeyValueStore perfmonKV = diffClose.register(new PerfMonKeyValueStore(Diff.class.getName(), diffFile.getAbsolutePath()));
         final Formatter diffFmt = diffClose.register(new Formatter(diffFile));
 
         Files.readLines(selF, Charsets.UTF_8, new AbstractLineProcessor() {
@@ -102,7 +109,7 @@ public class Diff {
 
         });
 
-        Files.readLines(origFile, Charsets.UTF_8, new AbstractLineProcessor() {
+        int leftOutCount = Files.readLines(origFile, Charsets.UTF_8, new AbstractLineProcessor() {
 
           @Override
           void doSomethingUseful(Set<String> itemset) {
@@ -116,12 +123,14 @@ public class Diff {
               }
             }
 
+            ++retval;
             diffFmt.format("%s\n", itemset.toString());
             LOG.info("{}", itemset);
           }
 
         });
 
+        perfmonKV.storeKeyValue("LeftOutCount", leftOutCount);
       } finally {
         diffClose.close();
       }
