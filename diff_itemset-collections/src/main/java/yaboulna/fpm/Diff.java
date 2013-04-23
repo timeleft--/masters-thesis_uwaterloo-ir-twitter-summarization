@@ -2,12 +2,10 @@ package yaboulna.fpm;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -16,7 +14,7 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.slf4j.Logger;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.Maps;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
@@ -43,7 +41,7 @@ public class Diff {
           splitPatterns[f] = commaSplitPattern;
         }
       }
-      
+
       fields[0] = fields[0].replaceAll("\\([0-9]+\\)", "");
 
       Set<String> itemset = Sets.newHashSet(splitPatterns[0].split(fields[0]));
@@ -90,9 +88,10 @@ public class Diff {
 
       Closer diffClose = Closer.create();
       try {
-        File diffFile = new File(selF.getParentFile(), selF.getName().replaceFirst(selPfx, "diff_" + origPfx + "-" + selPfx));
+        File diffFile = new File(selF.getParentFile(), selF.getName().replaceFirst(selPfx,
+            "diff_" + Joiner.on("-").join(keywords) + "_" + origPfx + "-" + selPfx));
         final Formatter diffFmt = diffClose.register(new Formatter(diffFile));
-        
+
         Files.readLines(selF, Charsets.UTF_8, new AbstractLineProcessor() {
 
           void doSomethingUseful(Set<String> itemset) {
@@ -116,7 +115,7 @@ public class Diff {
                 return;
               }
             }
-            
+
             diffFmt.format("%s\n", itemset.toString());
             LOG.info("{}", itemset);
           }
