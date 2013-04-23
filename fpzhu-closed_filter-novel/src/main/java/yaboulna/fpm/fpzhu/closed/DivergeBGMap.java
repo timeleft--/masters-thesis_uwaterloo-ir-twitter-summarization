@@ -1501,14 +1501,16 @@ public class DivergeBGMap {
           perfMonKV.storeKeyValue("KLD+Itemsets", positiveKLDivergence.size());
           perfMonKV.storeKeyValue("HighConfidenceIS", confidentItemsets.size());
           perfMonKV.storeKeyValue("StrongClosedIS", growingAlliances.keySet().size());
-          
+        }
           positiveKLDivergence.clear();
           confidentItemsets.clear();
           System.gc();
           
+        if(perfMon)
           perfMonKV.storeKeyValue("MemoryMBUsed", Runtime.getRuntime().totalMemory() / (1<<20));
-          LOG.info("MemoryMBUsed: {}", Runtime.getRuntime().totalMemory() / (1<<20));
-        }
+          
+        LOG.info("MemoryMBUsed: {}", Runtime.getRuntime().totalMemory() / (1<<20));
+        
         
 
       }
