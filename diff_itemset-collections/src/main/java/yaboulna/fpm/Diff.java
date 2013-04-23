@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.slf4j.Logger;
+import org.apache.commons.io.filefilter.IOFileFilter;
 
 import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 
@@ -26,6 +26,26 @@ import com.google.common.io.LineProcessor;
 public class Diff {
 //  private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(Diff.class);
 
+  static class MyAffixFileFilter implements IOFileFilter{
+
+  final String afx;
+  final boolean prefix;
+  
+  public MyAffixFileFilter(String afx, boolean isPrefix) {
+    super();
+    this.afx = afx;
+    this.prefix = isPrefix;
+  }
+
+  public boolean accept(File file) {
+    return accept(file.getParentFile(), file.getName());
+  }
+
+  public boolean accept(File dir, String name) {
+    return (prefix? name.startsWith(afx) : name.endsWith(afx));
+  }
+    
+  }
   static abstract class AbstractLineProcessor implements LineProcessor<Integer> {
     
     Integer retval = 0;
@@ -73,9 +93,9 @@ public class Diff {
     final Set<String> keywords = Sets.newHashSet(Arrays.copyOfRange(args, 3, args.length));
 
     List<File> selFiles = (List<File>) FileUtils.listFiles(dataDir,
-        FileFilterUtils.and(FileFilterUtils.prefixFileFilter(selPfx),
-            FileFilterUtils.notFileFilter(FileFilterUtils.prefixFileFilter("diff")),
-            FileFilterUtils.notFileFilter(FileFilterUtils.suffixFileFilter("log"))),
+        FileFilterUtils.and(new MyAffixFileFilter(selPfx, true), //FileFilterUtils.prefixFileFilter(selPfx),
+            FileFilterUtils.notFileFilter(new MyAffixFileFilter("diff", false)), // FileFilterUtils.prefixFileFilter("diff")),
+            FileFilterUtils.notFileFilter(new MyAffixFileFilter(".log", false))), //FileFilterUtils.suffixFileFilter("log"))),
         FileFilterUtils.trueFileFilter());
     Collections.sort(selFiles);
 
