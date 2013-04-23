@@ -159,7 +159,7 @@ public class DivergeBGMap {
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
 
-//  private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Overlap similarity
+// private static final double DOCID_SIMILARITY_GOOD_THRESHOLD = 0.75; // Overlap similarity
 
   private static final double KLDIVERGENCE_MIN = 0; // this is multiplied by frequency not prob
 
@@ -177,6 +177,7 @@ public class DivergeBGMap {
 
   private static final boolean ENFORCE_HIGHER_SUPPORT = false;
   private static final int ENFORCED_SUPPORT = 33;
+  private static final int HISTORY_LEN_IN_SECS = 7 * 24 * 3600;
 
   static boolean unLimitedBufferSize = false;
   static boolean stopMatchingParentFSimLow = false;
@@ -191,6 +192,7 @@ public class DivergeBGMap {
   static boolean honorTemporalSimilarity = false;
   static int temporalSimilarityThreshold = 60; // seconds
   static int absMaxDiff = 1000; // TODO arg
+  static boolean trending = false;
 
   /**
    * @param args
@@ -210,12 +212,12 @@ public class DivergeBGMap {
     }
 
     final double confThreshold;
-    if(args.length > 2){
+    if (args.length > 2) {
       confThreshold = Double.parseDouble(args[2]);
     } else {
       confThreshold = CONFIDENCE_DEFAULT_THRESHOLD;
     }
-    
+
     if (args.length > 3) {
       unLimitedBufferSize = args[3].contains("ULBuff");
       stopMatchingParentFSimLow = args[3].contains("SimLow");
@@ -228,6 +230,7 @@ public class DivergeBGMap {
       fallBackToItemsKLD = args[3].contains("ITKld");
       cntUnMaximal = !args[3].contains("MaxOnly");
       honorTemporalSimilarity = args[3].contains("Temporal");
+      trending = args[3].contains("Trending");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -241,22 +244,23 @@ public class DivergeBGMap {
     LOG.info("fallBackToItemsKLD: " + fallBackToItemsKLD);
     LOG.info("cntUnMaximal: " + cntUnMaximal);
     LOG.info("honorTemporalSimilarity: " + honorTemporalSimilarity);
-    
+    LOG.info("trending: " + trending);
+
     String thresholds = "";
-    thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD="+ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
-    thresholds += " ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD="+ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD;
-    thresholds += " ITEMSET_SIMILARITY_PROMISING_THRESHOLD="+ITEMSET_SIMILARITY_PROMISING_THRESHOLD;
-    thresholds += " ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH="+ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH;
-    thresholds += " ITEMSET_SIMILARITY_BAD_THRESHOLD="+ITEMSET_SIMILARITY_BAD_THRESHOLD;
-//    thresholds += " DOCID_SIMILARITY_GOOD_THRESHOLD="+DOCID_SIMILARITY_GOOD_THRESHOLD;
-    thresholds += " CONFIDENCE_HIGH_THRESHOLD="+confThreshold;
-    
+    thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
+    thresholds += " ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD;
+    thresholds += " ITEMSET_SIMILARITY_PROMISING_THRESHOLD=" + ITEMSET_SIMILARITY_PROMISING_THRESHOLD;
+    thresholds += " ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH=" + ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH;
+    thresholds += " ITEMSET_SIMILARITY_BAD_THRESHOLD=" + ITEMSET_SIMILARITY_BAD_THRESHOLD;
+// thresholds += " DOCID_SIMILARITY_GOOD_THRESHOLD="+DOCID_SIMILARITY_GOOD_THRESHOLD;
+    thresholds += " CONFIDENCE_HIGH_THRESHOLD=" + confThreshold;
+
     LOG.info("Thresholds: " + thresholds);
 
-    int histLenSecs = 4 * 7 * 24 * 3600;
-//    if (args.length > 3) {
-//      histLenSecs = Integer.parseInt(args[3]);
-//    }
+    int bgLenSecs = 4 * 7 * 24 * 3600;
+    if (args.length > 4) {
+      bgLenSecs = Integer.parseInt(args[4]);
+    }
 
 // String novelPfx = "novel_";
 // // if (args.length > 3) {
@@ -273,7 +277,7 @@ public class DivergeBGMap {
     }
 
     options += "_conf" + confThreshold;
-    
+
     if (filterLowKLD) {
       options += "_KLD" + KLDIVERGENCE_MIN;
     }
@@ -283,13 +287,13 @@ public class DivergeBGMap {
     if (!unLimitedBufferSize) {
       options += "_Buff" + MAX_LOOKBACK_FOR_PARENT;
     }
-    
+
     args = Arrays.copyOf(args, 4);
-    
+
     args[2] = options;
 
     args[3] = thresholds;
-    
+
     // FIXMED: if there are any .out files, this will cause an error now... skip them
     IOFileFilter fpNotOutFilter = new IOFileFilter() {
 
@@ -310,6 +314,12 @@ public class DivergeBGMap {
     final SummaryStatistics unigramCountStats = new SummaryStatistics();
     final Map<Set<String>, LinkedList<Long>> fgIdsMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
     final Map<Set<String>, Double> positiveKLDivergence = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
+
+    final Map<Set<String>, SummaryStatistics> historyStats = (trending ? Maps
+        .<Set<String>, SummaryStatistics>newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS) : null);
+    final Map<Set<String>, MutableInt> historyTtl = (trending
+        ? Maps.<Set<String>, MutableInt>newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS)
+        : null);
 
     final List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, fpNotOutFilter,
         FileFilterUtils.trueFileFilter());
@@ -348,13 +358,14 @@ public class DivergeBGMap {
       PerfMonKeyValueStore perfMon = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
           Arrays.toString(args)));
       for (File fgF : fgFiles) {
-        final File novelFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", "novel_" + options + "_")); 
+        final File novelFile = new File(fgF.getParentFile(), fgF.getName()
+            .replaceFirst("fp_", "novel_" + options + "_"));
         if (novelFile.exists()) {
           // TODO: skip output that already exists
         }
 
         final File selFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", "sel_" + options + "_"));
-        
+
         org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
         if (PERFORMANCE_CALC_MODE_LESS_LOGGING) {
           rootLogger.setLevel(Level.INFO);
@@ -370,7 +381,7 @@ public class DivergeBGMap {
           }
         }
         long windowStartUx = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 2));
-        long idealBgStartUx = windowStartUx - histLenSecs;
+        long idealBgStartUx = windowStartUx - bgLenSecs;
 
         // Load the appropriate background file
         for (int b = 0; b < bgFiles.size(); ++b) {
@@ -412,6 +423,8 @@ public class DivergeBGMap {
         if (!idfFromBG) {
           bgIDFMap.clear();
         }
+
+        final long historyLenInEpochSteps = Math.round(HISTORY_LEN_IN_SECS / (hrsPerEpoch * 3600.0));
 
         LOG.info("Loading foreground freqs from {}", fgF);
         int itemsetsOfShortAverageLen = Files.readLines(fgF, Charsets.UTF_8,
@@ -770,10 +783,10 @@ public class DivergeBGMap {
                           :
                           Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                               Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                  Math.floor((1 - confThreshold) * //DOCID_SIMILARITY_GOOD_THRESHOLD) *
+                                  Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD) *
                                       Math.max(candDocIds.size(), iDocIds.size())))));
 
-                  if(maxDiffCnt == absMaxDiff * hrsPerEpoch){
+                  if (maxDiffCnt == absMaxDiff * hrsPerEpoch) {
                     ++absMaxDiffEnforced;
                   }
                   if (!ancestorItemsets.contains(cand)) {
@@ -931,14 +944,15 @@ public class DivergeBGMap {
 
                           for (Set<String> exitingAllianceHead : candidateTransHeads) {
 
-                            Collection<Long> existingDocIds = (ALLIANCES_MERGE_WITH_HEAD ? fgIdsMap.get(exitingAllianceHead) :
-                              growingAlliances.get(exitingAllianceHead).getValue());
+                            Collection<Long> existingDocIds = (ALLIANCES_MERGE_WITH_HEAD ? fgIdsMap
+                                .get(exitingAllianceHead) :
+                                growingAlliances.get(exitingAllianceHead).getValue());
                             if (LOG.isTraceEnabled())
                               LOG.trace(itemset.toString() + iDocIds.size()
                                   + " offered one more merge option {} through candidate {}",
                                   (ALLIANCES_MERGE_WITH_HEAD ? exitingAllianceHead.toString() :
-                              growingAlliances.get(exitingAllianceHead).getKey().toString())
-                                  + existingDocIds.size(),
+                                      growingAlliances.get(exitingAllianceHead).getKey().toString())
+                                      + existingDocIds.size(),
                                   cand + "diff" + differentDocs);
 
                             int existingHeadNonOverlap = Integer.MAX_VALUE;
@@ -958,9 +972,9 @@ public class DivergeBGMap {
 // to
 // allow a merger
                                   Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                      Math.floor((1 -  confThreshold) * //DOCID_SIMILARITY_GOOD_THRESHOLD) *
+                                      Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD) *
                                           Math.max(existingDocIds.size(), iDocIds.size()))));
-                              if(existingMaxDiffCnt == absMaxDiff * hrsPerEpoch){
+                              if (existingMaxDiffCnt == absMaxDiff * hrsPerEpoch) {
                                 ++absMaxDiffEnforced;
                               }
 
@@ -1063,7 +1077,7 @@ public class DivergeBGMap {
                             :
                             Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                 Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                    Math.floor((1 -  confThreshold) * //DOCID_SIMILARITY_GOOD_THRESHOLD)
+                                    Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
                                         Math.max(fgIdsMap.get(theOnlyOneIllMerge).size(), iDocIds.size()))))),
                         theOnlyOnesDifference,
                         theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
@@ -1138,7 +1152,7 @@ public class DivergeBGMap {
                             :
                             Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                 Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                    Math.floor((1 -  confThreshold) * //DOCID_SIMILARITY_GOOD_THRESHOLD)
+                                    Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
                                         Math.max(fgIdsMap.get(bestUnofficialCandidate).size(), iDocIds.size()))))),
                         bestUnofficialCandidateDiff,
                         bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size());
@@ -1184,13 +1198,13 @@ public class DivergeBGMap {
 // unalliedItemsets.remove(parentItemset);
                     for (Set<String> pis : ancestorItemsets) {
 // unalliedItemsets.remove(HashMultiset.create(pis));
-//                      if (unalliedItemsets.containsKey(pis)) {
-//                        unMaximalIS.increment();
-//                      }
-                      
+// if (unalliedItemsets.containsKey(pis)) {
+// unMaximalIS.increment();
+// }
+
                       Set<String> origParent = pis;
                       while (pis != null) {
-      // unalliedItemsets.remove(parentItemset);
+                        // unalliedItemsets.remove(parentItemset);
                         if (unalliedItemsets.containsKey(pis)) {
                           unMaximalIS.increment();
                         }
@@ -1261,20 +1275,47 @@ public class DivergeBGMap {
                 (fgIdsMap.containsKey(itemset) ? fgIdsMap.get(itemset) : ""));
           }
 
-          
           Formatter selectionFormat = novelClose.register(new Formatter(selFile, Charsets.UTF_8.name()));
+
+          final File trendingFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_",
+              "trending_" + options + "_"));
+
+          Formatter trendingFmt = novelClose.register(new Formatter(trendingFile, Charsets.UTF_8.name()));
 
           for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
               .entrySet()) {
             Multiset<String> mergedItemset = e.getValue().getKey();
             Set<Long> unionDocId = e.getValue().getValue();
+
+            if (trending) {
+
+              SummaryStatistics hs = historyStats.get(mergedItemset.elementSet());
+              double historyAvg2StdDev = 0;
+              if (hs != null) {
+                historyAvg2StdDev = hs.getMean() + 2 * hs.getStandardDeviation();
+              } else {
+                hs = new SummaryStatistics();
+              }
+
+              double fgProb = unionDocId.size() * 1.0 / fgNumTweets;
+              if (fgProb > historyAvg2StdDev) {
+                trendingFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%s\n", fgProb, unionDocId);
+              }
+
+              hs.addValue(fgProb);
+
+              historyStats.put(mergedItemset.elementSet(), hs);
+              // TODO adjust for half epoch steps
+              historyTtl.put(mergedItemset.elementSet(), new MutableInt(historyLenInEpochSteps + 1));
+            }
+
             Set<String> parentItemset = itemsetParentMap.get(e.getKey());
             double confidence = unionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
             if (confidence < confThreshold) {
+              ++alliedLowConf;
               if (!RESEARCH_MODE) {
                 continue;
               }
-              ++alliedLowConf;
             } else {
               // The parent will be present in the final output within this itemset, so even if it
               // were pending alliance to get printed it can be removed now
@@ -1348,11 +1389,27 @@ public class DivergeBGMap {
             selectionFormat.out().append("\n");
           }
 
-          final File hcFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_", "highConf_" + options + "_"));
-          
+          if (trending) {
+            List<Set<String>> toDie = Lists.newLinkedList();
+            for (java.util.Map.Entry<Set<String>, MutableInt> e : historyTtl.entrySet()) {
+              if (e.getValue().intValue() == 1) {
+                toDie.add(e.getKey());
+              } else {
+                e.getValue().decrement();
+              }
+            }
+            for (Set<String> d : toDie) {
+              historyTtl.remove(d);
+              historyStats.remove(d);
+            }
+          }
+
+          final File hcFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_",
+              "highConf_" + options + "_"));
+
           Formatter hcFormat = novelClose.register(new Formatter(hcFile, Charsets.UTF_8.name()));
 
-          for(java.util.Map.Entry<Set<String>,Double> hcEntry: confidentItemsets.entrySet()){
+          for (java.util.Map.Entry<Set<String>, Double> hcEntry : confidentItemsets.entrySet()) {
             Set<String> itemset = hcEntry.getKey();
             Double conf = hcEntry.getValue();
             hcFormat.format(itemset + "\t%.15f\t%s\n", conf,
@@ -1396,7 +1453,6 @@ public class DivergeBGMap {
             fgCountMap.size() - (stronglyClosedItemsetsFilter.numLen1Itemsets + itemsetsOfShortAverageLen),
             fgCountMap.size());
 
-        
         perfMon.storeKeyValue("Timestamp", System.currentTimeMillis());
         perfMon.storeKeyValue("CPUMillisFilter", filteringCPUTime / 1e6);
         perfMon.storeKeyValue("TotalItemsets", fgCountMap.size() + itemsetsOfShortAverageLen);
