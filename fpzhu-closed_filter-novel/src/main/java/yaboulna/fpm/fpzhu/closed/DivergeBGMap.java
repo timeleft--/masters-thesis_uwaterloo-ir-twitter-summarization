@@ -193,6 +193,7 @@ public class DivergeBGMap {
   static int temporalSimilarityThreshold = 60; // seconds
   static int absMaxDiff = 1000; // TODO arg
   static boolean trending = false;
+  static boolean perfMon = false;
 
   /**
    * @param args
@@ -231,6 +232,7 @@ public class DivergeBGMap {
       cntUnMaximal = !args[3].contains("MaxOnly");
       honorTemporalSimilarity = args[3].contains("Temporal");
       trending = args[3].contains("Trending");
+      perfMon = args[3].contains("PerfMon");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -245,6 +247,7 @@ public class DivergeBGMap {
     LOG.info("cntUnMaximal: " + cntUnMaximal);
     LOG.info("honorTemporalSimilarity: " + honorTemporalSimilarity);
     LOG.info("trending: " + trending);
+    LOG.info("perfMon: " + perfMon);
 
     String thresholds = "";
     thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
@@ -315,13 +318,13 @@ public class DivergeBGMap {
     final Map<Set<String>, LinkedList<Long>> fgIdsMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
     final Map<Set<String>, Double> positiveKLDivergence = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
 
-    Map<Set<String>, SummaryStatistics> historyStats = null; 
-    Map<Set<String>, MutableInt> historyTtl = null; 
-    if(trending){
+    Map<Set<String>, SummaryStatistics> historyStats = null;
+    Map<Set<String>, MutableInt> historyTtl = null;
+    if (trending) {
       historyStats = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
       historyTtl = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
     }
-    
+
     final List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, fpNotOutFilter,
         FileFilterUtils.trueFileFilter());
     Collections.sort(bgFiles, NameFileComparator.NAME_COMPARATOR);
@@ -356,7 +359,7 @@ public class DivergeBGMap {
     Closer perfMonCloser = Closer.create();
 
     try {
-      PerfMonKeyValueStore perfMon = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
+      PerfMonKeyValueStore perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
           Arrays.toString(args)));
       for (File fgF : fgFiles) {
         final File novelFile = new File(fgF.getParentFile(), fgF.getName()
@@ -425,8 +428,8 @@ public class DivergeBGMap {
           bgIDFMap.clear();
         }
 
-        final long historyLenInEpochSteps = Math.round(HISTORY_LEN_IN_SECS / (hrsPerEpoch * 3600.0)); 
-        
+        final long historyLenInEpochSteps = Math.round(HISTORY_LEN_IN_SECS / (hrsPerEpoch * 3600.0));
+
         LOG.info("Loading foreground freqs from {}", fgF);
         int itemsetsOfShortAverageLen = Files.readLines(fgF, Charsets.UTF_8,
             new ItemsetTabCountProcessor(fgCountMap, fgIdsMap,
@@ -1280,25 +1283,25 @@ public class DivergeBGMap {
 
           final File trendingFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_",
               "trending_" + options + "_"));
-          
+
           final File notTrendingFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_",
               "notTrending_" + options + "_"));
 
           Formatter trendingFmt = null;
 
           Formatter notTrendingFmt = null;
-          if(trending){
-            trendingFmt= novelClose.register(new Formatter(trendingFile, Charsets.UTF_8.name()));
+          if (trending) {
+            trendingFmt = novelClose.register(new Formatter(trendingFile, Charsets.UTF_8.name()));
             notTrendingFmt = novelClose.register(new Formatter(notTrendingFile, Charsets.UTF_8.name()));
           }
-          
+
           for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
               .entrySet()) {
             Multiset<String> mergedItemset = e.getValue().getKey();
             Set<Long> unionDocId = e.getValue().getValue();
 
             if (trending) {
-              
+
               SummaryStatistics hs = historyStats.get(mergedItemset.elementSet());
               double historyAvg2StdDev = 0;
               if (hs != null) {
@@ -1309,15 +1312,15 @@ public class DivergeBGMap {
 
               double fgProb = unionDocId.size() * 1.0 / fgNumTweets;
               if (fgProb > historyAvg2StdDev) {
-                trendingFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); //,unionDocId);
-              }  else {
-                notTrendingFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); //unionDocId);
+                trendingFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); // ,unionDocId);
+              } else {
+                notTrendingFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); // unionDocId);
               }
-              
+
               hs.addValue(fgProb);
-              
+
               historyStats.put(mergedItemset.elementSet(), hs);
-              //TODO adjust for half epoch steps
+              // TODO adjust for half epoch steps
               historyTtl.put(mergedItemset.elementSet(), new MutableInt(historyLenInEpochSteps + 1));
             }
 
@@ -1401,22 +1404,21 @@ public class DivergeBGMap {
             selectionFormat.out().append("\n");
           }
 
-          
           if (trending) {
             List<Set<String>> toDie = Lists.newLinkedList();
-            for(java.util.Map.Entry<Set<String>, MutableInt> e: historyTtl.entrySet()){
-              if(e.getValue().intValue() == 1){
+            for (java.util.Map.Entry<Set<String>, MutableInt> e : historyTtl.entrySet()) {
+              if (e.getValue().intValue() == 1) {
                 toDie.add(e.getKey());
               } else {
                 e.getValue().decrement();
               }
             }
-            for(Set<String> d: toDie){
+            for (Set<String> d : toDie) {
               historyTtl.remove(d);
               historyStats.remove(d);
             }
           }
-          
+
           final File hcFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_",
               "highConf_" + options + "_"));
 
@@ -1466,22 +1468,24 @@ public class DivergeBGMap {
             fgCountMap.size() - (stronglyClosedItemsetsFilter.numLen1Itemsets + itemsetsOfShortAverageLen),
             fgCountMap.size());
 
-        perfMon.storeKeyValue("Timestamp", System.currentTimeMillis());
-        perfMon.storeKeyValue("CPUMillisFilter", filteringCPUTime / 1e6);
-        perfMon.storeKeyValue("TotalItemsets", fgCountMap.size() + itemsetsOfShortAverageLen);
-        perfMon.storeKeyValue("Avg-2CharsItemsets", itemsetsOfShortAverageLen);
-        perfMon.storeKeyValue("EnoughCharsItemsets", fgCountMap.size());
-        perfMon.storeKeyValue("Len1Itemsets", stronglyClosedItemsetsFilter.numLen1Itemsets);
-        perfMon.storeKeyValue("Len2+Itemsets", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
-        perfMon.storeKeyValue("UnalliedIS", unalliedItemsets.size());
-        perfMon.storeKeyValue("UnalliedUnMaximal", unMaximalIS.intValue());
-        perfMon.storeKeyValue("AlliedLowConf", alliedLowConf);
-        perfMon.storeKeyValue("OverConfident", overConfident);
-        perfMon.storeKeyValue("absMaxDiffEnforced", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
-        perfMon.storeKeyValue("KLD+Itemsets", positiveKLDivergence.size());
-        perfMon.storeKeyValue("HighConfidenceIS", confidentItemsets.size());
-        perfMon.storeKeyValue("StrongClosedIS", growingAlliances.keySet().size());
-
+        if (perfMon) {
+          perfMonKV.storeKeyValue("Timestamp", System.currentTimeMillis());
+          perfMonKV.storeKeyValue("CPUMillisFilter", filteringCPUTime / 1e6);
+          perfMonKV.storeKeyValue("TotalItemsets", fgCountMap.size() + itemsetsOfShortAverageLen);
+          perfMonKV.storeKeyValue("Avg-2CharsItemsets", itemsetsOfShortAverageLen);
+          perfMonKV.storeKeyValue("EnoughCharsItemsets", fgCountMap.size());
+          perfMonKV.storeKeyValue("Len1Itemsets", stronglyClosedItemsetsFilter.numLen1Itemsets);
+          perfMonKV.storeKeyValue("Len2+Itemsets", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
+          perfMonKV.storeKeyValue("UnalliedIS", unalliedItemsets.size());
+          perfMonKV.storeKeyValue("UnalliedUnMaximal", unMaximalIS.intValue());
+          perfMonKV.storeKeyValue("AlliedLowConf", alliedLowConf);
+          perfMonKV.storeKeyValue("OverConfident", overConfident);
+          perfMonKV.storeKeyValue("absMaxDiffEnforced", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
+          perfMonKV.storeKeyValue("KLD+Itemsets", positiveKLDivergence.size());
+          perfMonKV.storeKeyValue("HighConfidenceIS", confidentItemsets.size());
+          perfMonKV.storeKeyValue("StrongClosedIS", growingAlliances.keySet().size());
+        }
+        
         LOG.info("CPUMillisFilter: {}", filteringCPUTime / 1e6);
         LOG.info("TotalItemsets: {}", fgCountMap.size() + itemsetsOfShortAverageLen);
         LOG.info("Avg-2CharsItemsets: {}", itemsetsOfShortAverageLen);
