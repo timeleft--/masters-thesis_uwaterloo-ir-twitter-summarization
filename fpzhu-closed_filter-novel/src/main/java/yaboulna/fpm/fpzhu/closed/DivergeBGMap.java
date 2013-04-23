@@ -361,6 +361,7 @@ public class DivergeBGMap {
     try {
       PerfMonKeyValueStore perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
           Arrays.toString(args)));
+      perfMonKV.batchSizeToWrite = 15;
       for (File fgF : fgFiles) {
         final File novelFile = new File(fgF.getParentFile(), fgF.getName()
             .replaceFirst("fp_", "novel_" + options + "_"));

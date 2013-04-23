@@ -185,6 +185,7 @@ public class HgramsWindow {
     try {
       PerfMonKeyValueStore perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(HgramsWindow.class.getName(),
           Arrays.toString(args)));
+      perfMonKV.batchSizeToWrite = 8;
       for (; windowStartUx < windowEndUx; windowStartUx += stepSec) {
         LOG.info("Strting Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
         Path epochOut = new Path(outRoot, "fp_" + epochLen + "_" + windowStartUx);
@@ -440,11 +441,14 @@ public class HgramsWindow {
             LOG.info("Translating the output file {} into {}", epochOutLocal.getAbsolutePath(),
                 epochOutText.getAbsolutePath());
 
+            int lnNum = 0;
+            int itemsetCount = 0;
+            
             BufferedReader decodeReader = new BufferedReader(new FileReader(epochOutLocal));
             FileWriterWithEncoding decodeWriter = new FileWriterWithEncoding(epochOutText,
                 Charset.forName("UTF-8"));
             try {
-              int lnNum = 0;
+              
               String ln;
               BiMap<Integer, String> decodeMap = tokenIdMapping.inverse();
               List<String> distinctSortedTokens = Lists.newLinkedList();
@@ -546,7 +550,7 @@ public class HgramsWindow {
                 decodeWriter.write((distinctSortedTokens.size() == 0 ? "NUMTWEETS" :
                     commaJoiner.join(distinctSortedTokens)) + "\t"
                     + codes[c].substring(0, codes[c].length() - 1).substring(1));
-
+                ++itemsetCount;
                 pendingEndLn = true; // distinctSortedTokens.size() != 1;
 // will be written only after making sure there aren't transaction ids for this itemset: + "\n");
 
@@ -569,6 +573,7 @@ public class HgramsWindow {
             perfMonKV.storeKeyValue("DistinctTerms", tokenIdMapping.size());
             perfMonKV.storeKeyValue("Support", support);
             perfMonKV.storeKeyValue("WallMillisMining", cmdWallTime / 1e6);
+            perfMonKV.storeKeyValue("ItemsetsCount", itemsetCount);
 //            perfMonKV.storeKeyValue("CPUNanosMining", cmdCPUTime);
             
 // perfMonKV.storeKeyValue("CPUSecsMining", "" + (cmdCPUTime / 1e9));

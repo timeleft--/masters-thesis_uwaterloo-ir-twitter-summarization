@@ -22,7 +22,7 @@ public class PerfMonKeyValueStore implements Closeable {
   private final Connection conn;
   private final PreparedStatement insertStmt;
   private long batchCounter = 0;
-  public int batchSizeToWrite = 105;
+  public int batchSizeToWrite = 10;
 
   public PerfMonKeyValueStore(String pMonitoredClassName, String pArgs) throws ClassNotFoundException, SQLException {
     monitoredClassName = pMonitoredClassName;
