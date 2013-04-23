@@ -193,7 +193,7 @@ public class DivergeBGMap {
   static int temporalSimilarityThreshold = 60; // seconds
   static int absMaxDiff = 1000; // TODO arg
   static boolean trending = false;
-  static boolean perfMon = false;
+  static boolean perfMon = true;
 
   /**
    * @param args
@@ -232,7 +232,7 @@ public class DivergeBGMap {
       cntUnMaximal = !args[3].contains("MaxOnly");
       honorTemporalSimilarity = args[3].contains("Temporal");
       trending = args[3].contains("Trending");
-      perfMon = args[3].contains("PerfMon");
+      perfMon = !args[3].contains("NoPerfMon");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
