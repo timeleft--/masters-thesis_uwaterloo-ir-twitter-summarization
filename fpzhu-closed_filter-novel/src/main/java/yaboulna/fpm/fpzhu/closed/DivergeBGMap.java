@@ -315,12 +315,13 @@ public class DivergeBGMap {
     final Map<Set<String>, LinkedList<Long>> fgIdsMap = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
     final Map<Set<String>, Double> positiveKLDivergence = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
 
-    final Map<Set<String>, SummaryStatistics> historyStats = (trending ? Maps
-        .<Set<String>, SummaryStatistics>newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS) : null);
-    final Map<Set<String>, MutableInt> historyTtl = (trending
-        ? Maps.<Set<String>, MutableInt>newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS)
-        : null);
-
+    Map<Set<String>, SummaryStatistics> historyStats = null; 
+    Map<Set<String>, MutableInt> historyTtl = null; 
+    if(trending){
+      historyStats = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
+      historyTtl = Maps.newHashMapWithExpectedSize(FG_MAX_NUM_ITEMSETS);
+    }
+    
     final List<File> bgFiles = (List<File>) FileUtils.listFiles(bgDir, fpNotOutFilter,
         FileFilterUtils.trueFileFilter());
     Collections.sort(bgFiles, NameFileComparator.NAME_COMPARATOR);
@@ -424,8 +425,8 @@ public class DivergeBGMap {
           bgIDFMap.clear();
         }
 
-        final long historyLenInEpochSteps = Math.round(HISTORY_LEN_IN_SECS / (hrsPerEpoch * 3600.0));
-
+        final long historyLenInEpochSteps = Math.round(HISTORY_LEN_IN_SECS / (hrsPerEpoch * 3600.0)); 
+        
         LOG.info("Loading foreground freqs from {}", fgF);
         int itemsetsOfShortAverageLen = Files.readLines(fgF, Charsets.UTF_8,
             new ItemsetTabCountProcessor(fgCountMap, fgIdsMap,
@@ -1282,13 +1283,14 @@ public class DivergeBGMap {
 
           Formatter trendingFmt = novelClose.register(new Formatter(trendingFile, Charsets.UTF_8.name()));
 
+          
           for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
               .entrySet()) {
             Multiset<String> mergedItemset = e.getValue().getKey();
             Set<Long> unionDocId = e.getValue().getValue();
 
             if (trending) {
-
+              
               SummaryStatistics hs = historyStats.get(mergedItemset.elementSet());
               double historyAvg2StdDev = 0;
               if (hs != null) {
@@ -1301,11 +1303,11 @@ public class DivergeBGMap {
               if (fgProb > historyAvg2StdDev) {
                 trendingFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%s\n", fgProb, unionDocId);
               }
-
+              
               hs.addValue(fgProb);
-
+              
               historyStats.put(mergedItemset.elementSet(), hs);
-              // TODO adjust for half epoch steps
+              //TODO adjust for half epoch steps
               historyTtl.put(mergedItemset.elementSet(), new MutableInt(historyLenInEpochSteps + 1));
             }
 
@@ -1389,21 +1391,22 @@ public class DivergeBGMap {
             selectionFormat.out().append("\n");
           }
 
+          
           if (trending) {
             List<Set<String>> toDie = Lists.newLinkedList();
-            for (java.util.Map.Entry<Set<String>, MutableInt> e : historyTtl.entrySet()) {
-              if (e.getValue().intValue() == 1) {
+            for(java.util.Map.Entry<Set<String>, MutableInt> e: historyTtl.entrySet()){
+              if(e.getValue().intValue() == 1){
                 toDie.add(e.getKey());
               } else {
                 e.getValue().decrement();
               }
             }
-            for (Set<String> d : toDie) {
+            for(Set<String> d: toDie){
               historyTtl.remove(d);
               historyStats.remove(d);
             }
           }
-
+          
           final File hcFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_",
               "highConf_" + options + "_"));
 
