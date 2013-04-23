@@ -1507,6 +1507,7 @@ public class DivergeBGMap {
           System.gc();
           
           perfMonKV.storeKeyValue("MemoryMBUsed", Runtime.getRuntime().totalMemory() / (1<<20));
+          LOG.info("MemoryMBUsed: {}", Runtime.getRuntime().totalMemory() / (1<<20));
         }
         
 
