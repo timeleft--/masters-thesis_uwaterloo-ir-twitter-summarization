@@ -24,7 +24,7 @@ import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
 
 public class Diff {
-  private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(Diff.class);
+//  private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(Diff.class);
 
   static abstract class AbstractLineProcessor implements LineProcessor<Integer> {
     
@@ -88,7 +88,8 @@ public class Diff {
 
       File origFile = new File(selF.getParentFile(), selF.getName().replaceFirst(selPfx, origPfx));
       if (!origFile.exists()) {
-        LOG.debug("Orig file {} does not exist for selection file {}", origFile, selF);
+//        LOG.debug("Orig file {} does not exist for selection file {}", origFile, selF);
+        System.out.println("Orig file does not exist for selection file: " + selF);
         continue;
       }
 
@@ -96,6 +97,10 @@ public class Diff {
       try {
         File diffFile = new File(selF.getParentFile(), selF.getName().replaceFirst(selPfx,
             "diff_" + Joiner.on("-").join(keywords) + "_" + origPfx + "-" + selPfx));
+//        LOG.debug
+        
+        System.out.println(origFile + " - " + selF + " = " + diffFile);
+        
         final PerfMonKeyValueStore perfmonKV = diffClose.register(new PerfMonKeyValueStore(Diff.class.getName(), diffFile.getAbsolutePath()));
         final Formatter diffFmt = diffClose.register(new Formatter(diffFile));
 
@@ -125,7 +130,7 @@ public class Diff {
 
             ++retval;
             diffFmt.format("%s\n", itemset.toString());
-            LOG.info("{}", itemset);
+//            LOG.info("{}", itemset);
           }
 
         });
