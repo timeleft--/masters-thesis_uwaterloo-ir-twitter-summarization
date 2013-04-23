@@ -90,6 +90,9 @@ public class Diff {
     String selPfx = args[1];
     String origPfx = args[2];
 
+    File diffDir = new File(dataDir, "diff");
+    diffDir.mkdir();
+    
     final Set<String> keywords = Sets.newHashSet(Arrays.copyOfRange(args, 3, args.length));
 
     List<File> selFiles = (List<File>) FileUtils.listFiles(dataDir,
@@ -106,7 +109,7 @@ public class Diff {
 
       selSet.clear();
 
-      File origFile = new File(selF.getParentFile(), selF.getName().replaceFirst(selPfx, origPfx));
+      File origFile = new File(selF.getParentFile(), replaceFirst(selF.getName(), selPfx, origPfx));
       if (!origFile.exists()) {
 //        LOG.debug("Orig file {} does not exist for selection file {}", origFile, selF);
         System.out.println("Orig file does not exist for selection file: " + selF);
@@ -115,7 +118,7 @@ public class Diff {
 
       Closer diffClose = Closer.create();
       try {
-        File diffFile = new File(selF.getParentFile(), selF.getName().replaceFirst(selPfx,
+        File diffFile = new File(diffDir, replaceFirst(selF.getName(),selPfx,
             "diff_" + Joiner.on("-").join(keywords) + "_" + origPfx + "-" + selPfx));
 //        LOG.debug
         
@@ -160,5 +163,13 @@ public class Diff {
         diffClose.close();
       }
     }
+  }
+
+  private static String replaceFirst(String str, String replaced, String replacement) {
+    int ix = str.indexOf(replaced);
+    String retval = str.substring(0, ix);
+    retval += replacement;
+    retval += str.substring(ix + replaced.length());
+    return retval;
   }
 }
