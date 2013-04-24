@@ -119,7 +119,8 @@ public class Diff {
       Closer diffClose = Closer.create();
       try {
         File diffFile = new File(diffDir, replaceFirst(selF.getName(),selPfx,
-            "diff_" + Joiner.on("-").join(keywords) + "_" + origPfx + "-" + selPfx));
+            "diff_" + Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords)) 
+                + "_" + origPfx + "-" + selPfx));
 //        LOG.debug
         
         System.out.println(origFile + " - " + selF + " = " + diffFile);
@@ -130,7 +131,7 @@ public class Diff {
         Files.readLines(selF, Charsets.UTF_8, new AbstractLineProcessor() {
 
           void doSomethingUseful(Set<String> itemset) {
-            if (!Sets.intersection(keywords, itemset).isEmpty()) {
+            if (keywords.isEmpty() || !Sets.intersection(keywords, itemset).isEmpty()) {
               selSet.add(itemset); // , null);
             }
           }
@@ -141,7 +142,7 @@ public class Diff {
 
           @Override
           void doSomethingUseful(Set<String> itemset) {
-            if (Sets.intersection(keywords, itemset).isEmpty()) {
+            if (!keywords.isEmpty() && Sets.intersection(keywords, itemset).isEmpty()) {
               return;
             }
 
