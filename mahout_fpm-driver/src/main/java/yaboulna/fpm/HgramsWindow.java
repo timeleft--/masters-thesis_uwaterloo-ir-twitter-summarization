@@ -56,6 +56,8 @@ public class HgramsWindow {
   private static final int TOPIC_WORDS_PER_MINUTE = 100;
   private static final int FREQUENT_PATTERNS_PER_MINUTE = 1;
 
+  private static final boolean EXCLUDE_LENLESS2_ITEMSETS = true;
+
   private static boolean USE_RELIABLE_ALGO;
 
   /**
@@ -348,51 +350,51 @@ public class HgramsWindow {
 
             cmd += " " + tmpFile.getAbsolutePath()
                 + " " + support + " " + epochOutLocal;
-            
+
             LOG.info("Executing command: " + cmd);
 
-//            final String finalCmd = cmd;
+// final String finalCmd = cmd;
 //
-//            class CmdRunnable implements Runnable {
-//              Process proc;
-//              Exception error = null;
-//              @Override
-//              public void run() {
-//                Runtime rt = Runtime.getRuntime();
-//                try {
-//                  proc = rt.exec(finalCmd);
-//                  proc.waitFor();
-//                  while (true) {
-//                    // don't die
-//                    Thread.sleep(999999999);
-//                  }
-//                } catch (IOException e) {
-//                  error = e;
-//                } catch (InterruptedException e) {
-//                  // ok.. I'll die now
-//                  LOG.debug("Bye bye");
-//                }
-//              }
-//            };
-//            CmdRunnable cmdRunnable = new CmdRunnable();
-//            Thread cmdThread = new Thread(cmdRunnable);
-//            cmdThread.start();
+// class CmdRunnable implements Runnable {
+// Process proc;
+// Exception error = null;
+// @Override
+// public void run() {
+// Runtime rt = Runtime.getRuntime();
+// try {
+// proc = rt.exec(finalCmd);
+// proc.waitFor();
+// while (true) {
+// // don't die
+// Thread.sleep(999999999);
+// }
+// } catch (IOException e) {
+// error = e;
+// } catch (InterruptedException e) {
+// // ok.. I'll die now
+// LOG.debug("Bye bye");
+// }
+// }
+// };
+// CmdRunnable cmdRunnable = new CmdRunnable();
+// Thread cmdThread = new Thread(cmdRunnable);
+// cmdThread.start();
 //
-//            Process proc = cmdRunnable.proc;
-//            while (proc == null) {
-//              Thread.sleep(1000);
-//              proc = cmdRunnable.proc;
-//            }
-//            if (cmdRunnable.error != null) {
-//              throw cmdRunnable.error;
-//            }
-            
+// Process proc = cmdRunnable.proc;
+// while (proc == null) {
+// Thread.sleep(1000);
+// proc = cmdRunnable.proc;
+// }
+// if (cmdRunnable.error != null) {
+// throw cmdRunnable.error;
+// }
+
             Runtime rt = Runtime.getRuntime();
             long cmdWallTime = System.nanoTime();
             Process proc = rt.exec(cmd);
-//            proc.waitFor();
-//            cmdWallTime = System.nanoTime() - cmdWallTime;
-            
+// proc.waitFor();
+// cmdWallTime = System.nanoTime() - cmdWallTime;
+
             LOG.info("Piping to output and error from the command to stdout and stderr");
             ExecutorService executor = Executors.newFixedThreadPool(2);
 
@@ -416,19 +418,18 @@ public class HgramsWindow {
             }
 
             cmdWallTime = System.nanoTime() - cmdWallTime;
-            
+
             executor.shutdown();
-            
-            
-//            long cmdCPUTime = -1;
-//            if (cmdRunnable.error == null) {
-//              ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
-//              cmdCPUTime = tmxb.getThreadCpuTime(cmdThread.getId());
-//              LOG.info("The cmd " + finalCmd + " executed in {} nanosecs = {}", cmdCPUTime, cmdCPUTime / 1e9);
-//              cmdThread.interrupt();
-//            } else {
-//              LOG.error("Error while executing cmd: " + cmdRunnable.error);
-//            }
+
+// long cmdCPUTime = -1;
+// if (cmdRunnable.error == null) {
+// ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
+// cmdCPUTime = tmxb.getThreadCpuTime(cmdThread.getId());
+// LOG.info("The cmd " + finalCmd + " executed in {} nanosecs = {}", cmdCPUTime, cmdCPUTime / 1e9);
+// cmdThread.interrupt();
+// } else {
+// LOG.error("Error while executing cmd: " + cmdRunnable.error);
+// }
 
             File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()) + "_supp" + support);
 
@@ -443,12 +444,12 @@ public class HgramsWindow {
 
             int lnNum = 0;
             int itemsetCount = 0;
-            
+
             BufferedReader decodeReader = new BufferedReader(new FileReader(epochOutLocal));
             FileWriterWithEncoding decodeWriter = new FileWriterWithEncoding(epochOutText,
                 Charset.forName("UTF-8"));
             try {
-              
+
               String ln;
               BiMap<Integer, String> decodeMap = tokenIdMapping.inverse();
               List<String> distinctSortedTokens = Lists.newLinkedList();
@@ -490,10 +491,10 @@ public class HgramsWindow {
                 }
 
                 String[] codes = ln.split(" ");
-// if (codes.length == 2) {
-// // only the ogram and its frequency
-// continue;
-// }
+                if (EXCLUDE_LENLESS2_ITEMSETS && codes.length == 2) {
+                  // only the ogram and its frequency
+                  continue;
+                }
                 int c;
                 for (c = 0; c < codes.length - 1; ++c) {
                   String item = decodeMap.get(Integer.parseInt(codes[c]));
@@ -574,8 +575,8 @@ public class HgramsWindow {
             perfMonKV.storeKeyValue("Support", support);
             perfMonKV.storeKeyValue("WallMillisMining", cmdWallTime / 1e6);
             perfMonKV.storeKeyValue("ItemsetsCount", itemsetCount);
-//            perfMonKV.storeKeyValue("CPUNanosMining", cmdCPUTime);
-            
+// perfMonKV.storeKeyValue("CPUNanosMining", cmdCPUTime);
+
 // perfMonKV.storeKeyValue("CPUSecsMining", "" + (cmdCPUTime / 1e9));
 
 // File perfFile = new File(HgramsWindow.class.getName() + "_" + Joiner.on("_").join(args) + ".perf");
