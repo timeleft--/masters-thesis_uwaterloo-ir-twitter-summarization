@@ -1,0 +1,647 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><!-- base href="http://59.64.138.216/wp-content/uploads/2011/TREC2011/notebook.papers/elly.microblog.pdf" --></head><body bgcolor="#ffffff" link="blue" vlink="blue"><div style="background:#fff;border:1px solid #999;margin:-1px -1px 0;padding:0;"><div style="background:#ddd;border:1px solid #999;color:#000;font:13px arial,sans-serif;font-weight:normal;margin:12px;padding:8px;text-align:left">This is the html version of the file <a href="http://59.64.138.216/wp-content/uploads/2011/TREC2011/notebook.papers/elly.microblog.pdf"><font color="blue">http://59.64.138.216/wp-content/uploads/2011/TREC2011/notebook.papers/elly.microblog.pdf</font></a>.<br><b>Google</b> automatically generates html versions of documents as we crawl the web.</div></div><div style="position:relative">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Producer" content="MiKTeX pdfTeX-1.40.12">
+<meta name="Creator" content="TeX">
+<meta name="CreationDate" content="D:20111024070455+10'00'">
+<meta name="ModDate" content="D:20111024070455+10'00'">
+<meta name="Fullbanner" content="This is MiKTeX-pdfTeX 2.9.4225 (1.40.12)">
+<title>Query Expansion Based on Relevance Feedbacks for Micro-blogs Retrieval</title>
+
+<table border="0" width="100%"><tbody><tr><td align="right" bgcolor="eeeeee"><font face="arial,sans-serif"><a name="1"><b>Page 1</b></a></font></td></tr></tbody></table><font face="Times" size="3"><span style="font-size:19px;font-family:Times">
+<div style="position:absolute;top:336;left:103"><nobr>Query Expansion Based on Relevance Feedbacks for Micro-blogs Retrieval</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:15px;font-family:Times">
+<div style="position:absolute;top:395;left:192"><nobr>Huizhi Liang, Abdulmohsen Algarni, Yuefeng Li, Dian Tjondronegoro</nobr></div>
+<div style="position:absolute;top:416;left:143"><nobr>Faculty of Science and Technology, Queensland University of Technology, Australia</nobr></div>
+<div style="position:absolute;top:436;left:293"><nobr>{h1.liang, algarni, y2.li, dian}@qut.edu.au</nobr></div>
+<div style="position:absolute;top:500;left:219"><nobr>Abstract</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:538;left:93"><nobr>Real time searching is very important for information re-</nobr></div>
+<div style="position:absolute;top:556;left:75"><nobr>trieval based on micro-blogs. In this paper, we discuss two</nobr></div>
+<div style="position:absolute;top:574;left:75"><nobr>models to retrieve micro-blogs. The term based and pattern</nobr></div>
+<div style="position:absolute;top:592;left:75"><nobr>based pseudo-relevance feedbacks were used to expand the</nobr></div>
+<div style="position:absolute;top:610;left:75"><nobr>queries and re-rank the tweets. The experiments were con-</nobr></div>
+<div style="position:absolute;top:628;left:75"><nobr>ducted on the Tweets11 Corpus provided by the Micro-blogs</nobr></div>
+<div style="position:absolute;top:646;left:75"><nobr>Track of TREC 2011.</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:15px;font-family:Times">
+<div style="position:absolute;top:704;left:75"><nobr>1 Introduction</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:746;left:93"><nobr>Web users’ personal interests and preferences can be</nobr></div>
+<div style="position:absolute;top:764;left:75"><nobr>drawn in their user profiles. In Web information gathering,</nobr></div>
+<div style="position:absolute;top:782;left:75"><nobr>user profiles are used by many works to search informa-</nobr></div>
+<div style="position:absolute;top:800;left:75"><nobr>tion for users according to their personal needs [2,8]. To</nobr></div>
+<div style="position:absolute;top:818;left:75"><nobr>acquire user profiles, some techniques explicitly interview</nobr></div>
+<div style="position:absolute;top:836;left:75"><nobr>users [15]; some use user relevance feedback [20]. These</nobr></div>
+<div style="position:absolute;top:854;left:75"><nobr>mechanisms require user-effort in the user profile acquisi-</nobr></div>
+<div style="position:absolute;top:872;left:75"><nobr>tion process. Attempting to release such burden from users,</nobr></div>
+<div style="position:absolute;top:890;left:75"><nobr>alternatively some automatic techniques have been devel-</nobr></div>
+<div style="position:absolute;top:908;left:75"><nobr>oped to acquire user profiles from a collection of user per-</nobr></div>
+<div style="position:absolute;top:926;left:75"><nobr>sonal information, for example, browsing history [2, 24].</nobr></div>
+<div style="position:absolute;top:944;left:75"><nobr>User profiles acquired by such techniques, however, usually</nobr></div>
+<div style="position:absolute;top:962;left:75"><nobr>contain noise and uncertainties. Hence, a method to acquire</nobr></div>
+<div style="position:absolute;top:980;left:75"><nobr>user profiles effectively and efficiently (without the burden</nobr></div>
+<div style="position:absolute;top:998;left:75"><nobr>of user-effort) is an urgent need for personalized Web infor-</nobr></div>
+<div style="position:absolute;top:1015;left:75"><nobr>mation gathering.</nobr></div>
+<div style="position:absolute;top:1034;left:93"><nobr>Relevance feedback has been used widely in the area of</nobr></div>
+<div style="position:absolute;top:1052;left:75"><nobr>information retrieval. It has been reported effective when</nobr></div>
+<div style="position:absolute;top:1070;left:75"><nobr>applying to different kinds of retrieval models [7, 18, 19,</nobr></div>
+<div style="position:absolute;top:1088;left:75"><nobr>21, 31]. The idea of relevance feedback is to involve the</nobr></div>
+<div style="position:absolute;top:1105;left:75"><nobr>user in the retrieval process in order to improve the final re-</nobr></div>
+<div style="position:absolute;top:1123;left:75"><nobr>sult set. Some retrieval models also used pseudo relevance</nobr></div>
+<div style="position:absolute;top:1141;left:75"><nobr>feedback [12, 13] especially when there were no relevance</nobr></div>
+<div style="position:absolute;top:1159;left:75"><nobr>judgements available. In such models a small number of</nobr></div>
+<div style="position:absolute;top:1177;left:75"><nobr>top-ranked documents in the initial retrieval results are as-</nobr></div>
+<div style="position:absolute;top:1195;left:75"><nobr>sumed relevant, and then relevance feedback is applied [6].</nobr></div>
+<div style="position:absolute;top:1213;left:93"><nobr>The popular term-based IR models include the Rocchio</nobr></div>
+<div style="position:absolute;top:1231;left:75"><nobr>algorithm [4,18], probabilistic models, Okapi BM25 [5,17],</nobr></div>
+<div style="position:absolute;top:502;left:463"><nobr>and language models including model-based methods and</nobr></div>
+<div style="position:absolute;top:520;left:463"><nobr>relevance models [7, 14, 16, 29, 31]. Generally speaking,</nobr></div>
+<div style="position:absolute;top:538;left:463"><nobr>in the vector space model, terms have been extracted from</nobr></div>
+<div style="position:absolute;top:556;left:463"><nobr>feedback by using the Rocchio algorithm. Those terms are</nobr></div>
+<div style="position:absolute;top:574;left:463"><nobr>used to form a new query vector by maximizing its simi-</nobr></div>
+<div style="position:absolute;top:592;left:463"><nobr>larity to relevant documents and minimizing its similarity</nobr></div>
+<div style="position:absolute;top:610;left:463"><nobr>to non-relevant documents [18]. In the language modelling</nobr></div>
+<div style="position:absolute;top:627;left:463"><nobr>approaches, the key elements are the probabilities of word</nobr></div>
+<div style="position:absolute;top:645;left:463"><nobr>sequences including both words and phrases (or sentences).</nobr></div>
+<div style="position:absolute;top:663;left:463"><nobr>They are often approximated by n-gram models [26], such</nobr></div>
+<div style="position:absolute;top:681;left:463"><nobr>as Unigram, Bigram or Trigram, for considering term de-</nobr></div>
+<div style="position:absolute;top:699;left:463"><nobr>pendencies.</nobr></div>
+<div style="position:absolute;top:733;left:481"><nobr>IR models are the basis of ranking algorithm used in</nobr></div>
+<div style="position:absolute;top:751;left:463"><nobr>search engines to rank documents according to their rel-</nobr></div>
+<div style="position:absolute;top:769;left:463"><nobr>evance to a given query [3, 30]. Over the years, pattern-</nobr></div>
+<div style="position:absolute;top:787;left:463"><nobr>based approaches have been expected to outperform term-</nobr></div>
+<div style="position:absolute;top:805;left:463"><nobr>based techniques when discovering relevance features. Pat-</nobr></div>
+<div style="position:absolute;top:823;left:463"><nobr>terns are more discriminative and carry more “semantics”.</nobr></div>
+<div style="position:absolute;top:841;left:463"><nobr>However, according to information retrieval (IR) experi-</nobr></div>
+<div style="position:absolute;top:859;left:463"><nobr>ments, few significant improvements have been achieved by</nobr></div>
+<div style="position:absolute;top:877;left:463"><nobr>using pattern-based methods to replace term-based meth-</nobr></div>
+<div style="position:absolute;top:895;left:463"><nobr>ods [22, 23].</nobr></div>
+<div style="position:absolute;top:928;left:481"><nobr>A promising model, Relevance Feature Discovery</nobr></div>
+<div style="position:absolute;top:946;left:463"><nobr>(RFD), has been proposed by [10] for information filter-</nobr></div>
+<div style="position:absolute;top:964;left:463"><nobr>ing (IF) within the data mining community. The model</nobr></div>
+<div style="position:absolute;top:982;left:463"><nobr>has shown encouraging improvements of IF effectiveness.</nobr></div>
+<div style="position:absolute;top:1000;left:463"><nobr>Closed sequential patterns were discovered in positive text</nobr></div>
+<div style="position:absolute;top:1018;left:463"><nobr>documents, where a pattern was a set of terms that fre-</nobr></div>
+<div style="position:absolute;top:1036;left:463"><nobr>quently appeared in a paragraph. The deployed method was</nobr></div>
+<div style="position:absolute;top:1054;left:463"><nobr>applied to the extracted patterns to overcome the low fre-</nobr></div>
+<div style="position:absolute;top:1072;left:463"><nobr>quency problem.</nobr></div>
+<div style="position:absolute;top:1106;left:481"><nobr>The rest of this paper is organized as follows. Section 2</nobr></div>
+<div style="position:absolute;top:1124;left:463"><nobr>presents an overview of the Micro-blogs Track in TREC’11.</nobr></div>
+<div style="position:absolute;top:1142;left:463"><nobr>Section 3 reviews the concepts of Rocchio and cosine simi-</nobr></div>
+<div style="position:absolute;top:1160;left:463"><nobr>larity. Section 4 reviews the concept of patterns in text doc-</nobr></div>
+<div style="position:absolute;top:1178;left:463"><nobr>uments and a detailed reviews of Relevance Feature Dis-</nobr></div>
+<div style="position:absolute;top:1196;left:463"><nobr>covery (RFD) model. Section 5 describes the optional run</nobr></div>
+<div style="position:absolute;top:1213;left:463"><nobr>based on Rocchio model and pseudo-feedback. It is a term</nobr></div>
+<div style="position:absolute;top:1231;left:463"><nobr>based approach.The last section makes conclusions.</nobr></div>
+</span></font>
+
+<div style="position:absolute;top:1363;left:0"><hr><table border="0" width="100%"><tbody><tr><td align="right" bgcolor="eeeeee"><font face="arial,sans-serif"><a name="2"><b>Page 2</b></a></font></td></tr></tbody></table></div><font face="Times" size="3"><span style="font-size:15px;font-family:Times">
+<div style="position:absolute;top:1474;left:75"><nobr>2 The Models</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:1515;left:93"><nobr>A realtime search task is addressed in the Micro-blogs</nobr></div>
+<div style="position:absolute;top:1533;left:75"><nobr>Track of TREC 2011. In particular, the system answers a</nobr></div>
+<div style="position:absolute;top:1551;left:75"><nobr>query by providing a list of relevant tweets ordered from</nobr></div>
+<div style="position:absolute;top:1569;left:75"><nobr>newest to oldest, starting from the time the query was is-</nobr></div>
+<div style="position:absolute;top:1587;left:75"><nobr>sued. The Tweets2011 corpus is used for TREC 2011. The</nobr></div>
+<div style="position:absolute;top:1605;left:75"><nobr>corpus is comprised of 2 weeks of tweets sampled cour-</nobr></div>
+<div style="position:absolute;top:1623;left:75"><nobr>tesy of Twitter. The corpus is designed to be a reusable,</nobr></div>
+<div style="position:absolute;top:1641;left:75"><nobr>representative sample of the twittersphere - i.e. both impor-</nobr></div>
+<div style="position:absolute;top:1659;left:75"><nobr>tant and spam tweets are included.The size of the corpus is</nobr></div>
+<div style="position:absolute;top:1677;left:75"><nobr>approximately 16 million tweets over a period of 2 weeks</nobr></div>
+<div style="position:absolute;top:1695;left:75"><nobr>(24th January 2011 until 8th February, inclusive), which</nobr></div>
+<div style="position:absolute;top:1712;left:75"><nobr>covers both the time period of the Egyptian revolution and</nobr></div>
+<div style="position:absolute;top:1730;left:75"><nobr>the US Superbowl. Different types of tweets are present,</nobr></div>
+<div style="position:absolute;top:1748;left:75"><nobr>including replies and retweets.</nobr></div>
+<div style="position:absolute;top:1766;left:93"><nobr>In response to a query, the first stage is to automatically</nobr></div>
+<div style="position:absolute;top:1784;left:75"><nobr>retrieve a list of documents from the Tweets2011 corpus and</nobr></div>
+<div style="position:absolute;top:1802;left:75"><nobr>rank them based on their similarity to the query and time</nobr></div>
+<div style="position:absolute;top:1820;left:75"><nobr>recency as well. The key issue here is how to acquire user</nobr></div>
+<div style="position:absolute;top:1838;left:75"><nobr>interest from limited information. In this paper, we imple-</nobr></div>
+<div style="position:absolute;top:1856;left:75"><nobr>mented the following models:</nobr></div>
+<div style="position:absolute;top:1886;left:86"><nobr>1. Given a topic, all tweets were extracted using Rocchio</nobr></div>
+<div style="position:absolute;top:1904;left:105"><nobr>and cosine similarity via content search. The top 1000</nobr></div>
+<div style="position:absolute;top:1922;left:105"><nobr>tweets were submitted as the base run results;</nobr></div>
+<div style="position:absolute;top:1953;left:86"><nobr>2. The top 10 tweets were selected as the positive feed-</nobr></div>
+<div style="position:absolute;top:1971;left:105"><nobr>backs. These pseudo relevance feedbacks were used to</nobr></div>
+<div style="position:absolute;top:1989;left:105"><nobr>update user profiles in two different runs.</nobr></div>
+<div style="position:absolute;top:2018;left:123"><nobr>• Main run: The pseudo-relevance feedback went</nobr></div>
+<div style="position:absolute;top:2037;left:138"><nobr>into the RFD model to generate feature sets. The</nobr></div>
+<div style="position:absolute;top:2055;left:138"><nobr>feature sets were used to re-rank all the tweets. It</nobr></div>
+<div style="position:absolute;top:2073;left:138"><nobr>is a pattern based approach.</nobr></div>
+<div style="position:absolute;top:2096;left:123"><nobr>• Optional run: The Rocchio was used to build</nobr></div>
+<div style="position:absolute;top:2115;left:138"><nobr>user profiles from pseudo-relevance feedbacks;</nobr></div>
+<div style="position:absolute;top:2133;left:138"><nobr>The pseudo-relevance feedbacks then were used</nobr></div>
+<div style="position:absolute;top:2151;left:138"><nobr>to re-rank all the tweets.This term based model</nobr></div>
+<div style="position:absolute;top:2169;left:138"><nobr>also called Rocchio Model.</nobr></div>
+<div style="position:absolute;top:2200;left:86"><nobr>3. The top 1000 ranked tweets were submitted as the final</nobr></div>
+<div style="position:absolute;top:2218;left:105"><nobr>results.</nobr></div>
+<div style="position:absolute;top:2248;left:93"><nobr>The detailed description of the implemented models will</nobr></div>
+<div style="position:absolute;top:2266;left:75"><nobr>be discussed in Section 3, Section 4, and Section 5.</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:15px;font-family:Times">
+<div style="position:absolute;top:2306;left:75"><nobr>3 Rocchio and Cosine Similarity</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:2348;left:93"><nobr>In the vector space model all queries and tweets are rep-</nobr></div>
+<div style="position:absolute;top:2366;left:75"><nobr>resented as vectors in |V |-dimensional space, where V is</nobr></div>
+<div style="position:absolute;top:2384;left:75"><nobr>the set of all distinct terms in the collection. Restricted by</nobr></div>
+<div style="position:absolute;top:2401;left:75"><nobr>a fixed similarity metric, tweets with similar content have</nobr></div>
+<div style="position:absolute;top:2419;left:75"><nobr>similar vectors. However, the similarity of a tweet d to a</nobr></div>
+<div style="position:absolute;top:1476;left:463"><nobr>query q is measured based on the terminological overlap</nobr></div>
+<div style="position:absolute;top:1494;left:463"><nobr>between the query and the tweet. Thus, those relatively</nobr></div>
+<div style="position:absolute;top:1512;left:463"><nobr>rare terms have a comparatively high weight. The tweets</nobr></div>
+<div style="position:absolute;top:1530;left:463"><nobr>are ranked by the magnitude of the angle between the tweet</nobr></div>
+<div style="position:absolute;top:1548;left:463"><nobr>vector and the query vector.</nobr></div>
+<div style="position:absolute;top:1565;left:481"><nobr>The core of vector space model is cosinemeasure that</nobr></div>
+<div style="position:absolute;top:1583;left:463"><nobr>measures the angle between two vectors. The cosine be-</nobr></div>
+<div style="position:absolute;top:1601;left:463"><nobr>tween two vectors is determined as the dot product between</nobr></div>
+<div style="position:absolute;top:1622;left:463"><nobr>each tweet vector</nobr></div>
+<div style="position:absolute;top:1610;left:569"><nobr>−→</nobr></div>
+<div style="position:absolute;top:1622;left:573"><nobr>d and the query vector</nobr></div>
+<div style="position:absolute;top:1614;left:711"><nobr>−→</nobr></div>
+<div style="position:absolute;top:1622;left:714"><nobr>q , normalized by</nobr></div>
+<div style="position:absolute;top:1640;left:463"><nobr>the lengths of the tweet and the query. The main function of</nobr></div>
+<div style="position:absolute;top:1658;left:463"><nobr>cosine similarity can be generalized as follow:</nobr></div>
+<div style="position:absolute;top:1697;left:568"><nobr>cosine(q, d) =</nobr></div>
+<div style="position:absolute;top:1680;left:671"><nobr>−→</nobr></div>
+<div style="position:absolute;top:1687;left:675"><nobr>q .</nobr></div>
+<div style="position:absolute;top:1676;left:690"><nobr>−→</nobr></div>
+<div style="position:absolute;top:1687;left:694"><nobr>d</nobr></div>
+<div style="position:absolute;top:1710;left:665"><nobr>|−→q||</nobr></div>
+<div style="position:absolute;top:1700;left:692"><nobr>−→</nobr></div>
+<div style="position:absolute;top:1711;left:696"><nobr>d |</nobr></div>
+<div style="position:absolute;top:1736;left:463"><nobr>The vector space model does not specify how to set the</nobr></div>
+<div style="position:absolute;top:1754;left:463"><nobr>tweet term weight and the query term weight, but in prac-</nobr></div>
+<div style="position:absolute;top:1771;left:463"><nobr>tice these weights are often calculated using their collection</nobr></div>
+<div style="position:absolute;top:1789;left:463"><nobr>frequency and within-tweet frequency:</nobr></div>
+<div style="position:absolute;top:1823;left:584"><nobr>w<font style="font-size:8px">q,t </font>= ln(1 +</nobr></div>
+<div style="position:absolute;top:1813;left:676"><nobr>N</nobr></div>
+<div style="position:absolute;top:1833;left:677"><nobr>f<font style="font-size:8px">t</font></nobr></div>
+<div style="position:absolute;top:1823;left:691"><nobr>)</nobr></div>
+<div style="position:absolute;top:1823;left:800"><nobr>(1)</nobr></div>
+<div style="position:absolute;top:1857;left:581"><nobr>w<font style="font-size:8px">d,t </font>=1+ ln(f<font style="font-size:8px">d,t</font>)</nobr></div>
+<div style="position:absolute;top:1858;left:800"><nobr>(2)</nobr></div>
+<div style="position:absolute;top:1881;left:481"><nobr>In vector space model each tweet d is represented as a</nobr></div>
+<div style="position:absolute;top:1901;left:463"><nobr>vector</nobr></div>
+<div style="position:absolute;top:1890;left:503"><nobr>−→</nobr></div>
+<div style="position:absolute;top:1901;left:507"><nobr>d = (d, ˙,d<font style="font-size:8px">n</font>). According to a fixed similarity metric,</nobr></div>
+<div style="position:absolute;top:1919;left:463"><nobr>tweets with similar content have similar vectors. Each ele-</nobr></div>
+<div style="position:absolute;top:1937;left:463"><nobr>ment d<font style="font-size:8px">n </font>is represented by a set for terms T = {t<font style="font-size:8px">0</font>,t<font style="font-size:8px">1</font>, ˙,t<font style="font-size:8px">i</font>}.</nobr></div>
+<div style="position:absolute;top:1955;left:463"><nobr>The termset T of a tweet d is calculated as a combination of</nobr></div>
+<div style="position:absolute;top:1973;left:463"><nobr>the statistics TF(t<font style="font-size:8px">i</font>; d) and DF(t<font style="font-size:8px">i</font>). The termfrequency</nobr></div>
+<div style="position:absolute;top:1991;left:463"><nobr>TF(t<font style="font-size:8px">i</font>; d) is the number of terms t<font style="font-size:8px">i </font>occurred in the tweet d;</nobr></div>
+<div style="position:absolute;top:2009;left:463"><nobr>the tweetfrequency IDF(t<font style="font-size:8px">i</font>) is the number of tweets with</nobr></div>
+<div style="position:absolute;top:2027;left:463"><nobr>term t<font style="font-size:8px">i </font>occurred at least once [4].</nobr></div>
+<div style="position:absolute;top:2045;left:481"><nobr>Since the query length is constant for the evaluation of</nobr></div>
+<div style="position:absolute;top:2063;left:463"><nobr>a single query, we can ignore this factor, while preserving</nobr></div>
+<div style="position:absolute;top:2081;left:463"><nobr>ranking order. Bringing Equations 1 and 2 into the cosine</nobr></div>
+<div style="position:absolute;top:2099;left:463"><nobr>measure, we have:</nobr></div>
+<div style="position:absolute;top:2147;left:471"><nobr>cosine(q, d)<font style="font-size:8px">rank </font>=</nobr></div>
+<div style="position:absolute;top:2122;left:603"><nobr>∑</nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:2140;left:595"><nobr>t∈q∩d</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:2124;left:628"><nobr>(ln(1 + <font style="font-size:8px">N</font></nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:2132;left:681"><nobr>f<font style="font-size:5px">t</font></nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:2124;left:693"><nobr>) × (1 + ln(f<font style="font-size:8px">d,t</font>)))</nobr></div>
+<div style="position:absolute;top:2156;left:639"><nobr>√∑</nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:2179;left:654"><nobr>t∈d</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:2162;left:672"><nobr>(1 + ln(f<font style="font-size:8px">d,t</font>))<font style="font-size:8px">2</font></nobr></div>
+<div style="position:absolute;top:2193;left:800"><nobr>(3)</nobr></div>
+<div style="position:absolute;top:2211;left:481"><nobr>Similarity scores have been calculated for all tweets in</nobr></div>
+<div style="position:absolute;top:2229;left:463"><nobr>Tweets2011 against queries using Eq. 3. The weight of each</nobr></div>
+<div style="position:absolute;top:2247;left:463"><nobr>term t in a query q is set to 1 after text pre-processing in-</nobr></div>
+<div style="position:absolute;top:2265;left:463"><nobr>clude steaming and stopword removal. As a result, Eq. 3</nobr></div>
+<div style="position:absolute;top:2283;left:463"><nobr>can be re-generalized as:</nobr></div>
+<div style="position:absolute;top:2330;left:531"><nobr>cosine(q, d)<font style="font-size:8px">rank </font>=</nobr></div>
+<div style="position:absolute;top:2306;left:664"><nobr>∑</nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:2324;left:655"><nobr>t∈q∩d</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:2308;left:688"><nobr>(1 × f<font style="font-size:8px">d,t</font>)</nobr></div>
+<div style="position:absolute;top:2340;left:686"><nobr>|f<font style="font-size:8px">d,t</font>|</nobr></div>
+<div style="position:absolute;top:2366;left:481"><nobr>The final result of this step is a ranked list of all tweets</nobr></div>
+<div style="position:absolute;top:2384;left:463"><nobr>with their weights. The top 1000 tweets were selected as</nobr></div>
+<div style="position:absolute;top:2401;left:463"><nobr>a result of the base run; the top 10 tweets were used as an</nobr></div>
+<div style="position:absolute;top:2419;left:463"><nobr>input of the next stage.</nobr></div>
+<div style="position:absolute;top:2464;left:443"><nobr>2</nobr></div>
+</span></font>
+
+<div style="position:absolute;top:2551;left:0"><hr><table border="0" width="100%"><tbody><tr><td align="right" bgcolor="eeeeee"><font face="arial,sans-serif"><a name="3"><b>Page 3</b></a></font></td></tr></tbody></table></div><font face="Times" size="3"><span style="font-size:15px;font-family:Times">
+<div style="position:absolute;top:2662;left:75"><nobr>4 Relevance Feature Discovery</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:2711;left:93"><nobr>Relevance feature discovery is to find useful features,</nobr></div>
+<div style="position:absolute;top:2729;left:75"><nobr>including patterns, terms and their weights, in a training</nobr></div>
+<div style="position:absolute;top:2747;left:75"><nobr>set T weets, which consists of a set of positive tweets,</nobr></div>
+<div style="position:absolute;top:2764;left:75"><nobr>T weets<font style="font-size:8px">+</font>. To clearly understand the concepts of patterns,</nobr></div>
+<div style="position:absolute;top:2783;left:75"><nobr>we introduce normal patterns and closed patterns first, and</nobr></div>
+<div style="position:absolute;top:2801;left:75"><nobr>then we discuss sequential closed patterns. These defini-</nobr></div>
+<div style="position:absolute;top:2818;left:75"><nobr>tions can be found in [28].</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:14px;font-family:Times">
+<div style="position:absolute;top:2863;left:75"><nobr>4.1 Frequent and Closed Patterns</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:2910;left:93"><nobr>Let T = {t<font style="font-size:8px">1</font>,t<font style="font-size:8px">2</font>,...,t<font style="font-size:8px">m</font>} be a set of terms which</nobr></div>
+<div style="position:absolute;top:2928;left:75"><nobr>are extracted from T weets<font style="font-size:8px">+</font>. Given a termset X, a</nobr></div>
+<div style="position:absolute;top:2945;left:75"><nobr>set of terms, in document T weets, coverset(X) =</nobr></div>
+<div style="position:absolute;top:2962;left:75"><nobr>{tweet|tweet ∈ T weets, X ⊆ tweet}. Its absolute sup-</nobr></div>
+<div style="position:absolute;top:2981;left:75"><nobr>port sup<font style="font-size:8px">a</font>(X) = |coverset(X)|; and its relative support</nobr></div>
+<div style="position:absolute;top:3001;left:75"><nobr>sup<font style="font-size:8px">r</font>(X) =</nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:2997;left:156"><nobr>|coverset(X)|</nobr></div>
+<div style="position:absolute;top:3009;left:165"><nobr>|T weets<font style="font-size:5px">+</font>| <font style="font-size:12px">. A termset X is called frequent</font></nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:3021;left:75"><nobr>pattern if its sup<font style="font-size:8px">a </font>(or sup<font style="font-size:8px">r</font>) ≥ min sup, a minimum sup-</nobr></div>
+<div style="position:absolute;top:3039;left:75"><nobr>port.</nobr></div>
+<div style="position:absolute;top:3060;left:93"><nobr>Patterns can be structured into a taxonomy by using the</nobr></div>
+<div style="position:absolute;top:3078;left:75"><nobr>is-a (or subset) relation and closed patterns. Put simply, a</nobr></div>
+<div style="position:absolute;top:3096;left:75"><nobr>pattern taxonomy is described as a set of patterns, and the</nobr></div>
+<div style="position:absolute;top:3114;left:75"><nobr>relation in the taxonomy is the subset relation.</nobr></div>
+<div style="position:absolute;top:3134;left:93"><nobr>Smaller patterns in the taxonomy are usually more gen-</nobr></div>
+<div style="position:absolute;top:3152;left:75"><nobr>eral because they could be used frequently in both positive</nobr></div>
+<div style="position:absolute;top:3170;left:75"><nobr>and negative tweets; but larger patterns in the taxonomy are</nobr></div>
+<div style="position:absolute;top:3188;left:75"><nobr>usually more specific since they may be used only in posi-</nobr></div>
+<div style="position:absolute;top:3206;left:75"><nobr>tive tweets.</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:14px;font-family:Times">
+<div style="position:absolute;top:3250;left:75"><nobr>4.2 Closed Sequential Patterns</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:3297;left:93"><nobr>A sequential pattern s =&lt; t<font style="font-size:8px">1</font>,...,t<font style="font-size:8px">r </font>&gt; (t<font style="font-size:8px">i </font>∈ T) is an</nobr></div>
+<div style="position:absolute;top:3315;left:75"><nobr>ordered list of terms. A sequence s<font style="font-size:8px">1 </font>=&lt; x<font style="font-size:8px">1</font>,...,x<font style="font-size:8px">i </font>&gt; is</nobr></div>
+<div style="position:absolute;top:3333;left:75"><nobr>a sub-sequence of another sequence s<font style="font-size:8px">2 </font>=&lt; y<font style="font-size:8px">1</font>,...,y<font style="font-size:8px">j </font>&gt;,</nobr></div>
+<div style="position:absolute;top:3351;left:75"><nobr>denoted by s<font style="font-size:8px">1 </font>⊑ s<font style="font-size:8px">2</font>, iff ∃j<font style="font-size:8px">1</font>,...,j<font style="font-size:8px">i </font>such that 1 ≤ j<font style="font-size:8px">1 </font>&lt;</nobr></div>
+<div style="position:absolute;top:3369;left:75"><nobr>j<font style="font-size:8px">2 </font>... &lt; j<font style="font-size:8px">i </font>≤ j and x<font style="font-size:8px">1 </font>= y<font style="font-size:8px">j</font><font style="font-size:5px">1 </font>,x<font style="font-size:8px">2 </font>= y<font style="font-size:8px">j</font><font style="font-size:5px">2 </font>,...,x<font style="font-size:8px">i </font>= y<font style="font-size:8px">j</font><font style="font-size:5px">i </font>.</nobr></div>
+<div style="position:absolute;top:3387;left:75"><nobr>Given s<font style="font-size:8px">1 </font>⊑ s<font style="font-size:8px">2</font>, we usually say s<font style="font-size:8px">1 </font>is a sub-pattern of s<font style="font-size:8px">2</font>,</nobr></div>
+<div style="position:absolute;top:3405;left:75"><nobr>and s<font style="font-size:8px">2 </font>is a super-pattern of s<font style="font-size:8px">1</font>. In the following, we refer to</nobr></div>
+<div style="position:absolute;top:3423;left:75"><nobr>sequential patterns as patterns.</nobr></div>
+<div style="position:absolute;top:3443;left:93"><nobr>Given a sequential pattern X in tweet tweet,</nobr></div>
+<div style="position:absolute;top:3461;left:75"><nobr>coverset(X) is still used to denote the covering set</nobr></div>
+<div style="position:absolute;top:3479;left:75"><nobr>of X. Its absolute support and relative support are defined</nobr></div>
+<div style="position:absolute;top:3497;left:75"><nobr>as the same as for the normal patterns.</nobr></div>
+<div style="position:absolute;top:3518;left:93"><nobr>A sequential pattern X is called a frequent pattern if</nobr></div>
+<div style="position:absolute;top:3536;left:75"><nobr>its relative support ≥ min sup, a minimum support. The</nobr></div>
+<div style="position:absolute;top:3554;left:75"><nobr>property of closed patterns (see Eq. (1)) can be used to de-</nobr></div>
+<div style="position:absolute;top:3572;left:75"><nobr>fine closed sequential patterns. A frequent sequential pat-</nobr></div>
+<div style="position:absolute;top:3589;left:75"><nobr>tern X is called closed if not ∃ any super-pattern X<font style="font-size:8px">1 </font>of X</nobr></div>
+<div style="position:absolute;top:3607;left:75"><nobr>such that sup<font style="font-size:8px">a</font>(X<font style="font-size:8px">1</font>) = sup<font style="font-size:8px">a</font>(X).</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:14px;font-family:Times">
+<div style="position:absolute;top:2663;left:463"><nobr>4.3 The Deploying Method</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:2700;left:481"><nobr>In this section, we develop equations for deploying</nobr></div>
+<div style="position:absolute;top:2718;left:463"><nobr>higher level patterns over low-level terms by evaluating</nobr></div>
+<div style="position:absolute;top:2736;left:463"><nobr>term supports based on their appearances in patterns. The</nobr></div>
+<div style="position:absolute;top:2754;left:463"><nobr>evaluation of term supports (weights) in this paper is dif-</nobr></div>
+<div style="position:absolute;top:2771;left:463"><nobr>ferent from term-based approaches. For a term-based ap-</nobr></div>
+<div style="position:absolute;top:2789;left:463"><nobr>proach, the evaluation of a given term’s weight is based</nobr></div>
+<div style="position:absolute;top:2807;left:463"><nobr>on its appearances in tweets. In this research, terms are</nobr></div>
+<div style="position:absolute;top:2825;left:463"><nobr>weighted according to their appearances in discovered pat-</nobr></div>
+<div style="position:absolute;top:2843;left:463"><nobr>terns.</nobr></div>
+<div style="position:absolute;top:2861;left:481"><nobr>In Relevance Feature Discovery model (RFD) used SP-</nobr></div>
+<div style="position:absolute;top:2879;left:463"><nobr>Mining(T weets<font style="font-size:8px">+</font>, min sup) algorithm [27], was proposed</nobr></div>
+<div style="position:absolute;top:2897;left:463"><nobr>(also used in [?]) to find closed sequential patterns for all</nobr></div>
+<div style="position:absolute;top:2915;left:463"><nobr>tweets ∈ T weets<font style="font-size:8px">+</font>, which used the well-known Apriori</nobr></div>
+<div style="position:absolute;top:2933;left:463"><nobr>property in order to reduce the searching space. For all pos-</nobr></div>
+<div style="position:absolute;top:2951;left:463"><nobr>itive tweets tweet<font style="font-size:8px">i </font>∈ T weets<font style="font-size:8px">+</font>, the SPMining algorithm</nobr></div>
+<div style="position:absolute;top:2969;left:463"><nobr>can discover all closed sequential patterns, SP<font style="font-size:8px">i</font>, based on a</nobr></div>
+<div style="position:absolute;top:2987;left:463"><nobr>given min sup.</nobr></div>
+<div style="position:absolute;top:3005;left:481"><nobr>Let SP<font style="font-size:8px">1</font>, SP<font style="font-size:8px">2</font>, ..., SP<font style="font-size:8px">n </font>be the sets of discovered closed</nobr></div>
+<div style="position:absolute;top:3023;left:463"><nobr>sequential patterns for all tweets tweets<font style="font-size:8px">i </font>∈ T weets<font style="font-size:8px">+</font>(i =</nobr></div>
+<div style="position:absolute;top:3040;left:463"><nobr>1, ··· ,n), where n = |T weets<font style="font-size:8px">+</font>|. For a given term t, its</nobr></div>
+<div style="position:absolute;top:3058;left:463"><nobr>support (or called weight) in discovered patterns can be de-</nobr></div>
+<div style="position:absolute;top:3076;left:463"><nobr>scribed as follows:</nobr></div>
+<div style="position:absolute;top:3114;left:480"><nobr>support(t, T weets<font style="font-size:8px">+</font>) =</nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:3098;left:640"><nobr>n</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:3109;left:632"><nobr>∑</nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:3135;left:634"><nobr>i=1</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:3103;left:658"><nobr>|{p|p ∈ SP<font style="font-size:8px">i</font>,t ∈ p}|</nobr></div>
+<div style="position:absolute;top:3123;left:685"><nobr>∑</nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:3132;left:701"><nobr>p∈SP<font style="font-size:5px">i</font></nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:3123;left:739"><nobr>|p|</nobr></div>
+<div style="position:absolute;top:3114;left:800"><nobr>(4)</nobr></div>
+<div style="position:absolute;top:3157;left:463"><nobr>where |p| is the number of terms in p.</nobr></div>
+<div style="position:absolute;top:3175;left:481"><nobr>Table 1 illustrates an example of sets of dis-</nobr></div>
+<div style="position:absolute;top:3193;left:463"><nobr>covered closed sequential patterns for T weets<font style="font-size:8px">+</font></nobr></div>
+<div style="position:absolute;top:3193;left:806"><nobr>=</nobr></div>
+<div style="position:absolute;top:3210;left:463"><nobr>{tweet<font style="font-size:8px">1</font>, tweet<font style="font-size:8px">2</font>, ··· , tweet<font style="font-size:8px">5</font>}. For example, term global</nobr></div>
+<div style="position:absolute;top:3229;left:463"><nobr>appears in three tweets (tweet<font style="font-size:8px">2</font>, tweet<font style="font-size:8px">3 </font>and tweet<font style="font-size:8px">5</font>).</nobr></div>
+<div style="position:absolute;top:3247;left:463"><nobr>Therefore, its support is evaluated based on patterns in the</nobr></div>
+<div style="position:absolute;top:3265;left:463"><nobr>sets of closed sequential patterns that contain global:</nobr></div>
+<div style="position:absolute;top:3301;left:495"><nobr>support(global, T weets<font style="font-size:8px">+</font>) =</nobr></div>
+<div style="position:absolute;top:3290;left:683"><nobr>2</nobr></div>
+<div style="position:absolute;top:3311;left:683"><nobr>4</nobr></div>
+<div style="position:absolute;top:3301;left:695"><nobr>+</nobr></div>
+<div style="position:absolute;top:3290;left:712"><nobr>1</nobr></div>
+<div style="position:absolute;top:3311;left:712"><nobr>3</nobr></div>
+<div style="position:absolute;top:3301;left:724"><nobr>+</nobr></div>
+<div style="position:absolute;top:3290;left:741"><nobr>1</nobr></div>
+<div style="position:absolute;top:3311;left:741"><nobr>3</nobr></div>
+<div style="position:absolute;top:3301;left:755"><nobr>=</nobr></div>
+<div style="position:absolute;top:3290;left:772"><nobr>7</nobr></div>
+<div style="position:absolute;top:3311;left:772"><nobr>6</nobr></div>
+<div style="position:absolute;top:3301;left:781"><nobr>.</nobr></div>
+<div style="position:absolute;top:3372;left:518"><nobr><b>Table 1. Example of Pattern Mining</b></nobr></div>
+<div style="position:absolute;top:3390;left:466"><nobr>Tweets. Discovered Closed Sequential Patterns (SP<font style="font-size:8px">i</font>)</nobr></div>
+<div style="position:absolute;top:3412;left:469"><nobr>tweet<font style="font-size:8px">1</font></nobr></div>
+<div style="position:absolute;top:3411;left:531"><nobr>{〈carbon〉 , 〈carbon, emiss〉, 〈air, pollut〉 }</nobr></div>
+<div style="position:absolute;top:3431;left:469"><nobr>tweet<font style="font-size:8px">2</font></nobr></div>
+<div style="position:absolute;top:3430;left:531"><nobr>{〈greenhous, global〉, 〈emiss, global〉}</nobr></div>
+<div style="position:absolute;top:3449;left:469"><nobr>tweet<font style="font-size:8px">3</font></nobr></div>
+<div style="position:absolute;top:3448;left:531"><nobr>{〈greenhous〉, 〈global, emiss〉}</nobr></div>
+<div style="position:absolute;top:3468;left:469"><nobr>tweet<font style="font-size:8px">4</font></nobr></div>
+<div style="position:absolute;top:3467;left:531"><nobr>{〈carbon〉, 〈air〉, 〈air, antarct〉}</nobr></div>
+<div style="position:absolute;top:3486;left:469"><nobr>tweet<font style="font-size:8px">5</font></nobr></div>
+<div style="position:absolute;top:3486;left:531"><nobr>{〈emiss, global, pollut〉}</nobr></div>
+<div style="position:absolute;top:3527;left:481"><nobr>After the supports of terms have been computed from</nobr></div>
+<div style="position:absolute;top:3545;left:463"><nobr>the training set, the following rank will be assigned to every</nobr></div>
+<div style="position:absolute;top:3563;left:463"><nobr>incoming document tweet to decide its relevance:</nobr></div>
+<div style="position:absolute;top:3594;left:514"><nobr>rank(tweet) =</nobr></div>
+<div style="position:absolute;top:3590;left:613"><nobr>∑</nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:3615;left:614"><nobr>t∈T</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:3594;left:638"><nobr>weight(t)τ(t, tweet)</nobr></div>
+<div style="position:absolute;top:3595;left:800"><nobr>(5)</nobr></div>
+<div style="position:absolute;top:3652;left:443"><nobr>3</nobr></div>
+</span></font>
+
+<div style="position:absolute;top:3739;left:0"><hr><table border="0" width="100%"><tbody><tr><td align="right" bgcolor="eeeeee"><font face="arial,sans-serif"><a name="4"><b>Page 4</b></a></font></td></tr></tbody></table></div><font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:3852;left:75"><nobr>where weight(t)</nobr></div>
+<div style="position:absolute;top:3852;left:214"><nobr>=</nobr></div>
+<div style="position:absolute;top:3852;left:251"><nobr>support(t, T weets<font style="font-size:8px">+</font>); and</nobr></div>
+<div style="position:absolute;top:3870;left:75"><nobr>τ(t, tweet)=1 if t ∈ d; otherwise τ(t, tweet)=0.</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:15px;font-family:Times">
+<div style="position:absolute;top:3908;left:75"><nobr>5 Query Expansion Using Rocchio</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:3948;left:93"><nobr>The main goal of query expansion is to optimize a query.</nobr></div>
+<div style="position:absolute;top:3966;left:75"><nobr>A query is optimal if it ranks all relevant tweets on top of</nobr></div>
+<div style="position:absolute;top:3984;left:75"><nobr>those non-relevant. A query could lead to a good rank-</nobr></div>
+<div style="position:absolute;top:4002;left:75"><nobr>ing result if it contains all features in relevant documents</nobr></div>
+<div style="position:absolute;top:4020;left:75"><nobr>or tweets and disregards all features in non-relevant doc-</nobr></div>
+<div style="position:absolute;top:4038;left:75"><nobr>uments or tweets. However, the reformulation of an opti-</nobr></div>
+<div style="position:absolute;top:4056;left:75"><nobr>mal query is difficult. The Rocchio algorithm [18] has been</nobr></div>
+<div style="position:absolute;top:4074;left:75"><nobr>widely adopted when using relevant documents or tweets</nobr></div>
+<div style="position:absolute;top:4092;left:75"><nobr>(T weets<font style="font-size:8px">+</font>) and non-relevant documents (T weets<font style="font-size:8px">−</font>) to re-</nobr></div>
+<div style="position:absolute;top:4110;left:75"><nobr>formulate an initial query q:</nobr></div>
+<div style="position:absolute;top:4136;left:89"><nobr>−→</nobr></div>
+<div style="position:absolute;top:4143;left:93"><nobr>q = γ ×−→q + α</nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:4140;left:230"><nobr>1</nobr></div>
+<div style="position:absolute;top:4150;left:206"><nobr>|T weets<font style="font-size:5px">+</font>|</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:4141;left:265"><nobr>∑<font style="font-size:8px">−−−→</font></nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:4151;left:281"><nobr>tweet∈T weets<font style="font-size:5px">+</font></nobr></div>
+<div style="position:absolute;top:4133;left:378"><nobr>−−−→</nobr></div>
+<div style="position:absolute;top:4140;left:378"><nobr>tweet</nobr></div>
+<div style="position:absolute;top:4153;left:371"><nobr>||</nobr></div>
+<div style="position:absolute;top:4146;left:378"><nobr>−−−→</nobr></div>
+<div style="position:absolute;top:4153;left:378"><nobr>tweet||</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:4168;left:135"><nobr>−β</nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:4167;left:182"><nobr>1</nobr></div>
+<div style="position:absolute;top:4177;left:157"><nobr>|T weets<font style="font-size:5px">−</font>|</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:4168;left:217"><nobr>∑<font style="font-size:8px">−−−→</font></nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:4178;left:232"><nobr>tweet∈T weets<font style="font-size:5px">−</font></nobr></div>
+<div style="position:absolute;top:4160;left:330"><nobr>−−−→</nobr></div>
+<div style="position:absolute;top:4167;left:330"><nobr>tweet</nobr></div>
+<div style="position:absolute;top:4179;left:323"><nobr>||</nobr></div>
+<div style="position:absolute;top:4173;left:330"><nobr>−−−→</nobr></div>
+<div style="position:absolute;top:4180;left:330"><nobr>tweet||</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:4191;left:412"><nobr>(6)</nobr></div>
+<div style="position:absolute;top:4209;left:75"><nobr>where α = β = γ = 1.0 in this presented work as sug-</nobr></div>
+<div style="position:absolute;top:4227;left:75"><nobr>gested by [25].</nobr></div>
+<div style="position:absolute;top:4245;left:93"><nobr>In this paper, we used positive tweets only. Then Roc-</nobr></div>
+<div style="position:absolute;top:4263;left:75"><nobr>chio has been adapted to used positive feedback only , as</nobr></div>
+<div style="position:absolute;top:4281;left:75"><nobr>follow:</nobr></div>
+<div style="position:absolute;top:4303;left:89"><nobr>−→</nobr></div>
+<div style="position:absolute;top:4310;left:93"><nobr>q = γ ×−→q + α</nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:4308;left:230"><nobr>1</nobr></div>
+<div style="position:absolute;top:4318;left:206"><nobr>|T weets<font style="font-size:5px">+</font>|</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:4309;left:265"><nobr>∑<font style="font-size:8px">−−−→</font></nobr></div>
+</span></font>
+<font face="Times" size="2"><span style="font-size:8px;font-family:Times">
+<div style="position:absolute;top:4319;left:281"><nobr>tweet∈T weets<font style="font-size:5px">+</font></nobr></div>
+<div style="position:absolute;top:4301;left:378"><nobr>−−−→</nobr></div>
+<div style="position:absolute;top:4308;left:378"><nobr>tweet</nobr></div>
+<div style="position:absolute;top:4321;left:371"><nobr>||</nobr></div>
+<div style="position:absolute;top:4314;left:378"><nobr>−−−→</nobr></div>
+<div style="position:absolute;top:4321;left:378"><nobr>tweet||</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:4333;left:412"><nobr>(7)</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:15px;font-family:Times">
+<div style="position:absolute;top:4371;left:75"><nobr>6 Conclusion</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:4411;left:93"><nobr>Tacking on the realtime search task of the Micro-blogs</nobr></div>
+<div style="position:absolute;top:4429;left:75"><nobr>Track of TREC 2011, we discussed three models to retrive</nobr></div>
+<div style="position:absolute;top:4447;left:75"><nobr>relevant tweets for each query in this paper. For each query,</nobr></div>
+<div style="position:absolute;top:4465;left:75"><nobr>the basic model retrieved a list of tweets and rank them</nobr></div>
+<div style="position:absolute;top:4483;left:75"><nobr>based on their similarity to the query. The Rocchio Model</nobr></div>
+<div style="position:absolute;top:4501;left:75"><nobr>expanded user’s query with pseudo-relevance feedbacks,</nobr></div>
+<div style="position:absolute;top:4519;left:75"><nobr>which is a term based model. Different from the term-based</nobr></div>
+<div style="position:absolute;top:4537;left:75"><nobr>models, the RFD model is a pattern based model. The top</nobr></div>
+<div style="position:absolute;top:4555;left:75"><nobr>10 tweets were selected as the positive feedbacks. These</nobr></div>
+<div style="position:absolute;top:4573;left:75"><nobr>pseudo-relevance feedbacks were used in the RFD model to</nobr></div>
+<div style="position:absolute;top:4590;left:75"><nobr>generate the feature set. The feature set was used to rank all</nobr></div>
+<div style="position:absolute;top:4608;left:75"><nobr>the tweets.</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:15px;font-family:Times">
+<div style="position:absolute;top:4647;left:75"><nobr>Acknowledgements</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:11px;font-family:Times">
+<div style="position:absolute;top:4686;left:93"><nobr>The work presented in this paper was partially supported by</nobr></div>
+<div style="position:absolute;top:4703;left:75"><nobr>Cooperative Research Centres Australia (CRC).</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:15px;font-family:Times">
+<div style="position:absolute;top:4740;left:75"><nobr>References</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:11px;font-family:Times">
+<div style="position:absolute;top:4780;left:82"><nobr>[1] A. Algarni, Y. Li, Y. Xu, and R. Y. Lau. An effective model of</nobr></div>
+<div style="position:absolute;top:4796;left:105"><nobr>using negative relevance feedback for information filtering.</nobr></div>
+<div style="position:absolute;top:3853;left:493"><nobr>In CIKM ’09: Proceeding of the 18th ACM conference on</nobr></div>
+<div style="position:absolute;top:3869;left:493"><nobr>Information and knowledge management, pages 1605–1608,</nobr></div>
+<div style="position:absolute;top:3886;left:493"><nobr>New York, NY, USA, 2009. ACM.</nobr></div>
+<div style="position:absolute;top:3908;left:470"><nobr>[2] S. Gauch, J. Chaffee, and A. Pretschner. Ontology-based per-</nobr></div>
+<div style="position:absolute;top:3925;left:493"><nobr>sonalized search and browsing. Web Intelligence and Agent</nobr></div>
+<div style="position:absolute;top:3941;left:493"><nobr>Systems, 1(3-4):219–234, 2003.</nobr></div>
+<div style="position:absolute;top:3964;left:470"><nobr>[3] X. Geng, T.-Y. Liu, T. Qin, A. Arnold, H. Li, and H.-Y.</nobr></div>
+<div style="position:absolute;top:3980;left:493"><nobr>Shum. Query dependent ranking using k-nearest neighbor.</nobr></div>
+<div style="position:absolute;top:3996;left:493"><nobr>In SIGIR ’08: Proceedings of the 31st annual international</nobr></div>
+<div style="position:absolute;top:4013;left:493"><nobr>ACM SIGIR conference on Research and development in in-</nobr></div>
+<div style="position:absolute;top:4029;left:493"><nobr>formation retrieval, pages 115–122, New York, NY, USA,</nobr></div>
+<div style="position:absolute;top:4046;left:493"><nobr>2008. ACM.</nobr></div>
+<div style="position:absolute;top:4068;left:470"><nobr>[4] T. Joachims. A probabilistic analysis of the rocchio algo-</nobr></div>
+<div style="position:absolute;top:4085;left:493"><nobr>rithm with tfidf for text categorization. In ICML ’97: Pro-</nobr></div>
+<div style="position:absolute;top:4101;left:493"><nobr>ceedings of the Fourteenth International Conference on Ma-</nobr></div>
+<div style="position:absolute;top:4118;left:493"><nobr>chine Learning, pages 143–151, San Francisco, CA, USA,</nobr></div>
+<div style="position:absolute;top:4134;left:493"><nobr>1997. Morgan Kaufmann Publishers Inc.</nobr></div>
+<div style="position:absolute;top:4156;left:470"><nobr>[5] K. S. Jones, S. Walker, and S. E. Robertson. A probabilistic</nobr></div>
+<div style="position:absolute;top:4173;left:493"><nobr>model of information retrieval: development and compara-</nobr></div>
+<div style="position:absolute;top:4189;left:493"><nobr>tive experiments - part 1. Inf. Process. Manage., 36(6):779–</nobr></div>
+<div style="position:absolute;top:4206;left:493"><nobr>808, 2000.</nobr></div>
+<div style="position:absolute;top:4228;left:470"><nobr>[6] K. Y. Lanbo Zhang Yi Zhang, Jadiel de Arma. UCSC at</nobr></div>
+<div style="position:absolute;top:4245;left:493"><nobr>Relevance Feedback Track. In Proceedings of the 18th Text</nobr></div>
+<div style="position:absolute;top:4261;left:493"><nobr>Retrieval Conference (TREC 2009), 2009.</nobr></div>
+<div style="position:absolute;top:4284;left:470"><nobr>[7] V. Lavrenko and W. B. Croft. Relevance based language</nobr></div>
+<div style="position:absolute;top:4300;left:493"><nobr>models. In SIGIR ’01: Proceedings of the 24th annual in-</nobr></div>
+<div style="position:absolute;top:4317;left:493"><nobr>ternational ACM SIGIR conference on Research and devel-</nobr></div>
+<div style="position:absolute;top:4333;left:493"><nobr>opment in information retrieval, pages 120–127, New York,</nobr></div>
+<div style="position:absolute;top:4349;left:493"><nobr>NY, USA, 2001. ACM.</nobr></div>
+<div style="position:absolute;top:4372;left:470"><nobr>[8] Y. Li and N. Zhong. Mining Ontology for Automatically</nobr></div>
+<div style="position:absolute;top:4388;left:493"><nobr>Acquiring Web User Information Needs. IEEE Transactions</nobr></div>
+<div style="position:absolute;top:4405;left:493"><nobr>on Knowledge and Data Engineering, 18(4):554–568, 2006.</nobr></div>
+<div style="position:absolute;top:4427;left:470"><nobr>[9] Y. Li, X. Zhou, P. Bruza, Y. Xu, and R. Y. Lau. A two-stage</nobr></div>
+<div style="position:absolute;top:4444;left:493"><nobr>text mining model for information filtering. In CIKM ’08:</nobr></div>
+<div style="position:absolute;top:4460;left:493"><nobr>Proceeding of the 17th ACM conference on Information and</nobr></div>
+<div style="position:absolute;top:4477;left:493"><nobr>knowledge management, pages 1023–1032, New York, NY,</nobr></div>
+<div style="position:absolute;top:4493;left:493"><nobr>USA, 2008. ACM.</nobr></div>
+<div style="position:absolute;top:4515;left:463"><nobr>[10] Y. Li, A. Algarni, and N. Zhong. Mining positive and neg-</nobr></div>
+<div style="position:absolute;top:4532;left:493"><nobr>ative patterns for relevance feature discovery. In KDD ’10:</nobr></div>
+<div style="position:absolute;top:4548;left:493"><nobr>Proceedings of the 16th ACM SIGKDD international confer-</nobr></div>
+<div style="position:absolute;top:4565;left:493"><nobr>ence on Knowledge discovery and data mining, pages 753–</nobr></div>
+<div style="position:absolute;top:4581;left:493"><nobr>762, New York, NY, USA, 2010. ACM.</nobr></div>
+<div style="position:absolute;top:4604;left:463"><nobr>[11] X. Ling, Q. Mei, C. Zhai, and B. Schatz. Mining multi-</nobr></div>
+<div style="position:absolute;top:4620;left:493"><nobr>faceted overviews of arbitrary topics in a text collection. In</nobr></div>
+<div style="position:absolute;top:4637;left:493"><nobr>KDD ’08: Proceeding of the 14th ACM SIGKDD interna-</nobr></div>
+<div style="position:absolute;top:4653;left:493"><nobr>tional conference on Knowledge discovery and data mining,</nobr></div>
+<div style="position:absolute;top:4669;left:493"><nobr>pages 497–505, New York, NY, USA, 2008. ACM.</nobr></div>
+<div style="position:absolute;top:4692;left:463"><nobr>[12] Y. Lv and C. Zhai. Adaptive relevance feedback in infor-</nobr></div>
+<div style="position:absolute;top:4708;left:493"><nobr>mation retrieval. In CIKM ’09: Proceeding of the 18th</nobr></div>
+<div style="position:absolute;top:4725;left:493"><nobr>ACM conference on Information and knowledge manage-</nobr></div>
+<div style="position:absolute;top:4741;left:493"><nobr>ment, pages 255–264, New York, NY, USA, 2009. ACM.</nobr></div>
+<div style="position:absolute;top:4764;left:463"><nobr>[13] C. D. Manning, P. Raghavan, and H. Schtze. Introduction</nobr></div>
+<div style="position:absolute;top:4780;left:493"><nobr>to Information Retrieval. Cambridge University Press, New</nobr></div>
+<div style="position:absolute;top:4796;left:493"><nobr>York, NY, USA, 2008.</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:4840;left:443"><nobr>4</nobr></div>
+</span></font>
+
+<div style="position:absolute;top:4927;left:0"><hr><table border="0" width="100%"><tbody><tr><td align="right" bgcolor="eeeeee"><font face="arial,sans-serif"><a name="5"><b>Page 5</b></a></font></td></tr></tbody></table></div><font face="Times" size="3"><span style="font-size:11px;font-family:Times">
+<div style="position:absolute;top:5041;left:75"><nobr>[14] D. Metzler and W. B. Croft. Latent concept expansion us-</nobr></div>
+<div style="position:absolute;top:5057;left:105"><nobr>ing markov random fields. In SIGIR ’07: Proceedings of</nobr></div>
+<div style="position:absolute;top:5074;left:105"><nobr>the 30th annual international ACM SIGIR conference on Re-</nobr></div>
+<div style="position:absolute;top:5090;left:105"><nobr>search and development in information retrieval, pages 311–</nobr></div>
+<div style="position:absolute;top:5107;left:105"><nobr>318, New York, NY, USA, 2007. ACM.</nobr></div>
+<div style="position:absolute;top:5127;left:75"><nobr>[15] S. E. Middleton, N. R. Shadbolt, and D. C. D. Roure. Onto-</nobr></div>
+<div style="position:absolute;top:5143;left:105"><nobr>logical user profiling in recommender systems. ACM Trans-</nobr></div>
+<div style="position:absolute;top:5160;left:105"><nobr>actions on Information Systems (TOIS), 22(1):54–88, 2004.</nobr></div>
+<div style="position:absolute;top:5180;left:75"><nobr>[16] J. M. Ponte. A language modeling approach to information</nobr></div>
+<div style="position:absolute;top:5196;left:105"><nobr>retrieval. Master’s thesis, Amherst, MA, USA, 1998.</nobr></div>
+<div style="position:absolute;top:5216;left:75"><nobr>[17] C. J. V. Rijsbergen. Information Retrieval. Butterworth-</nobr></div>
+<div style="position:absolute;top:5233;left:105"><nobr>Heinemann, Newton, MA, USA, 1979.</nobr></div>
+<div style="position:absolute;top:5253;left:75"><nobr>[18] J. Rocchio. Relevance feedback in information retrieval, vol-</nobr></div>
+<div style="position:absolute;top:5269;left:105"><nobr>ume In The SMART Retrieval System: Experiments in Au-</nobr></div>
+<div style="position:absolute;top:5286;left:105"><nobr>tomatic Document Processing. Prentice Hall, 1971.</nobr></div>
+<div style="position:absolute;top:5306;left:75"><nobr>[19] S. E. Robertson and K. Sparck Jones. Relevance weighting</nobr></div>
+<div style="position:absolute;top:5322;left:105"><nobr>of search terms. pages 143–160, 1988.</nobr></div>
+<div style="position:absolute;top:5343;left:75"><nobr>[20] S. E. Robertson and I. Soboroff. The TREC 2002 filtering</nobr></div>
+<div style="position:absolute;top:5359;left:105"><nobr>track report. In Text REtrieval Conference, 2002.</nobr></div>
+<div style="position:absolute;top:5379;left:75"><nobr>[21] G. Salton and C. Buckley. Improving retrieval performance</nobr></div>
+<div style="position:absolute;top:5396;left:105"><nobr>by relevance feedback. pages 355–364, 1997.</nobr></div>
+<div style="position:absolute;top:5416;left:75"><nobr>[22] S. Scott and S. Matwin. Feature engineering for text classi-</nobr></div>
+<div style="position:absolute;top:5432;left:105"><nobr>fication. In ICML ’99: Proceedings of the Sixteenth Inter-</nobr></div>
+<div style="position:absolute;top:5449;left:105"><nobr>national Conference on Machine Learning, pages 379–388,</nobr></div>
+<div style="position:absolute;top:5465;left:105"><nobr>San Francisco, CA, USA, 1999. Morgan Kaufmann Publish-</nobr></div>
+<div style="position:absolute;top:5482;left:105"><nobr>ers Inc.</nobr></div>
+<div style="position:absolute;top:5502;left:75"><nobr>[23] F. Sebastiani. Machine learning in automated text categoriza-</nobr></div>
+<div style="position:absolute;top:5518;left:105"><nobr>tion. ACM Computing Surveys (CSUR), 34(1):1–47, 2002.</nobr></div>
+<div style="position:absolute;top:5538;left:75"><nobr>[24] A. Sieg, B. Mobasher, and R. Burke. Web search person-</nobr></div>
+<div style="position:absolute;top:5555;left:105"><nobr>alization with ontological user profiles. In Proceedings of</nobr></div>
+<div style="position:absolute;top:5571;left:105"><nobr>the sixteenth ACM conference on Conference on information</nobr></div>
+<div style="position:absolute;top:5588;left:105"><nobr>and knowledge management, pages 525–534, New York, NY,</nobr></div>
+<div style="position:absolute;top:5604;left:105"><nobr>USA, 2007. ACM.</nobr></div>
+<div style="position:absolute;top:5624;left:75"><nobr>[25] A. Singhal, M. Mitra, and C. Buckley. Learning routing</nobr></div>
+<div style="position:absolute;top:5641;left:105"><nobr>queries in a query zone. In SIGIR ’97: Proceedings of the</nobr></div>
+<div style="position:absolute;top:5657;left:105"><nobr>20th annual international ACM SIGIR conference on Re-</nobr></div>
+<div style="position:absolute;top:5674;left:105"><nobr>search and development in information retrieval, pages 25–</nobr></div>
+<div style="position:absolute;top:5690;left:105"><nobr>32, New York, NY, USA, 1997. ACM.</nobr></div>
+<div style="position:absolute;top:5710;left:75"><nobr>[26] F. Song and W. B. Croft. A general language model for infor-</nobr></div>
+<div style="position:absolute;top:5727;left:105"><nobr>mation retrieval. In CIKM ’99: Proceedings of the eighth in-</nobr></div>
+<div style="position:absolute;top:5743;left:105"><nobr>ternational conference on Information and knowledge man-</nobr></div>
+<div style="position:absolute;top:5760;left:105"><nobr>agement, pages 316–321, New York, NY, USA, 1999. ACM.</nobr></div>
+<div style="position:absolute;top:5780;left:75"><nobr>[27] S.-T. Wu, Y. Li, Y. Xu, B. Pham, and C. P. Automatic pat-</nobr></div>
+<div style="position:absolute;top:5796;left:105"><nobr>tern taxonomy exatraction for web mining. In Proceedings</nobr></div>
+<div style="position:absolute;top:5813;left:105"><nobr>of IEEE/WIC/ACM International Conference on Web Intelli-</nobr></div>
+<div style="position:absolute;top:5829;left:105"><nobr>gence, pages 242–248, Beijing, China, 2004.</nobr></div>
+<div style="position:absolute;top:5849;left:75"><nobr>[28] S.-T. Wu, Y. Li, and Y. Xu. Deploying approaches for pattern</nobr></div>
+<div style="position:absolute;top:5866;left:105"><nobr>refinement in text mining. In Proceedings of the Sixth In-</nobr></div>
+<div style="position:absolute;top:5882;left:105"><nobr>ternational Conference on Data Mining, pages 1157–1161,</nobr></div>
+<div style="position:absolute;top:5898;left:105"><nobr>2006.</nobr></div>
+<div style="position:absolute;top:5919;left:75"><nobr>[29] X. Wang, H. Fang, and C. Zhai. A study of methods for</nobr></div>
+<div style="position:absolute;top:5935;left:105"><nobr>negative relevance feedback. In SIGIR ’08: Proceedings of</nobr></div>
+<div style="position:absolute;top:5952;left:105"><nobr>the 31st annual international ACM SIGIR conference on Re-</nobr></div>
+<div style="position:absolute;top:5968;left:105"><nobr>search and development in information retrieval, pages 219–</nobr></div>
+<div style="position:absolute;top:5984;left:105"><nobr>226, New York, NY, USA, 2008. ACM.</nobr></div>
+<div style="position:absolute;top:5041;left:463"><nobr>[30] C. C. Yang. Search engines information retrieval in practice.</nobr></div>
+<div style="position:absolute;top:5057;left:493"><nobr>J. Am. Soc. Inf. Sci. Technol., 61(2):430–430, 2010.</nobr></div>
+<div style="position:absolute;top:5080;left:463"><nobr>[31] C. Zhai and J. Lafferty. Model-based feedback in the lan-</nobr></div>
+<div style="position:absolute;top:5096;left:493"><nobr>guage modeling approach to information retrieval. In CIKM</nobr></div>
+<div style="position:absolute;top:5113;left:493"><nobr>’01: Proceedings of the tenth international conference on In-</nobr></div>
+<div style="position:absolute;top:5129;left:493"><nobr>formation and knowledge management, pages 403–410, New</nobr></div>
+<div style="position:absolute;top:5145;left:493"><nobr>York, NY, USA, 2001. ACM.</nobr></div>
+</span></font>
+<font face="Times" size="3"><span style="font-size:12px;font-family:Times">
+<div style="position:absolute;top:6028;left:443"><nobr>5</nobr></div>
+</span></font>
+
+
+</div></body></html>

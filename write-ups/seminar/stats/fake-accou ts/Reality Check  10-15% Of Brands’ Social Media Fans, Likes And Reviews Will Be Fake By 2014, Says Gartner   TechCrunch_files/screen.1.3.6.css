@@ -1,0 +1,222 @@
+/* ------------------
+  TECHCRUNCH ::
+------------------------- */
+
+/* ------------------
+  Widget Container
+------------------------- */
+#grv_best_stories {
+  font-family: helvetica,arial,clean,sans-serif;
+  background: #fff;
+}
+
+/* ------------------
+  Widget Title
+------------------------- */
+#grv_best_stories h3 {
+  background: url('techcrunch.global.module-header_default.sprite.png') 100% -30px no-repeat;
+  color: white;
+  display: inline-block;
+  font-family: Interstate, Helvetica, Arial, sans-serif;
+  font-size: 25px;
+  font-weight: bold;
+  line-height: 30px;
+  margin: 0 0 5px 0;
+  padding: 0 30px 0 10px;
+  text-transform: uppercase;
+}
+
+
+/* ------------------
+  Widget Navigation
+------------------------- */
+.tabBar {
+  margin: 0px 0px 10px 10px;
+  height: 24px;
+  border-bottom: 1px solid #666;
+  position: relative;
+  padding: 0 0 5px 5px;
+}
+.tab {
+  color: black;
+  font-family: Interstate, Helvetica, Arial, sans-serif;
+  font-size: 100%;
+  font-weight: bold;
+  margin-right: 10px;
+  text-decoration: none;
+  text-transform: uppercase;
+  padding: 0px 0px 5px 0px;
+}
+.tab a {
+  color: #000;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 0;
+}
+.tab a:hover {
+  color: #0A9600;
+  text-decoration: none;
+}
+.selectedTab {
+  -moz-border-radius: 0px;
+  -webkit-border-radius: 0px;
+  background-color: #fff;
+  position: relative;
+}
+.selectedTab a, .selectedTab a:hover {
+  color: #0A9600;
+  text-decoration: none;
+}
+.selectedTab a:after {
+  bottom: -7px;
+  content: "▼";
+  font-size: 10px;
+  left: 44%;
+  position: absolute;
+}
+.untabbed .panel {
+  border-top: 1px solid #000;
+  margin-top: 6px;
+  padding-top: 10px;
+}
+
+
+/* ------------------
+  Widget Article
+------------------------- */
+.grv_articles {
+  padding: 0px 0px 0px 10px;
+  margin: 0;
+}
+.grv_article {
+  position: relative;
+  min-height: 55px; /* article HEIGHT */
+  margin: 0px 0px 6px 0px;
+  padding: 15px 0px 6px 105px;
+  background: url('tc_img_bg.png') no-repeat 1px 1px;
+}
+
+.grv_img_link {
+  background-color: white;
+  border: 2px solid #fff;
+  display: block;
+  height: 64px;
+  padding: 0px;
+  width: 89px;
+  overflow: hidden;
+  position: absolute;
+  top:  2px;
+  left: 2px;
+}
+.grv_img_link:hover {
+  /*background-color: #0A9600;*/
+  border: 2px solid #0A9600;
+}
+
+/* ------------------
+ 	Image Resizing - in conjunction with JS
+------------------------- */
+.grv_article_img {
+  position: relative;
+}
+
+a.grv_article_title {
+  position: relative;
+  color: black;
+  font-size: 16px;
+  line-height: 18px;
+  text-decoration: none;
+  font-weight: bold;
+  max-height: 54px;
+}
+a.grv_article_title:hover {
+  color: #0A9600;
+  text-decoration: none;
+}
+
+.spinner {
+  padding-bottom: 740px;
+}
+.grv_publisher {
+  display: inline;
+  font-size: 10px;
+  color: #999;
+}
+.grv_publisher a {
+  color: #0A9600;
+  text-decoration: none;
+}
+.grv_publisher a:hover {
+  text-decoration: underline;
+}
+
+
+/* ------------------
+  Thumbs Rating
+------------------------- */
+.rating_info {
+  display: none;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background: url('bg-white-90.png');
+  font-weight: bold;
+  text-align: center;
+}
+.rating_info h4 {
+  display: inline-block;
+  margin: 10px auto 4px auto;
+  font-size: 20px;
+  padding: 4px 10px 4px 10px;
+}
+.thumb_rating {
+  width: 13px;
+  height: 0px;
+  padding-top: 12px;
+  overflow: hidden;
+  background-image: url('thumb-ratings.png');
+  cursor: pointer;
+  display: none;
+}
+.grv_article:hover .thumb_rating {
+  display: block;
+}
+.thumbs_up {
+  background-position: -13px -12px;
+  position: absolute;
+  top:  0px;
+  right: 0px;
+}
+.thumbs_up:hover, .ratings.selected .thumbs_up {
+  background-position: -13px 0px;
+  display: block;
+}
+.thumbs_down {
+  background-position: 0px -12px;
+  position: absolute;
+  top:  0px;
+  right: 19px;
+}
+.thumbs_down:hover {
+  background-position: 0px 0px;
+}
+
+.rating_info h4 {
+  background: #0A9600;
+  color: #fff;
+  text-transform: uppercase;
+}
+.rating_info.rate_down_info h4, .rating_info.rated_down_info h4 {
+  background: #000;
+  color: #fff;
+}
+.rating_info p {
+  margin: 0;
+}
+
+.whats_this,
+#tt_whats_this {
+  display: none;
+}

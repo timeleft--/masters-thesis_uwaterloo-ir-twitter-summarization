@@ -1,0 +1,104 @@
+#friCalculator * {
+	margin: 0;
+}
+#friCalculator {
+	background-color: #fff;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-weight: normal;
+	width: 308px;
+	height: 275px;
+	max-height: 275px; /* for IE6 */
+	overflow: hidden;
+	text-align: left;
+	color: #333333;
+	padding-bottom: 40px;
+	position: relative;
+}
+#friCalculator h2 {
+	font-family: Georgia;
+	font-size: 14px;
+	padding: 5px 0 20px;
+	border-bottom: dotted 1px #999999;
+	margin-bottom: 5px;
+}
+#friCalculator p.compare_deals a:hover {
+	text-decoration: underline;
+}
+#friCalculator form {
+	width: 150px;
+}
+#friCalculator form #usage label {
+	display: block;
+	line-height: 20px;
+}
+#friCalculator #usage_lowLabel {
+	margin-top: 10px;
+}
+#friCalculator form #usage label input {
+	margin-right: 4px;
+}
+#friCalculator fieldset#usage {
+	border:none;
+	width: 140px;
+	margin: 10px 0;
+	padding: 0;
+	display: block;
+}
+#friCalculator form input#calculate, #friCalculator form input#continue {
+	cursor: pointer;
+}
+#friCalculator #PostCode {
+	display:block;
+	width: 110px;
+	padding: 2px;
+	margin-top: 5px;
+	border: solid 1px #999;
+}
+#friCalculator p#savings {
+	font-size: 14px;
+	font-weight: bold;
+	margin-bottom: 10px;
+}
+#friCalculator h3 {
+	font-size: 13px;
+	font-weight: bold;
+}
+#friCalculator .errorMessage {
+	color: #f00;
+	font-weight: bold;
+	position: absolute;
+	left: 0px;
+	bottom: 10px;
+	width: 120px;
+}
+#friCalculator .tariffName {
+	margin: 4px 0 10px 0;
+}
+#friCalculator .tariffName img {
+	display: block;
+	margin-top: 10px;
+}
+#friCalculator #unableToGetQuickDeal p {
+	margin-bottom: 1em;
+	width: 140px;
+}
+#friCalculator p.compare_deals {
+	position: absolute;
+	right: 0px;
+	width: 140px;
+	padding-top: 140px;
+	background: transparent url(Gas140x130.jpg) no-repeat scroll right top;
+}
+#friCalculator a {
+	color: #005689;
+	display:block;
+	border:0;
+	height:26px;
+	margin-bottom:5px;
+	text-decoration:none;
+}
+#friCalculator img {
+	border:0;
+	text-decoration:none;
+}

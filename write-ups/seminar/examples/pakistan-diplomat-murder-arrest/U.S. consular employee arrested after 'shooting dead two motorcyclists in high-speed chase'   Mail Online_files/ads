@@ -1,0 +1,41 @@
+{
+
+var google_ads = new Array();
+var google_ad;
+var google_radlinks = new Array();
+var google_radlink;
+var google_info = new Object();
+google_ad = new Object(); 
+google_ad.n = 1; 
+google_ad.type = "text"; 
+google_ad.bidtype = "CPC"; 
+google_ad.targeting_type = "contextual"; 
+google_ad.url = "http://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=CMwbywfOWUKt-84GAApbHgbAMo5bCwQSbqYOKOcCNtwEQASCP7-YZKAJQ1Jjm-_7_____AWD9iJqB6AOgAb2GhdwDyAEBqAMBqgS-AU_QxJeeXrEQ7VCUdew5cKd9enSn3gahmgqxCwq4pnzNC6wEjnzq9DkBe_EcxhyjUT4WwnpFZ9QuPOJXTNlOl-QpJtzZf71tD6jr99GpAdQLZ04WXnlEhwfy_lQoiz2naD15W2tvBLHrowJue1lbb0fD92nwHsmB9erH5J3yhB0akIQgRgofY6NR-q_GwTJVtXB_nR3jFornrNlRUVtv1wDFRAab5pvyU7Un7DF7ZKTpKWD_NoBCCOITYTrPdqE&amp;num=1&amp;sig=AOD64_3XcgosEwFiY2ewWfjycB9XjwF2iQ&amp;client=ca-an-dailymail&amp;adurl=http://www.zulily.com/%3Ftid%3Dsrchgoog_www.dailymail.co.uk_15238564779_content_DCO_-_(DI)_Text"; 
+google_ad.visible_url = "www.zulily.com"; 
+google_ad.line1 = "Baby \x26amp; Kids Designer Wear"; 
+google_ad.line2 = "Up to 90% Off on Clothes, Gear"; 
+google_ad.line3 = "\x26amp; More for Moms, Babies \x26amp; Kids!"; 
+google_ad.regionname = ""; 
+google_ads[0] = google_ad; 
+google_ad = new Object(); 
+google_ad.n = 2; 
+google_ad.type = "text"; 
+google_ad.bidtype = "CPC"; 
+google_ad.targeting_type = "contextual"; 
+google_ad.url = "http://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=C8JBdwfOWUKt-84GAApbHgbAM_uS8rwKuru2PQ8CNtwEQAiCP7-YZKAJQn4Wa4QJg_YiagegDoAHqtO3lA8gBAagDAaoEvgFP0KSslV6yEO1QlHXsOXCnfXp0p94GoZoKsQsKuKZ8zQusBI586vQ5AXvxHMYco1E-FsJ6RWfULjziV0zZTpfkKSbc2X-9bQ-o6_fRqQHUC2dOFl55RIcH8v5UKIs9p2g9eVtrbwSx66MCbntZW29Hw_dp8B7JgfXqx-Sd8oQdGpCEIEYKH2OjUfqvxsEyVbVwf50d4xaK56zZUVFbb9cAxUQG4-Wb8lOgJ-0Me2Sk6Slg_zaAQgjiE2Ef012d&amp;num=2&amp;sig=AOD64_1UNJQrlbuIGQefqTNMuHE3cIBEGA&amp;client=ca-an-dailymail&amp;adurl=http://gay.lavaplace.com/%3Fpage%3Dregister%26ref%3D1_181%26show%3Dmm%26gender%3D1%26looking_for%3D1%26kwrd_gender%3DSingle%2520Gays"; 
+google_ad.visible_url = "gay.lavaplace.com"; 
+google_ad.line1 = "Meet Single Gay Men Now"; 
+google_ad.line2 = "International Gay Men Dating Site"; 
+google_ad.line3 = "Meet men seeking men for love today"; 
+google_ad.regionname = ""; 
+google_ads[1] = google_ad; 
+google_info.feedback_url = "http://www.google.com/url?ct\x3dabg\x26q\x3dhttps://www.google.com/adsense/support/bin/request.py%3Fcontact%3Dabg_afc%26url%3Dhttp://www.dailymail.co.uk/news/article-1351324/U-S-consular-employee-arrested-shooting-dead-motorcyclists-high-speed-chase.html%26gl%3DCA%26hl%3Den%26client%3Dca-an-dailymail%26ai0%3DCMwbywfOWUKt-84GAApbHgbAMo5bCwQSbqYOKOcCNtwEQASCP7-YZKAJQ1Jjm-_7_____AWD9iJqB6AOgAb2GhdwDyAEBqAMBqgS-AU_QxJeeXrEQ7VCUdew5cKd9enSn3gahmgqxCwq4pnzNC6wEjnzq9DkBe_EcxhyjUT4WwnpFZ9QuPOJXTNlOl-QpJtzZf71tD6jr99GpAdQLZ04WXnlEhwfy_lQoiz2naD15W2tvBLHrowJue1lbb0fD92nwHsmB9erH5J3yhB0akIQgRgofY6NR-q_GwTJVtXB_nR3jFornrNlRUVtv1wDFRAab5pvyU7Un7DF7ZKTpKWD_NoBCCOITYTrPdqE%26ai1%3DC8JBdwfOWUKt-84GAApbHgbAM_uS8rwKuru2PQ8CNtwEQAiCP7-YZKAJQn4Wa4QJg_YiagegDoAHqtO3lA8gBAagDAaoEvgFP0KSslV6yEO1QlHXsOXCnfXp0p94GoZoKsQsKuKZ8zQusBI586vQ5AXvxHMYco1E-FsJ6RWfULjziV0zZTpfkKSbc2X-9bQ-o6_fRqQHUC2dOFl55RIcH8v5UKIs9p2g9eVtrbwSx66MCbntZW29Hw_dp8B7JgfXqx-Sd8oQdGpCEIEYKH2OjUfqvxsEyVbVwf50d4xaK56zZUVFbb9cAxUQG4-Wb8lOgJ-0Me2Sk6Slg_zaAQgjiE2Ef012d\x26usg\x3dAFQjCNFOh5NHnf_hN_aGj-OiplecxbsL6g";
+var google_attribution_text = "";
+var google_is_rtl = false;
+if (window.google_ad_request_done) {
+google_ad_request_done(google_ads);
+}
+if (window.google_radlink_request_done) {
+google_radlink_request_done(google_radlinks);
+}
+}

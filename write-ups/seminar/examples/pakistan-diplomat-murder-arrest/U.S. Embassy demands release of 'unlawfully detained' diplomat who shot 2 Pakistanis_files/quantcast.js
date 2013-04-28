@@ -1,0 +1,4 @@
+if ( typeof QUANTCAST_ON == 'undefined' || QUANTCAST_ON ) {
+	_qoptions={qacct:"p-5cYn7dCzvaeyA"}; 
+	try{function h(x){return(encodeURIComponent||escape)(x||'')}var qo='',qm='',m='webpage',e='load',u='undefined';if(typeof _qoptions!=u&&_qoptions){var q=_qoptions;for(var k in q){if(typeof(q[k])!='string')continue;if(k=='qacct'){_qacct=q[k]}else{qo+=';'+k+'='+h(q[k])}if(k=='media'){m=q[k]}if(k=='event'){e=q[k]}}_qoptions=null}if(_qacct.length==0)throw'';if(m=='webpage'&&e=='load'){if((typeof _qpixelsent!=u)&&(_qpixelsent==_qacct))throw'';_qpixelsent=_qacct}if(typeof _qmeta!=u&&_qmeta){qm=';m='+h(_qmeta);_qmeta=null}_qimg=new Image();_qimg.alt='';_qimg.src=(window.location.protocol=='https:'?'https:\/\/secure':'http:\/\/pixel')+'.quantserve.com/pixel;r='+Math.round(Math.random()*2147483647)+';ns='+(self==top?'0':'1')+';url='+h(window.location.href)+';ref='+h(window.document.referrer)+';et='+new Date().getTime()+';a='+_qacct+qo+qm}catch(e){}
+}

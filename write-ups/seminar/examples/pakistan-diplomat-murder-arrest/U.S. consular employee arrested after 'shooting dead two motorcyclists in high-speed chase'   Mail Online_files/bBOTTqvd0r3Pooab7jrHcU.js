@@ -1,0 +1,1 @@
+Tynt.sc({"w":"MailOnline","f":"DailyMail"})

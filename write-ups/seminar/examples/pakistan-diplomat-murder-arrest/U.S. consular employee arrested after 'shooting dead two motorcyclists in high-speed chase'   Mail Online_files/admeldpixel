@@ -1,0 +1,1 @@
+(new Image()).src='http://d.chango.com/c/am/pixel?i=7705d2e2-f6e5-11e0-9d90-00259034b9f4&p=&u=http%3A//tag.admeld.com/match%3Fadmeld_adprovider_id%3D333%26external_user_id%3D7705d2e2-f6e5-11e0-9d90-00259034b9f4&r=' + encodeURIComponent(document.referrer) + '&t=' + encodeURIComponent(document.title);

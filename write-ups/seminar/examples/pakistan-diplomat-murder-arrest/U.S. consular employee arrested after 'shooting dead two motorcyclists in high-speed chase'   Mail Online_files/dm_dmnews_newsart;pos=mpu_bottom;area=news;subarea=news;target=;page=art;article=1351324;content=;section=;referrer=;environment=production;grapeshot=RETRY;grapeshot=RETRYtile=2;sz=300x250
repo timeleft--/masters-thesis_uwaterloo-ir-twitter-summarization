@@ -1,0 +1,1 @@
+document.write('\x3cscript type\x3d\x22text/javascript\x22\x3e\nadmeld_publisher  \x3d 89;\nadmeld_site       \x3d \x27ANDigitalROW\x27;\nadmeld_size       \x3d \x27300x250\x27;\nadmeld_placement   \x3d \x27dailymail-btf\x27;\n\x3c/script\x3e\n\x3cscript type\x3d\x22text/javascript\x22 src\x3d\x22http://js.admeld.com/meld120.js\x22\x3e\x3c/script\x3e');

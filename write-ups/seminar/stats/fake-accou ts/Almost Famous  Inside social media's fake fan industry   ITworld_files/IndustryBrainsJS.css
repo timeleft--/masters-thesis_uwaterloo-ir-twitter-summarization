@@ -1,0 +1,163 @@
+A.low_link
+{
+    COLOR: #003399
+}
+A.low_link:link
+{
+    TEXT-DECORATION: none
+}
+A.low_link:visited
+{
+    TEXT-DECORATION: none
+}
+A.low_link:hover
+{
+    TEXT-DECORATION: underline
+}
+
+.bp_ModuleLink
+{
+    FONT-WEIGHT: normal;
+    FONT-SIZE: 11px;
+    COLOR: #003399;
+    FONT-FAMILY: Verdana, Arial
+}
+A.bp_ModuleLink:link
+{
+    FONT-WEIGHT: normal;
+    FONT-SIZE: 10px;
+    COLOR: #003399;
+    FONT-FAMILY: Verdana, Arial;
+    TEXT-DECORATION: none
+}
+A.bp_ModuleLink:visited
+{
+    FONT-WEIGHT: normal;
+    FONT-SIZE: 10px;
+    COLOR: #003399;
+    FONT-FAMILY: Verdana, Arial;
+    TEXT-DECORATION: none
+}
+A.bp_ModuleLink:hover
+{
+    FONT-WEIGHT: normal;
+    FONT-SIZE: 10px;
+    COLOR: #003399;
+    FONT-FAMILY: Verdana, Arial;
+    TEXT-DECORATION: underline
+}
+.Article_SubTitle
+{
+    FONT-WEIGHT: normal;
+    FONT-SIZE: 12px;
+    COLOR: #669900;
+    FONT-FAMILY: Verdana, arial, sans
+}
+#oc_header UL
+{
+    PADDING-RIGHT: 0px;
+    PADDING-LEFT: 0px;
+    PADDING-BOTTOM: 0px;
+    MARGIN: 0px;
+    PADDING-TOP: 0px;
+    LIST-STYLE-TYPE: none;
+    BACKGROUND-COLOR: #061954;
+    TEXT-ALIGN: left
+}
+#oc_header UL LI
+{
+    PADDING-RIGHT: 2px;
+    PADDING-LEFT: 6px;
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 11px;
+    BACKGROUND-IMAGE: url(http://www.industrybrains.com/images/Classifieds_arrow_js.gif);
+    PADDING-BOTTOM: 2px;
+    COLOR: #ffffff;
+    PADDING-TOP: 2px;
+    FONT-FAMILY: Verdana
+}
+
+#oc_header UL
+{
+    PADDING-RIGHT: 0px;
+    PADDING-LEFT: 0px;
+    PADDING-BOTTOM: 0px;
+    MARGIN: 0px;
+    PADDING-TOP: 0px;
+    LIST-STYLE-TYPE: none;
+    BACKGROUND-COLOR: #061954;
+    TEXT-ALIGN: left
+}
+#oc_header UL LI
+{
+    PADDING-RIGHT: 2px;
+    PADDING-LEFT: 6px;
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 11px;
+    BACKGROUND-IMAGE: url(http://www.industrybrains.com/images/Classifieds_arrow_js.gif);
+    PADDING-BOTTOM: 2px;
+    COLOR: #ffffff;
+    PADDING-TOP: 2px;
+    FONT-FAMILY: Verdana
+}
+#online_classified
+{
+    BORDER-RIGHT: #eaeaea 3px solid;
+    BORDER-TOP: #eaeaea 3px solid;
+    BORDER-LEFT: #eaeaea 3px solid;
+    BORDER-BOTTOM: #eaeaea 3px solid
+}
+#online_classified UL
+{
+    PADDING-RIGHT: 0px;
+    PADDING-LEFT: 0px;
+    PADDING-BOTTOM: 0px;
+    MARGIN: 0px;
+    PADDING-TOP: 0px;
+    LIST-STYLE-TYPE: none;
+    BACKGROUND-COLOR: #ffffff;
+    TEXT-ALIGN: left
+}
+#online_classified UL LI
+{
+    PADDING-RIGHT: 3px;
+    BACKGROUND-POSITION: 0px 11px;
+    PADDING-LEFT: 15px;
+    FONT-SIZE: 10px;
+    BACKGROUND-IMAGE: url(http://www.industrybrains.com/images/classifieds_arrow_js.gif);
+    COLOR: #333333;
+    PADDING-TOP: 5px;
+    BACKGROUND-REPEAT: no-repeat;
+    FONT-FAMILY: Verdana
+}
+#online_classified UL LI A
+{
+    FONT-WEIGHT: bold;
+    FONT-SIZE: 10px;
+    COLOR: #003399;
+    FONT-FAMILY: Verdana;
+    TEXT-DECORATION: underline
+}
+#online_classified UL LI A:hover
+{
+    TEXT-DECORATION: none
+}
+#online_classified UL LI.oc_footer
+{
+    BACKGROUND-POSITION: 25px 16px;
+    PADDING-BOTTOM: 10px;
+    PADDING-TOP: 10px;
+    TEXT-ALIGN: right
+}
+#online_classified UL LI.oc_footer A
+{
+    FONT-WEIGHT: normal;
+    TEXT-ALIGN: right
+}
+
+.content7
+{
+    FONT-SIZE: 10px;
+    COLOR: #000000;
+    FONT-FAMILY: Verdana, arial, sans
+}

@@ -1,0 +1,368 @@
+IDF:
+diplomat = 10.41
+pakistan = 9.06
+murder = 8.55
+arrest = 8.52
+
+
+Pakistan diplomat arrest murder
+11-04@11:01:46 main DEBUG FISQueryExpander:211 - Added 25 results from the query itemset:diplomat itemset:pakistan itemset:murder itemset:arrest
+11-04@11:01:46 main DEBUG FISQueryExpander:168 - Querying Twitter by: filtered(+(text:diplomat text:pakistan text:murder text:arrest) -text:rt)->timestamp:[-9223372036854775808 TO 1352044311444]
+1	DTN India: US mounts pressure on Pakistan to release 'illegally detained' murder-accused diplomat: Islamabad, Fe... http://bit.ly/gRaUKb	28.033785	34857364532236288
+2	U.S. diplomatic worker faces murder charges in Pakistan shooting (Los Angeles Times) http://feedzil.la/gAEXC8	28.033785	31053656509911040
+3	BBC News - US diplomat charged with Pakistan double murder  http://www.bbc.co.uk/news/world-south-asia-12304457	28.033785	30809856231342080
+4	Uh oh, American diplomat charged with double murder in Pakistan: http://yhoo.it/fG04tY He should have just called in a drone.	28.033785	30723400687165441
+5	The Mystery Deepens: Was American Arrested In Pakistan 4 Killing 2 Men An Assassin?—US Claims He Has 'Diplomatic Immunity' http://tiny.cc/I3	27.994335	35117929209008128
+6	Negotiations Continue in Pakistan on Detained US Diplomat (Voice Of America) http://feedzil.la/ibnxco	19.473457	34983143735820288
+7	U.S. official's fate may threaten U.S., Pakistan aid, ties - diplomat  #SouthAsia #news #IN	19.473457	34872339610996737
+8	DTN Pakistan: Wife of Pakistani Man Shot by US Diplomat Commits Suicide: A Pakistani nurse and unidentified rela... http://bit.ly/gjQ6rn	19.473457	34759762457395201
+9	Pakistan to continue to extend moral, political, diplomatic support to Kashmiris: PM: Prime Minister Syed Yusuf Raza Gilani has reite...	19.473457	33781218164080640
+10	Pakistan to continue to extend moral, political, diplomatic support to Kashmiris: PM: Prime Minister Syed Yusuf ... http://bit.ly/hHrIH0	19.473457	33781218138918912
+11	AP sources: Pakistan likely to release US diplomat - The Associated Press: DAWN.com AP… http://goo.gl/fb/SeCNK	19.473457	33712124932923392
+12	Case Of Jailed Diplomat In Pakistan Fuels Anger http://interesting.rssnewest.com/case-of-jailed-diplomat-in-pakistan-fuels-anger/	19.473457	33353153395040257
+13	Whether in Egypt or Pakistan the US must demand that our citizens are treated fairly, RELEASE OUR DIPLOMAT! RELEASE OUR JOURNALISTS!	19.473457	33317258596069376
+14	BREAKING NEWS&gt;&gt; Pakistan court extends detention of U.S. diplomat An American who killed two Pakistani men in Lahore las http://tiny.ly/z4YX	19.473457	33163528449953792
+15	U.S. diplomat ordered held in Pakistan http://goo.gl/fb/Ccz8W	19.473457	33107726003339264
+16	Pakistan court extends detention of US diplomat - msnbc.com	19.473457	33094359847014401
+17	U.S. diplomat ordered held in Pakistan: A Pakistani judge has ordered that a U.S. consular employee accused of k... http://bit.ly/ffXFpW	19.473457	33094107148591104
+18	U.S. diplomat ordered held in Pakistan http://bit.ly/f3ZmNn [CNN]	19.473457	33093699894247424
+19	Overload News Pakistan court extends detention of U.S. diplomat - Reuters: DAWN.comPakistan court extends detent... http://bit.ly/hDpWHM	19.473457	33068047145107456
+20	Pakistan court extends detention of U.S. diplomat: LAHORE, Pakistan (Reuters) - An American who killed two Pakis... http://bit.ly/gUZcNT	19.473457	33054629621141504
+21	Pakistan court extends detention of U.S. diplomat: LAHORE, Pakistan (Reuters) - An American who killed two Pakis... http://bit.ly/gUZcNT	19.473457	33054628148940800
+22	Davis holds diplomatic passport: Malik - Pakistan Observer http://bit.ly/fSn5ae	19.473457	33017924159541248
+23	Pakistan court blocks handing over of US "diplomat" - Reuters http://bit.ly/ecYGTl	19.473457	32350953285877760
+24	Pakistan'da diplomat krizi: Lahor kentinde görev yapan Amerikalı bir diplomatın kendisine saldıran iki kişiyi vu... http://bit.ly/frMfQl	19.473457	32338481829117952
+25	Pakistan court blocks handing over of U.S. \\\\\\\"diplomat\\\\\\\": LAHORE, Pakistan (Reuters) - A Pakistani co... http://bit.ly/eMz8mO	19.473457	32332659891904512
+26	U.S. Calls on Pakistan to Release Diplomat: The U.S. called for the immediate release of an American diploma... http://on.wsj.com/h3gjPV	19.473457	31869348700229632
+27	london hostage/death threat&gt;raymond davis according the australian pakistan embassy was issued a official/diplomatic	19.473457	31802123293294592
+28	Raymond Davis as a fake 'diplomat': Pakistan: Ms. Siddiqui's please of self defense, were not accepted, she was ... http://bit.ly/fjzSez	19.473457	31617061889249280
+29	US Demands Release of Diplomat in Pakistan: The United States has called for the immediate release of one of its... http://bit.ly/g6jRBK	19.473457	31456453080383488
+30	U.S. Embassy demands release of diplomat held by Pakistan in shooting deaths: Source: www.latimes.com --- Saturd... http://bit.ly/fJDZrl	19.473457	31418086171082752
+31	US asks Pakistan to release diplomat - http://tinyurl.com/64oqj4t #india #news	19.473457	31415088246169600
+32	NDTV: US asks Pakistan to release diplomat http://snipurl.com/1xerb8	19.473457	31413608780931072
+33	U.S. Demands Pakistan Release Diplomat Held in Shooting Deaths of 2 Pakistanis; State Dept. Says It Was Self-Defense http://bit.ly/fyLMtC	19.473457	31382773830782976
+
+ pakistan murder
+11-04@14:14:48 main DEBUG FISQueryExpander:168 - Querying Twitter by: filtered(+(text:pakistan text:murder) -text:rt)->timestamp:[-9223372036854775808 TO 1352050169743]
+1	DTN India: US mounts pressure on Pakistan to release 'illegally detained' murder-accused diplomat: Islamabad, Fe... http://bit.ly/gRaUKb	17.61956	34857364532236288
+2	Pakistan Won't Free U.S. Diplo Accused of Murder- Freed U.S. Hiker Ordered Back to Iran http://fxn.ws/hFjAF4 [Fox News]	17.61956	32492654612713472
+3	US Official to Face Murder Charge in Pakistan http://ow.ly/3M7Jk	17.61956	31415047490117634
+4	US official in Pakistan to face murder charge: Pakistan will pursue murder charges against a U.S. consular emplo... http://bit.ly/gxu3nC	17.61956	31284921209200641
+5	U.S. diplomatic worker faces murder charges in Pakistan shooting (Los Angeles Times) http://feedzil.la/gAEXC8	17.61956	31053656509911040
+6	DTN World News: U.S. official in Pakistan to face murder charges: Pakistan will pursue murder charges against a ... http://bit.ly/hknl23	17.61956	31006409738948610
+7	Official to face murder rap in Pakistan, fury against US grows http://tinyurl.com/4kn2hb3	17.61956	31000463302205441
+8	US official in Pakistan to face murder charge      (AP) - AP - Pakistan will pursue murder charges against a U.S. co... http://ow.ly/1b4nMV	17.61956	30966722299170816
+9	US official in Pakistan to face murder charge (AP) http://goo.gl/fb/650GW	17.61956	30950530419261440
+10	US official in Pakistan to face murder rap - Salon http://bit.ly/e0YTEY	17.61956	30941177725329408
+11	US official on Pakistan murder charge: A US consular official is facing murder charges after the shooting of two... http://bbc.in/gcQZFK	17.61956	30909954219053056
+12	US man on Pakistan murder charge: A US consular employee is charged with murder over the shooting of two motorcy... http://bbc.in/gcQZFK	17.61956	30887092338827264
+13	US man on Pakistan murder charge: A US consular employee is charged with murder over the shooting of two motorcy... http://bbc.in/gcQZFK	17.61956	30887030091157504
+14	BBC News - US diplomat charged with Pakistan double murder  http://www.bbc.co.uk/news/world-south-asia-12304457	17.61956	30809856231342080
+15	Uh oh, American diplomat charged with double murder in Pakistan: http://yhoo.it/fG04tY He should have just called in a drone.	17.61956	30723400687165441
+16	Breaking News: Ugandan gay rights activist murdered http://bit.ly/gS2ZsL #pakistan #news	17.61956	30619194575818755
+17	http://bit.ly/hv5yuq  Why Sonawane murdered? Kerosene Pakistan Rs 34.89 Bangladesh 30.53 Nepal Rs 34.35 &? @ShashiTharoor @SushmaSwarajBJP	17.61956	30595581206331392
+18	US embassy cables: Pakistan committed to defending conviction of Omar Saeed Sheikh for Daniel Pearl murder http://t.co/x3fDPRf via @guardian	17.61956	29965575237140480
+19	From Pakistan to Lausanne for 2 years: love, for chasing murderers, survived http://jewi.sh/464g http://jewi.sh/41qv ⓃⒺⓌⓈⓇⓊ ⒸⓄ ⒾⓁ	17.61956	29465538740617216
+20	The situation created in the wake of Taseer's murder has caused liberals to start fleeing Pakistan. Great cause for worry.	17.61956	29067530056245248
+21	Politics: House lawmakers warn Pakistan it could lose aid if American is not released: The warning was delivered... http://bit.ly/dRy0H3	9.059232	35123133375582208
+22	#UK #Pakistan Muntakhib Az Nabi saw Mery Khwaja by Shumaila http://bit.ly/gvS0gH  #news #geo #USA	9.059232	35118454700773376
+23	UN Applauds Pakistan's Climate Change Efforts - EcoWorld.com: DAWN.comUN Applauds Pakistan's Climate Change Effo... http://bit.ly/e8OP3g	9.059232	35118268100386816
+24	The Mystery Deepens: Was American Arrested In Pakistan 4 Killing 2 Men An Assassin?—US Claims He Has 'Diplomatic Immunity' http://tiny.cc/I3	9.059232	35117929209008128
+25	#UK #Pakistan SCVNGR: Coming To LG Optimus V- Via Virgin Mobile http://bit.ly/g8CyV3  #news #geo #USA	9.059232	35117903590203392
+26	Pakistan Is Failing Fast. http://read.bi/gcGYHp	9.059232	35116641918394368
+27	#UK #Pakistan بھٹکے بلوچوں کو واپس لا کر مایوسیاں دور کریں گے، رحمان ملک http://bit.ly/etBRsi  #news #geo #USA	9.059232	35109948274778112
+28	The case of Raymond #Davis only perpetuates the "propaganda mills of the growing #Islamist forces in #Pakistan." http://usat.ly/gpw1SB	9.059232	35109758973255680
+29	#UK #Pakistan Mubarak loses control of state media http://bit.ly/eEkteC  #news #geo #USA	9.059232	35105486923628544
+30	Business: Low Cost Biodegradable Plastic Bags Introduced in Pakistan http://bit.ly/f1tN95 #pakistan #business: B... http://bit.ly/hsndPo	9.059232	35091005749338112
+31	Utho Jago Pakistan - Watch February 8th 2011 Show http://bit.ly/fI6M75	9.059232	35088922740523008
+32	Chitral,Pakistan: 39 Community Representatives Trained – Chitral news: Chitral — EDO Health Department, Dr Sher ... http://bit.ly/eGcWsy	9.059232	35079088431431680
+33	(Biz) Govt plans crackdown against tax evaders, losing Rs796b annually http://t.co/f5afzgd #pakistan	9.059232	35073492487503872
+
+pakistan arrest 
+11-04@14:19:38 main DEBUG FISQueryExpander:168 - Querying Twitter by: filtered(+(text:pakistan text:arrest) -text:rt)->timestamp:[-9223372036854775808 TO 1352050169743]
+1	The Mystery Deepens: Was American Arrested In Pakistan 4 Killing 2 Men An Assassin?—US Claims He Has 'Diplomatic Immunity' http://tiny.cc/I3	17.580109	35117929209008128
+2	Karachi police swoop on 'killers': Police in Pakistan's southern port city of Karachi arrest three men accused of carrying out target...	17.580109	33233990227861505
+3	World News: Karachi police swoop on 'killers': Police in Pakistan's southern port city of Karachi arrest three m... http://bbc.in/fEE3NH	17.580109	33231028642385920
+4	Pakistan Arrests 17 Year Old Boy For Blasphemy - http://tinyurl.com/5tgolds - RaulDeSouza	17.580109	33197163173515264
+5	BBC News - Pakistan urged to free schoolboy arrested for blasphemy http://www.bbc.co.uk/news/world-south-asia-12351125 - Oh my... *sad*	17.580109	33125465195548672
+6	'CIA' arrest strains US-Pakistan ties http://bit.ly/htppDm #UK #news	17.580109	32519623433785346
+7	Politics: House lawmakers warn Pakistan it could lose aid if American is not released: The warning was delivered... http://bit.ly/dRy0H3	9.059232	35123133375582208
+8	#UK #Pakistan Muntakhib Az Nabi saw Mery Khwaja by Shumaila http://bit.ly/gvS0gH  #news #geo #USA	9.059232	35118454700773376
+9	UN Applauds Pakistan's Climate Change Efforts - EcoWorld.com: DAWN.comUN Applauds Pakistan's Climate Change Effo... http://bit.ly/e8OP3g	9.059232	35118268100386816
+10	#UK #Pakistan SCVNGR: Coming To LG Optimus V- Via Virgin Mobile http://bit.ly/g8CyV3  #news #geo #USA	9.059232	35117903590203392
+11	Pakistan Is Failing Fast. http://read.bi/gcGYHp	9.059232	35116641918394368
+12	#UK #Pakistan بھٹکے بلوچوں کو واپس لا کر مایوسیاں دور کریں گے، رحمان ملک http://bit.ly/etBRsi  #news #geo #USA	9.059232	35109948274778112
+13	The case of Raymond #Davis only perpetuates the "propaganda mills of the growing #Islamist forces in #Pakistan." http://usat.ly/gpw1SB	9.059232	35109758973255680
+14	#UK #Pakistan Mubarak loses control of state media http://bit.ly/eEkteC  #news #geo #USA	9.059232	35105486923628544
+15	Business: Low Cost Biodegradable Plastic Bags Introduced in Pakistan http://bit.ly/f1tN95 #pakistan #business: B... http://bit.ly/hsndPo	9.059232	35091005749338112
+16	Utho Jago Pakistan - Watch February 8th 2011 Show http://bit.ly/fI6M75	9.059232	35088922740523008
+17	Chitral,Pakistan: 39 Community Representatives Trained – Chitral news: Chitral — EDO Health Department, Dr Sher ... http://bit.ly/eGcWsy	9.059232	35079088431431680
+18	(Biz) Govt plans crackdown against tax evaders, losing Rs796b annually http://t.co/f5afzgd #pakistan	9.059232	35073492487503872
+19	GV South-Asia: Pakistan: Karachi Literature Festival 2011: Written by Rezwan “The second Karachi literature fest... http://bit.ly/gS2PCX	9.059232	35069684080443392
+20	Huge amount of counterfeit money from Pakistan cause for Indian concern: report http://bit.ly/gcxi1b	9.059232	35067900251340801
+21	Pakistan taxes Afghan-bound goods, NATO still exempt – The Express Tribune http://t.co/ZbiYVf0	9.059232	35055303871430656
+22	Unconditional release of DAVIS from Pakistan .....  Is  the way US pressuring Pakistan . what about @wikileaks opinion?	9.059232	35042513228279808
+23	@syrakhan http://on.fb.me/hzOqgZ  The Revolution of #Pakistan  #Inqalaab e #Pakistan  join #march23 freedom from corruption	9.059232	35038105312571392
+24	#Pakistan #Facebook #Statistics - Socialbakers http://t.co/OeSjOuq	9.059232	35036952281489408
+25	@sardesairajdeep true, team Pakistan has the uncanny knack of peaking at the right time...	9.059232	35030000340049920
+26	@FT never thought wl c the americans grovelling in front of pakistan - their creation....what irony	9.059232	35029097591750656
+27	The United States may scrap upcoming talks with Pakistan about the war in Afghanistan to furthe... http://yhoo.it/h65cmR #news #Pakistan	9.059232	35028674101125120
+28	Bombings kill 4, destroy oil tanker carrying NATO fuel: Three bomb blasts in northwest Pakistan killed four security personnel Tuesda...	9.059232	35023623756455936
+29	Sin and Injustice http://goo.gl/fb/Ef4SF #pakistan	9.059232	35021282827309056
+30	US suspends all high-level dialogue with Pakistan http://t.co/MDut9LS so wht is weak & begger nation  #Pakistan gonna do?	9.059232	35019224632004608
+31	Pakistan strike grounds flights: Passengers with Pakistan's state-owned airline PIA see some flights disrupted a... http://bbc.in/eVlKMU	9.059232	35018871563878400
+32	I want to see how america is handling this case wow I like this now america will know how easy its to handle pakistan	9.059232	35017379234717697
+33	PCB chief praises Waqar: Pakistan coach Waqar Younis has received strong support from PCB chief Ijaz Butt for his efforts to rebuild the...	9.059232	35014772667719680
+>
+
+>b:pakistan diplomat
+
+pakistan diplomat
+11-04@14:22:47 main DEBUG FISQueryExpander:168 - Querying Twitter by: filtered(+(text:diplomat text:pakistan) -text:rt)->timestamp:[-9223372036854775808 TO 1352050169743]
+1	The Mystery Deepens: Was American Arrested In Pakistan 4 Killing 2 Men An Assassin?—US Claims He Has 'Diplomatic Immunity' http://tiny.cc/I3	19.473457	35117929209008128
+2	Negotiations Continue in Pakistan on Detained US Diplomat (Voice Of America) http://feedzil.la/ibnxco	19.473457	34983143735820288
+3	U.S. official's fate may threaten U.S., Pakistan aid, ties - diplomat  #SouthAsia #news #IN	19.473457	34872339610996737
+4	DTN India: US mounts pressure on Pakistan to release 'illegally detained' murder-accused diplomat: Islamabad, Fe... http://bit.ly/gRaUKb	19.473457	34857364532236288
+5	DTN Pakistan: Wife of Pakistani Man Shot by US Diplomat Commits Suicide: A Pakistani nurse and unidentified rela... http://bit.ly/gjQ6rn	19.473457	34759762457395201
+6	Pakistan to continue to extend moral, political, diplomatic support to Kashmiris: PM: Prime Minister Syed Yusuf Raza Gilani has reite...	19.473457	33781218164080640
+7	Pakistan to continue to extend moral, political, diplomatic support to Kashmiris: PM: Prime Minister Syed Yusuf ... http://bit.ly/hHrIH0	19.473457	33781218138918912
+8	AP sources: Pakistan likely to release US diplomat - The Associated Press: DAWN.com AP… http://goo.gl/fb/SeCNK	19.473457	33712124932923392
+9	Case Of Jailed Diplomat In Pakistan Fuels Anger http://interesting.rssnewest.com/case-of-jailed-diplomat-in-pakistan-fuels-anger/	19.473457	33353153395040257
+10	Whether in Egypt or Pakistan the US must demand that our citizens are treated fairly, RELEASE OUR DIPLOMAT! RELEASE OUR JOURNALISTS!	19.473457	33317258596069376
+11	BREAKING NEWS&gt;&gt; Pakistan court extends detention of U.S. diplomat An American who killed two Pakistani men in Lahore las http://tiny.ly/z4YX	19.473457	33163528449953792
+12	U.S. diplomat ordered held in Pakistan http://goo.gl/fb/Ccz8W	19.473457	33107726003339264
+13	Pakistan court extends detention of US diplomat - msnbc.com	19.473457	33094359847014401
+14	U.S. diplomat ordered held in Pakistan: A Pakistani judge has ordered that a U.S. consular employee accused of k... http://bit.ly/ffXFpW	19.473457	33094107148591104
+15	U.S. diplomat ordered held in Pakistan http://bit.ly/f3ZmNn [CNN]	19.473457	33093699894247424
+16	Overload News Pakistan court extends detention of U.S. diplomat - Reuters: DAWN.comPakistan court extends detent... http://bit.ly/hDpWHM	19.473457	33068047145107456
+17	Pakistan court extends detention of U.S. diplomat: LAHORE, Pakistan (Reuters) - An American who killed two Pakis... http://bit.ly/gUZcNT	19.473457	33054629621141504
+18	Pakistan court extends detention of U.S. diplomat: LAHORE, Pakistan (Reuters) - An American who killed two Pakis... http://bit.ly/gUZcNT	19.473457	33054628148940800
+19	Davis holds diplomatic passport: Malik - Pakistan Observer http://bit.ly/fSn5ae	19.473457	33017924159541248
+20	Pakistan court blocks handing over of US "diplomat" - Reuters http://bit.ly/ecYGTl	19.473457	32350953285877760
+21	Pakistan'da diplomat krizi: Lahor kentinde görev yapan Amerikalı bir diplomatın kendisine saldıran iki kişiyi vu... http://bit.ly/frMfQl	19.473457	32338481829117952
+22	Pakistan court blocks handing over of U.S. \\\\\\\"diplomat\\\\\\\": LAHORE, Pakistan (Reuters) - A Pakistani co... http://bit.ly/eMz8mO	19.473457	32332659891904512
+23	U.S. Calls on Pakistan to Release Diplomat: The U.S. called for the immediate release of an American diploma... http://on.wsj.com/h3gjPV	19.473457	31869348700229632
+24	london hostage/death threat&gt;raymond davis according the australian pakistan embassy was issued a official/diplomatic	19.473457	31802123293294592
+25	Raymond Davis as a fake 'diplomat': Pakistan: Ms. Siddiqui's please of self defense, were not accepted, she was ... http://bit.ly/fjzSez	19.473457	31617061889249280
+26	US Demands Release of Diplomat in Pakistan: The United States has called for the immediate release of one of its... http://bit.ly/g6jRBK	19.473457	31456453080383488
+27	U.S. Embassy demands release of diplomat held by Pakistan in shooting deaths: Source: www.latimes.com --- Saturd... http://bit.ly/fJDZrl	19.473457	31418086171082752
+28	US asks Pakistan to release diplomat - http://tinyurl.com/64oqj4t #india #news	19.473457	31415088246169600
+29	NDTV: US asks Pakistan to release diplomat http://snipurl.com/1xerb8	19.473457	31413608780931072
+30	U.S. Demands Pakistan Release Diplomat Held in Shooting Deaths of 2 Pakistanis; State Dept. Says It Was Self-Defense http://bit.ly/fyLMtC	19.473457	31382773830782976
+31	:: Pakistan: SUA cer eliberarea imediata a unui diplomat care a impuscat mortal doi motociclisti http://bit.ly/i3xVgo	19.473457	31319830095208448
+32	#FoxNews U.S. Demands Release of Diplomat in Pakistan: U.S. embassy says official who killed two robbers acted i... http://bit.ly/dIYcJN	19.473457	31315354999324672
+33	Listening to the Pakistan Politician regarding #American Diplomat  shooting the dumb asses wants to b judge jury and executors	19.473457	31183953457057793
+>
+
+
+ murder arrest
+11-04@14:23:22 main DEBUG FISQueryExpander:168 - Querying Twitter by: filtered(+(text:murder text:arrest) -text:rt)->timestamp:[-9223372036854775808 TO 1352050169743]
+1	Two arrests in Saturday night stabbing with uncooperative victim. Two men in early 20s charged w/attempt murder, agg. assault.	17.081203	34988673887903744
+2	Man wanted in Phoenix woman's murder arrested in Argentina | azfamily.com http://t.co/x3icUyA #UFO4U-Daily-News http://twib.es/t-OH69Z	17.081203	33967234166562816
+3	Murder arrest after body is found: A man is arrested on suspicion of murder after police discover the body of a ... http://bbc.in/i6lfYD	17.081203	33931348125155329
+4	Kennel | Boy Held Over Party Stab Murder: A 15-year-old boy has been arrested after a man was stabbed to death n... http://bit.ly/g9Ekrv	17.081203	33348275302039552
+5	2 arrests were made in the murder of a UF cheerleader & i got an exclusive sit-down w/ her family. i should be elated but it's such sad news	17.081203	33010017422548993
+6	1 arrested, 1 sought on suspicion of attempted murder http://dlvr.it/FfRTV	17.081203	32849057353302016
+7	#ROCHDALE #NEWS: Man arrested on suspicion of murder - http://bit.ly/hSvONZ  #uknews #news #manchester #lancashire #oldham #salvationarmy	17.081203	32268960837664768
+8	@notoriousBJV murder. The police have the right to arrest anyone for now reason and torture them. And their families never know what	17.081203	32223694898069504
+9	Clue: Arrested Development Edition: Sure, there’s always money in the banana stand – but where’s the murder wea... http://bit.ly/fM55VE	17.081203	32219967474634752
+10	Albanian police arrest 3 in alleged murder plan http://bit.ly/eAwWgm	17.081203	31737117251997696
+11	Julie Schenecker Hospitalized after Arrest for Murdering her Teenage her Teens http://tinyurl.com/4sy2lwo	17.081203	31581207116386304
+12	WNYT.com: Schenectady Police make second arrest in murder of Terrill Reese http://bit.ly/f2b5GL	17.081203	31184254771658752
+13	#news BJP corporator arrested for Sunil Joshi murder http://bit.ly/dOWEzw (NDTV)	17.081203	30899515204575232
+14	Katy traffic stop leads to arrest of 3 teens in game-room murder: According to Harris County auth... http://bit.ly/hhabjB #Harris_County	17.081203	30316794950451200
+15	Israel arrests suspects in murder of U.S. tourist http://bit.ly/hh1wmf	17.081203	30240709860655104
+16	Israel arrests 3 suspects in murder of US tourist (AP) http://goo.gl/fb/1ShBO	17.081203	30198621387358208
+17	Fresno Police Arrest Man on Suspicion of Murder http://y6u.us/qN #559Alerts	17.081203	29980618624335873
+18	Surf Delhi New Post - Five dreaded criminals arrested for murder, loot. Read it now at http://bit.ly/hxkf57	17.081203	29688890453393408
+19	The notorious Pahalwan gang, allegedely  responsible for several murders in  Delhi, has been busted with the arrest o ...  http://tf.to/eH5d	17.081203	29625073279176704
+20	Guard: "Mexican police arrest gang leader blamed for Acapulco killings..Jose Lozano, behind 22 murders earlier in month" http://t.co/b3y90r7	17.081203	29526759665827840
+21	On February 8, 1587, Mary, Queen of Scots is executed on suspicion of plotting to murder her cousin Queen Elizabeth I.	8.560328	35123222735228929
+22	Murder shows rule.	8.560328	35122517702230016
+23	#Nowplaying Incubus -A crow left of the murder♥	8.560328	35119514496540672
+24	Stuff.co.nz : Police: 'Positive response' after Scott Guy graffiti release: Police investigating the murder of F... http://bit.ly/gkgWOh	8.560328	35118132158795776
+25	My neighbours' curtain twitches every time I walk past.It's so Rear Window I'm considering staging a murder to entertain them.	8.560328	35117689970106369
+26	#Justice4MJ Michael deserves that everybody know the truth about his murder	8.560328	35116547584294912
+27	dtn uK: Victoria Fabian whose husband Nicholas tried to murder her in car explosion flees court: Victoria Fabian... http://bit.ly/gllaYM	8.560328	35116221519110146
+28	Gotta luv #CSI, it's propa awesome!! I sooooo cud get away wid murder lmaooooooo	8.560328	35114776292102144
+29	"@Renknee: If you not talking about murder, guns, drugs, fucking, porn, jail, selling drugs or nude pics GET THE FUCK OFF MY TIMELINE" lmao	8.560328	35111738814763008
+30	#Justice4MJ Michael's murder was planned	8.560328	35102746931757056
+31	St. Louis jury convicts man of rape and murder of teen-age girl http://goo.gl/fb/bcfT8	8.560328	35098083708633088
+32	#thotsofangrynigga murder murder murder kill kill kill...all of u gotta go http://myloc.me/hy8ek	8.560328	35097334635438080
+33	Simmonds accuses Chahul's cmpny, Warnex PRO-DNA, of bragging they solved Derksen murder	8.560328	35094575752155136
+>	
+
+murder diplomat
+11-04@14:24:05 main DEBUG FISQueryExpander:168 - Querying Twitter by: filtered(+(text:diplomat text:murder) -text:rt)->timestamp:[-9223372036854775808 TO 1352050169743]
+1	DTN India: US mounts pressure on Pakistan to release 'illegally detained' murder-accused diplomat: Islamabad, Fe... http://bit.ly/gRaUKb	18.974552	34857364532236288
+2	Yahind.com: Murder-accused US diplomat may have been an ‘undercover spy’: Report  http://bit.ly/gJ5kOS	18.974552	32463160648671232
+3	U.S. diplomatic worker faces murder charges in Pakistan shooting (Los Angeles Times) http://feedzil.la/gAEXC8	18.974552	31053656509911040
+4	BBC News - US diplomat charged with Pakistan double murder  http://www.bbc.co.uk/news/world-south-asia-12304457	18.974552	30809856231342080
+5	Uh oh, American diplomat charged with double murder in Pakistan: http://yhoo.it/fG04tY He should have just called in a drone.	18.974552	30723400687165441
+6	Haïti délivre un passeport à l'ex-président Aristide: Les autorités haïtiennes ont délivré un passeport diplomat... http://bit.ly/hRZhJE	10.414226	35102738689822720
+7	@thenewshour Forget Egypt for d time being.Tagging Indian is OK.for them.They want their diplomat back from Pak.Otherwise they will stop aid	10.414226	34997966305497089
+8	Negotiations Continue in Pakistan on Detained US Diplomat (Voice Of America) http://feedzil.la/ibnxco	10.414226	34983143735820288
+9	A diplomat is a person who can tell you to go to hell in such a way that you actually look forward to the trip. Caskie Stinnett	10.414226	34854544630358016
+10	US diplomat killed ‘intelligence operatives’ in Lahore shootout http://bit.ly/er4Mw4	10.414226	34850682838319104
+11	@cgrand14 always the diplomat...let me know when you want to run for office, I'd be happy to work on your campaign.  :-).	10.414226	34391322110468096
+12	Saqué los logros "Veteran", "Teamwork", "Immortal", "Untouchable" y "Diplomat" en "Aegis Wing"	10.414226	34329612108566528
+13	#VETERANS TODAY Meet Omar Suleiman:  Diplomat, Torturer, Renditionist, and Manager of the B... http://bit.ly/gh5Pla #military #uknews #8	10.414226	34057930496024576
+14	UK to benefit from Canada oil sands: By Erikka Askeland JAMES Wright, Canada's top diplomat to the UK, robustly ... http://bit.ly/gg29vc	10.414226	34049944151134208
+15	#lol #seispalabras Official retracts V-P 'assassination bid': The German diplomat who said there was a... http://bit.ly/ggunbe #clubseis	10.414226	33904040882479104
+16	Ireland expels Russian diplomat story http://tf.to/g2fg	10.414226	33892651149299713
+17	This reinforces my thinking ElBaradei has been quietly doing backroom talks. He's a diplomat & they do that http://bit.ly/flLeGj #Jan25	10.414226	33869917916758016
+18	"‎​kan mereka diplomat kebal hukum"	10.414226	33783782557351937
+19	Botticelli Family Singers For Mama LP Diplomat D2348 VG http://r.ebay.com/xkCg1R	10.414226	33739686316875776
+20	AP sources: Pakistan likely to release US diplomat - The Associated Press: DAWN.com AP… http://goo.gl/fb/SeCNK	10.414226	33712124932923392
+21	Great article on DMW in NCIV's Network Newsletter. Citizen Diplomacy Day is Feb. 16-everyone can be a diplomat! http://fb.me/P4CpfFXv	10.414226	33537949333196800
+22	state TV confirmed:Amre Moussa, the Arab League's secretary-general & a veteran Egyptian diplomat, joined protesters in Tahrir Square on Fri	10.414226	33515200552374272
+23	Just Listed! 2007 Monaco Diplomat - Grass Valley, CA: 2007 Monaco Diplomat 38PDQ Quad Slide-Out Diesel Pusher.  ... http://bit.ly/fYb89L	10.414226	33509863183097856
+24	#ff @aliwardhana diplomat KBRI di Kairo, Mesir untuk apdet situasi di sana...	10.414226	33372457435922432
+25	Case Of Jailed Diplomat In Pakistan Fuels Anger http://interesting.rssnewest.com/case-of-jailed-diplomat-in-pakistan-fuels-anger/	10.414226	33353153395040257
+26	Whether in Egypt or Pakistan the US must demand that our citizens are treated fairly, RELEASE OUR DIPLOMAT! RELEASE OUR JOURNALISTS!	10.414226	33317258596069376
+27	@BTolBristol hmm not sure about that, dad or stepdad is a king or diplomat? not sure which way round lol	10.414226	33294175499722753
+28	@max_franke @Buchkolumne Meine Reden! Ich war Diplomat des größten Clans & habe über die Schicksale ganzer Planetenlager entschieden :)	10.414226	33187468526227457
+29	BREAKING NEWS&gt;&gt; Pakistan court extends detention of U.S. diplomat An American who killed two Pakistani men in Lahore las http://tiny.ly/z4YX	10.414226	33163528449953792
+30	U.S. diplomat ordered held in Pakistan http://goo.gl/fb/Ccz8W	10.414226	33107726003339264
+31	Pakistan court extends detention of US diplomat - msnbc.com	10.414226	33094359847014401
+32	U.S. diplomat ordered held in Pakistan: A Pakistani judge has ordered that a U.S. consular employee accused of k... http://bit.ly/ffXFpW	10.414226	33094107148591104
+33	U.S. diplomat ordered held in Pakistan http://bit.ly/f3ZmNn [CNN]	10.414226	33093699894247424
+
+diplomat arrest
+11-04@14:24:49 main DEBUG FISQueryExpander:168 - Querying Twitter by: filtered(+(text:diplomat text:arrest) -text:rt)->timestamp:[-9223372036854775808 TO 1352050169743]
+1	Haïti délivre un passeport à l'ex-président Aristide: Les autorités haïtiennes ont délivré un passeport diplomat... http://bit.ly/hRZhJE	10.414226	35102738689822720
+2	@thenewshour Forget Egypt for d time being.Tagging Indian is OK.for them.They want their diplomat back from Pak.Otherwise they will stop aid	10.414226	34997966305497089
+3	Negotiations Continue in Pakistan on Detained US Diplomat (Voice Of America) http://feedzil.la/ibnxco	10.414226	34983143735820288
+4	DTN India: US mounts pressure on Pakistan to release 'illegally detained' murder-accused diplomat: Islamabad, Fe... http://bit.ly/gRaUKb	10.414226	34857364532236288
+5	A diplomat is a person who can tell you to go to hell in such a way that you actually look forward to the trip. Caskie Stinnett	10.414226	34854544630358016
+6	US diplomat killed ‘intelligence operatives’ in Lahore shootout http://bit.ly/er4Mw4	10.414226	34850682838319104
+7	@cgrand14 always the diplomat...let me know when you want to run for office, I'd be happy to work on your campaign.  :-).	10.414226	34391322110468096
+8	Saqué los logros "Veteran", "Teamwork", "Immortal", "Untouchable" y "Diplomat" en "Aegis Wing"	10.414226	34329612108566528
+9	#VETERANS TODAY Meet Omar Suleiman:  Diplomat, Torturer, Renditionist, and Manager of the B... http://bit.ly/gh5Pla #military #uknews #8	10.414226	34057930496024576
+10	UK to benefit from Canada oil sands: By Erikka Askeland JAMES Wright, Canada's top diplomat to the UK, robustly ... http://bit.ly/gg29vc	10.414226	34049944151134208
+11	#lol #seispalabras Official retracts V-P 'assassination bid': The German diplomat who said there was a... http://bit.ly/ggunbe #clubseis	10.414226	33904040882479104
+12	Ireland expels Russian diplomat story http://tf.to/g2fg	10.414226	33892651149299713
+13	This reinforces my thinking ElBaradei has been quietly doing backroom talks. He's a diplomat & they do that http://bit.ly/flLeGj #Jan25	10.414226	33869917916758016
+14	"‎​kan mereka diplomat kebal hukum"	10.414226	33783782557351937
+15	Botticelli Family Singers For Mama LP Diplomat D2348 VG http://r.ebay.com/xkCg1R	10.414226	33739686316875776
+16	AP sources: Pakistan likely to release US diplomat - The Associated Press: DAWN.com AP… http://goo.gl/fb/SeCNK	10.414226	33712124932923392
+17	Great article on DMW in NCIV's Network Newsletter. Citizen Diplomacy Day is Feb. 16-everyone can be a diplomat! http://fb.me/P4CpfFXv	10.414226	33537949333196800
+18	state TV confirmed:Amre Moussa, the Arab League's secretary-general & a veteran Egyptian diplomat, joined protesters in Tahrir Square on Fri	10.414226	33515200552374272
+19	Just Listed! 2007 Monaco Diplomat - Grass Valley, CA: 2007 Monaco Diplomat 38PDQ Quad Slide-Out Diesel Pusher.  ... http://bit.ly/fYb89L	10.414226	33509863183097856
+20	#ff @aliwardhana diplomat KBRI di Kairo, Mesir untuk apdet situasi di sana...	10.414226	33372457435922432
+21	Case Of Jailed Diplomat In Pakistan Fuels Anger http://interesting.rssnewest.com/case-of-jailed-diplomat-in-pakistan-fuels-anger/	10.414226	33353153395040257
+22	Whether in Egypt or Pakistan the US must demand that our citizens are treated fairly, RELEASE OUR DIPLOMAT! RELEASE OUR JOURNALISTS!	10.414226	33317258596069376
+23	@BTolBristol hmm not sure about that, dad or stepdad is a king or diplomat? not sure which way round lol	10.414226	33294175499722753
+24	@max_franke @Buchkolumne Meine Reden! Ich war Diplomat des größten Clans & habe über die Schicksale ganzer Planetenlager entschieden :)	10.414226	33187468526227457
+25	BREAKING NEWS&gt;&gt; Pakistan court extends detention of U.S. diplomat An American who killed two Pakistani men in Lahore las http://tiny.ly/z4YX	10.414226	33163528449953792
+26	U.S. diplomat ordered held in Pakistan http://goo.gl/fb/Ccz8W	10.414226	33107726003339264
+27	Pakistan court extends detention of US diplomat - msnbc.com	10.414226	33094359847014401
+28	U.S. diplomat ordered held in Pakistan: A Pakistani judge has ordered that a U.S. consular employee accused of k... http://bit.ly/ffXFpW	10.414226	33094107148591104
+29	U.S. diplomat ordered held in Pakistan http://bit.ly/f3ZmNn [CNN]	10.414226	33093699894247424
+30	@Dalevich I knew a Brit diplomat who kept one for personal protection. Said it had more class than a simple revolver	10.414226	33073656909406208
+31	Overload News Pakistan court extends detention of U.S. diplomat - Reuters: DAWN.comPakistan court extends detent... http://bit.ly/hDpWHM	10.414226	33068047145107456
+32	Pakistan court extends detention of U.S. diplomat: LAHORE, Pakistan (Reuters) - An American who killed two Pakis... http://bit.ly/gUZcNT	10.414226	33054629621141504
+33	Pakistan court extends detention of U.S. diplomat: LAHORE, Pakistan (Reuters) - An American who killed two Pakis... http://bit.ly/gUZcNT	10.414226	33054628148940800
+>
+
+Frequent Itemsets on day 5 (January 29)
+
+Pakistan (also Diplomat)
+[consulate, pakistan]	10.5381550597	8571.3418805752	0.9988916235	0.0806532919	6.0188203863	0.0032467532	0.0016233766	0.0016708438	[employee, killed]
+[consulate, pakistan]	10.5381550597	8571.3418805752	0.9988916235	0.0806532919	6.0188203863	0.0032467532	0.0016233766	0.0016708438	[armed, killed, shot]
+[consulate, pakistan]	10.5381550597	8571.3418805752	0.9988916235	0.0806532919	6.0188203863	0.0032467532	0.0016233766	0.0016708438	[armed, shooting]
+[diplomat, kills]	8.3293300565	5605.4480976901	0.994084353	0.0164117485	4.4453714108	0.0026863667	0.0013431833	0.0014869889	[killed, lahore, pakistani, pakistanis, shot]	0.6171530043	-4763.7848401288	-0.0080961777	-0.0124187868	-0.0895558297	-0.0012915276	-0.0011439206	-0.0010903995
+[american, city, diplomat, killed, kills, lahore, pakistani, pakistanis, shot, two]	6.4193818432	106.3892883012	0.9006447651	3.80E-004	1.8402246555	3.98E-004	3.98E-005	1.00E-004	X
+[drone]	0	0	0	0	0	0.069306934	0.0693069324	0.0693069324	[pakistan]	10.5941891544	8856.123890077	0.9989531997	0.0916112265	6.6938669604	-0.0662252699	-0.0677661003	-0.0676360886
+
+murder
+[brutally, murdered]
+[murder, sonawane]	10.5673401382	8052.5765971627	0.9989344972	0.003006408	6.0440043536	0.0030418251	0.0015209125	0.0015588464	X
+[charged, murder]	8.728264846	4618.5675137183	0.9957102765	0.0259014456	5.6507104638	0.0027051398	0.0013525699	0.0023382697	X
+[murder, trial]	8.6456018166	4190.8047724985	0.9954769795	0.0228010075	5.6364949221	0.0016293279	8.15E-004	0.0015588464	X
+[murder, suspect]	8.31467465	4330.8753342576	0.9941508931	0.0134711747	5.2645297125	0.0027297544	0.0013648772	0.0023382697	X
+[murder, mystery]	8.0524033734	4089.1542294981	0.9929130826	0.0111494847	5.0311108302	0.0017953321	8.98E-004	0.0015588464	X
+[activist, gay, murdered, ugandan]	9.8585102362	1248.1677381177	0.9928273901	0.0028967348	5.6567375645	8.74E-004	2.18E-004	2.37E-004	X
+[activist, gay, murdered, rights, uganda]	8.8774540327	931.9561920197	0.9915742627	0.0040385493	5.1753991599	9.13E-004	1.83E-004	2.37E-004	X
+[guilty, murder]	7.3001932004	3111.8909544325	0.9878803932	0.0079909947	4.4418259763	0.0015278839	7.64E-004	0.0014981274	X
+[murder, murdered]	7.1293800316	4487.6225157421	0.986112094	0.0015432164	3.4758370039	0.0025445293	0.0012722646	0.0015588464	X
+[activist, david, kato, murder]	8.196458642	1268.4081730203	0.9791064241	0.0028769624	4.2257178293	0.0010570825	2.64E-004	3.47E-004	[ugandan]	1.2438607225	197.7425916201	0.0076262339	5.21E-004	0.7414346247	2.48E-004	-3.17E-006	0
+[murder, police]	6.3143964046	1149.3561941478	0.976373101	0.0135720319	3.9542643254	6.18E-004	3.09E-004	3.86E-004	[councilwoman, died, embattled, nevada, suicide]	1.4272496396	-483.1016767036	-0.0134398542	-0.0126671488	-2.1519170438	6.96E-004	-1.21E-004	0
+[murder, wrote]	6.3274161351	1991.7234423823	0.9760471056	0.0058506893	3.7017648411	0.0011428571	5.71E-004	9.02E-004	X
+[crime, murder]	6.2715711692	2279.5176209554	0.9749884463	0.0033067971	3.5373725244	0.0013518081	6.76E-004	0.0011933175	X
+[court, murder]	6.2000466803	1630.9016287373	0.9739437977	0.0032991192	3.6847367092	9.40E-004	4.70E-004	6.73E-004	X
+[councilwoman, died, embattled, murder, nevada, police, suicide]	7.7416460442	666.2545174441	0.9629332468	9.05E-004	1.8023472817	0.0013144306	1.88E-004	3.86E-004	X
+[alfred, belongs, brought, hitchcock, murder, television]	6.7527296031	1679.4718201776	0.957794999	9.80E-004	1.4499707422	0.0022119816	3.69E-004	8.65E-004	X
+[activist, gay, murdered, targeted]	7.0893494792	969.747792956	0.9529528119	1.93E-004	-2.3389181952	8.53E-004	2.13E-004	2.37E-004	X
+[california, charged, killer, murders, serial, unsolved, york]	7.0228846207	752.8685657267	0.9505541183	8.17E-004	1.2687176761	0.0011542584	1.65E-004	3.19E-004	X
+[david, gay, kato, murder, ugandan]	7.6562519301	566.2756651352	0.9426147975	0.0010678367	3.0794855745	6.34E-004	1.27E-004	2.37E-004	X
+[activist, gay, murder]	6.4993740359	869.1010593324	0.9425829457	7.86E-004	2.7859432795	5.96E-004	1.99E-004	2.37E-004	X
+[murder, wife]	4.8034637558	913.2052403124	0.9318276867	0.0027740127	2.4882377991	7.10E-004	3.55E-004	4.60E-004	X
+[mafia, murder]	4.6908231721	2017.1448802408	0.9258301454	7.10E-004	1.3520124749	0.0017993702	9.00E-004	0.0015588464	X
+[#realtalk, kim, murdered, realtalk]	5.1945955015	987.519122852	0.9201567452	2.70E-004	0.8946360418	0.0011648224	3.88E-004	4.88E-004	X
+[breaking, death, murder]	4.4889135063	584.7588798005	0.8963460058	7.94E-004	1.9520249067	6.22E-004	2.07E-004	3.93E-004	[charges]	0.7722425307	37.5733957082	0.029784919	2.27E-004	0.3567709272	1.46E-004	-1.53E-005	0
+[murder, option]	4.0098764448	1373.8974071885	0.8835552838	4.31E-004	0.8799011703	0.0014336918	7.17E-004	0.00132714	X
+[found, murder]
+[murdered, years]	3.0797365572	225.8205291586	0.7902369701	0.0011358331	0.234483441	3.07E-004	1.53E-004	1.57E-004	X
+
+
+arrest
+[arrest, cardiac]	11.9754600186	19001.4960571647	0.999633409	0.0278977211	7.826241356	0.0057224607	0.0028612304	0.0033613446	X
+[arrested, suspicion]	11.2175706766	8990.8625583204	0.9994256735	0.015984929	7.4313604803	0.0028409091	0.0014204546	0.001529052	X
+[anonymous, ddos]	10.7441028359	9386.4037578639	0.9990700071	0.010177251	6.8061246767	0.0032206119	0.001610306	0.0017436792	[arrest, attacks, police]	-2.1184811367	-8108.7743237315	-0.0087079321	0.0011540782	-1.8100619243	-6.72E-004	-0.0011004921	-9.72E-004
+[arrest, burglary]	9.8055349844	13350.9655390398	0.997910198	0.0072809256	5.6608770947	0.0053262317	0.0026631157	0.0033613446	X
+[#tunisia, arrest, tunisia, warrant]	10.2849709988	6331.8592247484	0.9976232967	0.0164433443	6.3894572627	0.0031282586	0.0010427529	0.0017021276	X
+[anonymous, arrests]	9.1991749274	7346.7072705997	0.9968507232	0.0046697769	5.3718305134	0.003074558	0.001537279	0.0017436792	X
+[attacks, cyber]	8.969874453	6873.2284300908	0.9962925784	0.015285654	5.607204853	0.0027548211	0.0013774105	0.0024301338	[arrests]	0.1101014522	-788.8183089091	1.29E-004	1.75E-004	-0.4796875632	9.81E-004	-1.32E-004	0
+[arrests, police]	8.5584710463	1803.878444845	0.9957251551	0.0782838797	5.4663550339	7.49E-004	3.75E-004	3.86E-004	X
+[arrests, cyber]	8.743980333	10883.1066247053	0.9954951243	0.0108867107	4.4215107223	0.0051085568	0.0025542784	0.0031796503	[attacks]	0.3359955722	-4798.6965035236	9.26E-004	0.0045735627	0.7060065676	-0.0013725667	-0.0013089484	-7.50E-004
+[arrest, authorities]	8.4615806134	8730.9031847164	0.9945304713	0.0060998783	4.7160300744	0.0040363269	0.0020181634	0.0033613446	X
+[arrested, suspect]	8.2461912909	4237.4050435334	0.9938522555	0.0127413349	5.2072266378	0.0017993703	9.00E-004	0.001529052	[police]	-0.2954514406	-2907.3986919078	-0.0010620602	0.0025614264	0.0149610664	-9.90E-004	-6.30E-004	-0.0011433983
+[anonymous, arrested, ddos]	8.747199397	3711.0130661772	0.9923729004	0.0037130892	4.8249661178	0.0023529412	7.84E-004	0.001529052	X
+[arrested, police]	7.8039543092	1548.2347560926	0.9922982036	0.0501696994	5.2630133364	6.16E-004	3.08E-004	3.86E-004	[arrest, british, five]	-2.0393298985	-878.5451952288	-0.0570252128	-0.0481786745	-2.8432523552	1.34E-004	-1.58E-004	0
+[arrested, police]	7.8039543092	1548.2347560926	0.9922982036	0.0501696994	5.2630133364	6.16E-004	3.08E-004	3.86E-004	[suspect]	0.1467855412	-218.2284044669	4.92E-004	-0.034866938	-0.0408256322	1.94E-004	-3.80E-005	0
+[arrested, police]	7.8039543092	1548.2347560926	0.9922982036	0.0501696994	5.2630133364	6.16E-004	3.08E-004	3.86E-004	[attacks, five, hold, recent, wikileaks]	-3.6147828641	-1233.4541255085	-0.2004447516	-0.0501152137	-4.425617908	1.39E-005	-2.18E-004	-9.24E-005
+[arrested, dui, kennedy, mariners]	8.8199686668	4345.5651316099	0.9918412937	0.0019043771	4.0829488839	0.0037037037	9.26E-004	0.001529052	X
+[ddos, police]	7.7193491277	1518.7478196966	0.9915566525	0.0368405118	4.3624548561	7.57E-004	3.79E-004	3.86E-004	[anonymous, arrest, attacks]	0.9062725715	-241.1183855642	-0.0011945775	-0.0255091825	0.6336078962	0.0017916373	1.31E-004	3.86E-004
+[anonymous, wikileaks]	7.733871096	2981.4241414565	0.9912139837	0.0166803729	4.9117319182	0.0013253811	6.63E-004	0.0010689471	[arrest, attacks, five, guardian, police, technology]	-2.270669273	-2549.2873220874	-0.081554981	-0.016266713	-1.2641037511	-4.36E-004	-5.51E-004	-6.83E-004
+[activist, arrest, protest]	7.7174865276	3385.7221710468	0.9900204691	0.0076483005	4.1876522818	0.0025199496	8.40E-004	0.0013793104	X
+[arrest, cop]	7.314833248	4494.5059452801	0.9878346519	0.0063833034	4.042226357	0.0023654642	0.0011827321	0.0018248175	X
+
+
+
+arrest
+11-04@14:36:32 main DEBUG FISQueryExpander:168 - Querying Twitter by: filtered(+text:arrest -text:rt)->timestamp:[-9223372036854775808 TO 1352050169743]
+1	V @mardomak: Iran - Mr. Karoubi said he was living under near house arrest, with guards outside his house mos… (cont) http://deck.ly/~bnbFL	8.520877	35101275041304576
+2	Police make arrest in Lake Geneva bomb threat case http://tinyurl.com/4be8elw	8.520877	35097779952947200
+3	Dan's Daily Update - The Kabot Arrest Video In Four Parts http://bit.ly/feBM9P	8.520877	35093221390422016
+4	they should arrest you or whoever dressed you .	8.520877	35086314969767936
+5	If I were a cop, I'd arrest Dora the Explorer for traveling underage. where the fuck is her mom?	8.520877	35078912132390912
+6	@Sophian_Cheryl You're from the Valentine's police right? you might wanna arrest me ;)	8.520877	35076831233179648
+7	Kenyan police accused of extrajudicial killings: No one has seen Kenneth Ngoche since his arrest three weeks ago... http://bit.ly/e0cw5l	8.520877	35043640115986432
+8	Officials in Congo seize millions of U.S. dollars and gold; arrest American, Frenchman, 2 Nigerians suspected of gold-smuggling - AP	8.520877	35035576688189440
+9	@lubzi @SmithSofia They arrest a child, create a criminal, and then have justification to kill him when he is a messed up adult. go figure	8.520877	35024984288137216
+10	Flawed European arrest warrant system means thousands face unjust extradition each year http://ow.ly/1s1Fhs	8.520877	35016318042243072
+11	who is also on house arrest....stoner family it is!	8.520877	35012216973434880
+12	Butte Deputies Arrest Man for Friday Robbery: The Butte County Sheriff's Office says Jesus Damian allegedly told... http://bit.ly/ezVYhK	8.520877	35003892911575040
+13	BREAKING NEWS: Harlan, Iowa police arrest Dustin Thomas, 27, for buying the alcohol that led to death of Julio Caceres, 17, last October.	8.520877	34992595260153856
+14	Off House Arrest March 1st. NOT March 2nd. HELL YEAH...Gettin Plastered that WHOLE Week! Lol. Lets Go @MaticTouch @RealSwah @SmooveTHAdude	8.520877	34992109429727232
+15	World News: Arrests for Harare foreigner raid: Police in Zimbabwe arrest eight people for looting after violent ... http://bbc.in/fuPH17	8.520877	34966667666653185
+16	"Arrest without charge, imprisonment without trial, disappearance without explanation"	8.520877	34964725070569473
+17	Operating From Home: Haven or House Arrest? http://www.nerix.net/operating-from-home-haven-or-house-arrest http://bit.ly/fsL37o	8.520877	34956880438628352
+18	Bush cancels Europe trip amid calls for his arrest http://shar.es/32BpU	8.520877	34919776446840832
+19	Funkmaster Flex's Wife Addresses Assault Arrest - http://bit.ly/gyupoz	8.520877	34886565738061824
+20	YNET: Kiryat Arba: Hundreds protest against Rabbi Lior's arrest http://bit.ly/f1FKIZ @iic01 #news #fb	8.520877	34884845138083841
+21	Lenoir County North Carolina : Lenoir County arrest reports - ENC Today http://uxp.in/28202819	8.520877	34850680397111296
+22	http://bit.ly/eSK4e2 Avoiding a Brain Injury Following Cardiac Arrest is a Potential Thanks to New Treatment	8.520877	34839876977303552
+23	Arrest warrant issued for man who pleaded guilty to residential burglary: http://bit.ly/fIc7qC	8.520877	34785443384000512
+24	house arrest	8.520877	34784076414066688
+25	Police arrest man after chase through downtown Somerset - 55 -year-old Vernon Tyree was taken into custody here at t... http://ow.ly/1be1ze	8.520877	34755182784946176
+26	County officials react to fire chief's arrest - WYMT http://bit.ly/funzO8 #FireNews	8.520877	34751328471224320
+27	roar Arrest Warrant Issued For Ivanka Trump’s Stalker: A New York judge has issued an arrest warrant for a man a... http://bit.ly/fhP4Ru	8.520877	34745805382356992
+28	Buckeyes recruit won't face charges after arrest: CLEVELAND (AP) -- Authorities say Ohio State football re... http://tinyurl.com/4ee2k7b	8.520877	34745471587061760
+29	Walking through Phoenix airport with my dog; terrified Sheriff Joe is going to drop down from the rafters and arrest us both.	8.520877	34739828763402240
+30	Question for @AJELive -- Was that Wael Ghonim in that video you showed of the arrest of the protester?	8.520877	34738369237876738
+31	David Frum gets it wrong, as always: Will Obama Speak Out Against Bush Arrest Threat? | http://t.co/Vc3Ciq0 #p2 #warcrimes #torture #bush	8.520877	34737017271091200
+32	Cancellation of Bush Trip to Switzerland Deprives Anti-Torture Activists of a Chance to Arrest Him | CNSnews.com http://t.co/D1NRMYv	8.520877	34714565488934912
+33	Vocab word : misdemeanorGameday tips, what not to do in the stadium to prevent arrest.http://tinyurl.com/4m9k6ya	8.520877	34708427120836608
+>

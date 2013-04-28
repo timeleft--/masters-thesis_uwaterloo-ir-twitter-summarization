@@ -1,0 +1,227 @@
+/**
+ * TABLE OF CONTENTS
+ *
+ * Note: Disqus classes/ID names not changed to ease any javascript changes from the old theme.
+ *
+ * 0: Disqus core CSS
+ * 1: Misc
+ * 2: Comment elements
+ *    2a: Post box
+ *    2b: Thread info box
+ *    2c: Log in box
+ *    2d: Pagination
+ * 3: Buttons
+ * 4: Comments
+ * 5: Trackbacks
+ * 6: Social media reactions
+ *
+ * v1.0 - P Gibbs - first version. 11/08/11
+ * v2.0 - P Gibbs - My Telegraph QA fixes  - DIGI-1110. 18/08/11
+ * v3.0 - P Gibbs - My Telegraph UAT fixes - DIGI-1110. 30/08/11
+ * v4.0 - P Gibbs - Blogs QA fixes - DIGI-594. 09/09/11
+ * v5.0 - P Gibbs - Disqus "Share on" tweaks. 04/11/11
+ * v6.0 - P Gibbs - Added Global toolbar. 20/01/12
+ */
+
+
+/**
+ * 0: Disqus core CSS
+ */
+.dsq-textarea-loading-text {display: none;}
+.dsq-textarea-loading .dsq-textarea-loading-text {display: block; color: #666; font-size: 13px;}
+.dsq-textarea-wrapper.dsq-textarea-loading iframe {position: absolute; top: -2000px;}
+.dsq-error {background: #f2d2d1; color: #981008; border: 1px solid #dd9d99; border: 1px solid rgba(230, 100, 100, 0.5);}
+#dsq-content #dsq-footer .dsq-font {color: inherit; text-decoration: none;}
+#dsq-content .dsq-remove-message {background-color:#FDF1D0; border:1px solid #FAD163; color: #817134; line-height: 1.25; margin: 10px 0; padding: 5px 8px;}
+
+
+/**
+ * 1: Misc
+ */
+#dsq-content ul, #dsq-content li {list-style-position: outside; list-style-type: none; margin: 0; padding: 0;}
+.dsq-clearfix {zoom: 1;}
+.dsq-clearfix:after {clear: both; content: "."; display: block; height: 0; visibility: hidden;}
+.showDisqusIcon, .disqusLogo {background: url('http://www.telegraph.co.uk/template/ver1-0/i/disqus/dsq-logo.gif') no-repeat; height: 18px; width: 131px;}
+.showDisqusIconFooter {margin-top: 13px;}
+.dsq-share-on-twitter {background-position: 0px !important;}
+.dsq-share-on-facebook {background-position: -13px !important;}
+.dsq-share-on-yahoo {background-position: -26px !important;}
+.dsq-share-on-openid {background-position: -39px !important;}
+.dsq-share-on-tumblr {background-position: -52px !important;}
+.dsq-share-on-wordpress {background-position: -65px !important;}
+.dsq-share-on-movabletype {background-position: -78px !important;}
+.dsq-share-on-typepad {background-position: -91px !important;}
+.dsq-share-on-icon {background: url('../../../images/themes/narcissus/13x13-icons-sprite.png'); display: block; height: 13px; width: 13px;}
+.dsq-accessibly-hidden {left: -999em; position: absolute;}
+#dsq-popup-message {width: 460px;}
+#dsq-content.clearfix {height: auto;}
+.dsq-share-twitter.dsq-share-toggled {background: url(../../../images/themes/houdini/icons-sprite.png) -133px 0;}
+.dsq-share-facebook.dsq-share-toggled {background: url(../../../images/themes/houdini/icons-sprite.png) -133px -12px;}
+.dsq-share-on span {cursor: pointer; margin: 1px 0 0 8px;}
+.dsq-share-twitter {
+float: left;
+display: block;
+width: 18px;
+height: 12px;
+background: url(../../../images/themes/houdini/icons-sprite.png) -115px 0;
+text-indent: -9999em;
+font-size: 6px;
+}
+.dsq-share-facebook {
+float: left;
+display: block;
+width: 12px;
+height: 12px;
+background: url(../../../images/themes/houdini/icons-sprite.png) -115px -12px;
+text-indent: -9999em;
+font-size: 6px;
+}
+* html .dsq-share-twitter,* html .dsq-share-facebook {overflow: hidden;}
+#dsq-content a.dsq-toolbar-item:hover,
+#dsq-content #dsq-toolbar-dropdown a:hover {
+border-bottom: 0;
+}
+
+/**
+ * 2: Comment elements
+ */
+
+/**
+ * 2a: Post box
+ */
+#dsq-content {border-top: 1px dotted #545454; font-family: arial, sans-serif;}
+#dsq-content .dsq-avatar {float: left; margin-right: 10px;}
+#dsq-content .dsq-avatar img {border: none; height: 50px; width: 50px;}
+.dsq-textarea-wrapper {min-height: 84px; padding: 5px;}
+.dsq-textarea-wrapper iframe {display: block; position: inherit; top: 0px;}
+.dsq-textarea-reply .dsq-textarea-wrapper iframe {min-height: 116px;}
+.user-name {color: #234B7B; font-size: 13px; font-weight: bold; margin-bottom: 4px;}
+.dsq-textarea-background {background-color: #FFF; border: 1px solid #DBDAD8; width: 100%;}
+#dsq-reply {clear: both;}
+.dsq-reply {background-color: #E6F2F9; -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px; margin: 1.5em 0 10px; padding: 10px 10px; position: relative;}
+.dsq-reply.dsq-edit h4 {font-size: 12px; line-height: 16px;}
+#dsq-content .dsq-textarea.dsq-textarea-reply, .dsq-reply .dsq-avatar img {float: left;}
+#dsq-content .userInfoButtons {color: #1E4C7D; float: left; font-size: 12px; margin: 20px 0 0; padding-left: 15px;}
+#dsq-content .userInfoButtons a.logout {background: url('http://www.telegraph.co.uk/template/ver1-0/i/disqus/dsq-icon-logout.gif') no-repeat; padding: 0 0 5px 23px; width: 36px;}
+.dsq-textarea.dsq-textarea-reply {width: 402px;}
+.dsq-textarea.dsq-textarea-reply .userName {color: #234B7B; font-size: 13px; font-weight: bold; margin-bottom: 4px;}
+#dsq-content .postMessageButton {float: left; margin: 9px 0 0; padding-left: 60px;}
+.reply-buttons {width: 100%;}
+
+/* Append post is a wrapper for the post box when replying to a comment */
+.dsq-append-post {background-color: #E6F2F9; -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;}
+.dsq-reply h4 {font-size: 12px; line-height: 16px;}
+.dsq-append-post .dsq-reply {-moz-border-radius-topleft: 0; -moz-border-radius-topright: 0; -webkit-border-top-left-radius: 0; -webkit-border-top-right-radius: 0; border-top-left-radius: 0; border-top-right-radius: 0; clear: left; margin-top: 0;}
+.dsq-textarea-reply iframe {height: 58px;}
+.dsq-edit .sm_share_buttons {padding-left: 0;}
+.sm_share_buttons {overflow: hidden; padding: 0.5em 0 0 20px; float: left; width: 200px;}
+.sm_share_buttons p {float: left; font-weight: bold; text-transform: uppercase; color: #666; font-size: 10px; margin-bottom: 0;}
+.sm_share_buttons .dsq-share-on-icon, .sm_share_buttons input {float: left; margin-top: 0; padding-top: 0;}
+.sm_share_buttons input {padding:0; height: 12px; width: 12px;}
+.sm_share_buttons input {margin: 0 5px 0 10px;}
+.dsq-append-post .sm_share_buttons p {padding-top: 0.5em;}
+#dsq-content .commentCount {overflow: hidden; padding-top: 5px;}
+#dsq-content .commentCount .commentNo {color: #404040; float: left; font-size: 1.6em; font-weight: bold;}
+#dsq-content .commentCount .disqusLogo {float: right;}
+.replyingTo {font-size:13px; margin-bottom:7px; font-weight:bold;}
+#dsq-content .dsq-mentions {left: 0 !important;}
+
+/**
+ * 2b: Thread info box
+ */
+.thread_info {border-top: 1px dotted #CCC; color: #666; font-size: 1.2em; margin: 13px 0 0; padding: 5px 0 10px;}
+.thread_info h4 {float: left;}
+.dsq-textarea.dsq-textarea-reply .dsq-textarea-wrapper {color: #666;}
+.thread_info #dsq-sort-by {color: #282828; float: right; margin-left: 5px;}
+.thread_info #dsq-sort-by select {width: auto;}
+#notice_and_alert {float: left;}
+#dsq-subscribe {float: right; width: 140px;}
+#dsq-subscribe img {float: left; margin-right: 6px;}
+#dsq-subscribe li {line-height: 16px; margin-bottom: 9px;}
+#dsq-subscribe li.last-child {margin: 0;}
+#updates_and_follow {margin: 10px 0;}
+.dsq-realtime-alert {margin-top: 2px;}
+
+/**
+ * 2c: Log in box
+ */
+.log_in_box {background-color: #F4F4F0; color: #161616; font-size: 13px; padding: 10px; margin-top: 13px;}
+.log_in_box .telegraphLogin {float: left;}
+.log_in_box .telegraphLogin a {font-weight: bold;}
+.log_in_box .loginTitle {font-weight: bold; margin-bottom: 7px;}
+.log_in_box .telegraphLogin .loginMessage {margin-bottom: 17px;}
+.log_in_box .otherLogins {float: right;}
+.log_in_box .otherLogins .loginMessage {margin-bottom: 13px;}
+.log_in_box .otherLogins img {display: inline;}
+
+/**
+ * 2d: Pagination
+ */
+#dsq-pagination {border-bottom: 1px dotted #D5D4D3; padding-bottom: 8px;}
+#dsq-pagination + .showDisqusIcon {padding-top: 0;}
+.dsq-numbered-pagination {font-size: 12px; font-weight: bold;}
+.dsq-numbered-pagination .current_page {background-color: #9ACDEC;}
+#dsq-content #dsq-footer .dsq-numbered-pagination {float: right; height: 16px; margin: 0;}
+.dsq-numbered-pagination a, .dsq-numbered-pagination span {padding: 2px 5px;}
+
+
+/**
+ * 3: Buttons
+ */
+#disqus_thread .comment-reply-button {margin-top: 10px;}
+.dsq-reply-button {margin-bottom: 5px !important;}
+button.dsq-button, a.dsq-button {float: left;}
+button.dsq-button, a.dsq-button, button.dsq-button:active, a.dsq-button:active {-webkit-border-radius: 0; -moz-border-radius: 0; border-radius: 0; background: none repeat scroll 0 0 #234B7B; border: 1px solid #122842; color: white; display: block; font-family: arial,sans-serif; font-size: 10px; font-weight: bold; height: 23px; text-transform: uppercase; width: 110px; margin-right: 5px; padding: 0 6px;}
+.dsq-popup .dsq-button, .dsq-popup button.dsq-button:active {display: inline-block; width: auto; height: auto; float: inherit; color: inherit;}
+#disqus_thread .thread_info > h4 {text-transform: none;}
+.dsq-popup .dsq-button, .dsq-popup button.dsq-button:active {color: #444; float: none;}
+
+
+/**
+* 4: Comments
+*/
+#dsq-comments {color: #262626; float: left; font-size: 12px; line-height: 16px; min-height: auto; width: 100%;}
+#dsq-comments li.dsq-comment {border-top: 1px dotted #CCC; padding: 10px 0;}
+#dsq-content .dsq-comment {clear: both;}
+.dsq-comment-header, .dsq-comment-header p {font-size: 13px; overflow: hidden;}
+.comment_author_avatar {padding-bottom: 10px;}
+#dsq-comments .dsq-comment-meta, #dsq-comments .dsq-comment-actions {overflow: hidden; }
+#dsq-comments .dsq-comment-message {line-height: 16px;}
+#dsq-comments .dsq-comment-body {float: left; width: 100%;}
+#dsq-comments .dsq-comment-footer {float: right; width: 140px;}
+#dsq-comments .dsq-comment-footer li {border-bottom: 1px dotted #CCC; padding: 5px 0;}
+#dsq-comments .dsq-comment-footer img.interesting {float: left; margin-right: 8px;}
+#dsq-comments .dsq-comment-footer li:first-child {padding-top: 0;}
+#dsq-comments .dsq-comment-footer li:last-child {padding-bottom: 0;}
+#dsq-content .dsq-mentions {position: relative !important; width: auto !important;}
+.li_ie_fix {font-size: 0;}
+.dsq-commenter-name {color: #234B7B; font-weight: bold;}
+#dsq-comments .dsq-comment-footer li.last-child {border-bottom: 0;}
+
+
+/**
+ * 5: Trackbacks
+ */
+#trackbacks {border-top: 1px dotted #CCC; margin-top: 10px; padding-top: 10px;}
+.dsq-trackback-url {margin-bottom: 1em;}
+#dsq-trackbacks {color: #262626; font-size: 12px; float: left; line-height: 16px; margin-bottom: 10px; min-height: 85px; width: 100%;}
+.dsq-reaction-header {font-size: 13px; overflow: hidden;}
+#dsq-trackbacks .dsq-reaction-message {line-height: 16px;}
+#dsq-trackbacks .dsq-reaction-body {float: left; max-width: 620px;}
+
+
+/**
+ * 6: Social media reactions
+ */
+.dsq-h4-reactions {border-top: 1px dotted #CCC;display:block;font-size: 1.3em; margin: 10px 0 10px; padding-top: 10px;}
+.reaction_avatar {padding-bottom: 10px;}
+.dsq-service-icon {display: inline;}
+#dsq-reactions {color: #262626; font-size: 12px; float: left; line-height: 16px; margin-bottom: 10px; min-height: 85px; width: 100%;}
+#dsq-reactions li.dsq-reaction, #dsq-trackbacks li {border-top: 1px dotted #CCC; margin-bottom: 10px; padding-top: 10px;}
+#dsq-content .dsq-reaction {clear: both; overflow: hidden;}
+.dsq-reaction-header {font-size: 13px; overflow: hidden;}
+#dsq-reactions .dsq-reaction-message {line-height: 16px;}
+#dsq-reactions .dsq-reaction-body {float: left; max-width: 620px;}
+.reaction-author-name {color: #234B7B; font-weight: bold;}
+.dsq-remove-reaction {font-weight: bold;}
+.dsq-reaction-body {width: 100%;}

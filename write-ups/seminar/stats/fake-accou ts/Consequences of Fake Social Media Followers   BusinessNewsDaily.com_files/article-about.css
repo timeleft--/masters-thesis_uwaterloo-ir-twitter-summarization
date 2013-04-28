@@ -1,0 +1,42 @@
+.about_title{ float:left; margin:1px; .margin:0px; font-size:22px; font-weight:bold; color:#999999; }
+.about_bottombg{ width:100%; float:left; height:55px; background-image:url('/images/site/bottom-aboutbg.jpg'); background-repeat:repeat-x; }
+.about_text{ float:left; background-color:#FFFFFF; font-size:13px;line-height:18px;margin-bottom:8px;clear: both; color: #666666; font-family: Verdana,Geneva,sans-serif; width:615px; }
+.about_text a,about_text a:visited{ color: #8B1722; text-decoration: underline; }
+.about_text a:hover{ color:#999999; }
+.about_text p img { padding:3px; /*border:1px solid #103d5a;*/ }
+.about_text ul { list-style-position:inside;margin:10px 0; padding:0 0 0 25px; }
+.about_text ul li { margin:0; padding:0; }
+.about_text ul li a { text-decoration:none; color:#8B1722; }
+.option { float:left; width:115px; height:33px;}
+.share-day { float:left; height:45px; width:52px; }
+.share-month-year { float:left; height:45px; width:110px; }
+.share-social-box { float:left; height:33px; padding-top:12px; }
+/********************** Article/About Share **********************************************/
+.aa_share{ width:584px; float:left; color:#FFFFFF; font-weight:bold; font-size:14px; background-color:#080806; background-image:url('/images/site/share-pagebg.jpg'); background-repeat:repeat-x; padding:15px;}
+.aa_text{ width:auto; float:left; }
+.aa_stp{ width:100% !important; font-family:Trebuchet MS, arial; margin-top:5px;}
+.aa_retweet{ width:auto; float:left; padding-top:5px; }
+.aa_retweet div{ width:auto; float:left; padding-right:10px; }
+.aa_fbl{ width:auto; float:left; padding:5px 0px 0px 10px; }
+.aa_fbl div{ width:auto; float:left; padding-right:10px; }
+.aa_buttons{ width:auto;.width:198px; float:right; .height:35px;.overflow:hidden;/*padding-top:5px;*/ }
+.aa_buttons div{ width:auto; float:left; padding-right:5px; }
+/*****************************************************************************************/
+
+/********************** Article Adsense **************************************************/
+.about_adsense{ width:100%; float:left; color:#000000; margin-bottom: 15px; }
+.about_adsense div{ float:left; overflow:hidden; padding-right: 10px;  }
+.about_adgap div{ float:left !important; clear: none;  }
+.about_adgoo{ font-family:verdana, arial, sans-serif; padding-bottom:75px; clear: both;}
+.about_adgoo a,.about_adgoo a:visited{ color:#727f6e; text-decoration:none; font-size:11px; }
+.about_adgoo a:hover{ color:#999999; }
+/*.about_adtitle{ width:100%; */
+.about_adtitle a,.about_adtitle a:visited{ color: #8B1722; font-size: 15px; font-weight: normal; margin-right: 5px; text-decoration: none; }
+.about_adtitle a:hover{ color:#999999; }
+#adsense_article_bottom .google_ad_text { color: #999999; float: left;  font-size: 12px; }
+#adsense_article_bottom .about_adgap { padding-bottom: 10px; }
+./*.about_adcont{ width:100%; } */
+.about_adcont div{ width:100%; }
+.about_adcont a,.about_adcont a:visited{ color:#727f6e; text-decoration:none; }
+.adsense_bottom_feedback_url { float: right; padding-right: 50px; color: black; font-size: 11px; text-align: right; text-decoration: none; } 
+/*****************************************************************************************/

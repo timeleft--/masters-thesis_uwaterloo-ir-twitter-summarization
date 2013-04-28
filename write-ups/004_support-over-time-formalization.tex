@@ -1,0 +1,238 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+% !TEX spellcheck = en_CA
+
+% This is a simple template for a LaTeX document using the "article" class.
+% See "book", "report", "letter" for other types of document.
+
+\documentclass[11pt]{llncs} % use larger type; default would be 10pt
+
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+\usepackage{url}
+%%% Examples of Article 0
+% These packages are optional, depending whether you want the features they provide.
+% See the LaTeX Companion or other references for full information.
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper} % or letterpaper (US) or a5paper or....
+% \geometry{margin=2in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+%   read geometry.pdf for detailed page layout information
+
+\usepackage{graphicx} % support the \includegraphics command and options
+
+% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% PACKAGES
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+% These packages are all incorporated in the memoir class to one degree or another...
+
+%%% HEADERS & FOOTERS
+\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+\pagestyle{fancy} % options: empty , plain , fancy
+\renewcommand{\headrulewidth}{0pt} % customise the layout...
+\lhead{}\chead{}\rhead{}
+\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+%%% ToC (table of contents) APPEARANCE
+\usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+\usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+\renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+\renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+
+\usepackage{amsmath}
+%%% END Article customizations
+
+%%% The "real" document content comes below...
+
+\title{State-space model for interesting term(set)s}
+\author{Younos Aboulnaga\inst{1}}
+%\date{} % Activate to display a given date or no date (if empty),
+         % otherwise the current date is printed 
+\institute{David R. Cheriton School of Computer Science, University of Waterloo, Waterloo, ON, Canada \email{yaboulna@uwaterloo.ca}}
+\begin{document}
+\maketitle
+\section{Introduction}
+We have chosen the state space model because of its ability to represent hidden component models with minimum assumptions. Alternatives we considered are the Box-Jenxins ARIMA models, and Hidden Markov Models. In the Box–Jenkins approach, trend and seasonal effects are treated as nuisance parameters. These effects are removed from the series before any analysis can begin. In Hidden Markov Models, the discretization of the level component into states would require imposing unnecessary assumptions on the behaviour of the system, let alone specifying an arbitrary number of states. ``State space methods provide an explicit structural framework for the decomposition of time series in order to diagnose all the dynamics in the time series data simultaneously.'' \cite{Commandeur2007}
+
+\section{Univariate model}
+\label{sec:univariate-model}
+We model the count of appearances of a term or termset, denoted term(set) from now on, at any point of time $t$ as a local level model; each \emph{observation} $y_t$ is equal to the current level plus an \emph{irregular component} $\varepsilon_t$. We assume the irregular components are drawn independently from a normal distribution with zero mean and a fixed variance; that is, it is homoscedastic \emph{white noise}. The level component $\mu_t$ is assumed to be stochastic, with stochastic slope $\nu_t$ to account for the increasing number of users of social media. Sochasticity of both the level and the slope components is modelled as irregular components, $\xi_t$ and $\zeta_t$ respectively. We assume  $\xi_t$ and $\zeta_t$ are also independent and normally distributed random variables with zero means and a fixed variances. The assumption of homoscedasticity might not be well justified for those two random variables, but it is an accepted simplification in the time series analysis of most domains except those with high volatility such as financial markets. We actually believe that there is evidence of volatility in the use of terms in social media, shown by the high churn in the 1000 most frequent terms hour after hour, and the high number of out of vocabulary terms. However, we chose to reduce the number of stochastic variables in the timeseries model of each term(set), and we can compensate for this by using wider confidence intervals (lower confidence levels) based on the deterministic variance.
+
+We also add 2 seasonal components to model the natural (uninteresting) change in the use of certain terms. The first seasonal $\gamma_t^{(h)}$ models the seasonality according to the hour of day, since different terms are used in different hours of the day both within the same language and across languages. Within the same language, the frequency of some terms such as ``night, morning and lunch'' increase as one region passes through different periods of the day. The frequency of all terms of a certain language also change as people in different locations on earth wake up, sleep and go through the various phases of the common 9-5 daily routine. The second seasonal $\gamma_t^{(d)}$ models the change of use of terms according to the day of the week, depending on how far the day is from the weekend. Therefore, there are $23 + 6 = 29$ seasonal equations all in all, and 27 of them are just for adjusting the lag of the seasonal effect. For simplicity we assume that the seasonal components are both deterministic; that is, with no corresponding irregular components. This assumption is supported by how there is always people going through a pattern change in their daily lives at each hour, and how the weekend days are different in different regions (Thursday and Friday in the Arab peninsula, for example).
+
+Equations \eqref{eq:univariate-model} represents the described model. The notation assumes that the time index $t$ increases with each time step; whether continuous or discrete. The equations calculate the values of the next state with respect to the current state, because time series models are normally used to predict the next state then adjust the model according to the deviation from the actual observation. As explained in \cite{Commandeur2007}, ``unlike classical regression, therefore, in state space methods the (hyper)parameter estimates are obtained by minimising the prediction errors and their variances, not by minimising the observation errors or disturbances and their variance.'' A popular method for this end is the use of a Kalman filter, but in its batch version it uses observations from the future to smooth the state and disturbances. It also does a second pass on the data for smoothing.
+
+\begin{center}
+\begin{equation}
+\label{eq:univariate-model}
+\begin{array}{rcll}
+y_t & = & \mu_{t} + \gamma_{1,t}^{(h)} + \gamma_{1,t}^{(d)} + \varepsilon_{t}, &\quad \varepsilon_{t} \sim NID(0, \sigma^{2}_{\varepsilon}) \\
+\mu_{t+1} & = & \mu_{t} + \nu_{t} + \xi_{t}, & \quad \xi_{t} \sim NID(0, \sigma^{2}_{\xi}) \\
+\nu_{t+1} & = & \nu_{t} + \zeta_{t}, &\quad \zeta_{t} \sim NID(0, \sigma^{2}_{\zeta}) \\
+\gamma_{1,t+1}^{(h)} & = & - \sum_{h = 1}^{23} {\gamma_{h,t}^{(h)}} & \\
+\gamma_{l,t+1}^{(h)} & = & \gamma_{l-1,t}^{(h)}, & \quad \forall l \in \{2\dots23\} \\
+\gamma_{1,t+1}^{(d)} & = & - \sum_{d = 1}^{6} {\gamma_{d,t}^{(d)}} & \\
+\gamma_{l,t+1}^{(d)} & = & \gamma_{l-1,t}^{(d)}, & \quad \forall l \in \{2\dots6\} \\
+\end{array}
+\end{equation}
+\end{center}
+
+% + \omega_{t}^{(h)},& \quad \omega_{t}^{(h)} \sim NID(0, \sigma^{2}_{\omega^{(h)}}) \\
+%  + \omega_{t}^{(d)},& \quad \omega_{t}^{(d)} \sim NID(0, \sigma^{2}_{\omega^{(d)}}) \\
+\section{Ranking according to user interest}
+To use this model to rank term(set)s according to users interest we differentiate between three cases, then we use rank fusion to rank term(set)s of high interest. The three cases are as follows:
+\begin{enumerate}
+\item To detect spikes of interest, the instantaneous residual of the slope $\zeta_{t}$ can be used. If its value falls over the upper bound of the confidence band this indicates a rise in the slope higher than expected, thus this difference can be used to rank term(set)s according to unexpected ``acceleration'' of interest. If CI(x) is one side of the confidence interval and E[x] is the expected value (assumed to be zero) acceleration is given by: 
+\begin{center}
+\begin{equation}
+\begin{array}{c}
+%\textrm{Highest Interest Acceleration} = 
+%\langle\mathcal{I}^{(a1)},\mathcal{I}^{(a2)},\dots\rangle \textrm{ such that } \\
+%(\zeta_{t}^{(a1)} - (E(\zeta_{t}^{(a1)}) + CI(\zeta_{t}^{(a1)}))) > (\zeta_{t}^{(a2)} - (E(\zeta_{t}^{(a2)}) + CI(\zeta_{t}^{(a2)}))) > \dots \\
+\mathcal{A} = \zeta_{t} - (E[\zeta_{t}] + CI(\zeta_{t})) \propto Z = \frac{\zeta_{t}}{\sigma_{\zeta_{t}}}
+%\textrm{ where CI(x) is one side of the confidence interval}
+\end{array}
+\end{equation}
+\end{center}
+\item To detect gradually increasing interest, we have to compare the current level with historic levels. However, to avoid keeping a history of levels per term(set)s, we note that our model is equivalent to an exponential moving average. Exponential moving average gives data an exponentially decreasing weight according to recency, therefore it will be higher than simple or cumulative moving average at times when the recent counts are higher than older ones. Therefore, it is enough to keep a moving average for each term(set), and use its difference form the level component to rank term(set)s according to gradual increase in interest. Since unweighted moving averages don't take trend into account when making predictions, we make our model's prediction closer to that of the moving average by subtracting the trend component from the level prediction. Thus the deviation from historic level (moving average) is given by:
+%we note that our model is random walk with noise and trend which is much faster to respond to change than simple moving average. A random walk with noise is equivalent to an exponential moving average, which gives data an exponentially decreasing weight according to recency. Therefore, we can make use of cross over methods
+\begin{center}
+\begin{equation}
+\mathcal{H} = \mu_t - \nu_{t-1} - \bar{\mu}_{t}
+\end{equation}
+\end{center}
+\item The moving average is also a good indicator for term(set)s with sustained high popularity. The simple moving average is more responsive than the cumulative moving average since data points that are \emph{too old} are subtracted, but calculating it over a history of $n$ time steps requires keeping a history of $n$ observations. Therefore we use the Cumulative Moving Average as an indicator of sustained interest:
+\begin{center}
+\begin{equation}
+\bar{\mu}_{t} =  \frac{(t-1) \bar{\mu}_{t-1} + y_{t}}{t}
+%\bar{\mu}_{t} =  \bar{\mu}_{t-1} - \frac{y_{t-n}}{n}+ \frac{y_{t}}{n}
+\end{equation}
+\end{center}
+\end{enumerate}
+
+\section{The normality assumption}
+The model in section \ref{sec:univariate-model} assumes that disturbances are white noise. On the other hand, the most exact explanation of the observations is that they are drawn from a Poisson distribution with mean $\mu_t$. However, the Poisson distribution can be approximated by a Gaussian distribution given that we will consider term(set)s with high enough support; $minsupp \ge 30$. This support is not prohibitively high in the context of social networks, and it is possible to devise many well known methods of estimation under the assumptions of normality, independence and homoscedasticity. This is particularly important for extending the model to the multivariate case where the multivariate normal distribution is one of a few well studied distributions.
+
+\subsection{Alternative views}
+It is possible to view the observations as coming from a Binomial distribution, where each Tweet is a Bernoulli trial for the occurrence of each term(set). However, this view requires fixing a number of Tweets for which the number of successes is estimated. With a varying rate of arrival of Tweets, this would mean that the epochs of the series of observations would correspond to different time intervals, making the model hard to interpret. One possible solution is to fix the time interval of the epoch, and explain the observations as coming from a Multinomial distribution on different \emph{levels} of occurrence. Since the Dirichlet distribution is the conjugate prior of the Multinomial distribution, then it is possible to use estimation methods from Bayesian inference. In this case, the relative frequencies of the term(set)s must be used to determine their level of occurrence, as the counts are meaningless given that the number of Tweets per epoch would be different and the model doesn't account for the changing rate. The model of section \ref{sec:univariate-model} accounts for the changing rate of arrival of Tweets by incorporating trend and seasonal variables.
+
+To work around the problem of fixing an arbitrary time step for all term(set)s, the observations can be viewed as drawn from a Negative Binomial distribution. In this case, the likelihood function for the parameter representing the number of failures until the experiment is stopped would be the central equation. Using this likelihood function, we would estimate the number of failures until the number of term(set) occurrences exceeds the minimum support. This estimate would then be divided by the current rate of arrival of Tweets to get the ``support lag'', which is anti-monotonic and suitable for spiky interest as the effect of the spike naturally fades with time. % but it is not additive.
+
+\section{Multivariate model}
+The model in section \ref{sec:univariate-model} is a simplified univariate model, presented to explain the intuition behind it. It is possible to use this univariate model for individual terms, assuming independence. However, the assumption of independence is unacceptable if the model would be used for term sets, where the occurrences of term sets cannot be independent of their subsets. One solution is to mine maximal term sets, but then it is impossible to mine term sets that evolve over time. The natural solution is thus to refuse the assumption of independence and use a multivariate model. The most important difference between the univariate and the multivariate model is not in the model equations, but rather in the distributions of the irregular components. The equations simply use matrix notation to represent $M$ different observations, levels and trends (with all state equations augmented in one block matrix), where $M$ is the number of distinct term(set)s. On the other hand, the variances of disturbances become covariance matrices; one for covariances of the measurements disturbances, and another for the covariances of all state disturbances (with covariance between different disturbances set to zero). Equation \eqref{eq:multivariate-model} shows the multivariate model, where bold symbols indicate vectors, capital symbols indicate matrices, $\mathbf{I_{RxC}}$ is the Identity matrix and $\mathbf{0_{RxC}}$ is a matrix of zeros of R row and C columns.
+
+ \begin{center}
+\begin{equation}
+\label{eq:multivariate-model}
+\begin{array}{rcll}
+\mathbf{y_t} & = & Z_{t}\boldsymbol{\alpha_{t}} + \boldsymbol{\varepsilon_{t}}, &\quad \boldsymbol{\varepsilon_{t}} \sim NID(0, H) \\
+\boldsymbol{\alpha_{t+1}} & = & T_{t}\boldsymbol{\alpha_{t}} +  R_{t}\boldsymbol{\eta_{t}}, &\quad \boldsymbol{\eta_{t}} \sim NID(0,Q) \\
+\end{array}
+\end{equation}
+\end{center}
+
+where 
+
+\begin{center}
+\begin{equation*}
+\begin{array}{c}
+
+Z =  \begin{bmatrix}
+\mathbf{I_{MxM}} &  \mathbf{0_{M x M}} &  \mathbf{0_{M x M}} &  \mathbf{0_{M x M}} 
+\end{bmatrix}, \\ \\
+
+T =  \begin{bmatrix}
+\mathbf{I_{MxM}} &  \mathbf{I_{M x M}} &  \mathbf{0_{M x 23M}} &  \mathbf{0_{M x 6M}} \\
+\mathbf{0_{M x M}}& \mathbf{I_{MxM}} &  \mathbf{0_{M x 23M}} &  \mathbf{0_{M x 6M}}  \\
+\mathbf{0_{23M x M}} &  \mathbf{0_{23M x M}} & \mathbf{S_{23}} &  \mathbf{0_{23M x 6M}} \\
+ \mathbf{0_{6M x M}} &  \mathbf{0_{6M x M}} & \mathbf{0_{6M x 23M}} &  \mathbf{S_{6}}
+\end{bmatrix}, \;
+
+R =  \begin{bmatrix}
+\mathbf{I_{2Mx2M}} \\
+\mathbf{0_{29Mx2M}}
+%\mathbf{I_{MxM}} &  \mathbf{0_{M x M}} \\
+%\mathbf{0_{M x M}} & \mathbf{I_{MxM}} \\
+ % \mathbf{0_{M x M}} &  \mathbf{0_{M x M}} \\
+ % \mathbf{0_{M x M}} &  \mathbf{0_{M x M}} 
+\end{bmatrix}, \\ \\
+
+\boldsymbol{\alpha'} = \begin{pmatrix}
+\mu^{(1)}\dots\mu^{(M)}&
+\nu^{(1)}\dots\nu^{(M)}&
+\gamma_{1}^{(h,1)}\dots\gamma_{1}^{(h,M)}\dots\gamma_{23}^{(h,M)}&
+\gamma_{1}^{(d,1)}\dots\gamma_{1}^{(d,M)}\dots\gamma_{6}^{(d,M)}&
+\end{pmatrix},\\ \\
+%\boldsymbol{\alpha} = \begin{pmatrix}
+%\mu^{(1)}\\\vdots\\\mu^{(M)}\\
+%\nu^{(1)}\\\vdots\\\nu^{(M)}\\
+%\gamma_{1}^{(h,1)}\\\vdots\\\gamma_{1}^{(h,M)}\\\vdots\\\gamma_{23}^{(h,M)}\\
+%\gamma_{1}^{(d,1)}\\\vdots\\\gamma_{1}^{(d,M)}\\\vdots\\\gamma_{6}^{(d,M)}\\
+%\end{pmatrix},\;
+
+\boldsymbol{\eta} = \begin{pmatrix}
+\xi^{(1)}\\\vdots\\\xi^{(M)}\\
+\zeta^{(1)}\\\vdots\\\zeta^{(M)}\\
+%0\\\vdots\\\vdots\\0
+\end{pmatrix},\;
+
+\mathbf{S}_{{l}} = \begin{bmatrix}
+-\mathbf{I_{MxM}} & -\mathbf{I_{MxM}} & \dots & -\mathbf{I_{MxM}} \\
+\mathbf{I}_{({l}-1)\mathbf{Mx}({l}-1)\mathbf{M}} & & \mathbf{0_{MxM}}\\
+\end{bmatrix}, \\ \\
+
+H = \mathbf{COV}(\varepsilon),\;
+
+Q =  \begin{bmatrix}
+ \mathbf{COV}(\xi) &  \mathbf{0_{M x M}} \\
+ \mathbf{0_{M x M}} &  \mathbf{COV}(\zeta) \\
+ \end{bmatrix}, \\\\
+ \mathbf{COV}(x) = \begin{bmatrix}
+ \sigma^{2}_{x^{(1)}} & cov(x^{(1)},x^{(2)}) & \dots & cov(x^{(1)},x^{(M)}) \\
+ \vdots & \ddots & & \vdots \\ 
+ cov(x^{(M)},x^{(1)}) & cov(x^{(M)},x^{(2)}) & \dots & \sigma^{2}_{x^{(M)}} 
+\end{bmatrix}
+
+%,\;
+%and \mathbf{0} is an matrix of zeros
+%H = \begin{bmatrix}
+ %\sigma^{2}_{\varepsilon^{(1)}} & cov(\varepsilon^{(1)},\varepsilon^{(2)}) & \dots & cov(\varepsilon^{(1)},\varepsilon^{(M)}) \\
+ %\vdots & \ddots & & \vdots \\ 
+ %cov(\varepsilon^{(M)},\varepsilon^{(1)}) & cov(\varepsilon^{(M)},\varepsilon^{(2)}) & \dots & \sigma^{2}_{\varepsilon^{(M)}} 
+%\end{bmatrix},\;
+%Q = \begin{bmatrix}
+ % \sigma^{2}_{\xi^{(1)}} & cov(\xi^{(1)},\xi^{(2)}) & \dots & cov(\xi^{(1)},\xi^{(M)}) & 0 & 0 & \dots & 0 \\
+ %\vdots & \ddots  &  & \vdots &  \vdots &  \ddots  & &  \vdots \\
+ % cov(\xi^{(M)},\xi^{(1)})  & cov(\xi^{(M)},\xi^{(1)})& \dots & \sigma^{2}_{\xi^{(M)}}& 0 & 0 & \dots & 0  \\
+ %0 & 0  & \dots & 0 &   \sigma^{2}_{\zeta^{(1)}} & cov(\zeta^{(1)},\zeta^{(2)}) & \dots & cov(\zeta^{(1)},\zeta^{(M)})\\
+ %\vdots &  \ddots & & \vdots &  \vdots & \ddots  & &  \vdots \\
+ % 0 & 0 & \dots & 0  & cov(\zeta^{(M)},\zeta^{(1)})  & cov(\zeta^{(M)},\zeta^{(1)})& \dots & \sigma^{2}_{\zeta^{(M)}}
+% \end{bmatrix}
+
+\end{array}
+\end{equation*}
+\end{center}
+\bibliographystyle{abbrv}
+\bibliography{yaboulna_thesis}
+\end{document}
+
+
+
+
+
+
+
+
+
+
