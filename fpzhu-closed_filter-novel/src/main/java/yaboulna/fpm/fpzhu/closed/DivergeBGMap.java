@@ -801,7 +801,7 @@ public class DivergeBGMap {
                       ((ancestorItemsets.contains(cand)) ?
                           // the (true) parent will necessarily be present in all documents of itemset
 // differentDocs = candDocIds.size() - iDocIds.size();
-                          Math.floor((1 - confThreshold) * candDocIds.size())
+                          Math.floor((itemset.size() == 2?confThreshold:  (1 - confThreshold)) * candDocIds.size())
                           :
                           Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                               Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
@@ -811,6 +811,7 @@ public class DivergeBGMap {
                   if (maxDiffCnt == absMaxDiff * hrsPerEpoch) {
                     ++absMaxDiffEnforced;
                   }
+                  
                   if (!ancestorItemsets.contains(cand)) {
 // // unionDocId.clear();
 // // intersDocId.clear();
@@ -919,6 +920,17 @@ public class DivergeBGMap {
                     }
 
                   }
+//                  else if(itemset.size() == 2){ // ancestor of a size 2 itemset.. might be language construct
+//                    // filter out language constructs.. or that is, keep only named entities by YuleQ
+//                    double a1b1 = iDocIds.size();
+//                    double a1b0 = 0; //should be 0 since b is parent itemset, but not smooth
+//                    double a0b1 = differentDocs;
+//                    double a0b0 = fgNumTweets - iDocIds.size() - candDocIds.size() + a1b1;
+//                    // Will always be 1 stupid
+//                    double yuleQ = (a1b1 * a0b0 - a1b0 * a0b1) / (a1b1 * a0b0 + a1b0 * a0b1); 
+//                    
+//                    
+//                  }
 
 // Iterator<Long> remainingIter;
 // if (iDidIter.hasNext()) {
