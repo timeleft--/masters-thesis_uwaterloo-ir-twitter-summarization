@@ -164,6 +164,9 @@ public class Diff {
         });
 
         perfmonKV.storeKeyValue("LeftOutCount", leftOutCount);
+        perfmonKV.storeKeyValue("NumSelItemsets", selSet.size());
+//        perfmonKV.storeKeyValue("PctLeftOut", selSet.size());
+        
       } finally {
         diffClose.close();
       }
