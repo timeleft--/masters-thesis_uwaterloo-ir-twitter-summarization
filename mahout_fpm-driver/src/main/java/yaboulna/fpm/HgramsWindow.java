@@ -56,7 +56,7 @@ public class HgramsWindow {
   private static final int TOPIC_WORDS_PER_MINUTE = 100;
   private static final int FREQUENT_PATTERNS_PER_MINUTE = 1;
 
-  private static final boolean EXCLUDE_LENLESS2_ITEMSETS = true;
+  private static final boolean EXCLUDE_LENLESS2_ITEMSETS = false;
 
   private static boolean USE_RELIABLE_ALGO;
 
