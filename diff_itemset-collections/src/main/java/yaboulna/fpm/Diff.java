@@ -138,6 +138,10 @@ public class Diff {
 
         });
 
+        File selKeywordsFile = new File(diffFile.getParentFile(),  replaceFirst(selF.getName(),selPfx,
+            selPfx + Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords)))); 
+        FileUtils.writeLines(selKeywordsFile, selSet);
+        
         int leftOutCount = Files.readLines(origFile, Charsets.UTF_8, new AbstractLineProcessor() {
 
           @Override
