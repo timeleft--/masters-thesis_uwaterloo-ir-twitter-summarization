@@ -123,7 +123,7 @@ public class DivergeBGMap {
       }
       Integer currCnt = fpCntMap.get(itemset);
       if(currCnt != null){
-        LOG.info("Repeated itemset {} with existing cnt {} and new cnt " + count, itemset, currCnt);
+        LOG.debug("Repeated itemset {} with existing cnt {} and new cnt " + count, itemset, currCnt);
         if(currCnt > count){
           ++repeatedItemsetsLessNewCnt;
           return true;
