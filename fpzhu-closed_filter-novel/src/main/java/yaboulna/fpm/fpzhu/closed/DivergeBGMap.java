@@ -184,7 +184,7 @@ public class DivergeBGMap {
   private static final boolean ALLIANCE_PREFER_SHORTER_ITEMSETS = false;
   private static final boolean ALLIANCE_PREFER_LONGER_ITEMSETS = false;
   
-  private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
+  private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = false;
 
   private static final boolean ENFORCE_HIGHER_SUPPORT = false;
   private static final int ENFORCED_SUPPORT = 33;
@@ -803,7 +803,7 @@ public class DivergeBGMap {
 // differentDocs = candDocIds.size() - iDocIds.size();
 //                          Math.floor((itemset.size() == 2?confThreshold:  (1 - confThreshold)) * candDocIds.size())
 //                          (1 - confThreshold) * candDocIds.size()
-                          (1 / confThreshold) * iDocIds.size()
+                          Math.floor((1 / confThreshold) * iDocIds.size())
                           :
                           Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                               Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
@@ -1109,7 +1109,8 @@ public class DivergeBGMap {
                         ((ancestorItemsets.contains(theOnlyOneIllMerge)) ?
                             // the (true) parent will necessarily be present in all documents of itemset
                             // differentDocs = candDocIds.size() - iDocIds.size();
-                            Math.floor((1 - confThreshold) * fgIdsMap.get(theOnlyOneIllMerge).size())
+//                            Math.floor((1 - confThreshold) * fgIdsMap.get(theOnlyOneIllMerge).size())
+                            Math.floor((1 / confThreshold) * iDocIds.size())
                             :
                             Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                 Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
@@ -1184,7 +1185,8 @@ public class DivergeBGMap {
                         + ((ancestorItemsets.contains(bestUnofficialCandidate)) ?
                             // the (true) parent will necessarily be present in all documents of itemset
                             // differentDocs = candDocIds.size() - iDocIds.size();
-                            Math.floor((1 - confThreshold) * fgIdsMap.get(bestUnofficialCandidate).size())
+//                            Math.floor((1 - confThreshold) * fgIdsMap.get(bestUnofficialCandidate).size())
+                            Math.floor((1 / confThreshold) * iDocIds.size())
                             :
                             Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                 Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
