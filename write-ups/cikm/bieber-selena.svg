@@ -4,53 +4,53 @@
     version="1.1" baseProfile="full">
     <defs/>
     <g>
-        <g latexdraw:type="rectangle" id="id269">
+        <g latexdraw:type="rectangle" id="id24">
             <rect x="2.449999988079071" y="0.44999998807907104"
                 width="231.10000002384186" height="125.10000002384186"
                 latexdraw:borderPos="outer"
                 stroke-width="0.8999999761581421" stroke="black" fill="none"/>
         </g>
-        <g latexdraw:type="circle" id="id270">
+        <g latexdraw:type="circle" id="id25">
             <circle cx="76.0" cy="69.0" r="46.55000001192093"
                 latexdraw:borderPos="outer"
                 stroke-width="0.8999999761581421" stroke="black" fill="none"/>
         </g>
-        <g latexdraw:type="circle" id="id272">
+        <g latexdraw:type="circle" id="id27">
             <circle cx="100.0" cy="69.0" r="44.55000001192093"
                 latexdraw:borderPos="outer"
                 stroke-width="0.8999999761581421" stroke="black" fill="none"/>
         </g>
-        <g latexdraw:type="circle" id="id274">
+        <g latexdraw:type="circle" id="id29">
             <circle cx="192.5" cy="43.5" r="13.050000011920929"
                 latexdraw:borderPos="outer"
                 stroke-width="0.8999999761581421" stroke="black"
                 fill="none" stroke-dasharray="8.0, 8.0"/>
         </g>
-        <g latexdraw:type="text" id="id276"
-            font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="13.0">
+        <g latexdraw:type="text" id="id31" font-family="Times New Roman"
+            fill="black" font-size="18" latexdraw:x="13.0">
             <text x="13.0" y="18.0"><![CDATA[Justin, Selena]]></text>
         </g>
-        <g latexdraw:type="text" id="id279"
-            font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="34.0">
+        <g latexdraw:type="text" id="id33" font-family="Times New Roman"
+            fill="black" font-size="18" latexdraw:x="34.0">
             <text x="34.0" y="83.0"><![CDATA[broke, up]]></text>
         </g>
-        <g latexdraw:type="text" id="id282"
-            font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="84.0">
+        <g latexdraw:type="text" id="id35" font-family="Times New Roman"
+            fill="black" font-size="18" latexdraw:x="84.0">
             <text x="84.0" y="62.0"><![CDATA[\#jelena]]></text>
         </g>
-        <g latexdraw:type="text" id="id285"
-            font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="165.0">
-            <text x="165.0" y="48.0"><![CDATA[Drew]]></text>
+        <g latexdraw:type="text" id="id37" font-family="Times New Roman"
+            fill="black" font-size="18" latexdraw:x="165.0">
+            <text x="165.0" y="27.0"><![CDATA[Drew]]></text>
         </g>
-        <g latexdraw:type="circle" id="id288">
+        <g latexdraw:type="circle" id="id39">
             <circle cx="193.5" cy="86.5" r="14.050000011920929"
                 latexdraw:borderPos="outer"
                 stroke-width="0.8999999761581421" stroke="black"
                 fill="none" stroke-dasharray="8.0, 8.0"/>
         </g>
-        <g latexdraw:type="text" id="id290"
-            font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="164.0">
-            <text x="164.0" y="91.0"><![CDATA[Marie]]></text>
+        <g latexdraw:type="text" id="id41" font-family="Times New Roman"
+            fill="black" font-size="18" latexdraw:x="164.0">
+            <text x="164.0" y="112.0"><![CDATA[Marie]]></text>
         </g>
     </g>
     <metadata>
