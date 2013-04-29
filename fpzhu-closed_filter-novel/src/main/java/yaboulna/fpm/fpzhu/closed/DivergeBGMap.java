@@ -801,7 +801,9 @@ public class DivergeBGMap {
                       ((ancestorItemsets.contains(cand)) ?
                           // the (true) parent will necessarily be present in all documents of itemset
 // differentDocs = candDocIds.size() - iDocIds.size();
-                          Math.floor((itemset.size() == 2?confThreshold:  (1 - confThreshold)) * candDocIds.size())
+//                          Math.floor((itemset.size() == 2?confThreshold:  (1 - confThreshold)) * candDocIds.size())
+//                          (1 - confThreshold) * candDocIds.size()
+                          (1 / confThreshold) * iDocIds.size()
                           :
                           Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                               Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
