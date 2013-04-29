@@ -142,7 +142,7 @@ public class Diff {
             selPfx + Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords)))); 
         FileUtils.writeLines(selKeywordsFile, selSet);
         
-        int leftOutCount = Files.readLines(origFile, Charsets.UTF_8, new AbstractLineProcessor() {
+        double leftOutCount = Files.readLines(origFile, Charsets.UTF_8, new AbstractLineProcessor() {
 
           @Override
           void doSomethingUseful(Set<String> itemset) {
@@ -165,7 +165,7 @@ public class Diff {
 
         perfmonKV.storeKeyValue("LeftOutCount", leftOutCount);
         perfmonKV.storeKeyValue("NumSelItemsets", selSet.size());
-//        perfmonKV.storeKeyValue("PctLeftOut", selSet.size());
+        perfmonKV.storeKeyValue("PctLeftOut", leftOutCount == 0? 0 : leftOutCount / (selSet.size() + leftOutCount));
         
       } finally {
         diffClose.close();
