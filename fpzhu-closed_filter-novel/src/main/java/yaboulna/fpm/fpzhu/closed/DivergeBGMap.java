@@ -183,7 +183,7 @@ public class DivergeBGMap {
   private static final boolean ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE = false;
   private static final boolean ALLIANCE_PREFER_SHORTER_ITEMSETS = false;
   private static final boolean ALLIANCE_PREFER_LONGER_ITEMSETS = false;
-  private static final boolean TOTALLY_IGNORE_1ITEMSETS = true;
+  private static final boolean TOTALLY_IGNORE_1ITEMSETS = false;
   private static final boolean IGNORE_1ITEMSETS_VERY_HIGH_CNT = false;
   private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
 
