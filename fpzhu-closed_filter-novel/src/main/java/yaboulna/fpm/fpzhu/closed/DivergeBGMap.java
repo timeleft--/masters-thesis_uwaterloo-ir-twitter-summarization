@@ -56,7 +56,7 @@ public class DivergeBGMap {
   static SimpleDateFormat logFileNameFmt = new SimpleDateFormat("MMdd-HHmmss");
 
   private static final Splitter comaSplitter = Splitter.on(',');
-  static class ItemsetTabCountProcessor implements LineProcessor<Integer> {
+  static class ItemsetTabCountProcessor implements LineProcessor<int[]> {
 
     private static final String NUM_TWEETS_STR = "NUMTWEETS";
 
@@ -69,6 +69,8 @@ public class DivergeBGMap {
 // Avoid copying this from one frame to another = Maps.newHashMapWithExpectedSize(4444444);
     boolean skipOneCharSets = true;
     int ignoredCount = 0;
+    int repeatedItemsetsLessNewCnt = 0;
+    int repeatedItemsetsMoreNewCnt = 0;
 
     private SummaryStatistics unigramCountStats;
 
@@ -119,6 +121,16 @@ public class DivergeBGMap {
         ++ignoredCount;
         return true;
       }
+      Integer currCnt = fpCntMap.get(itemset);
+      if(currCnt != null){
+        LOG.info("Repeated itemset {} with existing cnt {} and new cnt " + count, itemset, currCnt);
+        if(currCnt > count){
+          ++repeatedItemsetsLessNewCnt;
+          return true;
+        } else {
+          ++repeatedItemsetsMoreNewCnt;
+        }
+      }
       if (unigramCountStats != null && itemset.size() == 1) {
         unigramCountStats.addValue(count);
       }
@@ -139,8 +151,8 @@ public class DivergeBGMap {
       return true;
     }
     @Override
-    public Integer getResult() {
-      return ignoredCount;
+    public int[] getResult() {
+      return new int[] {ignoredCount, repeatedItemsetsLessNewCnt, repeatedItemsetsMoreNewCnt};
     }
   }
 
@@ -432,7 +444,7 @@ public class DivergeBGMap {
         final long historyLenInEpochSteps = Math.round(HISTORY_LEN_IN_SECS / (hrsPerEpoch * 3600.0));
 
         LOG.info("Loading foreground freqs from {}", fgF);
-        int itemsetsOfShortAverageLen = Files.readLines(fgF, Charsets.UTF_8,
+        int[] fileReadingPerfMeasures = Files.readLines(fgF, Charsets.UTF_8,
             new ItemsetTabCountProcessor(fgCountMap, fgIdsMap,
                 (TOTALLY_IGNORE_1ITEMSETS || !IGNORE_1ITEMSETS_VERY_HIGH_CNT ? null : unigramCountStats)));
         LOG.info("Loaded foreground freqs - num itemsets: {}", fgCountMap.size());
@@ -1466,12 +1478,14 @@ public class DivergeBGMap {
           novelClose.close();
         }
         LOG.info("Net itemsets after subtracting ignored: {} out of {} itemsets from file: " + fgF.getName(),
-            fgCountMap.size() - (stronglyClosedItemsetsFilter.numLen1Itemsets + itemsetsOfShortAverageLen),
+            fgCountMap.size() - (stronglyClosedItemsetsFilter.numLen1Itemsets + fileReadingPerfMeasures[0]),
             fgCountMap.size());
 
         LOG.info("CPUMillisFilter: {}", filteringCPUTime / 1e6);
-        LOG.info("TotalItemsets: {}", fgCountMap.size() + itemsetsOfShortAverageLen);
-        LOG.info("Avg-2CharsItemsets: {}", itemsetsOfShortAverageLen);
+        LOG.info("TotalItemsets: {}", fgCountMap.size() + fileReadingPerfMeasures[0]);
+        LOG.info("Avg-2CharsItemsets: {}", fileReadingPerfMeasures[0]);
+        LOG.info("RepItemsetsLessNew: {}", fileReadingPerfMeasures[1]);
+        LOG.info("RepItemsetsMoreNew: {}", fileReadingPerfMeasures[2]);
         LOG.info("EnoughCharsItemsets: {}", fgCountMap.size());
         LOG.info("Len1Itemsets: {}", stronglyClosedItemsetsFilter.numLen1Itemsets);
         LOG.info("Len2+Itemsets: {}", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
@@ -1488,8 +1502,10 @@ public class DivergeBGMap {
           perfMonKV.storeKeyValue("Timestamp", System.currentTimeMillis());
           perfMonKV.storeKeyValue("CPUMillisFilter", filteringCPUTime / 1e6);
           
-          perfMonKV.storeKeyValue("TotalItemsets", fgCountMap.size() + itemsetsOfShortAverageLen);
-          perfMonKV.storeKeyValue("Avg-2CharsItemsets", itemsetsOfShortAverageLen);
+          perfMonKV.storeKeyValue("TotalItemsets", fgCountMap.size() + fileReadingPerfMeasures[0]);
+          perfMonKV.storeKeyValue("Avg-2CharsItemsets", fileReadingPerfMeasures[0]);
+          perfMonKV.storeKeyValue("RepItemsetsLessNew", fileReadingPerfMeasures[1]);
+          perfMonKV.storeKeyValue("RepItemsetsMoreNew", fileReadingPerfMeasures[2]);
           perfMonKV.storeKeyValue("EnoughCharsItemsets", fgCountMap.size());
           perfMonKV.storeKeyValue("Len1Itemsets", stronglyClosedItemsetsFilter.numLen1Itemsets);
           perfMonKV.storeKeyValue("Len2+Itemsets", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
