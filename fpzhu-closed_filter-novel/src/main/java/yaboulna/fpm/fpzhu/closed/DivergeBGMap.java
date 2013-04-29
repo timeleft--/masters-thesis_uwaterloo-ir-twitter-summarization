@@ -183,8 +183,7 @@ public class DivergeBGMap {
   private static final boolean ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE = false;
   private static final boolean ALLIANCE_PREFER_SHORTER_ITEMSETS = false;
   private static final boolean ALLIANCE_PREFER_LONGER_ITEMSETS = false;
-  private static final boolean TOTALLY_IGNORE_1ITEMSETS = false;
-  private static final boolean IGNORE_1ITEMSETS_VERY_HIGH_CNT = false;
+  
   private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
 
   private static final boolean ENFORCE_HIGHER_SUPPORT = false;
@@ -206,6 +205,8 @@ public class DivergeBGMap {
   static int absMaxDiff = 1000; // TODO arg
   static boolean trending = false;
   static boolean perfMon = true;
+   static  boolean TOTALLY_IGNORE_1ITEMSETS = false;
+   static  boolean IGNORE_1ITEMSETS_VERY_HIGH_CNT = false;
 
   /**
    * @param args
@@ -245,6 +246,8 @@ public class DivergeBGMap {
       honorTemporalSimilarity = args[3].contains("Temporal");
       trending = args[3].contains("Trending");
       perfMon = !args[3].contains("NoPerfMon");
+      TOTALLY_IGNORE_1ITEMSETS = args[3].contains("Ignore1Tot");
+      IGNORE_1ITEMSETS_VERY_HIGH_CNT = args[3].contains("Ignore1VHi");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -260,6 +263,8 @@ public class DivergeBGMap {
     LOG.info("honorTemporalSimilarity: " + honorTemporalSimilarity);
     LOG.info("trending: " + trending);
     LOG.info("perfMon: " + perfMon);
+    LOG.info("TOTALLY_IGNORE_1ITEMSETS: " + TOTALLY_IGNORE_1ITEMSETS);
+    LOG.info("IGNORE_1ITEMSETS_VERY_HIGH_CNT: " + IGNORE_1ITEMSETS_VERY_HIGH_CNT);
 
     String thresholds = "";
     thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
