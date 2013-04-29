@@ -105,9 +105,10 @@ public class Diff {
 
     final Set<Set<String>> selSet = Sets.newHashSetWithExpectedSize(10000);
     // Map = Maps.newHashMapWithExpectedSize(10000);
-
+    double epochsWithOccs = 0;
+    double epochsCountTot = 0;
     for (File selF : selFiles) {
-
+      ++epochsCountTot;
       selSet.clear();
 
       File origFile = new File(selF.getParentFile(), replaceFirst(selF.getName(), selPfx, origPfx));
@@ -165,6 +166,7 @@ public class Diff {
         });
 
         if (origOccsOfKeyWords.doubleValue() > 0) {
+          ++epochsWithOccs;
           File selKeywordsFile = new File(diffFile.getParentFile(), replaceFirst(selF.getName(), selPfx,
               selPfx + Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords))));
           FileUtils.writeLines(selKeywordsFile, selSet);
@@ -179,6 +181,14 @@ public class Diff {
       } finally {
         diffClose.close();
       }
+    }
+    PerfMonKeyValueStore perfmonKV = new PerfMonKeyValueStore(Diff.class.getName(),
+        Arrays.toString(args));
+    try {
+      perfmonKV.storeKeyValue("EpochsWithKW", epochsWithOccs);
+      perfmonKV.storeKeyValue("EpochsCount", epochsCountTot);
+    } finally {
+      perfmonKV.close();
     }
   }
 
