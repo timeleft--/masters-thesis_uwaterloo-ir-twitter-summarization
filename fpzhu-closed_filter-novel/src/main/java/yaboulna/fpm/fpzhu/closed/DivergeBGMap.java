@@ -566,16 +566,6 @@ public class DivergeBGMap {
 
               double fgFreq = fgCountMap.get(itemset) + 1.0;
 
-              if (itemset.size() == 1) {
-                ++numLen1Itemsets; // .increment();
-                if (!TOTALLY_IGNORE_1ITEMSETS) {
-                  if (!IGNORE_1ITEMSETS_VERY_HIGH_CNT || fgFreq < stopWordsThreshold) {
-                    prevItemsets.addLast(itemset);
-                  }
-                }
-                continue;
-              }
-
               Integer bgCount = bgCountMap.get(itemset);
               double klDiver = Double.MIN_VALUE;
               if (bgCount == null) {
@@ -589,6 +579,17 @@ public class DivergeBGMap {
                 klDiver = fgFreq * (Math.log(fgFreq / bgCount) + bgFgLogP);
               }
               kldCache.put(itemset, klDiver);
+              
+              if (itemset.size() == 1) {
+                ++numLen1Itemsets; // .increment();
+                if (!TOTALLY_IGNORE_1ITEMSETS) {
+                  if (!IGNORE_1ITEMSETS_VERY_HIGH_CNT || fgFreq < stopWordsThreshold) {
+                    prevItemsets.addLast(itemset);
+                  }
+                }
+                continue;
+              }
+              
               if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
                 positiveKLDivergence.put(itemset, klDiver);
 
