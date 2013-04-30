@@ -27,6 +27,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.NameFileComparator;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.lang.mutable.MutableDouble;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Appender;
@@ -432,6 +433,7 @@ public class DivergeBGMap {
     Splitter underscoreSplit = Splitter.on('_');
 
     final Map<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> growingAlliances = Maps.newHashMap();
+    final Map<Set<String>,SummaryStatistics> alliedKLD = Maps.newHashMap();
     final Map<Set<String>, Set<String>> itemsetParentMap = Maps.newHashMap();
     final Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
     final Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
@@ -510,6 +512,7 @@ public class DivergeBGMap {
         final double hrsPerEpoch = Long.parseLong(Iterables.get(underscoreSplit.split(fgF.getName()), 1)) / 3600.0;
         if (!growAlliancesAcrossEpochs) {
           growingAlliances.clear();
+          alliedKLD.clear();
           allianceTransitive.clear();
           itemsetParentMap.clear();
           fgCountMap.clear();
@@ -1250,6 +1253,11 @@ public class DivergeBGMap {
                     alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
                         HashMultiset.create(theOnlyOneIllMerge), Sets.newHashSet(theOnlyOnesDocIds));
                     growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
+                    
+                    SummaryStatistics kldStats = new SummaryStatistics();
+                    kldStats.addValue(positiveKLDivergence.get(theOnlyOneIllMerge));
+                    alliedKLD.put(theOnlyOneIllMerge, kldStats);
+                    
                     if (!itemsetParentMap.containsKey(theOnlyOneIllMerge)) {
                       if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
                           && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
@@ -1262,6 +1270,8 @@ public class DivergeBGMap {
                   }
                   alliedItemsets.getKey().addAll(itemset);
                   alliedItemsets.getValue().addAll(iDocIds);
+                  
+                  alliedKLD.get(theOnlyOneIllMerge).addValue(positiveKLDivergence.get(itemset));
 
                   allied = true;
                 } else if (!mergeCandidates.isEmpty()) {
@@ -1492,27 +1502,28 @@ public class DivergeBGMap {
               }
             }
 
-            double klDiver = Double.MIN_VALUE;
-            Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
-            if (bgCount == null) {
-              if (!fallBackToItemsKLD) {
-                bgCount = 1;
-              } else {
-                klDiver = calcComponentsKLDiver(mergedItemset.elementSet(), unionDocId.size(),
-                    bgCountMap, fgCountMap, bgFgLogP, kldCache);
-              }
-            }
-            if (bgCount != null) {
-              klDiver = unionDocId.size() * 1.0 * (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
-
-            }
-            // klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+            double klDiver = alliedKLD.get(e.getKey()).getMean(); 
+//            double klDiver = Double.MIN_VALUE;
+//            Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
+//            if (bgCount == null) {
+//              if (!fallBackToItemsKLD) {
+//                bgCount = 1;
+//              } else {
+//                klDiver = calcComponentsKLDiver(mergedItemset.elementSet(), unionDocId.size(),
+//                    bgCountMap, fgCountMap, bgFgLogP, kldCache);
+//              }
+//            }
+//            if (bgCount != null) {
+//              klDiver = unionDocId.size() * 1.0 * (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+//
+//            }
+//            // klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
 
             selectionFormat.out().append(printMultiset(mergedItemset));
             selectionFormat.format(
                 "\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
-                confidence,
                 klDiver,
+                confidence,
                 calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
                     idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
                 unionDocId.size(),
@@ -1550,7 +1561,7 @@ public class DivergeBGMap {
           for (java.util.Map.Entry<Set<String>, Double> hcEntry : confidentItemsets.entrySet()) {
             Set<String> itemset = hcEntry.getKey();
             Double conf = hcEntry.getValue();
-            hcFormat.format(itemset + "\t%.15f\t%s\n", conf,
+            hcFormat.format(itemset + "\t%.15f\t%.15f\t%s\n", positiveKLDivergence.get(itemset), conf,
                 (fgIdsMap.containsKey(itemset) ? fgIdsMap.get(itemset) : ""));
           }
           // // Print the parents that were pending alliance with children to make sure they have conf
