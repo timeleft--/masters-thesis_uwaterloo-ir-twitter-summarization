@@ -17,6 +17,7 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.apache.hadoop.io.VLongWritable;
+import org.apache.lucene.analysis.LetterTokenizer;
 
 import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 
@@ -236,13 +237,17 @@ public class Diff {
           Set<Long> leftOutEpochs = Sets.newCopyOnWriteArraySet(leftOutItems.get(leftOutItemKey));
           leftOutFmt.format("%s\t%d\t%s\n", leftOutItemKey, leftOutEpochs.size(), leftOutEpochs.toString());
 
+          perfmonKV.storeKeyValue("LeftOut_" + leftOutItemKey, leftOutEpochs.size());
+
           Set<Long> compLeftOutEpochs = null;
           if (selectedItems.containsKey(leftOutItemKey)) {
             Set<Long> selectedEpochs = Sets.newCopyOnWriteArraySet(selectedItems.get(leftOutItemKey));
             compLeftOutEpochs = Sets.difference(leftOutEpochs, selectedEpochs);
           }
           if (compLeftOutEpochs != null && compLeftOutEpochs.size() > 0) {
-            compLeftOutFmt.format("%s\t%d\t%s\n", leftOutItemKey, compLeftOutEpochs.size(), compLeftOutEpochs.toString());
+            compLeftOutFmt.format("%s\t%d\t%s\n", leftOutItemKey, compLeftOutEpochs.size(),
+                compLeftOutEpochs.toString());
+            perfmonKV.storeKeyValue("CompLeftOut_" + leftOutItemKey, compLeftOutEpochs.size());
           }
         }
       }
