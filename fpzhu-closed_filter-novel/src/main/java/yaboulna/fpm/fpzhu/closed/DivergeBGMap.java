@@ -1502,7 +1502,7 @@ public class DivergeBGMap {
               }
             }
 
-            double klDiver = alliedKLD.get(e.getKey()).getMean(); 
+            SummaryStatistics kldStats = alliedKLD.get(e.getKey()); 
 //            double klDiver = Double.MIN_VALUE;
 //            Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
 //            if (bgCount == null) {
@@ -1521,8 +1521,14 @@ public class DivergeBGMap {
 
             selectionFormat.out().append(printMultiset(mergedItemset));
             selectionFormat.format(
-                "\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
-                klDiver,
+                "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+                kldStats.getMean(),
+                kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(),
+                kldStats.getVariance(),
+                kldStats.getMin(),
+                kldStats.getMax(),
+                (int)kldStats.getN(),
+                
                 confidence,
                 calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
                     idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
