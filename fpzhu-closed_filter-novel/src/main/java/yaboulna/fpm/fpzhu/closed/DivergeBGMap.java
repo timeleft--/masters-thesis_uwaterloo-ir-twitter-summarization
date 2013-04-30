@@ -71,6 +71,8 @@ public class DivergeBGMap {
     int ignoredCount = 0;
     int repeatedItemsetsLessNewCnt = 0;
     int repeatedItemsetsMoreNewCnt = 0;
+    int sumDifferenceInRepeatedCnt = 0;
+    int maxDifferenceInRepeatedCnt = 0;
 
     private SummaryStatistics unigramCountStats;
 
@@ -126,9 +128,17 @@ public class DivergeBGMap {
         LOG.debug("Repeated itemset {} with existing cnt {} and new cnt " + count, itemset, currCnt);
         if(currCnt > count){
           ++repeatedItemsetsLessNewCnt;
+          sumDifferenceInRepeatedCnt += currCnt - count;
+          if(currCnt - count > maxDifferenceInRepeatedCnt){
+            maxDifferenceInRepeatedCnt = currCnt - count;
+          }
           return true;
         } else {
           ++repeatedItemsetsMoreNewCnt;
+          sumDifferenceInRepeatedCnt += count - currCnt;
+          if(count - currCnt > maxDifferenceInRepeatedCnt){
+            maxDifferenceInRepeatedCnt = count - currCnt;
+          }
         }
       }
       if (unigramCountStats != null && itemset.size() == 1) {
@@ -152,7 +162,7 @@ public class DivergeBGMap {
     }
     @Override
     public int[] getResult() {
-      return new int[] {ignoredCount, repeatedItemsetsLessNewCnt, repeatedItemsetsMoreNewCnt};
+      return new int[] {ignoredCount, repeatedItemsetsLessNewCnt, repeatedItemsetsMoreNewCnt, sumDifferenceInRepeatedCnt, maxDifferenceInRepeatedCnt};
     }
   }
 
@@ -1508,6 +1518,8 @@ public class DivergeBGMap {
         LOG.info("Avg-2CharsItemsets: {}", fileReadingPerfMeasures[0]);
         LOG.info("RepItemsetsLessNew: {}", fileReadingPerfMeasures[1]);
         LOG.info("RepItemsetsMoreNew: {}", fileReadingPerfMeasures[2]);
+        LOG.info("AvgDiffInRepeatedCnt: {}", fileReadingPerfMeasures[3] * 1.0 / (fileReadingPerfMeasures[1] + fileReadingPerfMeasures[2]) );
+        LOG.info("MaxDiffInRepeatedCnt: {}", fileReadingPerfMeasures[4]);
         LOG.info("EnoughCharsItemsets: {}", fgCountMap.size());
         LOG.info("Len1Itemsets: {}", stronglyClosedItemsetsFilter.numLen1Itemsets);
         LOG.info("Len2+Itemsets: {}", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
@@ -1528,6 +1540,8 @@ public class DivergeBGMap {
           perfMonKV.storeKeyValue("Avg-2CharsItemsets", fileReadingPerfMeasures[0]);
           perfMonKV.storeKeyValue("RepItemsetsLessNew", fileReadingPerfMeasures[1]);
           perfMonKV.storeKeyValue("RepItemsetsMoreNew", fileReadingPerfMeasures[2]);
+          perfMonKV.storeKeyValue("AvgDiffInRepeatedCnt", fileReadingPerfMeasures[3] * 1.0 / (fileReadingPerfMeasures[1] + fileReadingPerfMeasures[2]) );
+          perfMonKV.storeKeyValue("MaxDiffInRepeatedCnt", fileReadingPerfMeasures[4]);
           perfMonKV.storeKeyValue("EnoughCharsItemsets", fgCountMap.size());
           perfMonKV.storeKeyValue("Len1Itemsets", stronglyClosedItemsetsFilter.numLen1Itemsets);
           perfMonKV.storeKeyValue("Len2+Itemsets", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
