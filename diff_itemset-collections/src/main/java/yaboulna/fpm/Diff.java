@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -14,6 +16,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang.mutable.MutableInt;
+import org.apache.hadoop.io.VLongWritable;
 
 import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 
@@ -21,8 +24,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
@@ -104,7 +105,7 @@ public class Diff {
         FileFilterUtils.and(new MyAffixFileFilter(selPfx, true), // FileFilterUtils.prefixFileFilter(selPfx),
             FileFilterUtils.notFileFilter(new MyAffixFileFilter("diff", false)), // FileFilterUtils.prefixFileFilter("diff")),
             FileFilterUtils.notFileFilter(new MyAffixFileFilter(".log", false))), // FileFilterUtils.suffixFileFilter("log"))),
-        FileFilterUtils.trueFileFilter());
+        FileFilterUtils.notFileFilter(new MyAffixFileFilter("diff", false)));
     Collections.sort(selFiles);
 
     final Set<Set<String>> selSet = Sets.newHashSetWithExpectedSize(10000);
@@ -112,9 +113,10 @@ public class Diff {
     double epochsWithOccs = 0;
     double epochsCountTot = 0;
     final Multimap<String, Long> leftOutItems = HashMultimap.create();
+    final Multimap<String, Long> selectedItems = HashMultimap.create();
     for (File selF : selFiles) {
-      
-      final long epochstartux = 0l;//FIXME
+      String[] nameParts = selF.getName().split("\\_");
+      final long epochstartux = Long.parseLong(nameParts[nameParts.length - 2]);
       ++epochsCountTot;
       selSet.clear();
 
@@ -141,12 +143,15 @@ public class Diff {
         int numCatchAllItemsets = Files.readLines(selF, Charsets.UTF_8, new AbstractLineProcessor() {
 
           void doSomethingUseful(Set<String> itemset) {
-            if(itemset.size() > 15){
+            if (itemset.size() > 15) {
               ++retval;
               return;
             }
             if (keywords.isEmpty() || !Sets.intersection(keywords, itemset).isEmpty()) {
               selSet.add(itemset); // , null);
+              for (String item : itemset) {
+                selectedItems.put(item, epochstartux);
+              }
             }
           }
 
@@ -163,14 +168,21 @@ public class Diff {
 
             origOccsOfKeyWords.increment();
 
+            Set<String> minDiff = itemset;
             for (Set<String> selected : selSet) {
-              if (Sets.intersection(selected, itemset).equals(itemset)) {
+              Set<String> diff = Sets.difference(itemset, selected);
+// if (Sets.intersection(selected, itemset).equals(itemset)) {
+              if (diff.size() == 0) {
                 return;
+              }
+              if (diff.size() < minDiff.size()) {
+                minDiff = diff;
               }
             }
 
-            for(String leftOutItem: Sets.difference(itemset, keywords)){
-              leftOutItems.put(leftOutItem, value);
+            for (String leftOutItem : minDiff) {
+              // Sets.difference(itemset, keywords)) {
+              leftOutItems.put(leftOutItem, epochstartux);
             }
             ++retval;
             diffFmt.format("%s\n", itemset.toString());
@@ -201,16 +213,43 @@ public class Diff {
         diffClose.close();
       }
     }
-    PerfMonKeyValueStore perfmonKV = new PerfMonKeyValueStore(Diff.class.getName(),
-        Arrays.toString(args));
+    Closer aggregateCloser = Closer.create();
+
     try {
+      PerfMonKeyValueStore perfmonKV = aggregateCloser.register(new PerfMonKeyValueStore(Diff.class.getName(),
+          Arrays.toString(args)));
       perfmonKV.storeKeyValue("EpochsWithKW", epochsWithOccs);
       perfmonKV.storeKeyValue("EpochsCount", epochsCountTot);
+
+      if (leftOutItems.size() > 0) {
+        File compLeftoutItemsFile = new File(dataDir.getAbsolutePath() + "/diff/comp-leftout-items_" +
+            Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords))
+            + "_" + origPfx + "-" + selPfx);
+        Formatter compLeftOutFmt = aggregateCloser.register(new Formatter(compLeftoutItemsFile));
+
+        File leftoutItemsFile = new File(dataDir.getAbsolutePath() + "/diff/leftout-items_" +
+            Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords))
+            + "_" + origPfx + "-" + selPfx);
+        Formatter leftOutFmt = aggregateCloser.register(new Formatter(leftoutItemsFile));
+
+        for (String leftOutItemKey : leftOutItems.keySet()) {
+          Set<Long> leftOutEpochs = Sets.newCopyOnWriteArraySet(leftOutItems.get(leftOutItemKey));
+          leftOutFmt.format("%s\t%d\t%s\n", leftOutItemKey, leftOutEpochs.size(), leftOutEpochs.toString());
+
+          Set<Long> compLeftOutEpochs = null;
+          if (selectedItems.containsKey(leftOutItemKey)) {
+            Set<Long> selectedEpochs = Sets.newCopyOnWriteArraySet(selectedItems.get(leftOutItemKey));
+            compLeftOutEpochs = Sets.difference(leftOutEpochs, selectedEpochs);
+          }
+          if (compLeftOutEpochs != null && compLeftOutEpochs.size() > 0) {
+            compLeftOutFmt.format("%s\t%d\t%s\n", leftOutItemKey, compLeftOutEpochs.size(), compLeftOutEpochs.toString());
+          }
+        }
+      }
     } finally {
-      perfmonKV.close();
+      aggregateCloser.close();
     }
   }
-
   private static String replaceFirst(String str, String replaced, String replacement) {
     int ix = str.indexOf(replaced);
     String retval = str.substring(0, ix);
