@@ -187,7 +187,7 @@ public class HgramsWindow {
     try {
       PerfMonKeyValueStore perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(HgramsWindow.class.getName(),
           Arrays.toString(args)));
-      perfMonKV.batchSizeToWrite = 8;
+      perfMonKV.batchSizeToWrite = 8; //FIXME: whenever you add a new perf key
       for (; windowStartUx < windowEndUx; windowStartUx += stepSec) {
         LOG.info("Strting Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
         Path epochOut = new Path(outRoot, "fp_" + epochLen + "_" + windowStartUx);

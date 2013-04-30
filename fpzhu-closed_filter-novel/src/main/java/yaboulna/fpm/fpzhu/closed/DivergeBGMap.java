@@ -461,7 +461,7 @@ public class DivergeBGMap {
     try {
       PerfMonKeyValueStore perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
           Arrays.toString(args)));
-      perfMonKV.batchSizeToWrite = 16;
+      perfMonKV.batchSizeToWrite = 19; //FIXME: whenever you add a new perf key
       for (File fgF : fgFiles) {
         final File novelFile = new File(fgF.getParentFile(), fgF.getName()
             .replaceFirst("fp_", "novel_" + options + "_"));
@@ -1633,7 +1633,6 @@ public class DivergeBGMap {
         if (perfMon) {
           perfMonKV.storeKeyValue("Timestamp", System.currentTimeMillis());
           perfMonKV.storeKeyValue("CPUMillisFilter", filteringCPUTime / 1e6);
-
           perfMonKV.storeKeyValue("TotalItemsets", fgCountMap.size() + fileReadingPerfMeasures[0]);
           perfMonKV.storeKeyValue("Avg-2CharsItemsets", fileReadingPerfMeasures[0]);
           perfMonKV.storeKeyValue("RepItemsetsLessOrEqNew", fileReadingPerfMeasures[1]);

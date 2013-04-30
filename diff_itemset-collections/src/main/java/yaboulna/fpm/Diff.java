@@ -135,6 +135,7 @@ public class Diff {
 
         final PerfMonKeyValueStore perfmonKV = diffClose.register(new PerfMonKeyValueStore(Diff.class.getName(),
             diffFile.getAbsolutePath()));
+      //perfmonKV.batchSizeToWrite = 7;// FIXME: whenever you add a new perf key (if more than 10 or will not close immediately
         final Formatter diffFmt = diffClose.register(new Formatter(diffFile));
 
         int numCatchAllItemsets = Files.readLines(selF, Charsets.UTF_8, new AbstractLineProcessor() {
