@@ -93,6 +93,11 @@ public class Diff {
     String selPfx = args[1];
     String origPfx = args[2];
 
+    final int maxLegitAllianceLength =
+        ((args.length > 3) ?
+            Integer.parseInt(args[3])
+            : 20);
+
     File diffDir = new File(dataDir, "diff" + "_" + origPfx + "-" + selPfx);
     diffDir.mkdir();
 
@@ -135,13 +140,14 @@ public class Diff {
 
         final PerfMonKeyValueStore perfmonKV = diffClose.register(new PerfMonKeyValueStore(Diff.class.getName(),
             diffFile.getAbsolutePath()));
-      //perfmonKV.batchSizeToWrite = 7;// FIXME: whenever you add a new perf key (if more than 10 or will not close immediately
+        // perfmonKV.batchSizeToWrite = 7;// FIXME: whenever you add a new perf key (if more than 10 or will not close
+// immediately
         final Formatter diffFmt = diffClose.register(new Formatter(diffFile));
 
         int numCatchAllItemsets = Files.readLines(selF, Charsets.UTF_8, new AbstractLineProcessor() {
 
           void doSomethingUseful(Set<String> itemset) {
-            if (itemset.size() > 15) {
+            if (itemset.size() > maxLegitAllianceLength) {
               ++retval;
               return;
             }
@@ -219,7 +225,7 @@ public class Diff {
       perfmonKV.storeKeyValue("EpochsWithKW", epochsWithOccs);
       perfmonKV.storeKeyValue("EpochsCount", epochsCountTot);
 
-      for(String kw: keywords){
+      for (String kw : keywords) {
         leftOutItems.removeAll(kw);
       }
       if (leftOutItems.size() > 0) {
