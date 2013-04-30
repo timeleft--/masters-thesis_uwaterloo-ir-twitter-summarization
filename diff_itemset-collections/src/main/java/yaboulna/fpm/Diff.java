@@ -93,10 +93,11 @@ public class Diff {
     String selPfx = args[1];
     String origPfx = args[2];
 
-    final int maxLegitAllianceLength =
-        ((args.length > 3) ?
-            Integer.parseInt(args[3])
-            : 20);
+    final int maxLegitAllianceLength = 20;
+    //The keywords man
+//        ((args.length > 3) ? 
+//            Integer.parseInt(args[3])
+//            : 20);
 
     File diffDir = new File(dataDir, "diff" + "_" + origPfx + "-" + selPfx);
     diffDir.mkdir();
