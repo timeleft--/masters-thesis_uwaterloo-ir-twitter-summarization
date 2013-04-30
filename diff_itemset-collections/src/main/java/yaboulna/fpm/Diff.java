@@ -4,11 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -16,8 +14,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang.mutable.MutableInt;
-import org.apache.hadoop.io.VLongWritable;
-import org.apache.lucene.analysis.LetterTokenizer;
 
 import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 
