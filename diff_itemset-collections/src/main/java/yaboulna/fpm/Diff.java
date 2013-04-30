@@ -219,6 +219,9 @@ public class Diff {
       perfmonKV.storeKeyValue("EpochsWithKW", epochsWithOccs);
       perfmonKV.storeKeyValue("EpochsCount", epochsCountTot);
 
+      for(String kw: keywords){
+        leftOutItems.removeAll(kw);
+      }
       if (leftOutItems.size() > 0) {
         File compLeftoutItemsFile = new File(diffDir, "comp-leftout-items_" +
             Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords))
