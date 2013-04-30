@@ -94,10 +94,10 @@ public class Diff {
     String origPfx = args[2];
 
     final int maxLegitAllianceLength = 20;
-    //The keywords man
-//        ((args.length > 3) ? 
-//            Integer.parseInt(args[3])
-//            : 20);
+    // The keywords man
+// ((args.length > 3) ?
+// Integer.parseInt(args[3])
+// : 20);
 
     File diffDir = new File(dataDir, "diff" + "_" + origPfx + "-" + selPfx);
     diffDir.mkdir();
@@ -119,7 +119,17 @@ public class Diff {
     final Multimap<String, Long> selectedItems = HashMultimap.create();
     for (File selF : selFiles) {
       String[] nameParts = selF.getName().split("\\_");
-      final long epochstartux = Long.parseLong(nameParts[nameParts.length - 2]);
+      long epochstartuxParsed;
+      try {
+        epochstartuxParsed = Long.parseLong(nameParts[nameParts.length - 2]);
+      } catch (NumberFormatException e) {
+        System.err.println("Number format excpetion while parsing epoch start: " + nameParts[nameParts.length - 2]
+            + " from array " +
+            Arrays.toString(nameParts) + " at index " + (nameParts.length - 2));
+        epochstartuxParsed = -1;
+        continue;
+      }
+      final long epochstartux = epochstartuxParsed;
       ++epochsCountTot;
       selSet.clear();
 
