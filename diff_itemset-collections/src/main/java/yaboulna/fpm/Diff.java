@@ -19,6 +19,10 @@ import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
@@ -107,7 +111,10 @@ public class Diff {
     // Map = Maps.newHashMapWithExpectedSize(10000);
     double epochsWithOccs = 0;
     double epochsCountTot = 0;
+    final Multimap<String, Long> leftOutItems = HashMultimap.create();
     for (File selF : selFiles) {
+      
+      final long epochstartux = 0l;//FIXME
       ++epochsCountTot;
       selSet.clear();
 
@@ -131,9 +138,13 @@ public class Diff {
             diffFile.getAbsolutePath()));
         final Formatter diffFmt = diffClose.register(new Formatter(diffFile));
 
-        Files.readLines(selF, Charsets.UTF_8, new AbstractLineProcessor() {
+        int numCatchAllItemsets = Files.readLines(selF, Charsets.UTF_8, new AbstractLineProcessor() {
 
           void doSomethingUseful(Set<String> itemset) {
+            if(itemset.size() > 15){
+              ++retval;
+              return;
+            }
             if (keywords.isEmpty() || !Sets.intersection(keywords, itemset).isEmpty()) {
               selSet.add(itemset); // , null);
             }
@@ -158,6 +169,9 @@ public class Diff {
               }
             }
 
+            for(String leftOutItem: Sets.difference(itemset, keywords)){
+              leftOutItems.put(leftOutItem, value);
+            }
             ++retval;
             diffFmt.format("%s\n", itemset.toString());
 // LOG.info("{}", itemset);
@@ -167,16 +181,21 @@ public class Diff {
 
         if (origOccsOfKeyWords.doubleValue() > 0) {
           ++epochsWithOccs;
-          File selKeywordsFile = new File(diffFile.getParentFile(), replaceFirst(selF.getName(), selPfx,
-              selPfx + Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords))));
+          File selKeywordsFile = new File(diffFile.getParentFile(), selF.getName() + "_"
+              + Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords)));
           FileUtils.writeLines(selKeywordsFile, selSet);
+
+          perfmonKV.storeKeyValue(selKeywordsFile.getAbsolutePath(), -1);
+          perfmonKV.storeKeyValue("NumCatchAllItemsets", numCatchAllItemsets);
           perfmonKV.storeKeyValue("OrigOccsOfKWs", origOccsOfKeyWords.doubleValue());
           perfmonKV.storeKeyValue("LeftOutCount", leftOutCount);
           perfmonKV.storeKeyValue("NumSelItemsets", selSet.size());
           perfmonKV
               .storeKeyValue("LeftOutPct", leftOutCount == 0 ? 0 : leftOutCount / origOccsOfKeyWords.doubleValue());
-          perfmonKV.storeKeyValue("SelToOrigCompRatio", selSet.size()
-              / (origOccsOfKeyWords.doubleValue() - leftOutCount));
+          if (selSet.size() > 0) {
+            perfmonKV.storeKeyValue("SelToOrigCompRatio", selSet.size()
+                / (origOccsOfKeyWords.doubleValue() - leftOutCount));
+          }
         }
       } finally {
         diffClose.close();
