@@ -106,9 +106,9 @@ public class Diff {
 
     List<File> selFiles = (List<File>) FileUtils.listFiles(dataDir,
         FileFilterUtils.and(new MyAffixFileFilter(selPfx, true), // FileFilterUtils.prefixFileFilter(selPfx),
-            FileFilterUtils.notFileFilter(new MyAffixFileFilter("diff", false)), // FileFilterUtils.prefixFileFilter("diff")),
+            FileFilterUtils.notFileFilter(new MyAffixFileFilter("diff", true)), // FileFilterUtils.prefixFileFilter("diff")),
             FileFilterUtils.notFileFilter(new MyAffixFileFilter(".log", false))), // FileFilterUtils.suffixFileFilter("log"))),
-        FileFilterUtils.notFileFilter(new MyAffixFileFilter("diff", false)));
+        FileFilterUtils.notFileFilter(new MyAffixFileFilter("diff", true)));
     Collections.sort(selFiles);
 
     final Set<Set<String>> selSet = Sets.newHashSetWithExpectedSize(10000);
