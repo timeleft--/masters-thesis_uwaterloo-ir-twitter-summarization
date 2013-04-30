@@ -93,7 +93,7 @@ public class Diff {
     String selPfx = args[1];
     String origPfx = args[2];
 
-    File diffDir = new File(dataDir, "diff");
+    File diffDir = new File(dataDir, "diff" + "_" + origPfx + "-" + selPfx);
     diffDir.mkdir();
 
     final Set<String> keywords = Sets.newHashSet(Arrays.copyOfRange(args, 3, args.length));
@@ -220,12 +220,12 @@ public class Diff {
       perfmonKV.storeKeyValue("EpochsCount", epochsCountTot);
 
       if (leftOutItems.size() > 0) {
-        File compLeftoutItemsFile = new File(dataDir.getAbsolutePath() + "/diff/comp-leftout-items_" +
+        File compLeftoutItemsFile = new File(diffDir, "comp-leftout-items_" +
             Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords))
             + "_" + origPfx + "-" + selPfx);
         Formatter compLeftOutFmt = aggregateCloser.register(new Formatter(compLeftoutItemsFile));
 
-        File leftoutItemsFile = new File(dataDir.getAbsolutePath() + "/diff/leftout-items_" +
+        File leftoutItemsFile = new File(diffDir, "leftout-items_" +
             Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords))
             + "_" + origPfx + "-" + selPfx);
         Formatter leftOutFmt = aggregateCloser.register(new Formatter(leftoutItemsFile));
