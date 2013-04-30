@@ -41,6 +41,7 @@ import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -451,7 +452,7 @@ public class DivergeBGMap {
     // unionDocId = Lists.newLinkedList();
     // intersDocId = Sets.newHashSet();
 
-    final Map<String, Double> kldCache = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS / 10);
+    final Map<Set<String>, Double> kldCache = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS / 10);
 
     final LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
 
@@ -587,7 +588,7 @@ public class DivergeBGMap {
               if (bgCount != null) {
                 klDiver = fgFreq * (Math.log(fgFreq / bgCount) + bgFgLogP);
               }
-
+              kldCache.put(itemset, klDiver);
               if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
                 positiveKLDivergence.put(itemset, klDiver);
 
@@ -1255,7 +1256,7 @@ public class DivergeBGMap {
                     growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
                     
                     SummaryStatistics kldStats = new SummaryStatistics();
-                    kldStats.addValue(positiveKLDivergence.get(theOnlyOneIllMerge));
+                    kldStats.addValue(kldCache.get(theOnlyOneIllMerge));
                     alliedKLD.put(theOnlyOneIllMerge, kldStats);
                     
                     if (!itemsetParentMap.containsKey(theOnlyOneIllMerge)) {
@@ -1271,7 +1272,7 @@ public class DivergeBGMap {
                   alliedItemsets.getKey().addAll(itemset);
                   alliedItemsets.getValue().addAll(iDocIds);
                   
-                  alliedKLD.get(theOnlyOneIllMerge).addValue(positiveKLDivergence.get(itemset));
+                  alliedKLD.get(theOnlyOneIllMerge).addValue(kldCache.get(itemset));
 
                   allied = true;
                 } else if (!mergeCandidates.isEmpty()) {
@@ -1669,10 +1670,11 @@ public class DivergeBGMap {
   }
   private static double calcComponentsKLDiver(Set<String> itemset, double itemsetCnt,
       Map<Set<String>, Integer> bgCountMap,
-      Map<Set<String>, Integer> fgCountMap, double bgFgLogP, Map<String, Double> kldCache) {
+      Map<Set<String>, Integer> fgCountMap, double bgFgLogP, Map<Set<String>, Double> kldCache) {
     double retVal = 0;
     for (String item : itemset) {
-      Double itemKLD = kldCache.get(item);
+      Set<String> itemAsSet = Collections.singleton(item);
+      Double itemKLD = kldCache.get(itemAsSet);
       if (itemKLD == null) {
         Set<String> itemKey = Collections.singleton(item);
         Integer bgItemCnt = bgCountMap.get(itemKey);
@@ -1685,7 +1687,7 @@ public class DivergeBGMap {
         }
         // Multiplying by many hight numbers makes this value absolutlely high: fgItemCnt.doubleValue() *
         itemKLD = (Math.log(fgItemCnt.doubleValue() / bgItemCnt.doubleValue()) + bgFgLogP);
-        kldCache.put(item, itemKLD);
+        kldCache.put(itemAsSet, itemKLD);
       }
       retVal += itemKLD;
     }
