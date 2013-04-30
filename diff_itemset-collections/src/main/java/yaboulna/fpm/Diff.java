@@ -239,7 +239,7 @@ public class Diff {
       for (String kw : keywords) {
         leftOutItems.removeAll(kw);
       }
-      if (leftOutItems.size() > 0) {
+//Always create a file      if (leftOutItems.size() > 0) {
         File compLeftoutItemsFile = new File(diffDir, "comp-leftout-items_" +
             Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords))
             + "_" + origPfx + "-" + selPfx);
@@ -267,7 +267,7 @@ public class Diff {
             perfmonKV.storeKeyValue("CompLeftOut_" + leftOutItemKey, compLeftOutEpochs.size());
           }
         }
-      }
+//      }
     } finally {
       aggregateCloser.close();
     }
