@@ -452,7 +452,7 @@ public class DivergeBGMap {
     // unionDocId = Lists.newLinkedList();
     // intersDocId = Sets.newHashSet();
 
-    final Map<Set<String>, Double> kldCache = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS / 10);
+    final Map<Set<String>, Double> kldCache = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS);
 
     final LinkedList<Set<String>> prevItemsets = Lists.newLinkedList();
 
