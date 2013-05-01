@@ -302,38 +302,5 @@ public class Diff {
     retval += str.substring(ix + replaced.length());
     return retval;
   }
-// Nov  6th  
-// (actually,here,how,i,is,right,this,week - \#3eekmybiodistrict3,bio - for,obama,vote) \\ (\#sophiachat,qual - extra,salary - @brittd1178,and,can,everybody,get,nigger,of,office,out,so,this,vote,we) \\ (here,how,i,is,right,this,week - @brittd1178,and,can,get,out,so,vote,we - @laliminati,olmak)
-// (and,get,out,vote - @laliminati,lali - geordie,shore) \\ (0,1,de,jong - geordie,shore - if,obama,wins) \\ (de,gol,pepe - hala,madrid - geordie,shore) \\ (de,gol,pepe - geordie,shore - for,i,voted) \\ (for,i,voted - for,obama,vote - fuera,juego) \\ (and,basketball,love - for,i,voted - el,madrid,real) \\ (\#countkun,11,6 - for,i,voted - eu,te,vivo) \\ (\#geordieshore,@charlottegshore - @sophiaabrahao,URL,live,on - academy,tool) \\ (if,romney,wins - geordie,shore - if,obama,wins) \\ (geordie,shore - if,obama,wins - @noemiking20,club,my,spots) \\ (a,alguém,considera,de,idade,partir,que,velho,você - for,i,voted - if,obama,wins) \\ (virginia,west - election,is,the,this - food,stamps) \\ (a,alguém,considera,de,idade,partir,que,velho,você - election,is,this - virginia,west) \\ (food,stamps - a,alguém,considera,de,idade,partir,que,velho,você - linda,mcmahon,senate) \\ (\#stayinline,in,line - got,obama,this - a,alguém,considera,de,idade,partir,que,velho,você) \\ (got,obama,this - projected,winner - canada,move,moving,to) \\ (obama,to,win - election,the,watching - projected,winner) \\ (elizabeth,warren - popular,vote - 163,172) \\ (\#forward,\#obama2012 - election,is,this - is,my,president,still) \\ (\#forward,\#obama2012 - of,president,the - back,in,office) \\ (\#forward,\#obama2012 - colorado,in,legalized - black,go,never,once,you) \\ (colorado,in,legal - food,stamps - colorado,in,is,legal,weed) \\ (acceptance,speech,wrote - in,is,legal,weed - cnn,on) \\ (come,to,yet - est,mais - colorado,move,to) \\ (come,to,yet - behind,flag,hair,her,in,obama - flag,that,weave)
-//Nov 9th
-//& \#iwillneverunderstand,why -   hari,pahlawan,selamat -   @chrisripley77,available,club,my,spots \\\hline
-//&   \#iwillneverunderstand,why -   hari,pahlawan -   ao,lado,sempre,seu \\\hline
-//
-//&   \#iwillneverunderstand,why -   brian,shaw -   breaking,brown,coach,head,mike \\\hline
-//&   @boyquotations,do,everyone,follow,followers,gain,more,rt,s,want,who,you -   brian,shaw -   jackson,jerry,phil,sloan \\\hline
-//&   @boyquotations,do,everyone,follow,followers,gain,more,rt,s,want,who,you -   ao,lado,sempre,seu -   brian,shaw \\\hline
-//&   09,11 -   \#tvoh,babette -   \#tvoh,ivar \\\hline
-//&   futuro,será -   acha,que,você -   cia,david,director,petraeus,resigns \\\hline
-//&   \#emawinbieber,\#mtvema,URL,at,be,bieber,big,i,justin,pick,the,think,tweet,will,winner,your -   give,love,me -   \#tvoh,johannes \\\hline
-//&   \#emawinkaty,\#mtvema,URL,at,be,big,i,katy,perry,pick,the,think,tweet,will,winner,your -   \#emawingaga,\#mtvema,at,big,pick,the,tweet,winner,your -   \#emawinbieber,\#mtvema,URL,at,be,bieber,big,i,justin,pick,the,think,tweet,will,winner,your \\\hline
-//&   \#emawinbieber,\#mtvema,URL,at,be,bieber,big,i,justin,pick,the,think,tweet,will,winner,your -   \#atatürkenot,atam,atatürkenot -   qui,veut \\\hline
-//&   brown,mike -   \#emawinbieber,\#mtvema,URL,at,be,bieber,big,i,justin,pick,the,think,tweet,will,winner,your -   qui,veut \\\hline
-//&   brown,mike -   \#qvemf,lilou -   \#emawinbieber,\#mtvema,URL,at,be,bieber,big,i,justin,pick,the,think,tweet,will,winner,your \\\hline
-//&   brown,mike -   bulan,lahir -   @venomextreme,venom \\\hline
-//&   @boyquotations,do,everyone,follow,followers,gain,more,rt,s,want,who,you -   brown,mike -   \#emawinbieber,\#mtvema,be,big,the,tweet,will,winner,your \\\hline
-//&   \#ullychat,qual -   \#ullychat,@ullylages,qual -   brown,mike \\\hline
-//&   o,pensado,que,sobre,tem,ultimamente,você -   URL,business,i,online -   coffee,green \\\hline
-//&   @boyquotations,do,everyone,follow,followers,gain,more,rt,s,want,who,you -   o,que,tem,você -   o,pensado,que,sobre,tem,ultimamente,você \\\hline
-//&   \#iwillneverunderstand,why -   o,pensado,que,sobre,tem,ultimamente,você -   \#mtvema,URL,at,be,big,pick,the,tweet,will,winner,your \\\hline
-//&   \#iwillneverunderstand,why -   o,pensado,que,sobre,tem,ultimamente,você -   o,pensado,que,tem,ultimamente,você \\\hline
-//&   hari,pahlawan,selamat -   \#mtvema,URL,at,be,big,pick,the,tweet,will,winner,your -   \#mtvema,URL,at,be,big,the,tweet,will,winner \\\hline
-//&   hari,pahlawan,selamat -   \#mtvema,URL,at,be,big,pick,the,tweet,will,winner,your -   \#iwillneverunderstand,why \\\hline
-//&   hari,pahlawan,selamat -   \#iwillneverunderstand,why -   pick,your \\\hline
-//&   hari,pahlawan,selamat -   and,broke,selena,up -   \#iwillneverunderstand,why \\\hline
-//&   \#asdtanya,\#hmmomspik,@ahspeakdoang -   \#iwillneverunderstand,why -   hari,pahlawan,selamat \\\hline
-//&   \#iwillneverunderstand,why -   brown,mike -   hari,pahlawan,selamat \\\hline
-//&   10,nov -   brown,mike -   10,11,2012 \\\hline
-//&   10,11,2012 -   \#iwillneverunderstand,why -   hari,pahlawan,selamat \\\hline
-//&  anıyoruz,kemal,mustafa -   hari,pahlawan,selamat -   \#iwillneverunderstand,why \\\hline
-//  
+  
 }
