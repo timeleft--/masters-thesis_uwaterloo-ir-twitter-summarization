@@ -27,7 +27,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.NameFileComparator;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.lang.mutable.MutableDouble;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
@@ -41,11 +40,12 @@ import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Sets;
@@ -441,6 +441,7 @@ public class DivergeBGMap {
     final Map<Set<String>, DescriptiveStatistics> alliedKLD = Maps.newHashMap();
     final Map<Set<String>, Set<String>> itemsetParentMap = Maps.newHashMap();
     final Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
+    final Multimap<Set<String>, Set<String>> allianceTransitiveInverse = HashMultimap.create();
     final Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
     final Map<Set<String>, Double> confidentItemsets = Maps.newHashMap();
     final Set<String> preAllocatedSet1 = Sets.newHashSet();
@@ -519,6 +520,7 @@ public class DivergeBGMap {
           growingAlliances.clear();
           alliedKLD.clear();
           allianceTransitive.clear();
+          allianceTransitiveInverse.clear();
           itemsetParentMap.clear();
           fgCountMap.clear();
           unigramCountStats.clear();
@@ -1230,6 +1232,7 @@ public class DivergeBGMap {
                               theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
                       } else {
                         // the new alliance will be better.. clear the one from earlier
+                        //TODO: do I need to handle the inverse in this case.. or does it not happen anymore?
                         allianceTransitive.remove(transHeads);
                         transHeads = null;
                       }
@@ -1249,6 +1252,7 @@ public class DivergeBGMap {
 // continue;
 // }
                   transHeads.add(theOnlyOneIllMerge);
+                  allianceTransitiveInverse.put(theOnlyOneIllMerge, itemset);
 
                   java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
                       .get(theOnlyOneIllMerge);
@@ -1522,6 +1526,27 @@ public class DivergeBGMap {
               }
             }
 
+            Collection<Set<String>> allianceMembers = allianceTransitiveInverse.get(e.getKey());
+            double mutualInfo = 0;
+            double freqSubset = fgIdsMap.get(e.getKey()).size(); 
+            for(Set<String> member: allianceMembers){
+              double freqSuperset = fgIdsMap.get(member).size();
+              double conditionalProb;
+              
+              
+//              if(confidentItemsets.containsKey(member)){
+//               conditionalProb = confidentItemsets.get(member);
+//              } else {
+//                LOG.info("An itemset is member in an alliance without being confident.. can this be?)
+                conditionalProb = freqSuperset / freqSubset;
+             
+                
+                mutualInfo += conditionalProb * DoubleMath.log2(conditionalProb / (freqSuperset / fgNumTweets));
+            }
+            mutualInfo *= freqSubset / fgNumTweets;
+            
+            
+            
             DescriptiveStatistics kldStats = alliedKLD.get(e.getKey());
             double yMeasure = 0;
 // kldStats.getSum() * kldStats.getN();
@@ -1551,21 +1576,25 @@ public class DivergeBGMap {
             selectionFormat.out().append(printMultiset(mergedItemset));
             selectionFormat
                 .format(
-                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
-                    yMeasure,
-                    kldStats.getSum(),
-                    kldStats.getSumsq(),
-                    kldStats.getVariance(),
-                    kldStats.getKurtosis(),
-                    kldStats.getSkewness(),
-                    kldStats.getMean(),
-                    kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(),
+                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+                    yMeasure, //2
+                    kldStats.getSum(), //3
+                    kldStats.getSumsq(), //4
+                    kldStats.getVariance(), //5
+                    kldStats.getKurtosis(), //6
+                    kldStats.getSkewness(), //7
+                    kldStats.getMean(), //8
+                    kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(), //9
 
+                    mutualInfo, //10
+                    mutualInfo/allianceMembers.size(), //11
+                    
                     kldStats.getMin(),
-                    kldStats.getMax(),
-                    (int) kldStats.getN(),
+                    kldStats.getPercentile(0.5),
+                    kldStats.getMax(), 
+                    (int) kldStats.getN(), 
 
-                    confidence,
+                    confidence, 
                     calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
                         idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
                     unionDocId.size(),
