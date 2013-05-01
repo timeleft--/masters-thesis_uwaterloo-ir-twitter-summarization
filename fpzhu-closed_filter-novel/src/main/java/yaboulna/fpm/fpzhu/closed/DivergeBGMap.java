@@ -1585,7 +1585,7 @@ public class DivergeBGMap {
             selectionFormat.out().append(printMultiset(mergedItemset));
             selectionFormat
                 .format(
-                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
                     yMeasure, //2
                     kldStats.getSum(), //3
                     kldStats.getSumsq(), //4
@@ -1608,13 +1608,13 @@ public class DivergeBGMap {
                     kldStats.getMax(),  //18 
                     (int) kldStats.getN(), //19
 
-                    confidence, 
+                    confidence, //20
                     calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
-                        idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
-                    unionDocId.size(),
+                        idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap), //21
+                    unionDocId.size(), //22
                     calcEntropy(mergedItemset.elementSet(), entropyFromBg ? bgCountMap : fgCountMap,
-                        entropyFromBg ? bgNumTweets : fgNumTweets),
-                    calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets));
+                        entropyFromBg ? bgNumTweets : fgNumTweets), //23
+                    calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets)); //24
 
             Set<Long> headDocIds = Sets.newCopyOnWriteArraySet(fgIdsMap.get(e.getKey()));
             selectionFormat.out().append(headDocIds.toString().substring(1))
