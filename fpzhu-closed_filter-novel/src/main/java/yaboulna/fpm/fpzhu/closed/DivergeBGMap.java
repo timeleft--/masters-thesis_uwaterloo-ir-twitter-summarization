@@ -29,6 +29,7 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang.mutable.MutableDouble;
 import org.apache.commons.lang.mutable.MutableInt;
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
@@ -434,7 +435,7 @@ public class DivergeBGMap {
     Splitter underscoreSplit = Splitter.on('_');
 
     final Map<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> growingAlliances = Maps.newHashMap();
-    final Map<Set<String>,SummaryStatistics> alliedKLD = Maps.newHashMap();
+    final Map<Set<String>,DescriptiveStatistics> alliedKLD = Maps.newHashMap();
     final Map<Set<String>, Set<String>> itemsetParentMap = Maps.newHashMap();
     final Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
     final Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
@@ -1256,7 +1257,7 @@ public class DivergeBGMap {
                         HashMultiset.create(theOnlyOneIllMerge), Sets.newHashSet(theOnlyOnesDocIds));
                     growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
                     
-                    SummaryStatistics kldStats = new SummaryStatistics();
+                    DescriptiveStatistics kldStats = new DescriptiveStatistics();
                     kldStats.addValue(kldCache.get(theOnlyOneIllMerge));
                     alliedKLD.put(theOnlyOneIllMerge, kldStats);
                     
@@ -1504,7 +1505,16 @@ public class DivergeBGMap {
               }
             }
 
-            SummaryStatistics kldStats = alliedKLD.get(e.getKey()); 
+            DescriptiveStatistics kldStats = alliedKLD.get(e.getKey()); 
+            double yMeasure = 0; 
+//            kldStats.getSum() * kldStats.getN();
+            double kldSum = kldStats.getSum();
+            double logM = Math.log(kldStats.getN());
+            for(double val: kldStats.getValues()){
+              yMeasure += kldSum - val + logM;
+            }
+            double yMeasureNoDiv = yMeasure;
+            yMeasure /= kldStats.getN();
 //            double klDiver = Double.MIN_VALUE;
 //            Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
 //            if (bgCount == null) {
@@ -1523,10 +1533,16 @@ public class DivergeBGMap {
 
             selectionFormat.out().append(printMultiset(mergedItemset));
             selectionFormat.format(
-                "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+                "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+                yMeasure,
+                yMeasureNoDiv,
+                kldStats.getSumsq(),
+                kldStats.getVariance(),
+                kldStats.getKurtosis(),
+                kldStats.getSkewness(),
                 kldStats.getMean(),
                 kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(),
-                kldStats.getVariance(),
+                
                 kldStats.getMin(),
                 kldStats.getMax(),
                 (int)kldStats.getN(),

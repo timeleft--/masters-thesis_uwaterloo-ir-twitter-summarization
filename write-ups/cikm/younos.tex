@@ -509,21 +509,122 @@ Algorithm \ref{algo:alliance} shows the described algorithm for merging itemsets
 
 \section{Empirical Evaluation}
 \label{sec:empirical}
-We have shown in the last 3 sections how to improve the efficiency of Frequent Itemsets Mining on social media data, by reducing the number of itemsets produced. To show the performance of the proposed  methods in filtering out itemsets that are uninteresting and choosing interesting ones, we show examples of mining Tweets posted in the first half of November, 2012. This period includes the US presidential elections on November 6th, and the MTV Europe Music Awards (MTVEMA) on November 9th. Justin Bieber won the MTVEMA, and on the same day he also broke up with Selena Gomez. Therefore, this period contains events of different types that overlap, and we can use it to assess the effectiveness of our methods without access to ground truth data. The KL-Divergence is calculated against the results of mining the month of October. 
+We have shown in the last 3 sections how to improve the efficiency of Frequent Itemsets Mining on social media data, by reducing the number of itemsets produced. To show the performance of the proposed methods in 
+%filtering out itemsets that are uninteresting and 
+choosing important itemsets, we apply them on Tweets posted on the $6^{th}$ and $9^{th}$ of November 2012. In tables \ref{table:nov6} and \ref{table:nov9} we show the results of mining overlapping 1 hour epochs. Because of space limitation we show only the top 3 itemsets, ranked as described in section \ref{sec:strong}, for each hour. Times are in the EST zone.
+%by point wise KL-Divergence against the results of mining the month of October. 
 
-To validate that filtered itemsets don't contain important information, we list all items that appear in filtered out itemsets but not in any  chosen itemset. If an itemset is not fully contained in any of the chosen ones, then the minimum difference it had with any of the chosen ones can possibly contain information not present in the selection. Table \ref{table:filteringPerf} shows the differences between  itemsets containing any of the terms \texttt{barack, obama, mitt, romney, justin, bieber, selena, gomez}, and the selection made by the different criteria proposed. If a number appears beside an item, it is the number of epochs when this item appeared and didn't get selected.
-%For each itemset in the full collection we find the minimum difference between it and itemsets selected by the selection criterion we proposed.
+On November $6^{th}$, the US presidential elections took place and we can see how its events unwind from ``get out and vote'' to the projection of ``obama to win'' and the votes counts (only ``163, 172'' made it to the top 3 at 20:30), all the way to the ``acceptance speech'' and the social media attention given to the ``lady behind obama  with a flag in her hair''. Early in the day, the ``goal [de] Pepe'' scored for ``Real Madrid'' and other itemsets about UEFA Champions football games appear in the top 3. At 22:30 the news that ``weed is legal in Colorado'' breaks into the top 3 because of its novelty, even though this is short after Obama's victory was declared. Throughout the day itemsets about the elections as well as about other topics are ranked high, even if they are topics in a language other than English and thus with a smaller supporting user base (such as the topic in Portuguese about when to consider a person old [velho]).
+%UEFA Champions football games! We can 
 
+On November $9^{th}$, no major events were happening but many overlapping minor ones happened. The day starts by news about the end of two careers; the Laker's ``coach Mike Brown'' got fired  and ``CIA director David Petraeus resigns''. The relationship of Justin Bieber also ends as he ``broke, up [with], Selena'' at 22:00 (the name of  Bieber is included in other itemsets  not in the top 3). The MTV Europe Music Awards (MTVEMA) was also taking place and votes were solicited from audience through Twitter. This is an example of a topic where people have different opinions, as the hour 15:00 shows. The top 3 itemsets of this hour are supporting ``Katy  Perry'', ``Lady Gaga'' and ``Justin Bieber'' respectively and they are all reported as separate itemsets. The neutral itemset only soliciting votes is also mined and appears in the top 3 of other hours. By the end of the day many congratulations for the Indonesian Hero's day (``Hari Pahlawan'') appear, and the Turkish commemoration day of Ataturk is also mentioned as the 10th starts in these countries. 
 
-\begin{table*}
+% (we refer to it as the \emph{MTVEMA voting invitation} to save space).
+%To start off, the Laker's ``coach Mike Brown'' got fired and it was expected that either ``Phil Jackson [or] Jerry Sloan'' will succeed him. Another career end gets attention as ``CIA director David Petraeus resigns'', and an The MTV Europe Music Awards (MTVEMA) was also taking place and he also broke up with Selena Gomez. Therefore, this period contains events of different types that overlap, and we can use it to assess the effectiveness of our methods without access to ground truth data. The itemset alliances shown are the top 10 per hour ranked by point wise KL-Divergence against the results of mining the month of October. 
+
+\begin{table}
+\begin{center}
+\small
+\begin{tabular}{|p{.6cm}|p{7.5cm}|}
+\hline %\textbf{Top 3 itemsets for hours in November 6th,  2012} \\\hline
+\texttt{12:00} & and, get, out, vote - @laliminati, lali - geordie, shore \\\hline 
+\texttt{12:30} & 0, 1, de, jong - geordie, shore - if, obama, wins \\\hline 
+\texttt{13:00} & de, gol, pepe - hala, madrid - geordie, shore \\\hline 
+\texttt{13:30} & de, gol, pepe - geordie, shore - for, i, voted \\\hline 
+\texttt{14:00} & for, i, voted - for, obama, vote - fuera, juego \\\hline 
+\texttt{14:30} & and, basketball, love - for, i, voted - el, madrid, real \\\hline 
+\texttt{15:00} & \#countkun, 11, 6 - for, i, voted - eu, te, vivo \\\hline 
+\texttt{15:30} & \#geordieshore, @charlottegshore - @sophiaabrahao, URL, live, on - academy, tool \\\hline 
+\texttt{16:00} & if, romney, wins - geordie, shore - if, obama, wins \\\hline 
+\texttt{16:30} & geordie,shore - if,obama,wins - @noemiking20,club,spots \\\hline 
+\texttt{17:00} & a, algu\'{e}m, considera, de, idade, partir, que, velho, voc\^{e}  - for, i, voted - if, obama, wins \\\hline 
+\texttt{17:30} & virginia, west - election, is, the, this - food, stamps \\\hline 
+\texttt{18:00} & a, algu\'{e}m, considera, de, idade, partir, que, velho, voc\^{e}  - election, is, this - virginia, west \\\hline 
+\texttt{18:30} & food, stamps - a, algu\'{e}m, considera, de, idade, partir, que,  velho, voc\^{e}  - linda, mcmahon, senate \\\hline 
+\texttt{19:00} & \#stayinline, in, line - got, obama, this - a, algu\'{e}m, considera, de, idade, partir, que, velho, voc\^{e} \\\hline 
+\texttt{19:30} & got, obama, this - projected, winner - canada, move, moving, to \\\hline 
+\texttt{20:00} & obama,to,win - election,the,watching - projected, winner \\\hline
+\texttt{20:30} & elizabeth, warren - popular, vote - 163, 172 \\\hline 
+\texttt{21:00} & \#forward, \#obama2012 - election, is, this - is, my, president, still \\\hline 
+\texttt{21:30} & \#forward,\#obama2012 - of,president,the - back,in,office \\\hline 
+\texttt{22:00} & \#forward, \#obama2012 - colorado, in, legalized - black, go, never, once, you \\\hline 
+\texttt{22:30} & colorado,in,legal - food,stamps - colorado,in,is,legal,weed \\\hline 
+\texttt{23:00} & acceptance, speech, wrote - in, is, legal, weed - cnn, on \\\hline 
+\texttt{23:30} & come, to, yet - est, mais - colorado, move, to \\\hline 
+\texttt{00:00} & come, to, yet - behind, flag, hair, her, in, obama - flag, that, weave \\\hline
+ \end{tabular}
+ \caption{Top 3 itemsets for hours in November 6th}
+ \label{table:nov6}
+ \end{center}
+ \end{table}
+ 
+ 
+ 
+  
+ 
+ \begin{table}
 \centering
-\begin{tabular}{|c|c|c|c|}
-Point-wise KL-Divergence & Strong Closed Itemsets & Itemsets Alliances \\
-to, president (1), is, for, a, the, in, i, and, of, s, URL
-\end{tabular}
-\caption{Items present in filtered out itemsets but not in any itemset in the selection made by different criteria}
-\label{table:filteringPerf}
-\end{table*}
+\small
+\begin{tabular}{|p{.6cm}|p{7.5cm}|}
+\hline %\textbf{Top 3 itemsets for hours in November 6th,  2012} \\\hline
+\texttt{12:00} &   \#iwillneverunderstand, why -   brian, shaw -   breaking, brown, coach, head, mike \\\hline
+\texttt{12:30} &   @boyquotations, do, everyone, follow, followers, gain, more, rt, s, want, who, you \emph{(written as `@boyquotations,..' later)}  -   brian, shaw -   jackson, jerry, phil, sloan \\\hline
+
+\texttt{13:00} &    `@boyquotations,..' -   ao, lado, sempre, seu -   brian, shaw \\\hline
+
+\texttt{13:30} &   09, 11 -   \#tvoh, babette -   \#tvoh, ivar \\\hline
+
+\texttt{14:00} &   futuro,ser\'{a} -   acha,que,voc\^{e} -   cia,david, director,petraeus, resigns \\\hline
+
+\texttt{14:30} &   \#emawinbieber, \#mtvema, URL, at, be, bieber, big, i, justin, pick, the, think, tweet, will, winner, your \emph{(written as `\#emawinbieber,..')} -   give, love, me -   \#tvoh, johannes \\\hline
+
+\texttt{15:00} &   \#emawinkaty, \#mtvema, URL, at, be, big, i, katy, perry, pick, the, think, tweet, will, winner, your -   \#emawingaga, \#mtvema, at, big, pick, the, tweet, winner, your -   `\#emawinbieber,..' \\\hline
+
+\texttt{15:30} &   `\#emawinbieber,..' -   \#atat\"{u}rkenot, atam, atat\"{u}rkenot -   qui, veut \\\hline
+
+\texttt{16:00} &   brown, mike -   `\#emawinbieber,..' -   qui, veut \\\hline
+
+\texttt{16:30} &   brown, mike -   \#qvemf, lilou -  `\#emawinbieber,..' \\\hline
+
+\texttt{17:00} &   brown, mike -   bulan, lahir -   @venomextreme, venom \\\hline
+
+\texttt{17:30} &   `@boyquotations,..' -  `\#emawinbieber,..' \\\hline
+
+\texttt{18:00} &   \#ullychat, qual -   \#ullychat, @ullylages, qual -   brown, mike \\\hline
+
+\texttt{18:30} &   o, pensado, que, sobre, tem, ultimamente, voc\^{e} -   URL, business, i, online -   coffee, green \\\hline
+
+\texttt{19:00}&   `@boyquotations,..' -   o, que, tem, voc\^{e} -   o, pensado, que, sobre, tem, ultimamente, voc\^{e} \\\hline
+
+\texttt{19:30}&   \#iwillneverunderstand, why -   o, pensado, que, sobre, tem, ultimamente, voc\^{e} -   \#mtvema, URL, at, be, big, pick, the, tweet, will, winner, your \\\hline
+
+\texttt{20:00} &   \#iwillneverunderstand,why -   o, pensado, que, sobre, tem, ultimamente, voc\^{e} -   o,pensado,que,tem,ultimamente,voc\^{e} \\\hline
+
+\texttt{20:30} &   hari, pahlawan, selamat -   \#mtvema, URL, at, be, big, pick, the, tweet, will, winner, your -   \#mtvema, URL, at, be, big, the, tweet, will, winner \\\hline
+
+\texttt{21:00} &   hari, pahlawan, selamat -   \#mtvema, URL, at, be, big, pick, the, tweet, will, winner, your -   \#iwillneverunderstand, why \\\hline
+
+\texttt{21:30} &   hari, pahlawan, selamat -   \#iwillneverunderstand, why -   pick, your \\\hline
+
+\texttt{22:00} &   hari, pahlawan, selamat -   and, broke, selena, up -   \#iwillneverunderstand, why \\\hline
+
+\texttt{22:30}&   \#asdtanya, \#hmmomspik, @ahspeakdoang -   \#iwillneverunderstand, why -   hari, pahlawan, selamat \\\hline
+
+\texttt{23:00} &   \#iwillneverunderstand, why -   brown, mike -   hari, pahlawan, selamat \\\hline
+
+\texttt{23:30}&   10, nov -   brown, mike -   10, 11, 2012 \\\hline
+
+\texttt{00:00} &  ataturk, aniyoruz, kemal, mustafa -   hari, pahlawan, selamat -   \#iwillneverunderstand, why \\\hline
+ \end{tabular}
+ \caption{Top 3 itemsets for hours in November 9th}
+ \label{table:nov9}
+ \end{table}
+
+ 
+ 
+ 
+ %To validate that filtered itemsets don't contain important information, we list all items that appear in filtered out itemsets but not in any  chosen itemset. If an itemset is not fully contained in any of the chosen ones, then the minimum difference it had with any of the chosen ones can possibly contain information not present in the selection. Table \ref{table:filteringPerf} shows the differences between  itemsets containing any of the terms \texttt{barack, obama, mitt, romney, justin, bieber, selena, gomez}, and the selection at different values of $\kappa$. We do not show all the filtered items because of space constraints, but we pick the most ..... If a number appears beside an item, it is the number of epochs when this item appeared and didn't get selected.
+%For each itemset in the full collection we find the minimum difference between it and itemsets selected by the selection criterion we proposed.
 
 
 \section{Related work}
