@@ -1585,7 +1585,7 @@ public class DivergeBGMap {
             selectionFormat.out().append(printMultiset(mergedItemset));
             selectionFormat
                 .format(
-                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
                     yMeasure, //2
                     kldStats.getSum(), //3
                     kldStats.getSumsq(), //4
@@ -1603,10 +1603,10 @@ public class DivergeBGMap {
                     kldGain2, //14
                     kldGain2 / allianceMembers.size(), //15
                     
-                    kldStats.getMin(),
-                    kldStats.getPercentile(0.5),
-                    kldStats.getMax(), 
-                    (int) kldStats.getN(), 
+                    kldStats.getMin(), //16
+                    kldStats.getPercentile(0.5), //17
+                    kldStats.getMax(),  //18 
+                    (int) kldStats.getN(), //19
 
                     confidence, 
                     calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
