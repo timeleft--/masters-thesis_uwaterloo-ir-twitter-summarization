@@ -1544,10 +1544,19 @@ public class DivergeBGMap {
                 mutualInfo += conditionalProb * DoubleMath.log2(conditionalProb / (freqSuperset / fgNumTweets));
             }
             mutualInfo *= freqSubset / fgNumTweets;
-            
-            
+           
             
             DescriptiveStatistics kldStats = alliedKLD.get(e.getKey());
+            
+            double kldGain = 0;
+            double kldGain2 = 0;
+            double kldSubset = kldCache.get(e.getKey());
+            for(double membKld: kldStats.getValues()){
+              kldGain += membKld - kldSubset;
+              kldGain2 += Math.pow((membKld - kldSubset),2);
+            }
+            
+           
             double yMeasure = 0;
 // kldStats.getSum() * kldStats.getN();
             double kldSum = kldStats.getSum();
@@ -1576,7 +1585,7 @@ public class DivergeBGMap {
             selectionFormat.out().append(printMultiset(mergedItemset));
             selectionFormat
                 .format(
-                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
                     yMeasure, //2
                     kldStats.getSum(), //3
                     kldStats.getSumsq(), //4
@@ -1588,6 +1597,11 @@ public class DivergeBGMap {
 
                     mutualInfo, //10
                     mutualInfo/allianceMembers.size(), //11
+                    
+                    kldGain, //12
+                    kldGain / allianceMembers.size(), //13
+                    kldGain2, //14
+                    kldGain2 / allianceMembers.size(), //15
                     
                     kldStats.getMin(),
                     kldStats.getPercentile(0.5),
