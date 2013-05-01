@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Formatter;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -20,6 +21,7 @@ import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closer;
@@ -249,24 +251,45 @@ public class Diff {
             Joiner.on("-").join((keywords.isEmpty() ? Arrays.asList("NO", "KEYWORDS") : keywords))
             + "_" + origPfx + "-" + selPfx);
         Formatter leftOutFmt = aggregateCloser.register(new Formatter(leftoutItemsFile));
-
+        int minedWithLag = 0;
         for (String leftOutItemKey : leftOutItems.keySet()) {
           Set<Long> leftOutEpochs = Sets.newCopyOnWriteArraySet(leftOutItems.get(leftOutItemKey));
           leftOutFmt.format("%s\t%d\t%s\n", leftOutItemKey, leftOutEpochs.size(), leftOutEpochs.toString());
 
           perfmonKV.storeKeyValue("LeftOut_" + leftOutItemKey, leftOutEpochs.size());
-
-          Set<Long> compLeftOutEpochs = null;
+         
+          List<Long> compLeftOutEpochs = Lists.newLinkedList();
           if (selectedItems.containsKey(leftOutItemKey)) {
-            Set<Long> selectedEpochs = Sets.newCopyOnWriteArraySet(selectedItems.get(leftOutItemKey));
-            compLeftOutEpochs = Sets.difference(leftOutEpochs, selectedEpochs);
+            Iterator<Long> selIter = selectedItems.get(leftOutItemKey).iterator();
+            Long selEpoch = selIter.next();
+            for(Long loEpoch: leftOutEpochs){
+              while(selEpoch < loEpoch){
+                if(selIter.hasNext()){
+                  selEpoch = selIter.next();
+                } else {
+                  selEpoch = Long.MAX_VALUE;
+                }
+              }
+              
+              if(selEpoch - loEpoch > 1800){
+                compLeftOutEpochs.add(loEpoch);
+              } else {
+                perfmonKV.storeKeyValue("MinedWithLag_" + leftOutItemKey, selEpoch);
+                ++minedWithLag;
+              }
+            }
+//            Set<Long> selectedEpochs = Sets.newCopyOnWriteArraySet(selectedItems.get(leftOutItemKey));
+//            compLeftOutEpochs = Sets.difference(leftOutEpochs, selectedEpochs);
           }
           if (compLeftOutEpochs != null && compLeftOutEpochs.size() > 0) {
             compLeftOutFmt.format("%s\t%d\t%s\n", leftOutItemKey, compLeftOutEpochs.size(),
                 compLeftOutEpochs.toString());
             perfmonKV.storeKeyValue("CompLeftOut_" + leftOutItemKey, compLeftOutEpochs.size());
+          } else {
+            perfmonKV.storeKeyValue("AlwaysMinedWithLag_" + leftOutItemKey, -1);
           }
         }
+        perfmonKV.storeKeyValue("MinedWithLagCount", minedWithLag);
 //      }
     } finally {
       aggregateCloser.close();

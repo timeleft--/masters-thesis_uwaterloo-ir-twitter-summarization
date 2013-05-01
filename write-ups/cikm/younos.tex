@@ -509,7 +509,22 @@ Algorithm \ref{algo:alliance} shows the described algorithm for merging itemsets
 
 \section{Empirical Evaluation}
 \label{sec:empirical}
-Examples from Nov. 6 and 9. Nov. 9 has two events for Bieber.. MTVEMA and break up.
+We have shown in the last 3 sections how to improve the efficiency of Frequent Itemsets Mining on social media data, by reducing the number of itemsets produced. To show the performance of the proposed  methods in filtering out itemsets that are uninteresting and choosing interesting ones, we show examples of mining Tweets posted in the first half of November, 2012. This period includes the US presidential elections on November 6th, and the MTV Europe Music Awards (MTVEMA) on November 9th. Justin Bieber won the MTVEMA, and on the same day he also broke up with Selena Gomez. Therefore, this period contains events of different types that overlap, and we can use it to assess the effectiveness of our methods without access to ground truth data. The KL-Divergence is calculated against the results of mining the month of October. 
+
+To validate that filtered itemsets don't contain important information, we list all items that appear in filtered out itemsets but not in any  chosen itemset. If an itemset is not fully contained in any of the chosen ones, then the minimum difference it had with any of the chosen ones can possibly contain information not present in the selection. Table \ref{table:filteringPerf} shows the differences between  itemsets containing any of the terms \texttt{barack, obama, mitt, romney, justin, bieber, selena, gomez}, and the selection made by the different criteria proposed. If a number appears beside an item, it is the number of epochs when this item appeared and didn't get selected.
+%For each itemset in the full collection we find the minimum difference between it and itemsets selected by the selection criterion we proposed.
+
+
+\begin{table*}
+\centering
+\begin{tabular}{|c|c|c|c|}
+Point-wise KL-Divergence & Strong Closed Itemsets & Itemsets Alliances \\
+to, president (1), is, for, a, the, in, i, and, of, s, URL
+\end{tabular}
+\caption{Items present in filtered out itemsets but not in any itemset in the selection made by different criteria}
+\label{table:filteringPerf}
+\end{table*}
+
 
 \section{Related work}
 \label{sec:related}
