@@ -290,7 +290,7 @@ public class DivergeBGMap {
   static boolean perfMon = true;
   static boolean TOTALLY_IGNORE_1ITEMSETS = false;
   static boolean IGNORE_1ITEMSETS_VERY_HIGH_CNT = false;
-  static boolean allianceKLDPositiveOnly = true;
+  static boolean allianceKLDPositiveOnly = false;
 
   /**
    * @param args
@@ -332,7 +332,7 @@ public class DivergeBGMap {
       perfMon = !args[3].contains("NoPerfMon");
       TOTALLY_IGNORE_1ITEMSETS = args[3].contains("Ignore1Tot");
       IGNORE_1ITEMSETS_VERY_HIGH_CNT = args[3].contains("Ignore1VHi");
-      allianceKLDPositiveOnly = !args[3].contains("KLDPosNeg");
+      allianceKLDPositiveOnly = args[3].contains("KLDPosOnly");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
