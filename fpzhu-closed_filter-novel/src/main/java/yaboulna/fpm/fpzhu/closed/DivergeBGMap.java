@@ -130,40 +130,18 @@ public class DivergeBGMap {
       if (currCnt != null) {
         LOG.debug("Repeated itemset {} with existing cnt {} and new cnt " + count, itemset, currCnt);
 
-        if (fpDocIdsMap != null && ids.length() > 0){
+        if (fpDocIdsMap != null && ids.length() > 0) {
 
-            LinkedList<Long> newDocIds = Lists.newLinkedList();
-            for (String docid : comaSplitter.split(ids)) {
-              newDocIds.add(Long.valueOf(docid));
-            }
-            Iterator<Long> newDocIdsIter = newDocIds.iterator();
-            Long newDocIdI = newDocIdsIter.next();
+          LinkedList<Long> newDocIds = Lists.newLinkedList();
+          for (String docid : comaSplitter.split(ids)) {
+            newDocIds.add(Long.valueOf(docid));
+          }
+          Iterator<Long> newDocIdsIter = newDocIds.iterator();
+          Long newDocIdI = newDocIdsIter.next();
 
-            LinkedList<Long> mergedIds = Lists.newLinkedList();
-            for (Long existingDocId : fpDocIdsMap.get(itemset)) {
-              while (newDocIdI < existingDocId) {
-
-                mergedIds.add(newDocIdI);
-
-                if (newDocIdsIter.hasNext()) {
-                  newDocIdI = newDocIdsIter.next();
-                } else {
-                  newDocIdI = Long.MAX_VALUE;
-                }
-              }
-
-              mergedIds.add(existingDocId);
-
-              if (existingDocId.equals(newDocIdI)) {
-                if (newDocIdsIter.hasNext()) {
-                  newDocIdI = newDocIdsIter.next();
-                } else {
-                  newDocIdI = Long.MAX_VALUE;
-                }
-              }
-            }
-
-            while (newDocIdI < Long.MAX_VALUE) {
+          LinkedList<Long> mergedIds = Lists.newLinkedList();
+          for (Long existingDocId : fpDocIdsMap.get(itemset)) {
+            while (newDocIdI < existingDocId) {
 
               mergedIds.add(newDocIdI);
 
@@ -173,27 +151,49 @@ public class DivergeBGMap {
                 newDocIdI = Long.MAX_VALUE;
               }
             }
-            
-            count = mergedIds.size();
-            
-            if (currCnt >= count) {
-              ++repeatedItemsetsLessOrEqNewCnt;
-              sumDifferenceInRepeatedCnt += currCnt - count;
-              if (currCnt - count > maxDifferenceInRepeatedCnt) {
-                maxDifferenceInRepeatedCnt = currCnt - count;
+
+            mergedIds.add(existingDocId);
+
+            if (existingDocId.equals(newDocIdI)) {
+              if (newDocIdsIter.hasNext()) {
+                newDocIdI = newDocIdsIter.next();
+              } else {
+                newDocIdI = Long.MAX_VALUE;
               }
-              return true;
-            } else {
-              ++repeatedItemsetsMoreNewCnt;
-              sumDifferenceInRepeatedCnt += count - currCnt;
-              if (count - currCnt > maxDifferenceInRepeatedCnt) {
-                maxDifferenceInRepeatedCnt = count - currCnt;
-              }
-              
-              fpCntMap.put(itemset, count);
-              fpDocIdsMap.put(itemset, mergedIds);
             }
-          
+          }
+
+          while (newDocIdI < Long.MAX_VALUE) {
+
+            mergedIds.add(newDocIdI);
+
+            if (newDocIdsIter.hasNext()) {
+              newDocIdI = newDocIdsIter.next();
+            } else {
+              newDocIdI = Long.MAX_VALUE;
+            }
+          }
+
+          count = mergedIds.size();
+
+          if (currCnt >= count) {
+            ++repeatedItemsetsLessOrEqNewCnt;
+            sumDifferenceInRepeatedCnt += currCnt - count;
+            if (currCnt - count > maxDifferenceInRepeatedCnt) {
+              maxDifferenceInRepeatedCnt = currCnt - count;
+            }
+            return true;
+          } else {
+            ++repeatedItemsetsMoreNewCnt;
+            sumDifferenceInRepeatedCnt += count - currCnt;
+            if (count - currCnt > maxDifferenceInRepeatedCnt) {
+              maxDifferenceInRepeatedCnt = count - currCnt;
+            }
+
+            fpCntMap.put(itemset, count);
+            fpDocIdsMap.put(itemset, mergedIds);
+          }
+
         } else {
 
           if (currCnt >= count) {
@@ -290,6 +290,7 @@ public class DivergeBGMap {
   static boolean perfMon = true;
   static boolean TOTALLY_IGNORE_1ITEMSETS = false;
   static boolean IGNORE_1ITEMSETS_VERY_HIGH_CNT = false;
+  static boolean allianceKLDPositiveOnly = true;
 
   /**
    * @param args
@@ -331,6 +332,7 @@ public class DivergeBGMap {
       perfMon = !args[3].contains("NoPerfMon");
       TOTALLY_IGNORE_1ITEMSETS = args[3].contains("Ignore1Tot");
       IGNORE_1ITEMSETS_VERY_HIGH_CNT = args[3].contains("Ignore1VHi");
+      allianceKLDPositiveOnly = !args[3].contains("KLDPosNeg");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -348,6 +350,7 @@ public class DivergeBGMap {
     LOG.info("perfMon: " + perfMon);
     LOG.info("TOTALLY_IGNORE_1ITEMSETS: " + TOTALLY_IGNORE_1ITEMSETS);
     LOG.info("IGNORE_1ITEMSETS_VERY_HIGH_CNT: " + IGNORE_1ITEMSETS_VERY_HIGH_CNT);
+    LOG.info("allianceKLDPositiveOnly: " + allianceKLDPositiveOnly);
 
     String thresholds = "";
     thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
@@ -435,7 +438,7 @@ public class DivergeBGMap {
     Splitter underscoreSplit = Splitter.on('_');
 
     final Map<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> growingAlliances = Maps.newHashMap();
-    final Map<Set<String>,DescriptiveStatistics> alliedKLD = Maps.newHashMap();
+    final Map<Set<String>, DescriptiveStatistics> alliedKLD = Maps.newHashMap();
     final Map<Set<String>, Set<String>> itemsetParentMap = Maps.newHashMap();
     final Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
     final Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
@@ -462,7 +465,7 @@ public class DivergeBGMap {
     try {
       PerfMonKeyValueStore perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
           Arrays.toString(args)));
-      perfMonKV.batchSizeToWrite = 19; //FIXME: whenever you add a new perf key
+      perfMonKV.batchSizeToWrite = 19; // FIXME: whenever you add a new perf key
       for (File fgF : fgFiles) {
         final File novelFile = new File(fgF.getParentFile(), fgF.getName()
             .replaceFirst("fp_", "novel_" + options + "_"));
@@ -580,7 +583,7 @@ public class DivergeBGMap {
                 klDiver = fgFreq * (Math.log(fgFreq / bgCount) + bgFgLogP);
               }
               kldCache.put(itemset, klDiver);
-              
+
               if (itemset.size() == 1) {
                 ++numLen1Itemsets; // .increment();
                 if (!TOTALLY_IGNORE_1ITEMSETS) {
@@ -590,7 +593,7 @@ public class DivergeBGMap {
                 }
                 continue;
               }
-              
+
               if (!filterLowKLD || klDiver > KLDIVERGENCE_MIN) {
                 positiveKLDivergence.put(itemset, klDiver);
 
@@ -1256,11 +1259,19 @@ public class DivergeBGMap {
                     alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
                         HashMultiset.create(theOnlyOneIllMerge), Sets.newHashSet(theOnlyOnesDocIds));
                     growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
-                    
+
                     DescriptiveStatistics kldStats = new DescriptiveStatistics();
-                    kldStats.addValue(kldCache.get(theOnlyOneIllMerge));
+
+                    if (allianceKLDPositiveOnly) {
+                      if (positiveKLDivergence.containsKey(theOnlyOneIllMerge)) {
+                        kldStats.addValue(positiveKLDivergence.get(theOnlyOneIllMerge));
+                      }
+                    } else {
+                      kldStats.addValue(kldCache.get(theOnlyOneIllMerge));
+                    }
+
                     alliedKLD.put(theOnlyOneIllMerge, kldStats);
-                    
+
                     if (!itemsetParentMap.containsKey(theOnlyOneIllMerge)) {
                       if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
                           && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
@@ -1273,8 +1284,14 @@ public class DivergeBGMap {
                   }
                   alliedItemsets.getKey().addAll(itemset);
                   alliedItemsets.getValue().addAll(iDocIds);
-                  
-                  alliedKLD.get(theOnlyOneIllMerge).addValue(kldCache.get(itemset));
+
+                  if (allianceKLDPositiveOnly) {
+                    if (positiveKLDivergence.containsKey(itemset)) {
+                      alliedKLD.get(theOnlyOneIllMerge).addValue(positiveKLDivergence.get(itemset));
+                    }
+                  } else {
+                    alliedKLD.get(theOnlyOneIllMerge).addValue(kldCache.get(itemset));
+                  }
 
                   allied = true;
                 } else if (!mergeCandidates.isEmpty()) {
@@ -1505,55 +1522,56 @@ public class DivergeBGMap {
               }
             }
 
-            DescriptiveStatistics kldStats = alliedKLD.get(e.getKey()); 
-            double yMeasure = 0; 
-//            kldStats.getSum() * kldStats.getN();
+            DescriptiveStatistics kldStats = alliedKLD.get(e.getKey());
+            double yMeasure = 0;
+// kldStats.getSum() * kldStats.getN();
             double kldSum = kldStats.getSum();
             double logM = Math.log(kldStats.getN());
-            for(double val: kldStats.getValues()){
+            for (double val : kldStats.getValues()) {
               yMeasure += kldSum - val + logM;
             }
             double yMeasureNoDiv = yMeasure;
             yMeasure /= kldStats.getN();
-//            double klDiver = Double.MIN_VALUE;
-//            Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
-//            if (bgCount == null) {
-//              if (!fallBackToItemsKLD) {
-//                bgCount = 1;
-//              } else {
-//                klDiver = calcComponentsKLDiver(mergedItemset.elementSet(), unionDocId.size(),
-//                    bgCountMap, fgCountMap, bgFgLogP, kldCache);
-//              }
-//            }
-//            if (bgCount != null) {
-//              klDiver = unionDocId.size() * 1.0 * (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+// double klDiver = Double.MIN_VALUE;
+// Integer bgCount = bgCountMap.get(mergedItemset.elementSet());
+// if (bgCount == null) {
+// if (!fallBackToItemsKLD) {
+// bgCount = 1;
+// } else {
+// klDiver = calcComponentsKLDiver(mergedItemset.elementSet(), unionDocId.size(),
+// bgCountMap, fgCountMap, bgFgLogP, kldCache);
+// }
+// }
+// if (bgCount != null) {
+// klDiver = unionDocId.size() * 1.0 * (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
 //
-//            }
-//            // klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
+// }
+// // klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
 
             selectionFormat.out().append(printMultiset(mergedItemset));
-            selectionFormat.format(
-                "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
-                yMeasure,
-                yMeasureNoDiv,
-                kldStats.getSumsq(),
-                kldStats.getVariance(),
-                kldStats.getKurtosis(),
-                kldStats.getSkewness(),
-                kldStats.getMean(),
-                kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(),
-                
-                kldStats.getMin(),
-                kldStats.getMax(),
-                (int)kldStats.getN(),
-                
-                confidence,
-                calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
-                    idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
-                unionDocId.size(),
-                calcEntropy(mergedItemset.elementSet(), entropyFromBg ? bgCountMap : fgCountMap,
-                    entropyFromBg ? bgNumTweets : fgNumTweets),
-                calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets));
+            selectionFormat
+                .format(
+                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+                    yMeasure,
+                    kldStats.getSum(),
+                    kldStats.getSumsq(),
+                    kldStats.getVariance(),
+                    kldStats.getKurtosis(),
+                    kldStats.getSkewness(),
+                    kldStats.getMean(),
+                    kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(),
+
+                    kldStats.getMin(),
+                    kldStats.getMax(),
+                    (int) kldStats.getN(),
+
+                    confidence,
+                    calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
+                        idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap),
+                    unionDocId.size(),
+                    calcEntropy(mergedItemset.elementSet(), entropyFromBg ? bgCountMap : fgCountMap,
+                        entropyFromBg ? bgNumTweets : fgNumTweets),
+                    calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets));
 
             Set<Long> headDocIds = Sets.newCopyOnWriteArraySet(fgIdsMap.get(e.getKey()));
             selectionFormat.out().append(headDocIds.toString().substring(1))

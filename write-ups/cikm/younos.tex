@@ -384,7 +384,28 @@ After mining term N-Grams we flatten the itemsets to sets of unigrams again. Thi
 \section{Temporal mining}
 \label{sec:KLD}
 KL-Divergence 
-
+\begin{figure}
+\centering
+% Generated with LaTeXDraw 2.0.8
+% Wed May 01 10:13:00 EDT 2013
+% \usepackage[usenames,dvipsnames]{pstricks}
+% \usepackage{epsfig}
+% \usepackage{pst-grad} % For gradients
+% \usepackage{pst-plot} % For axes
+\scalebox{.4} % Change this value to rescale the drawing.
+{
+\begin{pspicture}(0,-5.61)(19.94,5.61)
+\rput(9.97,0.0){\includegraphics{runtime_different-epoch-spans_bar-table.eps}}
+\rput(9.8,1.44){\includegraphics{runtime_different-epoch-spans_line.eps}}
+\usefont{T1}{ptm}{m}{n}
+\rput{90.15449}(0.96138316,-0.45039606){\rput(0.6871191,0.225){\LARGE Time in milliseconds}}
+\usefont{T1}{ptm}{m}{n}
+\rput(10.130039,-0.925){\Large Epoch span in hours}
+\end{pspicture} 
+}
+\caption{Mean runtime at different epoch spans}
+\label{fig:runtimeEpochs}
+\end{figure}
 \section{Strongly closed itemsets alliances}
 \label{sec:strong}
 The closed property of an itemset is very easily violated by modifying one document that contains the itemset and removing one of its items. While an update operation is not supported in the model of frequent itemsets mining, a similar effect happens when people are writing about a certain fine grained topic. For example, on November 9th, 2012 many people where tweeting that "Justin Bieber and Selena Gomez broke up". If all Tweets which use the verb "break up" to report the topic also contain the two names in full, then there will be one closed itemset with all 6 items. However, a Tweet can contain any of 8 other combinations of the four names that fully convey the meaning. We can consider that Tweets with any of these combinations are modifications of the \emph{maximal} closed itemset. Therefore instead of 1 maximal itemset about the topic there will be 9 closed ones. Now consider that it is possible to say that "Justin and Selena broke up" as well as "Justin broke up with Selena", resulting in 2 maximal itemsets. This increase in the number of maximal itemsets because of slight variations in the language is intensified by the length limit on Tweets, specially when people try to make space for their comment about a Tweet they are retweeting. We therefore need a property between the easily violated closed property and the very strict maximal property which also results in a large number of redundant itemsets. 
