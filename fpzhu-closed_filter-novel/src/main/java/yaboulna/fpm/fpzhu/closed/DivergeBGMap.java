@@ -1594,7 +1594,7 @@ public class DivergeBGMap {
                     (kldStats.getSum() - mutualInfo) / allianceMembers.size(), //4
                     (kldGain + subsetSelfInfo) / allianceMembers.size(), //5
                     kldGain2 / subsetSelfInfo2/ allianceMembers.size(), //6
-                    kldGain2 + subsetSelfInfo2, //7
+                    kldGain2 / allianceMembers.size(), //7
                     mutualInfo, //8
                     
                     
