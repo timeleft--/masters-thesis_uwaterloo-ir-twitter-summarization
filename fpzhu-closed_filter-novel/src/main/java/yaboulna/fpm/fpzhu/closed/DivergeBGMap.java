@@ -1592,8 +1592,10 @@ public class DivergeBGMap {
                     kldStats.getVariance(), //2
                     (kldGain2 + subsetSelfInfo2) / allianceMembers.size(), //3
                     (kldStats.getSum() - mutualInfo) / allianceMembers.size(), //4
-                    kldGain2 + subsetSelfInfo2, //5
-                    mutualInfo, //6
+                    (kldGain + subsetSelfInfo) / allianceMembers.size(), //5
+                    kldGain2 / subsetSelfInfo2/ allianceMembers.size(), //6
+                    kldGain2 + subsetSelfInfo2, //7
+                    mutualInfo, //8
                     
                     
 //                    mutualInfo/allianceMembers.size(), //11
@@ -1603,13 +1605,13 @@ public class DivergeBGMap {
 //                    kldGain2 / allianceMembers.size(), //15
                     
                     
-                    yMeasure, //2
-                    kldStats.getSum(), //3
-                    kldStats.getSumsq(), //4
-                     kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(),//5
-                    kldStats.getKurtosis(), //6
-                    kldStats.getSkewness(), //7
-                    kldStats.getMean(), //8
+                    yMeasure, //9
+                    kldStats.getSum(), //10
+                    kldStats.getSumsq(), //11
+                     kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(),//12
+                    kldStats.getKurtosis(), //13
+                    kldStats.getSkewness(), //14
+                    kldStats.getMean(), //15
                     
                     
                     kldStats.getMin(), //16
