@@ -1548,9 +1548,9 @@ public class DivergeBGMap {
             
             DescriptiveStatistics kldStats = alliedKLD.get(e.getKey());
             
-            double kldGain = 0;
-            double kldGain2 = 0;
             double kldSubset = kldCache.get(e.getKey());
+            double kldGain = kldSubset;
+            double kldGain2 = kldSubset * kldSubset;
             for(double membKld: kldStats.getValues()){
               kldGain += membKld - kldSubset;
               kldGain2 += Math.pow((membKld - kldSubset),2);

@@ -53,7 +53,7 @@
 %\usepackage{pst-grad} % For gradients
 %\usepackage{pst-plot} % For axes
 
-
+\usepackage{mathtools}
 
 \usepackage{algorithm2e}
 
@@ -470,8 +470,6 @@ After joining an alliance an itemset seizes to exist outside of the alliance, so
 %To minimize the difference in frequency between the current itemset and the alliance candidate, we assume that the 1 combination will appear $\ciel{b/2}$ times,  Therefore the difference in frequency between  $b$ 
 
 
-Expanding on the previous observation that adding a high IDF term to an itemset with low IDF terms only prevents achieving a high enough cosine similarity, we introduce an optimization that improves both runtime, memory requirements and filtering power. Unlike the original LCM algorithm, our extension requires keeping previous itemsets in memory so that newly generated ones are compared to them to find candidates for alliance. Instead of keeping all previous itemsets in memory we keep only a limited number, $b$. This obviously improves runtime and memory requirements, and it can also improve the quality of itemsets chosen for alliance. If the total ordering follows the descending order of items' frequencies, then, because of the way PPC-Extension produces itemsets, for an itemset $S_x$ and any candidate subset $S_{(x-b)}$ that was produced $b$ itemsets earlier $\|D_{S_{(x-b)}}\| - \|D_{S_x}\| \ge b$. This lower bound is achieved when the intersection of the documents containing the current itemset $S_x$ and all the $b-1$ supersets before it is exactly the subset $S_{(x-b)}$, and there are no more itemsets with the same intersection. In this case each of the $b$ supersets must have support at most $\|D_{S_{(x-b)}}\| - 1$ to be considered closed, but because there are $b$ of them then actually their support is $\|D_{S_{(x-b)}}\| - b$. Since the minimum support difference is $b$, then the maximum confidence of $S_x$ is $\frac{\|D_{S_{(x-b)}}\| - b}{\|D_{S_{(x-b)}}\|} $. Therefore for a given $\kappa$ we can determine the buffer size $b$ as the frequency of itemsets keeps decreasing. In our implementation we use a fixed $b$ of 1000.
-
 %A similar situation also happens if the intersection ???
 %must have a frequency of occurrence at least $b$ more than the current itemset's frequency. 
 
@@ -518,6 +516,10 @@ Algorithm \ref{algo:alliance} shows the described algorithm for merging itemsets
 \end{algorithm}
 
 
+\subsection{Bounding runtime and memory}
+\label{}
+Expanding on the previous observation that adding a high IDF term to an itemset with low IDF terms only prevents achieving a high enough cosine similarity, we introduce an optimization that improves both runtime, memory requirements and filtering power. Unlike the original LCM algorithm, our extension requires keeping previous itemsets in memory so that newly generated ones are compared to them to find candidates for alliance. Instead of keeping all previous itemsets in memory we keep only a limited number, $b$. This obviously improves runtime and memory requirements, and it can also improve the quality of itemsets chosen for alliance. If the total ordering follows the descending order of items' frequencies, then, because of the way PPC-Extension produces itemsets, for an itemset $S_x$ and any candidate subset $S_{(x-b)}$ that was produced $b$ itemsets earlier $\|D_{S_{(x-b)}}\| - \|D_{S_x}\| \ge b$. This lower bound is achieved when the intersection of the documents containing the current itemset $S_x$ and all the $b-1$ supersets before it is exactly the subset $S_{(x-b)}$, and there are no more itemsets with the same intersection. In this case each of the $b$ supersets must have support at most $\|D_{S_{(x-b)}}\| - 1$ to be considered closed, but because there are $b$ of them then actually their support is $\|D_{S_{(x-b)}}\| - b$. Since the minimum support difference is $b$, then the maximum confidence of $S_x$ is $\frac{\|D_{S_{(x-b)}}\| - b}{\|D_{S_{(x-b)}}\|} $. Therefore for a given $\kappa$ we can determine the buffer size $b$ as the frequency of itemsets keeps decreasing. In our implementation we use a fixed $b$ of 1000.
+
 
 % The difference between documents containing a certain strongly closed itemset and the intersection can be as little as one document. Thus all variations can have high confidence. On the other hand, using an upper bound on confidence is totally counter intuitive, since this means that if only one document exists with a shorter itemset then the longer itemset will be omitted. 
 %Observe that all documents containing the longer itemset will also contain the shorter itemset, and it is possible for several variations to have high confidence because documents
@@ -526,13 +528,27 @@ Algorithm \ref{algo:alliance} shows the described algorithm for merging itemsets
 %We build on the confidence property by merging high confidence itemsets that are extensions of the same itemset into an itemset \emph{alliance}. The itemset alliance is a bag of items formed by taking the union of all member itemsets. This concentrates the numerous high confidence closed and maximal itemsets about a certain topic into one unit. Furthermore, we also include in the alliance all itemsets with high cosine similarity to its members. This merges together itemsets that differ because of items that come earlier in the total ordering and are not pertaining to the topic, such as ``with'' and ``and'' in the Bieber-Gomez example. To avoid forming alliances that are not coherent about a certain topic, we go beyond the numerical calculation of confidence and we actually calculate the overlap between the posting lists of itemsets being merged. In case of merging an itemset with its subset 
 %With a reasonably high support, the 
  
+\subsection{Ranking alliances}
+\label{sec:allianceRank}
+So far we have been reducing the number of itemsets, and we succeeded to reduce it to about 1\% of the original number (in alliances). We now discuss how to rank the itemset alliances, making use of the structure of the alliance. We have experimented with various ranking schemes applied directly to itemsets (before and after reduction) and none of them resulted in a satisfactory ranking. Again, we exploit the pointwise KL Divergence from a background model. The pointwise KLD of the probability of an itemset $S_i$ in the background model $Q$ from its probability in the current epoch $P$ can be considered the information gain: 
+\begin{multline}IG(P(S_i),Q(S_i)) = KLD(P(S_i)||Q(S_i)) \\ = - (H(P(S_i)) - H(P(S_i),Q(S_i))) \\ = \sum{P(S_i) \log{P(S_i)}} - \sum{P(S_i) \log{Q(S_i)}} \end{multline}
 
+We note that the joint probability of the itemset and its superset is equal to the probability of the superset; $P(S_i,S_j) = P(S_j)$. Thus, the information gain of the appearance of an itemset and its superset is essentially the information gain of the superset.  Also, their Pointwise Mutual Information is the Self Information of the subset:
+\begin{multline}
+PMI(S_i, S_j) = \log{ \frac{P(S_i,S_j)}{P(S_i)P(S_j)} } = -\log{P(S_i)} = I(S_i)
+\end{multline}
+
+Therefore, the information gain of a superset is different from the information gain of its subset by the information gained (or lost) because of the additional items. Thus, the information gain of the appearance of all itemsets in an alliance can be calculated as the information gain of its smallest subset plus  the differences between the KLDs of member subsets and the smallest subset. 
+%the squares of
+%The difference is squared because the difference in information gain can be negative, however the information content is positive:
+%can be explained in terms of mutual information. It is the mutual information between the itemset's appearance in  and 
+%structure of the alliance produced by PPC-Extension if the total ordering follows the descending order of items' frequencies.
 
 \section{Empirical Evaluation}
 \label{sec:empirical}
 We have shown in the last 3 sections how to improve the efficiency of Frequent Itemsets Mining on social media data, by reducing the number of itemsets produced. To show the performance of the proposed methods in 
 %filtering out itemsets that are uninteresting and 
-choosing important itemsets, we apply them on Tweets posted on the $6^{th}$ and $9^{th}$ of November 2012. In tables \ref{table:nov6} and \ref{table:nov9} we show the results of mining overlapping 1 hour epochs. Because of space limitation we show only the top 3 itemsets, ranked as described in section \ref{sec:strong}, for each hour. Times are in the EST zone.
+choosing important itemsets, we apply them on Tweets posted on the $6^{th}$ and $9^{th}$ of November 2012. In tables \ref{table:nov6} and \ref{table:nov9} we show the results of mining overlapping 1 hour epochs. Because of space limitation we show only the top 3 itemsets, ranked as described in section \ref{sec:allianceRank}, for each hour. Times are in the EST zone.
 %by point wise KL-Divergence against the results of mining the month of October. 
 
 On November $6^{th}$, the US presidential elections took place and we can see how its events unwind from ``get out and vote'' to the projection of ``obama to win'' and the votes counts (only ``163, 172'' made it to the top 3 at 20:30), all the way to the ``acceptance speech'' and the social media attention given to the ``lady behind obama  with a flag in her hair''. Early in the day, the ``goal [de] Pepe'' scored for ``Real Madrid'' and other itemsets about UEFA Champions football games appear in the top 3. At 22:30 the news that ``weed is legal in Colorado'' breaks into the top 3 because of its novelty, even though this is short after Obama's victory was declared. Throughout the day itemsets about the elections as well as about other topics are ranked high, even if they are topics in a language other than English and thus with a smaller supporting user base (such as the topic in Portuguese about when to consider a person old [velho]).
