@@ -1549,8 +1549,10 @@ public class DivergeBGMap {
             DescriptiveStatistics kldStats = alliedKLD.get(e.getKey());
             
             double kldSubset = kldCache.get(e.getKey());
-            double kldGain = kldSubset;
-            double kldGain2 = kldSubset * kldSubset;
+            double subsetSelfInfo = - Math.log(freqSubset / fgNumTweets);
+            double subsetSelfInfo2 = subsetSelfInfo * subsetSelfInfo;
+            double kldGain = 0; //kldSubset;
+            double kldGain2 = 0; //kldSubset * kldSubset;
             for(double membKld: kldStats.getValues()){
               kldGain += membKld - kldSubset;
               kldGain2 += Math.pow((membKld - kldSubset),2);
@@ -1586,22 +1588,29 @@ public class DivergeBGMap {
             selectionFormat
                 .format(
                     "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+                    
+                    kldStats.getVariance(), //2
+                    (kldGain2 + subsetSelfInfo2) / allianceMembers.size(), //3
+                    (kldStats.getSum() - mutualInfo) / allianceMembers.size(), //4
+                    kldGain2 + subsetSelfInfo2, //5
+                    mutualInfo, //6
+                    
+                    
+//                    mutualInfo/allianceMembers.size(), //11
+//                    kldGain, //12
+//                    kldGain / allianceMembers.size(), //13
+//                    kldGain2, //14
+//                    kldGain2 / allianceMembers.size(), //15
+                    
+                    
                     yMeasure, //2
                     kldStats.getSum(), //3
                     kldStats.getSumsq(), //4
-                    kldStats.getVariance(), //5
+                     kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(),//5
                     kldStats.getKurtosis(), //6
                     kldStats.getSkewness(), //7
                     kldStats.getMean(), //8
-                    kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(), //9
-
-                    mutualInfo, //10
-                    mutualInfo/allianceMembers.size(), //11
                     
-                    kldGain, //12
-                    kldGain / allianceMembers.size(), //13
-                    kldGain2, //14
-                    kldGain2 / allianceMembers.size(), //15
                     
                     kldStats.getMin(), //16
                     kldStats.getPercentile(0.5), //17

@@ -530,7 +530,9 @@ Expanding on the previous observation that adding a high IDF term to an itemset 
  
 \subsection{Ranking alliances}
 \label{sec:allianceRank}
-So far we have been reducing the number of itemsets, and we succeeded to reduce it to about 1\% of the original number (in alliances). We now discuss how to rank the itemset alliances, making use of the structure of the alliance. We have experimented with various ranking schemes applied directly to itemsets (before and after reduction) and none of them resulted in a satisfactory ranking. Again, we exploit the pointwise KL Divergence from a background model. The pointwise KLD of the probability of an itemset $S_i$ in the background model $Q$ from its probability in the current epoch $P$ can be considered the information gain: 
+So far we have been reducing the number of itemsets, and we succeeded to reduce it to about 1\% of the original number (in alliances). We now discuss how to rank the itemset alliances, making use of the structure of the alliance. 
+%We have experimented with various ranking schemes applied directly to itemsets (before and after reduction) and none of them resulted in a satisfactory ranking. 
+Again, we exploit the pointwise KL Divergence from a background model. The pointwise KLD of the probability of an itemset $S_i$ in the background model $Q$ from its probability in the current epoch $P$ can be considered the information gain: 
 \begin{multline}IG(P(S_i),Q(S_i)) = KLD(P(S_i)||Q(S_i)) \\ = - (H(P(S_i)) - H(P(S_i),Q(S_i))) \\ = \sum{P(S_i) \log{P(S_i)}} - \sum{P(S_i) \log{Q(S_i)}} \end{multline}
 
 We note that the joint probability of the itemset and its superset is equal to the probability of the superset; $P(S_i,S_j) = P(S_j)$. Thus, the information gain of the appearance of an itemset and its superset is essentially the information gain of the superset.  Also, their Pointwise Mutual Information is the Self Information of the subset:
@@ -538,11 +540,18 @@ We note that the joint probability of the itemset and its superset is equal to t
 PMI(S_i, S_j) = \log{ \frac{P(S_i,S_j)}{P(S_i)P(S_j)} } = -\log{P(S_i)} = I(S_i)
 \end{multline}
 
-Therefore, the information gain of a superset is different from the information gain of its subset by the information gained (or lost) because of the additional items. Thus, the information gain of the appearance of all itemsets in an alliance can be calculated as the information gain of its smallest subset plus  the differences between the KLDs of member subsets and the smallest subset. 
+Therefore, the information gain of a superset is different from the information gain of its subset by the information gained (or lost) because of the additional items. Thus, the information gain of the appearance of all itemsets in an alliance of $m$ itemets, $S_{i1},S_{i2},...S_{im}$, can be calculated as the information gain of its smallest subset, $S_{min}$, plus the differences between the KLDs of member subsets and the smallest subset. We use the squares of the differences, because the pointwise KLD value might be positive or negative, depending on whether the subset appears with lower or higher probability than in the background. Thus the information gain of an alliance is given by:
+\begin{multline*}IG(P(S_{i1},...S_{im}),Q(S_{i1},...S_{im})) = I(S_{min}) + \\ %S_{i2},
+\sum_{j = i1..im}{(KLD(P(S_j)||Q(S_j)) - KLD(P(S_{min})||Q(S_{min})))^{2}} \end{multline*}
 %the squares of
 %The difference is squared because the difference in information gain can be negative, however the information content is positive:
 %can be explained in terms of mutual information. It is the mutual information between the itemset's appearance in  and 
 %structure of the alliance produced by PPC-Extension if the total ordering follows the descending order of items' frequencies.
+
+Finally, the average information gain of an itemset in an alliance is give by:
+\begin{equation}\label{eq:avgIG}\overline{IG}_{alliance} = \frac{IG(P(S_{i1},...S_{im}),Q(S_{i1},...S_{im}))}{m}\end{equation}
+
+The ranking of itemset alliances according to equation \ref{eq:avgIG} gives superior results to many other ranking schemes we tried, including ones based on scores derived from the itemset content directly. An intuitive explanation is that this ranking scheme gives high scores to itemsets alliances made up of a minimum set with small KLD and supersets with large KLD. According to the structure of the alliance produced by PPC-Extension if the total ordering follows the descending order of items' frequencies, the small KLD minimum subset will be an entity with sustained interest, and the high KLD supersets will be new appearing with probabilities very different from their background probabilities. In the next section we show the results of applying this ranking scheme along with the methods described in previous sections.
 
 \section{Empirical Evaluation}
 \label{sec:empirical}
