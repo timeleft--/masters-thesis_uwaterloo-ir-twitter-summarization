@@ -212,6 +212,7 @@ public class HgramTransactionIterator implements Iterator<Pair<List<String>, Lon
 
     Statement suppStmt = conn.createStatement();
     try {
+      suppPct *= (windowEndUx - windowStartUx) / 3600.0;
 //    @formatter:off
       String suppSql = ""
           + "\n SELECT floor(" + suppPct + " * sum(totalCnt/10.0)) " //10 is avg(tweetLen)

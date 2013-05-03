@@ -103,24 +103,163 @@ Abstract
 
 \section{Introduction}
 
-The nature of text in social media poses a challenge when applying traditional information retrieval and text mining algorithms, as detailed in section \ref{sec:socmed}. Text in social media is usually short, lacks context and structure, and is created at a very high rate. The sheer volume of social media streams mandates the use of efficient algorithms, and the short length of individual documents makes it possible to apply Frequent Itemsets Mining. This family of algorithms is very fast and efficient, however it is not readily suited for application on text. For example, \{obama, won\}, \{sham, and, travesty, @realDonaldTrump\} and \{flag, in, her, hair\}  are  itemsets mined from Tweets posted on November 6th, 2012 using terms as items. They appear frequently in the last couple of hours of the US elections day, but they are not as frequent as \{of, the\} and other English language constructs. Even if a maximum frequency threshold is set, risking to filter out important itemsets, a lot of non-English language constructs will be mined because the proportion of posts in English is much higher than other languages. In this paper we propose methods for adapting Frequent Itemsets Mining to be effective on social media text, without degrading its efficiency. As a result, the mined Frequent Itemsets provide the vocabulary associated with events and can be used in various ways for search and summarization.
+The nature of text in social media poses a challenge when applying traditional search and text mining algorithms. Text in social media is usually short, lacks context and structure, and is created at a very high rate. The sheer volume of social media streams mandates the use of efficient algorithms, and the short length of individual documents makes it possible to apply Frequent Itemsets Mining. This family of algorithms is very fast and efficient, however it is not readily suited for application on text. The problem with Frequent Itemsets Mining is the large number of itemsets it produces.
+%, specially that most of them are not interesting. 
+Actually it was originally proposed as a preliminary stage to Association Rules Mining, which sifts through the numerous itemsets and produces a smaller number of association rules. The number of itemsets produced can be reduced by setting a higher threshold on the minimum frequency of an itemset. However, in text this threshold has to be kept low because frequencies follow a long tailed Zipfean distribution. Also, the head of the distribution is made up mostly of stop words; a situation that doesn't happen in the domain of market basket data since the packaging of each item is not enlisted in the receipt!
+%The first type of uninteresting itemsets is the language constructs that bear no information, such as ``such as'', and itemsets that are made up of all the different fragments of the language construct along with other items. The latter type is an artifact of itemset mining when the final itemset has such a language construct within it; for example, \{we, did, it, \#teamobama\}.
+%It produces a very high number of itemsets most of them are uninteresting language constructs.
+%The number of itemsets it produces is exponential in the number of items,  
+%For example, one would expect that \{obama, won\}, \{sham, and, travesty, @realDonaldTrump\} and \{flag, in, her, hair\}  are  itemsets mined from Tweets posted on November 6th, 2012 using terms as items. They appear frequently in the last couple of hours of the US elections day, but they are not as frequent as \{of, the\} and other English language constructs. 
+Even if a maximum frequency threshold is set, risking to filter out important itemsets, a lot of non-English language constructs will be mined because the proportion of posts in English is much higher than other languages. In this paper we propose methods for adapting Frequent Itemset Mining to be effective on social media text, without degrading its efficiency. %or relying on features of a particular language.
 
-Frequent itemsets include ``trending topics'', as well as topics that have sustained interest for longer periods of time without sudden peaks. We use the term ``trending topics'' as defined by Twitter in a blog post explaining why a topic about WikiLeaks wasn't trending as was expected by internet activists \footnote{http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}. The blog post explains that a topic is trending if a sudden peak is detected, and links this to the change in the velocity of the conversation. Since the number of posts associated with such a trending topic must be high, Frequent Itemsets Mining will detect it. Furthermore, it detects topics that have a steady high volume of posts.
+Unlike trending topics\footnote{http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}  \cite{mathioudakis2010twittermonitor}, the results of Frequent Itemset Mining include itemsets that have high frequency because of sustained relatively high interest as well as a spike of interest. 
+% GOES TO RELATED WORK Unlike bursty events detection methods \cite{klienberg2002},
+%Frequent itemsets include ``trending topics'', as well as topics that have sustained interest for longer periods of time without sudden peaks. We use the term ``trending topics'' as defined by Twitter in a blog post explaining why a topic about WikiLeaks wasn't trending as was expected by internet activists \footnote{http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}. The blog post explains that a topic is trending if a sudden peak is detected, and links this to the change in the velocity of the conversation. Since the number of posts associated with such a trending topic must be high, Frequent Itemsets Mining will detect it. Furthermore, it detects topics that have a steady high volume of posts.
+The mined itemsets provide the vocabulary associated with events and can be used in various ways for search and summarization. For example, the collection of mining results of different epochs of time can be used for temporal query expansion \cite{choi2012temporal}. The mining results of each epoch can be treated as a document, so that the probability of an epoch conditioned on a query can be estimated as the probability of this document on the query using any pseudo-revelance feedback method. Further, terms from individual itemsets relevant to a query (using any relevance ranking) can be used for query expansion, thus acting as precomputed results of a simple version of pseudo-revelance feedback. 
+% after applying appropriate weights to items.
+%Liken to Rosie Jones Temporal profiles?? 
+% Mention CMU and/or Glasgow's work that used pseudo-relevance feedback for Microblogs?
+%For summarization, itemsets that appear as a sequence can be used as an extractive summary of the social media stream at a certain time. This does not take into account pr
 
-The rest of the paper is organized as follows: We start by an overview of properties of text in social media and describe the dataset we use in section \ref{sec:socmed}. Then we explain the Frequent Itemset Mining algorithm which we build upon in section \ref{sec:fim}. In the next 3 sections we describe the adaptations we propose for making the algorithm suitable for mining social media text. In section \ref{sec:ngrams} we describe how using term N-Grams of variable lengths filters out many language constructs. In section \ref{sec:KLD} we describe the use of differential temporal features to rank interesting itemsets. In section \ref{sec:strong} we propose the strong closed property and show how to reduce the number of itemsets without loosing important ones. After that we show an example of the results of applying our methods in section \ref{sec:emperical}. In section \ref{sec:related} we discuss related work that applied Frequent Itemsets Mining on text. Finally, we finish by the conclusion and future work in section \ref{sec:concfut}.
+The rest of the paper is organized as follows: We start by an overview of properties of text in social media and describe the dataset we use in section \ref{sec:socmed}. Then we explain the Frequent Itemset Mining algorithm which we build upon in section \ref{sec:fim}. 
+In the next 3 sections we describe the adaptations we propose for making the algorithm suitable for mining social media text. In section \ref{sec:ngrams} we describe how using term N-Grams of variable lengths filters out many language constructs. In section \ref{sec:KLD} we describe the use of differential temporal features to rank interesting itemsets. In section \ref{sec:strong} we propose the strong closed property and show how to reduce the number of itemsets without loosing important ones. After that we show an example of the results of applying our methods in section \ref{sec:emperical}. In section \ref{sec:related} we discuss related work that applied Frequent Itemsets Mining on text. Finally, we finish by the conclusion and future work in section \ref{sec:concfut}.
 
 %Mining user generated content has been a hot topic since the beginning of Web 2.0. \textbf{didn't I say I dislike such inaugrational sentences.. ehem!} Businesses are interested in getting direct insights from consumers without incurring costs for surveys, and so are governments, celebrities, and above all advertisers and market analysts. Researchers are interested because methods developed for other media does not necessarily work for social media. This is particularly correct for Twitter because of its length restriction, high volume and lack of structure. The length restriction has resulted in a very particular language use as detailed in \ref{sec:socmed}, but it seems to have also played a dual role in encouraging people to keep Tweeting about everything they do, think or feel. This resulted in a very high volume of Tweets\footnote{We receive an average of 100,000 Tweets per hour from Spritzer}, most of which is personal updates but some of which represent what is happening now. The speed of news on Twitter has been known to exceed the news on professional news agencies \cite{firststory}, and it even travels faster than earthquakes \cite{earthquake}. First stories that appear in Twitter rather than official news are covered by Twitter user present at the event, and able to provide content that cannot be acquired after the fact such as the picture of the emergency landing on the Hudson river \cite{hudson}. Such stories are noticed because of the natural collaborative filtering act of retweeting good content, and the use of the community developed convention of Hashtags. The Twitter website makes use of this by following the rise in the volume of keywords, and featuring keywords whose rise in volume accelerates more than any other. However, this does not catch topics with sustained interest. It also fails to catch important topics for which the interest is peaking within a certain niche of users. Further it is almost always polluted by uninteresting topics that are made trending. In this paper we propose...
 
+\begin{figure*}
+\centering
+% Generated with LaTeXDraw 2.0.8
+% Thu May 02 21:16:47 EDT 2013
+% \usepackage[usenames,dvipsnames]{pstricks}
+% \usepackage{epsfig}
+% \usepackage{pst-grad} % For gradients
+% \usepackage{pst-plot} % For axes
+\scalebox{1} % Change this value to rescale the drawing.
+{
+\begin{pspicture}(0,-4.41)(17.873497,4.4013004)
+\pstriangle[linewidth=0.04,dimen=outer](8.57,-4.41)(17.14,8.82)
+\psline[linewidth=0.04cm](0.78,-3.59)(16.32,-3.61)
+\psline[linewidth=0.04cm,linestyle=dashed,dash=0.16cm 0.16cm](6.88,2.57)(10.24,2.59)
+\usefont{T1}{ptm}{m}{n}
+\rput(8.465957,-4.005){Items with low frequency; excluded by Frequent Itemset Mining since they are below the support threshold}
+\psline[linewidth=0.04cm,linestyle=dashed,dash=0.16cm 0.16cm](2.44,-2.03)(14.78,-2.01)
+\usefont{T1}{ptm}{m}{n}
+\rput(4.0392385,4.075){Items with the highest frequencies within transactions }
+\usefont{T1}{ptm}{m}{n}
+\rput(3.7760057,3.675){sharing a common prefix are most likely language }
+\usefont{T1}{ptm}{m}{n}
+\rput(3.4375684,3.295){constructs, but they can also be topical words}
+\usefont{T1}{ptm}{m}{n}
+\rput(13.305957,4.075){In section 3 we reduce the number of itemsets produced}
+\usefont{T1}{ptm}{m}{n}
+\rput(12.990498,3.675){through flattening the peakedness of this head.}
+\usefont{T1}{ptm}{m}{n}
+\rput(2.1082716,0.675){The closed property selects }
+\usefont{T1}{ptm}{m}{n}
+\rput(1.8648047,0.295){non-redundant itemsets, }
+\usefont{T1}{ptm}{m}{n}
+\rput(3.0692382,2.295){Itemsets whose lowest frequency item is}
+\usefont{T1}{ptm}{m}{n}
+\rput(2.732578,1.895){within the mid-range of frequencies}
+\usefont{T1}{ptm}{m}{n}
+\rput(2.409707,1.515){contain interesting information,}
+\usefont{T1}{ptm}{m}{n}
+\rput(2.4226954,1.095){but there are too many of them.}
+\usefont{T1}{ptm}{m}{n}
+\rput(1.8226953,-0.105){but it is easily violated.}
+\usefont{T1}{ptm}{m}{n}
+\rput(14.025957,2.295){In section 4 we propose the strong closed}
+\usefont{T1}{ptm}{m}{n}
+\rput(14.607364,1.895){property. It selects only itemsets comprizing}
+\usefont{T1}{ptm}{m}{n}
+\rput(14.774668,1.495){a high proportion of the support of their}
+\usefont{T1}{ptm}{m}{n}
+\rput(14.486103,1.075){closed subsets, after combining...}
+\usefont{T1}{ptm}{m}{n}
+\rput(14.701895,0.695){For redundancy because of the}
+\usefont{T1}{ptm}{m}{n}
+\rput(14.806572,0.295){use of language, clustering}
+\usefont{T1}{ptm}{m}{n}
+\rput(15.167656,-0.105){of the remaining itemsets}
+\usefont{T1}{ptm}{m}{n}
+\rput(15.264932,-0.525){solves the problem, as}
+\usefont{T1}{ptm}{m}{n}
+\rput(1.5603125,-0.505){It also doesn't solve}
+\usefont{T1}{ptm}{m}{n}
+\rput(1.3780762,-0.905){redundancy from }
+\usefont{T1}{ptm}{m}{n}
+\rput(1.2769824,-1.705){in language.}
+\usefont{T1}{ptm}{m}{n}
+\rput(1.2849317,-1.305){slight variations}
+\usefont{T1}{ptm}{m}{n}
+\rput(15.70628,-0.925){discussed in section 8.}
+\usefont{T1}{ptm}{m}{n}
+\rput(8.459648,-2.345){After mining itemsets based on support and reducing their redundancy, we rank}
+\usefont{T1}{ptm}{m}{n}
+\rput(8.603467,-3.265){specially in text where frequency has a Zipfean distribution. Section 9 describes our ranking scheme.}
+\usefont{T1}{ptm}{m}{n}
+\rput(8.574101,-2.805){the remiaining itemsets using temporal features. The majority of itemsets has low support, }
+\usefont{T1}{pcr}{m}{n}
+\rput(8.502881,3.535){the}
+\usefont{T1}{pcr}{m}{n}
+\rput(7.644902,2.835){obama}
+\usefont{T1}{pcr}{m}{n}
+\rput(8.208155,1.035){won}
+\usefont{T1}{pcr}{m}{n}
+\rput(7.4023533,1.875){president}
+\usefont{T1}{pcr}{m}{n}
+\rput(10.234902,-1.625){\#mtvema}
+\usefont{T1}{pcr}{m}{n}
+\rput(9.792881,2.175){bieber}
+\usefont{T1}{pcr}{m}{n}
+\rput(10.138154,1.475){justin}
+\usefont{T1}{pcr}{m}{n}
+\rput(11.074903,0.655){selena}
+\usefont{T1}{pcr}{m}{n}
+\rput(7.9116306,0.115){elections}
+\usefont{T1}{pcr}{m}{n}
+\rput(7.711367,-0.925){\#elections2012}
+\usefont{T1}{pcr}{m}{n}
+\rput(11.507587,0.055){gomez}
+\usefont{T1}{pcr}{m}{n}
+\rput(5.996133,0.615){barack}
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.56,4.35)(7.78,3.05)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(7.68,2.65)(7.32,2.03)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(6.84,1.63)(6.4,0.81)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.38,0.83)(8.34,0.37)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.26,-0.11)(8.28,-0.69)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.62,2.59)(8.42,1.25)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.56,4.29)(8.5,3.71)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.62,4.35)(9.82,2.41)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(9.18,0.85)(10.0,-1.39)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(11.14,0.43)(11.3,0.19)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(6.04,0.43)(5.4,-1.03)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(9.96,1.97)(10.22,1.61)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(9.44,2.01)(9.12,1.21)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(10.42,1.29)(10.74,0.83)
+\usefont{T1}{pcr}{m}{n}
+\rput(8.844902,2.815){obama}
+\usefont{T1}{pcr}{m}{n}
+\rput(9.168155,1.055){won}
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.54,3.29)(8.56,2.93)
+\usefont{T1}{pcr}{m}{n}
+\rput(5.4113674,-1.365){\#elections2012}
+\end{pspicture} 
+}
+\caption{Roadmap of the paper overlaid on an frequency ordered prefix tree}
+%, where the higher the item in the tree the more its frequency is. The}
+\end{figure*}
 
-\section{Social Media Text}
-\label{sec:socmed}
-Short non-canonical text
-
-Works regardless of language... not only English
 \section{Frequent Itemset Mining}
 \label{sec:fim}
 \subsection{Preliminaries}
-A \emph{frequent itemset} is a set of items that occur together a number of times higher than a certain threshold, called the \emph{support} threshold. Traditionally, Frequent Itemset Mining is applied to a \emph{database} of \emph{transactions} made at a retail store. This terminology is suitable for market basket data and we will stick to it out of convention, even though we are mining text where the terms corpus and document are normally used. Because of the dynamic nature of social media, the input we give to mining algorithms is an \emph{epoch} of data rather than a database. An epoch of data comprises all documents posted in a certain period of time, the length of this period is the epoch's \emph{span}. We also adapt the support threshold to the dynamicity of the volume of documents posted at different times of the day. We define the \emph{minimum support threshold} as the threshold at the hour of the least volume during the day, supplied as an absolute number and then converted to a ratio $\alpha$. The actual support threshold used for mining any given \emph{span} of time is thus $\alpha$ multiplied by the number of documents in the \emph{epoch}. 
+Traditionally, Frequent Itemset Mining is applied to a \emph{database} of \emph{transactions} made at a retail store. This terminology is suitable for market basket data and we will stick to it out of convention, even though we are mining text where the terms corpus and document are normally used. Because of the dynamic nature of social media, rather than giving the whole database as input to mining algorithms, the input is an \emph{epoch} of data; data with timestamps within a certain period of time. The epoch's \emph{span} is the length of this period in hours, and the \emph{volume} at this epoch is the number of transactions in the epoch divided by its \emph{span}.
+
+A \emph{frequent itemset} is a set of items that occur together a number of times higher than a given threshold, called the \emph{support} threshold. We also adapt the support threshold to the dynamicity of the \emph{volume} at different times of the day. We define the \emph{minimum support threshold} as the threshold at the hour of the least \emph{volume} during the day.  The \emph{minimum support} is supplied as an absolute number, $a$, and then converted to a ratio, $\alpha$:
+
+\begin{equation}\alpha = \frac{a}{volume_{daily-minimum}}\end{equation}
+
+The actual support threshold used for mining any given \emph{span} of time is thus $\alpha$ multiplied by the number of transactions in the \emph{epoch}. 
 
 %frequently; for example, when mining Tweets posted on November 6th, 2012 using terms as items, the set \{of, president, states, the, united\} is a frequent itemset (ordered lexicographically). Traditionally, Frequent Itemset Mining is applied to a \emph{database} of \emph{transactions} made at a retail store. This terminology is suitable for market basket data, but as we are mining social media text we use the term \emph{document} instead of transaction. It is noteworthy that this term is used as a matter of convention, yet our methods are tailored for the short ``documents'' typical of social media as described earlier. Because of the dynamic nature of social media, we call the input to a mining algorithm an \emph{epoch} of data rather than a database. An epoch of data is all documents posted in a certain period of time, the length of this period is the epoch's \emph{span}.
 % in a dynamic "corpus" typical of social media as described earlier.\emph{corpus} instead of database
@@ -283,7 +422,7 @@ The algorithm described works well on the sparse data typical to text mining. We
 %Throughout the discussion above, 
 %In the next few sections we will look at ways to reduce the number of itemsets produced and filter out uninteresting ones. 
 %counts the support of itemsets 
-While extremely fast, Frequent Itemsets Mining produces numerous itemsets that are not interesting. Actually it was originally proposed as a preliminary stage to Association Rules Mining, which sifts through the relatively high number of itemsets and produces a smaller number of association rules. The first type of uninteresting itemsets is the language constructs that bear no information, such as ``such as'', and itemsets that are made up of all the different fragments of the language construct along with other items. The latter type is an artifact of itemset mining when the final itemset has such a language construct within it; for example, \{we, did, it, \#teamobama\}.
+%While extremely fast, Frequent Itemsets Mining produces numerous itemsets that are not interesting. Actually it was originally proposed as a preliminary stage to Association Rules Mining, which sifts through the relatively high number of itemsets and produces a smaller number of association rules. The first type of uninteresting itemsets is the language constructs that bear no information, such as ``such as'', and itemsets that are made up of all the different fragments of the language construct along with other items. The latter type is an artifact of itemset mining when the final itemset has such a language construct within it; for example, \{we, did, it, \#teamobama\}.
 % One possibility to get rid of such itemsets is to mine itemsets 
 % and might produce wrong results otherwise
 If we can treat sequential language constructs, and really any other multiword expression, as one item we reduce the number of itemsets produced in these two ways. %just described.
