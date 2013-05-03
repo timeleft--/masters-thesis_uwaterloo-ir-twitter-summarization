@@ -3,331 +3,353 @@
     xmlns:latexdraw="http://latexdraw.sourceforge.net/namespaces/latexdraw"
     version="1.1" baseProfile="full">
     <defs>
-        <marker overflow="visible" orient="auto" id="arrow2-3163">
+        <marker overflow="visible" orient="auto" id="arrow2-3637">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3164">
+        <marker overflow="visible" orient="auto" id="arrow2-3638">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3165">
+        <marker overflow="visible" orient="auto" id="arrow2-3639">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3166">
+        <marker overflow="visible" orient="auto" id="arrow2-3640">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3167">
+        <marker overflow="visible" orient="auto" id="arrow2-3641">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3168">
+        <marker overflow="visible" orient="auto" id="arrow2-3642">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3169">
+        <marker overflow="visible" orient="auto" id="arrow2-3643">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3170">
+        <marker overflow="visible" orient="auto" id="arrow2-3644">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3171">
+        <marker overflow="visible" orient="auto" id="arrow2-3645">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3172">
+        <marker overflow="visible" orient="auto" id="arrow2-3646">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3173">
+        <marker overflow="visible" orient="auto" id="arrow2-3647">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3174">
+        <marker overflow="visible" orient="auto" id="arrow2-3648">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3175">
+        <marker overflow="visible" orient="auto" id="arrow2-3649">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
-        <marker overflow="visible" orient="auto" id="arrow2-3176">
+        <marker overflow="visible" orient="auto" id="arrow2-3650">
+            <path
+                d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
+                latexdraw:arrSizeNum="2.0" fill="black"/>
+        </marker>
+        <marker overflow="visible" orient="auto" id="arrow2-3657">
             <path
                 d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
                 latexdraw:arrSizeNum="2.0" fill="black"/>
         </marker>
     </defs>
     <g>
-        <g latexdraw:type="triangle" id="id3036" latexdraw:points="13.0 17.0 870.0 17.0 13.0 458.0 870.0 458.0">
+        <g latexdraw:type="triangle" id="id3510" latexdraw:points="13.0 17.0 870.0 17.0 13.0 458.0 870.0 458.0">
             <polygon
                 points="441.5,18.43499 867.8145,457.0 15.185511,457.0"
                 latexdraw:borderPos="outer" stroke-width="2.0"
                 stroke="black" fill="none"/>
         </g>
-        <g latexdraw:type="line" id="id3037">
+        <g latexdraw:type="line" id="id3511">
             <line x1="52.0" x2="829.0" y1="417.0" y2="418.0"
                 stroke-width="2.0" stroke="black" latexdraw:rotationAngle="0.0"/>
         </g>
-        <g latexdraw:type="line" id="id3038">
+        <g latexdraw:type="line" id="id3512">
             <line x1="357.0" x2="525.0" y1="109.0" y2="108.0"
                 stroke-width="2.0" stroke="black"
                 stroke-dasharray="8.0, 8.0" latexdraw:rotationAngle="0.0"/>
         </g>
-        <g latexdraw:type="text" id="id3039"
+        <g latexdraw:type="text" id="id3513"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="46.0">
             <text x="46.0" y="443.0"><![CDATA[Items with low frequency; excluded by Frequent Itemset Mining since they are below the support threshold]]></text>
         </g>
-        <g latexdraw:type="line" id="id3042">
+        <g latexdraw:type="line" id="id3516">
             <line x1="135.0" x2="752.0" y1="339.0" y2="338.0"
                 stroke-width="2.0" stroke="black"
                 stroke-dasharray="8.0, 8.0" latexdraw:rotationAngle="0.0"/>
         </g>
-        <g latexdraw:type="text" id="id3043"
+        <g latexdraw:type="text" id="id3517"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="19.0">
             <text x="19.0" y="39.0"><![CDATA[Items with the highest frequencies within transactions ]]></text>
         </g>
-        <g latexdraw:type="text" id="id3046"
+        <g latexdraw:type="text" id="id3520"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="19.0">
             <text x="19.0" y="59.0"><![CDATA[sharing a common prefix are most likely language ]]></text>
         </g>
-        <g latexdraw:type="text" id="id3049"
+        <g latexdraw:type="text" id="id3523"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="19.0">
             <text x="19.0" y="78.0"><![CDATA[constructs, but they can also be topical words]]></text>
         </g>
-        <g latexdraw:type="text" id="id3052"
+        <g latexdraw:type="text" id="id3526"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="475.0">
             <text x="475.0" y="39.0"><![CDATA[In section 3 we reduce the number of itemsets produced]]></text>
         </g>
-        <g latexdraw:type="text" id="id3055"
+        <g latexdraw:type="text" id="id3529"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="494.0">
             <text x="494.0" y="59.0"><![CDATA[through flattening the peakedness of this head.]]></text>
         </g>
-        <g latexdraw:type="text" id="id3058"
+        <g latexdraw:type="text" id="id3532"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="17.0">
             <text x="17.0" y="209.0"><![CDATA[The closed property selects ]]></text>
         </g>
-        <g latexdraw:type="text" id="id3061"
+        <g latexdraw:type="text" id="id3535"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="20.0">
             <text x="20.0" y="228.0"><![CDATA[non-redundant itemsets, ]]></text>
         </g>
-        <g latexdraw:type="text" id="id3064"
+        <g latexdraw:type="text" id="id3538"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="19.0">
             <text x="19.0" y="128.0"><![CDATA[Itemsets whose lowest frequency item is]]></text>
         </g>
-        <g latexdraw:type="text" id="id3067"
+        <g latexdraw:type="text" id="id3541"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="20.0">
             <text x="20.0" y="148.0"><![CDATA[within the mid-range of frequencies]]></text>
         </g>
-        <g latexdraw:type="text" id="id3070"
+        <g latexdraw:type="text" id="id3544"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="19.0">
             <text x="19.0" y="167.0"><![CDATA[contain interesting information,]]></text>
         </g>
-        <g latexdraw:type="text" id="id3073"
+        <g latexdraw:type="text" id="id3547"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="19.0">
             <text x="19.0" y="188.0"><![CDATA[but there are too many of them.]]></text>
         </g>
-        <g latexdraw:type="text" id="id3076"
+        <g latexdraw:type="text" id="id3550"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="20.0">
             <text x="20.0" y="248.0"><![CDATA[but it is easily violated.]]></text>
         </g>
-        <g latexdraw:type="text" id="id3079"
+        <g latexdraw:type="text" id="id3553"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="564.0">
             <text x="564.0" y="128.0"><![CDATA[In section 4 we propose the strong closed]]></text>
         </g>
-        <g latexdraw:type="text" id="id3082"
+        <g latexdraw:type="text" id="id3556"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="582.0">
             <text x="582.0" y="148.0"><![CDATA[property that selects only itemsets that]]></text>
         </g>
-        <g latexdraw:type="text" id="id3085"
+        <g latexdraw:type="text" id="id3559"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="607.0">
             <text x="607.0" y="168.0"><![CDATA[make up a high proportion of their]]></text>
         </g>
-        <g latexdraw:type="text" id="id3088"
+        <g latexdraw:type="text" id="id3562"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="617.0">
             <text x="617.0" y="189.0"><![CDATA[closed subsets' support. ]]></text>
         </g>
-        <g latexdraw:type="text" id="id3091"
+        <g latexdraw:type="text" id="id3565"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="637.0">
             <text x="637.0" y="208.0"><![CDATA[For redundancy because of the]]></text>
         </g>
-        <g latexdraw:type="text" id="id3094"
+        <g latexdraw:type="text" id="id3568"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="656.0">
             <text x="656.0" y="228.0"><![CDATA[use of language, clustering]]></text>
         </g>
-        <g latexdraw:type="text" id="id3097"
+        <g latexdraw:type="text" id="id3571"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="680.0">
             <text x="680.0" y="248.0"><![CDATA[of the remaining itemsets]]></text>
         </g>
-        <g latexdraw:type="text" id="id3100"
+        <g latexdraw:type="text" id="id3574"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="696.0">
             <text x="696.0" y="269.0"><![CDATA[solves the problem, as]]></text>
         </g>
-        <g latexdraw:type="text" id="id3103"
+        <g latexdraw:type="text" id="id3577"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="21.0">
             <text x="21.0" y="268.0"><![CDATA[It also doesn't solve]]></text>
         </g>
-        <g latexdraw:type="text" id="id3106"
+        <g latexdraw:type="text" id="id3580"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="22.0">
             <text x="22.0" y="288.0"><![CDATA[redundancy from ]]></text>
         </g>
-        <g latexdraw:type="text" id="id3109"
+        <g latexdraw:type="text" id="id3583"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="20.0">
             <text x="20.0" y="328.0"><![CDATA[in the language.]]></text>
         </g>
-        <g latexdraw:type="text" id="id3112"
+        <g latexdraw:type="text" id="id3586"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="21.0">
             <text x="21.0" y="308.0"><![CDATA[slight variations]]></text>
         </g>
-        <g latexdraw:type="text" id="id3115"
+        <g latexdraw:type="text" id="id3589"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="718.0">
             <text x="718.0" y="289.0"><![CDATA[discussed in section 8.]]></text>
         </g>
-        <g latexdraw:type="text" id="id3118"
+        <g latexdraw:type="text" id="id3592"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="146.0">
             <text x="146.0" y="360.0"><![CDATA[After mining itemsets based on support and reducing their redundancy, we rank]]></text>
         </g>
-        <g latexdraw:type="text" id="id3121"
+        <g latexdraw:type="text" id="id3595"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="77.0">
             <text x="77.0" y="406.0"><![CDATA[specially in text where frequency has a Zipfean distribution. Section 9 describes our ranking scheme.]]></text>
         </g>
-        <g latexdraw:type="text" id="id3124"
+        <g latexdraw:type="text" id="id3598"
             font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="114.0">
             <text x="114.0" y="383.0"><![CDATA[the remiaining itemsets using temporal features. The majority of itemsets has low support, ]]></text>
         </g>
-        <g latexdraw:type="text" id="id3127" font-family="Courier New"
+        <g latexdraw:type="text" id="id3601" font-family="Courier New"
             fill="black" font-size="18" latexdraw:x="423.0">
             <text x="423.0" y="66.0"><![CDATA[the]]></text>
         </g>
-        <g latexdraw:type="text" id="id3130" font-family="Courier New"
-            fill="black" font-size="18" latexdraw:x="379.0">
-            <text x="379.0" y="101.0"><![CDATA[obama]]></text>
+        <g latexdraw:type="text" id="id3604" font-family="Courier New"
+            fill="black" font-size="18" latexdraw:x="369.0">
+            <text x="369.0" y="101.0"><![CDATA[obama]]></text>
         </g>
-        <g latexdraw:type="text" id="id3133" font-family="Courier New"
-            fill="black" font-size="18" latexdraw:x="428.0">
-            <text x="428.0" y="190.0"><![CDATA[won]]></text>
+        <g latexdraw:type="text" id="id3607" font-family="Courier New"
+            fill="black" font-size="18" latexdraw:x="408.0">
+            <text x="408.0" y="191.0"><![CDATA[won]]></text>
         </g>
-        <g latexdraw:type="text" id="id3136" font-family="Courier New"
+        <g latexdraw:type="text" id="id3610" font-family="Courier New"
             fill="black" font-size="18" latexdraw:x="335.0">
             <text x="335.0" y="149.0"><![CDATA[president]]></text>
         </g>
-        <g latexdraw:type="text" id="id3139" font-family="Courier New"
+        <g latexdraw:type="text" id="id3613" font-family="Courier New"
             fill="black" font-size="18" latexdraw:x="482.0">
             <text x="482.0" y="324.0"><![CDATA[\#mtvema]]></text>
         </g>
-        <g latexdraw:type="text" id="id3142" font-family="Courier New"
+        <g latexdraw:type="text" id="id3616" font-family="Courier New"
             fill="black" font-size="18" latexdraw:x="471.0">
             <text x="471.0" y="134.0"><![CDATA[bieber]]></text>
         </g>
-        <g latexdraw:type="text" id="id3145" font-family="Courier New"
+        <g latexdraw:type="text" id="id3619" font-family="Courier New"
             fill="black" font-size="18" latexdraw:x="488.0">
             <text x="488.0" y="169.0"><![CDATA[justin]]></text>
         </g>
-        <g latexdraw:type="text" id="id3148" font-family="Courier New"
+        <g latexdraw:type="text" id="id3622" font-family="Courier New"
             fill="black" font-size="18" latexdraw:x="535.0">
             <text x="535.0" y="210.0"><![CDATA[selena]]></text>
         </g>
-        <g latexdraw:type="text" id="id3151" font-family="Courier New"
+        <g latexdraw:type="text" id="id3625" font-family="Courier New"
             fill="black" font-size="18" latexdraw:x="361.0">
             <text x="361.0" y="237.0"><![CDATA[elections]]></text>
         </g>
-        <g latexdraw:type="text" id="id3154" font-family="Courier New"
-            fill="black" font-size="18" latexdraw:x="298.0">
-            <text x="298.0" y="291.0"><![CDATA[\#elections2012]]></text>
+        <g latexdraw:type="text" id="id3628" font-family="Courier New"
+            fill="black" font-size="18" latexdraw:x="318.0">
+            <text x="318.0" y="289.0"><![CDATA[\#elections2012]]></text>
         </g>
-        <g latexdraw:type="text" id="id3157" font-family="Courier New"
-            fill="black" font-size="18" latexdraw:x="575.0">
-            <text x="575.0" y="254.0"><![CDATA[gomez]]></text>
+        <g latexdraw:type="text" id="id3631" font-family="Courier New"
+            fill="black" font-size="18" latexdraw:x="563.0">
+            <text x="563.0" y="238.0"><![CDATA[gomez]]></text>
         </g>
-        <g latexdraw:type="text" id="id3160" font-family="Courier New"
+        <g latexdraw:type="text" id="id3634" font-family="Courier New"
             fill="black" font-size="18" latexdraw:x="281.0">
             <text x="281.0" y="212.0"><![CDATA[barack]]></text>
         </g>
-        <g latexdraw:type="line" id="id3163">
-            <line x1="441.0" x2="403.0" y1="20.0" y2="79.0"
+        <g latexdraw:type="line" id="id3637">
+            <line x1="441.0" x2="402.0" y1="20.0" y2="85.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3163)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3637)"/>
         </g>
-        <g latexdraw:type="line" id="id3164">
+        <g latexdraw:type="line" id="id3638">
             <line x1="397.0" x2="379.0" y1="105.0" y2="136.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3164)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3638)"/>
         </g>
-        <g latexdraw:type="line" id="id3165">
-            <line x1="370.0" x2="324.0" y1="156.0" y2="193.0"
+        <g latexdraw:type="line" id="id3639">
+            <line x1="355.0" x2="333.0" y1="156.0" y2="197.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3165)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3639)"/>
         </g>
-        <g latexdraw:type="line" id="id3166">
-            <line x1="442.0" x2="430.0" y1="195.0" y2="219.0"
+        <g latexdraw:type="line" id="id3640">
+            <line x1="432.0" x2="430.0" y1="196.0" y2="219.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3166)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3640)"/>
         </g>
-        <g latexdraw:type="line" id="id3167">
-            <line x1="402.0" x2="391.0" y1="246.0" y2="274.0"
+        <g latexdraw:type="line" id="id3641">
+            <line x1="426.0" x2="427.0" y1="243.0" y2="272.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3167)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3641)"/>
         </g>
-        <g latexdraw:type="line" id="id3168">
-            <line x1="428.0" x2="448.0" y1="109.0" y2="171.0"
+        <g latexdraw:type="line" id="id3642">
+            <line x1="444.0" x2="434.0" y1="108.0" y2="175.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3168)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3642)"/>
         </g>
-        <g latexdraw:type="line" id="id3169">
+        <g latexdraw:type="line" id="id3643">
             <line x1="441.0" x2="438.0" y1="23.0" y2="52.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3169)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3643)"/>
         </g>
-        <g latexdraw:type="line" id="id3170">
-            <line x1="441.0" x2="490.0" y1="23.0" y2="118.0"
+        <g latexdraw:type="line" id="id3644">
+            <line x1="444.0" x2="504.0" y1="20.0" y2="117.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3170)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3644)"/>
         </g>
-        <g latexdraw:type="line" id="id3171">
-            <line x1="457.0" x2="513.0" y1="196.0" y2="307.0"
+        <g latexdraw:type="line" id="id3645">
+            <line x1="472.0" x2="513.0" y1="195.0" y2="307.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3171)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3645)"/>
         </g>
-        <g latexdraw:type="line" id="id3172">
-            <line x1="572.0" x2="595.0" y1="215.0" y2="240.0"
+        <g latexdraw:type="line" id="id3646">
+            <line x1="570.0" x2="578.0" y1="216.0" y2="228.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3172)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3646)"/>
         </g>
-        <g latexdraw:type="line" id="id3173">
-            <line x1="315.0" x2="327.0" y1="216.0" y2="279.0"
+        <g latexdraw:type="line" id="id3647">
+            <line x1="315.0" x2="283.0" y1="216.0" y2="289.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3173)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3647)"/>
         </g>
-        <g latexdraw:type="line" id="id3174">
-            <line x1="504.0" x2="517.0" y1="139.0" y2="157.0"
+        <g latexdraw:type="line" id="id3648">
+            <line x1="511.0" x2="524.0" y1="139.0" y2="157.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3174)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3648)"/>
         </g>
-        <g latexdraw:type="line" id="id3175">
-            <line x1="485.0" x2="452.0" y1="137.0" y2="172.0"
+        <g latexdraw:type="line" id="id3649">
+            <line x1="485.0" x2="469.0" y1="137.0" y2="177.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3175)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3649)"/>
         </g>
-        <g latexdraw:type="line" id="id3176">
-            <line x1="522.0" x2="550.0" y1="175.0" y2="196.0"
+        <g latexdraw:type="line" id="id3650">
+            <line x1="534.0" x2="550.0" y1="173.0" y2="196.0"
                 stroke-width="2.0" stroke="black" stroke-linecap="round"
-                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3176)"/>
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3650)"/>
+        </g>
+        <g latexdraw:type="text" id="id3651" font-family="Courier New"
+            fill="black" font-size="18" latexdraw:x="429.0">
+            <text x="429.0" y="102.0"><![CDATA[obama]]></text>
+        </g>
+        <g latexdraw:type="text" id="id3654" font-family="Courier New"
+            fill="black" font-size="18" latexdraw:x="456.0">
+            <text x="456.0" y="190.0"><![CDATA[won]]></text>
+        </g>
+        <g latexdraw:type="line" id="id3657">
+            <line x1="441.0" x2="443.0" y1="71.0" y2="90.0"
+                stroke-width="2.0" stroke="black" stroke-linecap="round"
+                stroke-dasharray="1, 10.0" latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-3657)"/>
+        </g>
+        <g latexdraw:type="text" id="id3658" font-family="Courier New"
+            fill="black" font-size="18" latexdraw:x="203.0">
+            <text x="203.0" y="311.0"><![CDATA[\#elections2012]]></text>
         </g>
     </g>
     <metadata>
