@@ -144,7 +144,7 @@ public class HgramsWindow {
     if (args.length > 5) {
       if (args[5].charAt(0) == '>') {
         minSupp = Integer.parseInt(args[5].substring(1));
-        suppPct = minSupp * 0.0001 / 5;
+        suppPct = minSupp * 0.0001 / 5; // hourlyVolume_min =  5 / 0.0001
         relSupp = true;
       } else {
         minSupp = -1;

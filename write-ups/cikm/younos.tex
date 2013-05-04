@@ -70,8 +70,8 @@
 %\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
 % --- End of Author Metadata ---
 
-\title{Adapting Frequent Itemsets Mining for Social Media Text by Strengthening the Closed Property}
-
+%\title{Adapting Frequent Itemsets Mining for Social Media Text by Strengthening the Closed Property}
+\title{Strong Closure and Novelty Ranking for Efficiently Mining a Temporal Synopsis of Social Media }
 %
 % You need the command \numberofauthors to handle the 'placement
 % and alignment' of the authors beneath the title.
@@ -119,7 +119,9 @@ The mined itemsets provide the vocabulary associated with events and can be used
 % after applying appropriate weights to items.
 %Liken to Rosie Jones Temporal profiles?? 
 % Mention CMU and/or Glasgow's work that used pseudo-relevance feedback for Microblogs?
-%For summarization, itemsets that appear as a sequence can be used as an extractive summary of the social media stream at a certain time. This does not take into account pr
+% FUTURE WORK: For summarization, itemsets that appear as a sequence can be used as an extractive summary of the social media stream at a certain time. This does not take into account pr
+We also propose a quality ranking scheme that makes the mining results presentable to human users. We don't call this a summary because we don't take into account the quality measures of summaries such as coherence and cohesion. However, the top ranked itemsets cover a variety of open topics, and within one topic different opinions are reported as separate contrastive itemsets.  
+% TODO: By the date of the camera ready version, please have a url to put and tell people to go to and look! However,
 
 The rest of the paper is organized as follows: We start by an overview of properties of text in social media and describe the dataset we use in section \ref{sec:socmed}. Then we explain the Frequent Itemset Mining algorithm which we build upon in section \ref{sec:fim}. 
 In the next 3 sections we describe the adaptations we propose for making the algorithm suitable for mining social media text. In section \ref{sec:ngrams} we describe how using term N-Grams of variable lengths filters out many language constructs. In section \ref{sec:KLD} we describe the use of differential temporal features to rank interesting itemsets. In section \ref{sec:strong} we propose the strong closed property and show how to reduce the number of itemsets without loosing important ones. After that we show an example of the results of applying our methods in section \ref{sec:emperical}. In section \ref{sec:related} we discuss related work that applied Frequent Itemsets Mining on text. Finally, we finish by the conclusion and future work in section \ref{sec:concfut}.
@@ -250,37 +252,59 @@ In the next 3 sections we describe the adaptations we propose for making the alg
 %, where the higher the item in the tree the more its frequency is. The}
 \end{figure*}
 
+\section{Related Work}
+\label{sec:related}
+Frequent Itemset Mining is a very large body of work that goes back to the early 90s. We cover the topic only briefly, as the focus of this paper is not Frequent Itemsets Mining but rather its adaptation to social media text. The original Apriori algorithm \cite{agrawal1994fast} and algorithms based on it suffer performance degradation and a big increase in memory requirement when the number of distinct items is high. This is caused by the candidate generation bottleneck as explained later. Another famous class of mining algorithms is the FP-Growth \cite{han2000mining} based algorithms. FP-Growth  skips the candidate generation step, and instead creates a succinct representation of the data as a frequency ordered prefix tree called the FP-tree. An FP-tree imposes the invariant that within a branch the frequency is non-increasing from the root down to the leaves. 
+%While this class of algorithms performs better than the Apriori based ones,
+The memory requirements of FP-Growth algorithm suffers from the sparsity of the data, since the data structure is succinct only if it can find common prefixes within the constraints of its invariant. 
+%Also, it is not suitable for 
+A less known algorithm that is robust against data sparsity is LCM \cite{uno2004lcm}, which we will describe in detail in section \ref{sec:lcm}. We use the implementation submitted to the workshop for Frequent Itemset Mining Implementations (FIMI) '04 \cite{DBLP:conf/fimi/2004}, which is the workshop's award winner. In section \ref{sec:runtime} we show that our extensions do not degrade the performance of LCM by comparing the extended LCM to the runner up at FIMI '04. 
+%The extended LCM still beats the runner up
+%and we found to perform very well on the Twitter dataset we have is LCM \cite{uno2004lcm}
+
+%Frequent Itemset Mining was applied to all kinds of data, including social media text. In \cite{yang2012framework}
+%, which we found out about only recently, 
+The problem that there are too many itemsets, with a lot of noise and redundancy, is addressed either by clustering \cite{yan2005summarizing} the itemsets or by mining only itemsets that satisfy a certain condition. The closure condition \cite{pasquier1999discovering} is a prominent condition upon which many other conditions are based. Most similar to the strongly closed itemsets we  propose are the $\delta$-covered \cite{xin2005mining} and the $\delta$-free \cite{boulicaut2003free} sets. The $\delta$-covered condition is exactly the opposite of the strong closure condition, and it ``relaxes the closure condition to further reduce pattern set size'' \cite{liu2012finding}. The $\delta$-free condition is like the strongly closed condition but it is used to eliminate different itemsets, since the motivation is to provide a compressed representation of itemsets by sacrificing support information. In fact, the motivation of most of the work in finding representative itemsets is compressing itemsets mined from a general dataset. This leads to decisions different than what  we made in order to find the most informative itemsets mined from social media text. In %a recent work 
+\cite{yang2012framework}, LCM is also used to mine Twitter posts and then a few itemsets are selected, but they are selected according to their utility in a
+%, similar to our work, the authors make an effort to select only a few frequent itemsets. However, they address the problem as a stream compression problem and they select itemsets based on utility in their proposed
+lossy compression algorithm, SPUR. SPUR is based on representing transactions as itemsets that cover them, and it might introduce false positives and negatives. The algorithm could meet the desired  constraints on memory consumption (set at 20MB) and on processing data as a stream, but there was no justification why such tight constraints should be set. On the other hand, the quality of the summary seems to be affected by the choice of utility function, but the only assessment made about this was by showing that the actual transactions can be reconstructed from the summary with an accuracy that is expected to be high ``for both recent data and frequent keywords''. In the experiments, non-negative matrix factorization is used to extract topics from parts of the summary matching the query ``world cup'' and specific time intervals (before certain matches), but it is unclear whether the raw summary would cover a variety of topics, specially non-trending ones, and no ranking scheme was shown to pick interesting topics without specifying a query.
+%the algorithm is used to summarize Tweets matching the query ``world cup'' from specific time intervals (during the world cup), then nonMatrix Factoization but the top chosen patterns are not compelling. 
+On the other hand, improvements in query expansion performance have been reported in \cite{li2010mining}, because of using  term weights based on itemsets known to come from related documents as well as one from unrelated documents. 
+%There are two other works from the same author, but their results are not good.. should I cite? Pattern Cooccurrence Matrix and Queensland in TREC Microblog 2011
+
+
+
 \section{Frequent Itemset Mining}
 \label{sec:fim}
 \subsection{Preliminaries}
 Traditionally, Frequent Itemset Mining is applied to a \emph{database} of \emph{transactions} made at a retail store. This terminology is suitable for market basket data and we will stick to it out of convention, even though we are mining text where the terms corpus and document are normally used. Because of the dynamic nature of social media, rather than giving the whole database as input to mining algorithms, the input is an \emph{epoch} of data; data with timestamps within a certain period of time. The epoch's \emph{span} is the length of this period in hours, and the \emph{volume} at this epoch is the number of transactions in the epoch divided by its \emph{span}.
 
-A \emph{frequent itemset} is a set of items that occur together a number of times higher than a given threshold, called the \emph{support} threshold. We also adapt the support threshold to the dynamicity of the \emph{volume} at different times of the day. We define the \emph{minimum support threshold} as the threshold at the hour of the least \emph{volume} during the day.  The \emph{minimum support} is supplied as an absolute number, $a$, and then converted to a ratio, $\alpha$:
-
-\begin{equation}\alpha = \frac{a}{volume_{daily-minimum}}\end{equation}
-
-The actual support threshold used for mining any given \emph{span} of time is thus $\alpha$ multiplied by the number of transactions in the \emph{epoch}. 
+A \emph{frequent itemset} is a set of items that occur together a number of times higher than a given threshold, called the \emph{support} threshold. We also adapt the support threshold to the dynamicity of the \emph{volume} at different times of the day. We define the \emph{minimum support threshold} as the threshold at the hour of the least \emph{volume} during the day.  The \emph{minimum support} is supplied as an absolute number, $a$, and then converted to a ratio, $\alpha = \frac{a}{avg(volume_{daily-minimum})}$.
+%\begin{equation}\alpha = \frac{a}{volume_{daily-minimum}}\end{equation}
+%The actual support threshold used for mining any given \emph{span} of time is thus $\alpha$ multiplied by the number of transactions in the \emph{epoch}. 
+The actual support threshold used for mining any given epoch is thus $\alpha$ multiplied by the \emph{epoch}'s \emph{volume}. 
 
 %frequently; for example, when mining Tweets posted on November 6th, 2012 using terms as items, the set \{of, president, states, the, united\} is a frequent itemset (ordered lexicographically). Traditionally, Frequent Itemset Mining is applied to a \emph{database} of \emph{transactions} made at a retail store. This terminology is suitable for market basket data, but as we are mining social media text we use the term \emph{document} instead of transaction. It is noteworthy that this term is used as a matter of convention, yet our methods are tailored for the short ``documents'' typical of social media as described earlier. Because of the dynamic nature of social media, we call the input to a mining algorithm an \emph{epoch} of data rather than a database. An epoch of data is all documents posted in a certain period of time, the length of this period is the epoch's \emph{span}.
 % in a dynamic "corpus" typical of social media as described earlier.\emph{corpus} instead of database
 
 %The \emph{support} of an itemset is the number of times it appears, as a ratio of the number of documents in the epoch. The \emph{minimum support} is a threshold separating \emph{frequent} itemsets from \emph{infrequent} ones. Even though selecting itemsets based on their frequency of appearance was criticized in the domain of market basket data because it generates obvious itemsets, it makes sense in the domain of social media because this acts precisely as a collaborative filter. 
 
-Following is the notation used in this paper:
+We now introduce the notation used in this paper:
 
 \begin{itemize}
-\item $I = \{i_1,i_2,..,i_n\}$: The set of possible items (vocabulary).
-\item $d_a = \{i_{a1},i_{a2},..\}$: A document made up of as a set of items, not necessarily terms. Each document has a sequential id denoted by the subscript letter.
-\item $E^{span} = \langle d_a, d_b, ..\rangle$: An epoch of data of a certain span, such as an hour, made up of a sequence of documents.
-\item $S \subset I$: An itemset, its support is given by $\|D_S\|$.
-\item $D_S$: All documents containing itemset S.
-\item $\|.\|$: The norm operator; gives the size of the operand.
+\item $I = \{i_1,i_2,..,i_n\}$: The set of all items (vocabulary).
+\item $t_a = \{i_{a1},i_{a2},..\}$: A transaction made up of as a set of items, not necessarily terms. Each transaction has a sequential id denoted by the subscript letter.
+\item $E^{span} = \langle t_a, t_b, ..\rangle$: An epoch of data of a certain span, such as an hour, made up of a sequence of transactions.
+\item $s \subset I$: An itemset, its support is given by $|T_s|$.
+\item $T_s = \{t: s \subseteq t\}$: All transactions containing itemset s.
+\item $|.|$: Cardinality operator; gives the size of the operand.
+%\item $\|.\| = \sum_{x \in .}{|x|}$: The Manhattan norm.
 
 \end{itemize}
 
 \subsection{Background}
 
-The two basic operations of Frequent Itemset Mining algorithms are \emph{Candidate Generation} and \emph{Solution Pruning}. The original Apriori algorithm by Agrawal et al. \cite{apriori} generates candidates of length \emph{K} (\emph{K}-itemsets) by merging frequent itemsets of length \emph{(K-1)} (\emph{(K-1)}-itemsets) that differ in only 1 item, usually the last item given a certain total ordering of items. By using only frequent  \emph{(K-1)}-itemsets for generating candidate \emph{K}-itemsets a lot of possible \emph{K}-itemsets are implicitly pruned, based on that all subsets of a frequent itemset has to be frequent (the Apriori property). This still generates a very large number of candidates, specially in early iterations of the algorithm. Consider, for example, the generation of candidate \emph{2}-itemsets from a database. This requires producing all unordered pairs of \emph{1}-itemsets (terms), after pruning out rare ones with frequency less than the support threshold. In many domains, including text mining, the number of fequent \emph{1}-itemsets is large enough to prohibit generating a number of candidates in the order of this number squared. In text mining, a rather low support threshold has to be used, because the frequency of terms follow a long tailed Zipfean distribution.
+The two basic operations of Frequent Itemset Mining algorithms are \emph{Candidate Generation} and \emph{Solution Pruning}. The original Apriori algorithm by Agrawal et al. \cite{agrawal1994fast} generates candidates of length \emph{K} (\emph{K}-itemsets) by merging frequent itemsets of length \emph{(K-1)} (\emph{(K-1)}-itemsets) that differ in only 1 item, usually the last item given a certain total ordering of items. By using only frequent  \emph{(K-1)}-itemsets for generating candidate \emph{K}-itemsets a lot of possible \emph{K}-itemsets are implicitly pruned, based on that all subsets of a frequent itemset has to be frequent (the Apriori property). This still generates a very large number of candidates, specially in early iterations of the algorithm. Consider, for example, the generation of candidate \emph{2}-itemsets from a database. This requires producing all unordered pairs of \emph{1}-itemsets (terms), after pruning out rare ones with frequency less than the support threshold. In many domains, including text mining, the number of fequent \emph{1}-itemsets is large enough to prohibit generating a number of candidates in the order of this number squared. In text mining, a rather low support threshold has to be used, because the frequency of terms follow a long tailed Zipfean distribution.
 
 \section{Basic Algorithm}
 To overcome the bottleneck of \emph{Candidate Generation}, many algorithms are proposed to take hints from the transaction space rather than operating blindly in the item space, each based on a certain property that helps pruning out more candidates. In this paper we expand on LCM \cite{lcm}, an algorithm based on a property of a certain class of itemsets called \emph{Closed Itemsets}. A formal definition of closed itemsets is given in equation \ref{eq:Closed}: 
@@ -368,7 +392,7 @@ The algorithm also lends itself to distributed implementations easily. For examp
 \SetAlgoLined
 \LinesNumbered
 \SetKwProg{Fn}{Function}{ is}{end}
-\KwIn{$\alpha$: Minimum support ratio}
+\KwIn{$\alpha$: Dynamic support ratio}
 
 \KwData{E: Epoch of data}
 \KwResult{C: Closed itemsets having support $\alpha$ within E}
@@ -377,7 +401,7 @@ X $\gets$ Inverted index of E\;
 %(\tcp{follow total ordering})
 \ForEach{$i \in X.tokens$}{
 	$D_{\{i\}} \gets$ X.postingsList[$i$]\;
-	\lIf{$\|D_{\{i\}}\| \geq \alpha \|E\|$}{
+	\lIf{$\|D_{\{i\}}\| \geq \alpha \frac{\|E\|}{E.span}$}{
 		LCM($\{i\}, i, D_{\{i\}}$)
 	}
 }
@@ -400,7 +424,7 @@ X $\gets$ Inverted index of E\;
 	}
 	C.add($\langle S \cup suffix, D_S\rangle$)\;
 	\ForEach{$i \succ i_{sh}$ and $i \notin $ suffix}{
-		\If{frequency[$i$] $\geq \alpha \|E\|$}{
+		\If{frequency[$i$] $\geq \alpha \frac{\|E\|}{E.span}$}{
 			$D \gets D_S \cap i$	\tcp*{Results of query $S$ AND $i$}
 			LCM($S \cup suffix \cup \{i\}, i, D$) 
 		}
@@ -413,7 +437,8 @@ X $\gets$ Inverted index of E\;
 
 \end{algorithm}
 
-The algorithm described works well on the sparse data typical to text mining. We experimented with other algorithms, and this one is superior to all of them. As the focus of this paper is not Frequent Itemsets Mining, but rather its adaptation to social media text, we give only a brief account of the experience. As mentioned before, Apriori based algorithms suffer from the candidate generation bottleneck when the number of distinct items is high. Another famous class of mining algorithms is the FP-Growth \cite{han} based algorithms. FP-Growth  skips the candidate generation step, and instead creates a succinct representation of the data as a special prefix tree called the FP-tree. An FP-tree imposes the invariant that within a branch the frequency is non-increasing from the root down to the leaves. While this class of algorithms performs better than the Apriori based ones, it suffers from the sparsity of the data since the data structure is succinct only if it can find common prefixes within the constraints of its invariant. Thus, LCM is the most efficient algorithm for Frequent Itemsets Mining on social media text. In this paper, we use the LCM implementation submitted to the workshop of Frequent Itemset Mining Implentations (FIMI) '04 \cite{fimi04}.
+The algorithm described works well on the sparse data typical to text mining. 
+%FIMI??
 %In the next few sections we will see how to make the efficient fre also effective.
 
 \section{Mining term N-Grams}
@@ -605,7 +630,7 @@ After joining an alliance an itemset seizes to exist outside of the alliance, so
 %It is difficult to reason about how alliances are formed, specially after fi
 
 %Expanding on the previous observation that adding a high IDF term to an itemset with low IDF terms only prevents achieving a high enough cosine similarity, we introduce an optimization that improves both runtime, memory requirements and filtering power. Unlike the original LCM algorithm, our extension requires keeping previous itemsets in memory so that newly generated ones are compared to them to find candidates for alliance. Instead of keeping all previous itemsets in memory we keep only a limited number, $b$. This obviously improves runtime and memory requirements, but it also improves the quality of itemsets chosen for alliance. Given the way PPC-Extension produces itemsets, an alliance candidate appearing more than $b$ itemsets earlier must be similar because of a term that has at least $\log_2(b+1)$  extension items \emph{smaller} than the one that got added to form the current itemset. This lower bound assumes that all possible itemsets created by appending any combination of the $\log_2(b+1)$ will be closed and will have enough support. In this case, there will be 1 combination where all the items are appended, $\log_2(b+1)$ combinations where one item is missing, $\log_2(b+1)$ choose 2 combinations where 2 items are missing, ... etc. For all of these combinations to be closed itemsets, the 1 combination where all the items are appended has to have minimum support, the  $\log_2(b+1)$ combinations where 1 item is missing will each have support 1 more than minimum, the combinations where 2 items are missing will each have support 2 more than minimum, ... etc. Therefore the minimum drop in frequency between a closed itemsets and its subset produced $b$ steps earlier is given by:
-%\begin{equation}\|D_{S_x}\| - \|D_{S_(x-b)}\| = \alpha \|E\| + \sum_{a=1}^{\log_2(b+1) - 1}a\binom{\log_2(b+1)}{a} \end{equation}
+%\begin{equation}\|D_{S_x}\| - \|D_{S_(x-b)}\| = \alpha \frac{\|E\|}{E.span} + \sum_{a=1}^{\log_2(b+1) - 1}a\binom{\log_2(b+1)}{a} \end{equation}
 %To minimize the difference in frequency between the current itemset and the alliance candidate, we assume that the 1 combination will appear $\ciel{b/2}$ times,  Therefore the difference in frequency between  $b$ 
 
 
