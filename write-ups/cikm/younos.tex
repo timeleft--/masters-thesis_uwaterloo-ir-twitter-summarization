@@ -348,7 +348,7 @@ Besides being much smaller than the solution space of frequent itemsets, the sol
 Table \ref{table:PPCExample} is an example of how \emph{PPC-Extentsion} is used to generate closed itemsets starting from the  \emph{1}-itemset `barack'. The upper table enumerates $D_{barack}$. %, the documents containing `barack'. 
 The lower table shows steps of itemsets generation. The current solution along with its frequency is in column 2, solutions marked by an * are the closed itemsets emitted. All possible extension items and their frequencies are in column 3 with the one being considered bolded. Column 4 is a comment explaining the step. At each step, a pass is done on $D_{itemset}$ to enumerate and count possible extension items.
 % After the counting step, the rules of PPC-Extension are followed to decide whether to output an itemset as a closed one or not. 
-To enforce a support threshold infrequent extension items are removed, but in this example there isn't such a threshold. Notice that the number of steps is linear in the number of closed itemsets, and the only additional storage required besides the storage of the documents is that of the possible extension items. Of course this is a simplified example, but it shows in essence how LCM achieves its low run time and memory requirements. We refer the interested reader to \cite{lcm} for a theoretical proof that the algorithm runs in linear time in the number of closed itemsets, and that this number is quadratic in the number of transactions. We proceed by describing how to implement this algorithm using an inverted index.
+To enforce a support threshold infrequent extension items are removed, but in this example there isn't such a threshold. Notice that the number of steps is linear in the number of closed itemsets, and the only additional storage required besides the storage of the documents is that of the possible extension items. Of course this is a simplified example, but it shows in essence how LCM achieves its low run time and memory requirements. We refer the interested reader to \cite{lcm} for a theoretical proof that the algorithm runs in linear time in the number of closed itemsets, and that this number is quadratic in the number of transactions. Performance on a real data set is shown in section \ref{sec:socmine}. We proceed by describing how to implement this algorithm using an inverted index.
 
 %all closed itemsets were generated in 5 steps (not counting steps shown only for explanation), with only one redundant step  
 %The most important contribution of LCM is that it generates closed itemsets from 
@@ -388,7 +388,7 @@ Closed itemsets containing `barack'
 \label{table:PPCExample}
 \end{table*}
 
-\subsection{An inverted index based implementation}
+\subsection{Implementation details}
 We show in algorithm \ref{algo:lcmix} how to implement LCM and PPO-Extension using an inverted index. The algorithm takes as input an epoch of data and a support threshold as a ratio $\alpha$. It outputs the closed itemsets with support more than the threshold. Along with each itemset in the solution, it also outputs the transactions in which it occurs - which is represented as $\langle items, \|D_{itemset}\| \rangle$. The symbol $\succ$ denotes that the lefthand side  succeeds the righthand side in the total ordering.
 
 The algorithm also lends itself to distributed implementations easily. For example, a Map/Reduce implementation is easy since the only operations are counting (line 14) and projection (line 22). However, the fast execution time and the low memory requirements of the algorithm makes it possible that a distributed implementation will cause an overhead. In the implementation shown, it is not necessary that the index's tokens list follow the total ordering; all itemsets of length 1 will be considered anyway. 
@@ -440,16 +440,76 @@ X $\gets$ Inverted index of E\;
 
 \caption{LCM Frequent Itemsets Mining}
 \label{algo:lcmix}
-
-
 \end{algorithm}
 
-The algorithm described works well on the sparse data typical to text mining. 
+%The algorithm described works well on the sparse data typical to text mining. 
 %FIMI??
 %In the next few sections we will see how to make the efficient fre also effective.
 
-\section{Mining term N-Grams}
+\section{Mining social media}
+\label{sec:socmine}
+
+Throughout this paper we use data we have been collecting from the Twitter public stream\footnote{https://dev.twitter.com/docs/streaming-apis/streams/public} as of October 1st, 2012. 
+% at 00:00 HST. We use Hawaii Standard Time as our reference 
+We use only Tweets written in Latin script to facilitate tokenization using white space and other word boundaries. We collected only the Tweet text to avoid reliance on any features specific to a certain social medium, and make the algorithms applicable to other media where text is short such as comments and Facebook or Google+ status updates. The only preprocessing performed was removing duplicate original Tweets (not retweets) using a Bloom filter. This removes spam Tweets sent by BotNets, such as advertisements about Raspberry Ketone diets.
+
+We apply the algorithms to epochs of data, so they are not strictly stream processing algorithms. However, we regard the process as mining a sliding window that is moved forward by time steps of short span. The time step must be longer than the time needed to mine an epoch of data, and the performance of our algorithms makes it possible to use a time step of a few seconds for epochs up to a day long. Figure \ref{fig:runtimeEpochs} shows the runtime of LCM on epochs of increasing length, and we will show in section \ref{sec:} that our extensions don't degrade the performance. The times reported in figure \ref{fig:runtimeEpochs} are averages across all epochs of the specified length in the months of October, November and December, using a time step that is half the epoch length. The variance is very low and the confidence bands are not shown because they appear as dots on top of the bars. 
+ %much shorter than time needed for human perception. 
+% arbitrary span is processed in much less time than its span.
+
+The support threshold used throughout this paper, unless otherwise specified, is $\alpha=0.0002$. This is determined as follows: We picked a topical term that is known to  steadily  appear with a rather high frequency, and is talked about in all languages; `obama'. The maximum likely hood estimate of the probability of the term `obama' within the whole collection of Tweets is 0.0001. Since the average number of Tweets per hour is 100000, so the term `obama' is expected to appear 10 times per hour on average. Thus, we use a minimum support threshold of 10, which translates into $\alpha = 0.0002$.
+
+\begin{figure}
+\centering
+% Generated with LaTeXDraw 2.0.8
+% Wed May 01 10:13:00 EDT 2013
+% \usepackage[usenames,dvipsnames]{pstricks}
+% \usepackage{epsfig}
+% \usepackage{pst-grad} % For gradients
+% \usepackage{pst-plot} % For axes
+\scalebox{.4} % Change this value to rescale the drawing.
+{
+\begin{pspicture}(0,-5.61)(19.94,5.61)
+\rput(9.97,0.0){\includegraphics{runtime_different-epoch-spans_bar-table.eps}}
+\rput(9.8,1.44){\includegraphics{runtime_different-epoch-spans_line.eps}}
+\usefont{T1}{ptm}{m}{n}
+\rput{90.15449}(0.96138316,-0.45039606){\rput(0.6871191,0.225){\LARGE Time in milliseconds}}
+\usefont{T1}{ptm}{m}{n}
+\rput(10.130039,-0.925){\Large Epoch span in hours}
+\end{pspicture} 
+}
+\caption{Mean runtime at different epoch spans}
+\label{fig:runtimeEpochs}
+\end{figure}
+
+The number of itemsets mined from a selection of spans is shown in
+\begin{figure}
+\centering
+% Generated with LaTeXDraw 2.0.8
+% Sat May 04 11:23:51 EDT 2013
+% \usepackage[usenames,dvipsnames]{pstricks}
+% \usepackage{epsfig}
+% \usepackage{pst-grad} % For gradients
+% \usepackage{pst-plot} % For axes
+\scalebox{1} % Change this value to rescale the drawing.
+{
+\begin{pspicture}(0,-2.74)(8.22,2.74)
+\rput(4.11,0.0){\includegraphics{mean-itemsets-count_change-with-epochlen_closed-maximal.eps}}
+\end{pspicture} 
+}
+
+\end{figure}
+
+
+\subsection{Mining term N-Grams}
 \label{sec:ngrams}
+
+A large number of itemsets are language constructs that bear no information, such as ``such as''.  By treating sequential language constructs, and any other multiword expression, as one item we eliminate a large number of such itemsets. Actually, we also eliminate itemsets that are made up of all the different fragments of the language construct along with other items; for example, \{we, did, it, \#teamobama\} can produce 10 other combination of length 2 or more. There are many measures of association that can be used to detect multiword expressions, but each measure is good only under certain conditions and has special properties \cite{ramisch2012broad}. We experimented with various measures, and in fact we found out that a very good measure for identifying multiword Named Entities is Yule's Q; a measure of association and disassociation derived from the odds ratio. However, we have finally found that for the purpose of preprocessing before Frequent Itemsets Mining what works best is tokenizing the documents into term N-Grams with varying N. 
+
+We start by tokenizing into unigrams, and counting their frequencies. Then we use the probability of the same word used to determine the support threshold, $P(`obama') = 0.0001$, and assume that this is where the head of the Zipfean distribution starts. For each unigram belonging to the head, we create two term bigrams by attaching to it the unigrams before and after it. We repeat this foreach N $\ge$ 1 by creating two (N+1)-Grams for all N-Grams with probabilities above the threshold until there are no more such N-Grams. We do not prevent overlap, because there is no guarantee that the N-Gram created makes any sense. At each N, the probability threshold is adjusted to account for the increase in the number of tokens and the overall increase in the grand sum of counts, since each high frequency N-Gram is replaced by two lower frequency ones. Let the original probability threshold be $\eta$, then the adjusted $\eta_N$ is:
+\begin{equation}\eta_N = \eta * \frac{\sum_{\{i:\, i \,\in\, I\, and\, i.length \,\le\, N\}}{freq(i)}}{\sum_{\{i:\, i\, \in\, I \,and \,i.length\,=\,1\}}{freq(i)}}\end{equation}
+% At each N, the probability threshold is adjusted by the ratio of the sum of the counts of all terms of length up to (N+1), to the the sum of the counts of all terms of length up to N-Gram.
+
 %as described above 
 %Throughout the discussion above, 
 %In the next few sections we will look at ways to reduce the number of itemsets produced and filter out uninteresting ones. 
@@ -457,30 +517,34 @@ The algorithm described works well on the sparse data typical to text mining.
 %While extremely fast, Frequent Itemsets Mining produces numerous itemsets that are not interesting. Actually it was originally proposed as a preliminary stage to Association Rules Mining, which sifts through the relatively high number of itemsets and produces a smaller number of association rules. The first type of uninteresting itemsets is the language constructs that bear no information, such as ``such as'', and itemsets that are made up of all the different fragments of the language construct along with other items. The latter type is an artifact of itemset mining when the final itemset has such a language construct within it; for example, \{we, did, it, \#teamobama\}.
 % One possibility to get rid of such itemsets is to mine itemsets 
 % and might produce wrong results otherwise
-If we can treat sequential language constructs, and really any other multiword expression, as one item we reduce the number of itemsets produced in these two ways. %just described.
+%If we can treat sequential language constructs, and really any other multiword expression, as one item we reduce the number of itemsets produced in these two ways. %just described.
 %itemsets that are parts of it will not be produced, and fragments of it along with other itemsets in the rest of 
 %they will not be produced as itemsets (since we produce only itemset of length 2 or more). 
 
-There are many measures of association that can be used to detect multiword expressions \cite{afzal}, but each measure is good under certain conditions and has special properties. We experimented with various measures, and in fact we found out that a very good measure for identifying multiword Named Entities is Yule's Q; a measure of association and disassociation derived from the odds ratio. However, we have finally found that for the purpose of preprocessing before Frequent Itemsets Mining what works best is tokenizing the documents into term N-Grams with varying N. 
 
-We start by tokenizing into unigrams, then we
+
+%We start by tokenizing into unigrams, then we
 %producing term N-Grams from the window surrounding any token 
-create two term bigrams for each unigram appearing with a probability above a certain threshold, $\eta$, by attaching to it the unigrams before and after it. We do this recursively by increasing N and creating two (N+1)-Grams for each N-Gram above the threshold until there are no more N-Grams above the threshold. 
+%create two term bigrams for each unigram appearing with a probability above a certain threshold, $\eta$, by attaching to it the unigrams before and after it. We do this recursively by increasing N and creating two (N+1)-Grams for each N-Gram above the threshold until there are no more N-Grams above the threshold. 
 %At each value of N, the threshold $\eta$ is adjusted by the ratio of the number of tokens of length up to N and the number of unigrams; $\eta_{N} = \|\eta_1\| * \frac{\| I_{N}\|}{\|I_{1}\|}$.
 % thus flattening the Zipfian distribution a little. 
-Following we present an example of tokenizing ``Barack Obama president of the United States'':
+%Following we present an example of tokenizing ``Barack Obama president of the United States'':
 
-\begin{enumerate}
-\item First the tokens will be: \texttt{`barack', `obama', `president', `of', `the', `united', `states'}. 
-\item Assume that after tokenizing the whole epoch we find that the probability of \texttt{`obama', `of'} and \texttt{`the'} within the current epoch is more than $\eta$. Therefore the tokens are changed to: \texttt{`barack',  `barack + obama', `obama + president', `president', `president + \\of', `of + the', `the + united', `united', `states'}.
-\item Assume that the bigrams  \texttt{`barack + obama'} and \texttt{`of + the'} still appear with a probability higher than %the adjusted
-$\eta$. Therefore trigrams are generated by attaching the unigrams before and after them, and the tokens become: \texttt{`barack',  `barack + obama + president', `obama + president', `president', `president + of', `president + of + the', `of + the + united', `the + \\united', `united', `states'}
-\item At N=3, we find that no trigrams still appear with probability greater than $\eta$, and thus terminate.
-\end{enumerate}
+%\begin{enumerate}
+%\item First the tokens will be: \texttt{`barack', `obama', `president', `of', `the', `united', `states'}. 
+%\item Assume that after tokenizing the whole epoch we find that the probability of \texttt{`obama', `of'} and \texttt{`the'} within the current epoch is more than $\eta$. Therefore the tokens are changed to: \texttt{`barack',  `barack + obama', `obama + president', `president', `president + \\of', `of + the', `the + united', `united', `states'}.
+%\item Assume that the bigrams  \texttt{`barack + obama'} and \texttt{`of + the'} still appear with a probability higher than %the adjusted
+%$\eta$. Therefore trigrams are generated by attaching the unigrams before and after them, and the tokens become: \texttt{`barack',  `barack + obama + president', `obama + president', `president', `president + of', `president + of + the', `of + the + united', `the + \\united', `united', `states'}
+%\item At N=3, we find that no trigrams still appear with probability greater than $\eta$, and thus terminate.
+%\end{enumerate}
 
-Note that in the above procedure we didn't prevent overlap, because there is no guarantee that the N-Gram created makes any sense. The goal is to create a single unit out of frequent sequences and this is achieved because the N-Gram keeps growing as long as it is frequent, which will stop as soon as a unigram that is not part of the expression is attached to it. We can look at this as flattening the Zipfian distribution by creating more tokens with less frequency each, but the distribution of the input doesn't affect the results of itemsets mining - only its runtime can be affected.
+%Note that in the above procedure we didn't prevent overlap, because there is no guarantee that the N-Gram created makes any sense. The goal is to create a single unit out of frequent sequences and this is achieved because an N-Gram keeps growing as long as it is frequent.
+%, which will stop as soon as a unigram that is not part of the expression is attached to it. We can look at this as flattening the Zipfian distribution by creating more tokens with less frequency each, but the distribution of the input doesn't affect the results of itemsets mining - only its runtime can be affected.
 
-Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length of N-Grams from 1 to 5 on the number of tokens, the number of itemsets mined, and the runtime of mining 1 hour epochs of data. The values shown are averages across all 1 hour epochs in the month of November. The value of $\eta$ used is 0.0001, which is the probability of the term `obama' within the whole collection of Tweets. The support threshold used for mining in this experiment and all other experiments is also derived from the probability of the term `obama', since it is a known to be steadily frequent and talked about in all languages. The average number of Tweets per hour is 100000, so the term `obama' is expected to appear 10 times per hour on average. We use a minimum support threshold of 10, which translates into $\alpha = 0.0002$. Figure \ref{fig:ngramsLen}(a) shows that the number of distinct items increases a lot when N moves from 1 to 2, then keeps increasing slightly until it starts decreasing at N=5. The decrease happens because all 4-Grams with probability above the threshold are parts of Tweets from services that use the same text and append a URL, such as Tweets reporting scores from Game Insight\footnote{http://www.game-insight.com/}. Such Tweets are tokenized into more 4-Grams than 5-Gram, and the 4-Grams appearing in them don't appear elsewhere and thus each two of them are reduced into one when N=5.  Figure \ref{fig:ngramsLen}(b) shows that the number of itemsets keeps decreasing as expected.  Figure \ref{fig:ngramsLen}(c) shows that runtime also decreases as N goes from 1 to 5, since LCM runtime is proportional to the number of closed itemsets, and is not affecting by the sparsity of data. 
+Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length of N-Grams from 1 to 5 on the number of tokens, the number of itemsets mined, and the runtime of mining 1 hour epochs of data. The values shown are averages across all 1 hour epochs in the month of November. The value of $\eta$ used is 0.0001.
+%The value of $\eta$ used is 0.0001, which is the probability of the term `obama' within the whole collection of Tweets. 
+%The support threshold used for mining in this experiment and all other experiments is also derived from the probability of the term `obama', since it is a known to be steadily frequent and talked about in all languages. The average number of Tweets per hour is 100000, so the term `obama' is expected to appear 10 times per hour on average. We use a minimum support threshold of 10, which translates into $\alpha = 0.0002$.
+Figure \ref{fig:ngramsLen}(a) shows that the number of distinct items increases a lot when N moves from 1 to 2, then keeps increasing slightly until it starts decreasing at N=5. The decrease happens because all 4-Grams with probability above the threshold are parts of Tweets from services that use the same text and append a URL, such as Tweets reporting scores from Game Insight\footnote{http://www.game-insight.com/}. Such Tweets are tokenized into more 4-Grams than 5-Gram, and the 4-Grams appearing in them don't appear elsewhere; thus each two of them are reduced into one 5-Gram.  Figure \ref{fig:ngramsLen}(b) shows that the number of itemsets keeps decreasing as expected.  Figure \ref{fig:ngramsLen}(c) shows that runtime also decreases as N goes from 1 to 5, since LCM runtime is proportional to the number of closed itemsets, and is not affected by the sparsity of data. The runtimes in this figure are slightly less from those in figure \ref{fig:runtimeEpochs} because they don't include the time taken for writing the posting lists.
 % robust against  the increasing
 %At N=5 there is a slight increase of 44 milliseconds in the average runtime. We did not try to justify the increase and we suspect that it is caused by a slight difference in the condition of the shared machine at the time of running the experiment with N=5.
 %yet statistically significant increase. We suspect that this increase is due to the  
@@ -547,7 +611,11 @@ Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length of 
 \label{fig:ngramsLen}
 \end{figure*}
 
-After mining term N-Grams we flatten the itemsets to sets of unigrams again. This removes overlap between parts of  itemsets making it easier to reason about how they relate to each other. This also avoids the possibility that an itemset might be represented differently at different epochs. Actually, within one epoch an itemset will be represented as different N-Gram sets, and we merge them during flattening by taking the union of the posting lists of all the N-Gram sets flattened to the same itemset.
+After mining term N-Grams we flatten the itemsets to sets of unigrams again. This removes overlap between parts of  itemsets making it easier to reason about how they relate to each other. 
+%This also avoids the possibility that an itemset might be represented differently at different epochs. Actually, within one epoch 
+This is also necessary since an itemset will have different N-Gram set representations, and its  postings list is the union of those of the different representations.
+%, and its support would have been lost if not for maintaining the postings list. 
+%We merge the union of the posting lists of all the N-Gram sets flattened to the same itemset.
 
 %After flattening, we remove one more type of uninteresting itemsets produced just because the definition of closed itemsets cover it - the empty itemset and individual unigrams. In the rest of this paper we exclude them altogether, so an itemset  simply by not producing an itemset whose length is less than 2.
 
@@ -555,28 +623,7 @@ After mining term N-Grams we flatten the itemsets to sets of unigrams again. Thi
 \section{Temporal mining}
 \label{sec:KLD}
 KL-Divergence 
-\begin{figure}
-\centering
-% Generated with LaTeXDraw 2.0.8
-% Wed May 01 10:13:00 EDT 2013
-% \usepackage[usenames,dvipsnames]{pstricks}
-% \usepackage{epsfig}
-% \usepackage{pst-grad} % For gradients
-% \usepackage{pst-plot} % For axes
-\scalebox{.4} % Change this value to rescale the drawing.
-{
-\begin{pspicture}(0,-5.61)(19.94,5.61)
-\rput(9.97,0.0){\includegraphics{runtime_different-epoch-spans_bar-table.eps}}
-\rput(9.8,1.44){\includegraphics{runtime_different-epoch-spans_line.eps}}
-\usefont{T1}{ptm}{m}{n}
-\rput{90.15449}(0.96138316,-0.45039606){\rput(0.6871191,0.225){\LARGE Time in milliseconds}}
-\usefont{T1}{ptm}{m}{n}
-\rput(10.130039,-0.925){\Large Epoch span in hours}
-\end{pspicture} 
-}
-\caption{Mean runtime at different epoch spans}
-\label{fig:runtimeEpochs}
-\end{figure}
+
 \section{Strongly closed itemsets alliances}
 \label{sec:strong}
 The closed property of an itemset is very easily violated by modifying one document that contains the itemset and removing one of its items. While an update operation is not supported in the model of frequent itemsets mining, a similar effect happens when people are writing about a certain fine grained topic. For example, on November 9th, 2012 many people where tweeting that "Justin Bieber and Selena Gomez broke up". If all Tweets which use the verb "break up" to report the topic also contain the two names in full, then there will be one closed itemset with all 6 items. However, a Tweet can contain any of 8 other combinations of the four names that fully convey the meaning. We can consider that Tweets with any of these combinations are modifications of the \emph{maximal} closed itemset. Therefore instead of 1 maximal itemset about the topic there will be 9 closed ones. Now consider that it is possible to say that "Justin and Selena broke up" as well as "Justin broke up with Selena", resulting in 2 maximal itemsets. This increase in the number of maximal itemsets because of slight variations in the language is intensified by the length limit on Tweets, specially when people try to make space for their comment about a Tweet they are retweeting. We therefore need a property between the easily violated closed property and the very strict maximal property which also results in a large number of redundant itemsets. 

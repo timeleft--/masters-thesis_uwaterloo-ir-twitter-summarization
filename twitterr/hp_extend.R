@@ -69,6 +69,7 @@ for(len1 in c(1:5)){
   if(len1==1){
     HPD.volumeAdjustmentFactor <- 1
   } else {
+    # FIXME: use the length 1 volume as v1 always
     sql <- sprintf("select avg(CAST(v2.totalcnt as float8)/v1.totalcnt) as volRedFactor 
       from %s v1 join %s v2 on v2.epochstartux = v1.%s;", ifelse(len1==2,paste("volume_",HPD.epoch,len1-1,sep=""),paste("ogram_vol_",HPD.epoch,len1-1,sep="")),
       paste("ogram_vol_",HPD.epoch,len1,sep=""),
