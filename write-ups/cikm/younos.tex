@@ -459,6 +459,10 @@ We apply the algorithms to epochs of data, so they are not strictly stream proce
 
 The support threshold used throughout this paper, unless otherwise specified, is $\alpha=0.0002$. This is determined as follows: We picked a topical term that is known to  steadily  appear with a rather high frequency, and is talked about in all languages; `obama'. The maximum likely hood estimate of the probability of the term `obama' within the whole collection of Tweets is 0.0001. Since the average number of Tweets per hour is 100000, so the term `obama' is expected to appear 10 times per hour on average. Thus, we use a minimum support threshold of 10, which translates into $\alpha = 0.0002$.
 
+In the rest of this paper we mine epochs of 1 hour span. The reason behind this choice is an observation that the number of closed itemsets mined from epochs of span 1 hour or more, at the same support threshold, remains that same. This indicates that itemsets mined from shorter epochs of social media text are not included in the results of mining longer epochs. 
+%We will show that itemsets mined from epoch of span 1 hour are not only languag
+Therefore, the epoch span should be minimized. However, when the epoch span is shorter than an hour the frequency required to surpass the support threshold becomes very low, and number of mined itemsets increases because a lot of noise itemsets are mined.
+
 \begin{figure}
 \centering
 % Generated with LaTeXDraw 2.0.8
@@ -481,25 +485,6 @@ The support threshold used throughout this paper, unless otherwise specified, is
 \caption{Mean runtime at different epoch spans}
 \label{fig:runtimeEpochs}
 \end{figure}
-
-The number of itemsets mined from a selection of spans is shown in
-\begin{figure}
-\centering
-% Generated with LaTeXDraw 2.0.8
-% Sat May 04 11:23:51 EDT 2013
-% \usepackage[usenames,dvipsnames]{pstricks}
-% \usepackage{epsfig}
-% \usepackage{pst-grad} % For gradients
-% \usepackage{pst-plot} % For axes
-\scalebox{1} % Change this value to rescale the drawing.
-{
-\begin{pspicture}(0,-2.74)(8.22,2.74)
-\rput(4.11,0.0){\includegraphics{mean-itemsets-count_change-with-epochlen_closed-maximal.eps}}
-\end{pspicture} 
-}
-
-\end{figure}
-
 
 \subsection{Mining term N-Grams}
 \label{sec:ngrams}
@@ -541,7 +526,7 @@ We start by tokenizing into unigrams, and counting their frequencies. Then we us
 %Note that in the above procedure we didn't prevent overlap, because there is no guarantee that the N-Gram created makes any sense. The goal is to create a single unit out of frequent sequences and this is achieved because an N-Gram keeps growing as long as it is frequent.
 %, which will stop as soon as a unigram that is not part of the expression is attached to it. We can look at this as flattening the Zipfian distribution by creating more tokens with less frequency each, but the distribution of the input doesn't affect the results of itemsets mining - only its runtime can be affected.
 
-Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length of N-Grams from 1 to 5 on the number of tokens, the number of itemsets mined, and the runtime of mining 1 hour epochs of data. The values shown are averages across all 1 hour epochs in the month of November. The value of $\eta$ used is 0.0001.
+Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length of N-Grams from 1 to 5 on the number of tokens, the number of closed itemsets of length more than 1, and the runtime of mining 1 hour epochs of data. The values shown are averages across all 1 hour epochs in the month of November. The value of $\eta$ used is 0.0001.
 %The value of $\eta$ used is 0.0001, which is the probability of the term `obama' within the whole collection of Tweets. 
 %The support threshold used for mining in this experiment and all other experiments is also derived from the probability of the term `obama', since it is a known to be steadily frequent and talked about in all languages. The average number of Tweets per hour is 100000, so the term `obama' is expected to appear 10 times per hour on average. We use a minimum support threshold of 10, which translates into $\alpha = 0.0002$.
 Figure \ref{fig:ngramsLen}(a) shows that the number of distinct items increases a lot when N moves from 1 to 2, then keeps increasing slightly until it starts decreasing at N=5. The decrease happens because all 4-Grams with probability above the threshold are parts of Tweets from services that use the same text and append a URL, such as Tweets reporting scores from Game Insight\footnote{http://www.game-insight.com/}. Such Tweets are tokenized into more 4-Grams than 5-Gram, and the 4-Grams appearing in them don't appear elsewhere; thus each two of them are reduced into one 5-Gram.  Figure \ref{fig:ngramsLen}(b) shows that the number of itemsets keeps decreasing as expected.  Figure \ref{fig:ngramsLen}(c) shows that runtime also decreases as N goes from 1 to 5, since LCM runtime is proportional to the number of closed itemsets, and is not affected by the sparsity of data. The runtimes in this figure are slightly less from those in figure \ref{fig:runtimeEpochs} because they don't include the time taken for writing the posting lists.
@@ -620,9 +605,32 @@ This is also necessary since an itemset will have different N-Gram set represent
 %After flattening, we remove one more type of uninteresting itemsets produced just because the definition of closed itemsets cover it - the empty itemset and individual unigrams. In the rest of this paper we exclude them altogether, so an itemset  simply by not producing an itemset whose length is less than 2.
 
 
-\section{Temporal mining}
-\label{sec:KLD}
-KL-Divergence 
+%\subsection{Choice of epoch span}
+%\label{sec:span}
+%Figure \ref{fig:numItemsetsVsSpan} shows the number of itemsets mined from different spans, using the same support threshold. The number of itemsets is higher when the span is shorter than 1 hour because the frequency required to surpass the support threshold  becomes very low (7 on average), and thus more noise itemsets are mined. The flat shape after the 1 hour mark shows that the itemsets mined from the shorter epoch spans are not included in the mining results of longer spans. Therefore, we will mine epochs of 1 hour span for the rest of the paper. 
+
+%The numbers of both closed and maximal itemsets are shown, to give an intuition about the shape of the itemsets prefix tree. The small difference between the closed and maximal itemsets indicates that there is more breadth than than depth in the tree, since there aren't many internal nodes (closed itemsets that are not maximal). We discuss why this structure is formed and how to make use of this intuition in the following section.
+%This is a good segway to what we will discuss 
+
+%length of the epoch span used changes the nature of itemsets mined, . 
+%\begin{figure}
+%\centering
+% Generated with LaTeXDraw 2.0.8
+% Sat May 04 11:23:51 EDT 2013
+% \usepackage[usenames,dvipsnames]{pstricks}
+% \usepackage{epsfig}
+% \usepackage{pst-grad} % For gradients
+% \usepackage{pst-plot} % For axes
+%\scalebox{1} % Change this value to rescale the drawing.
+%{
+%\begin{pspicture}(0,-2.74)(8.22,2.74)
+%\rput(4.11,0.0){\includegraphics{mean-itemsets-count_change-with-epochlen_closed-maximal.eps}}
+%\end{pspicture} 
+%}
+%\label{fig:numItemsetsVsSpan}
+%\caption{Number of itemsets mined from different epoch spans, using N-Grams as items with N $\le$ 5} 
+%\end{figure}
+
 
 \section{Strongly closed itemsets alliances}
 \label{sec:strong}
