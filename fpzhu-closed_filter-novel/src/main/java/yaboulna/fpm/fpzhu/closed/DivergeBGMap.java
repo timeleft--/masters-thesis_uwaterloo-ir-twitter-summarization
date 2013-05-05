@@ -280,7 +280,7 @@ public class DivergeBGMap {
   static boolean idfFromBG = false;
   static boolean entropyFromBg = false;
   static boolean growAlliancesAcrossEpochs = false;
-  static boolean filterLowKLD = true;
+  static boolean filterLowKLD = false;
   static boolean fallBackToItemsKLD = false;
   static boolean cntUnMaximal = true;
   static boolean honorTemporalSimilarity = false;
@@ -327,7 +327,7 @@ public class DivergeBGMap {
       idfFromBG = args[3].contains("IdfBg");
       entropyFromBg = args[3].contains("EntBg");
       growAlliancesAcrossEpochs = args[3].contains("Grow");
-      filterLowKLD = !args[3].contains("NFLKld");
+      filterLowKLD = args[3].contains("KldPosOnly");
       fallBackToItemsKLD = args[3].contains("ITKld");
       cntUnMaximal = !args[3].contains("MaxOnly");
       honorTemporalSimilarity = args[3].contains("Temporal");
