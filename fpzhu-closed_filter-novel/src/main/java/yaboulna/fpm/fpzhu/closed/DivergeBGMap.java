@@ -795,7 +795,7 @@ public class DivergeBGMap {
                     if (// noCosineSimilarity ||
                     noJaccardSim || isPisSim > 0) { // >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD
                       String simMeasure;
-                      if (!noCosineSimilarity || isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
+                      if (!noCosineSimilarity && isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
                         double pisNorm = 0;
                         double itemsetNormTemp = 0;
                         // calculate the cosine similarity only if the jaccard similarity isn't enough
