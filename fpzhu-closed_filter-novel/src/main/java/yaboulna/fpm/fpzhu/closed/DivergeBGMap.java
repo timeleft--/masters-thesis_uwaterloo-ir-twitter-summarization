@@ -249,7 +249,7 @@ public class DivergeBGMap {
   private static final double CONFIDENCE_DEFAULT_THRESHOLD = 0.1; // lower bound
 
   private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
-  private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.66; // Cosine similarity
+// private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.66; // Cosine similarity
   private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0.33; // Jaccard similarity
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
@@ -293,6 +293,7 @@ public class DivergeBGMap {
   static boolean allianceKLDPositiveOnly = false;
   static boolean maxDiffFromMinSupp = false;
   static boolean noCosineSimilarity = false;
+  static boolean cosNoJaccard = true;
 
   /**
    * @param args
@@ -337,6 +338,7 @@ public class DivergeBGMap {
       allianceKLDPositiveOnly = args[3].contains("KLDPosOnly");
       maxDiffFromMinSupp = args[3].contains("MinSupp");
       noCosineSimilarity = args[3].contains("NoCos");
+      cosNoJaccard = !args[3].contains("Jaccard");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -357,10 +359,12 @@ public class DivergeBGMap {
     LOG.info("allianceKLDPositiveOnly: " + allianceKLDPositiveOnly);
     LOG.info("maxDiffFromMinSupp: " + maxDiffFromMinSupp);
     LOG.info("noCosineSimilarity: " + noCosineSimilarity);
+    LOG.info("cosNoJaccard: " + cosNoJaccard);
 
     String thresholds = "";
     thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
-    thresholds += " ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD;
+    thresholds += " ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD=ITEMSET_SIMILARITY_BAD_THRESHOLD";// +
+// ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD;
     thresholds += " ITEMSET_SIMILARITY_PROMISING_THRESHOLD=" + ITEMSET_SIMILARITY_PROMISING_THRESHOLD;
     thresholds += " ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH=" + ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH;
     thresholds += " ITEMSET_SIMILARITY_BAD_THRESHOLD=" + ITEMSET_SIMILARITY_BAD_THRESHOLD;
@@ -785,11 +789,11 @@ public class DivergeBGMap {
                     // then if it is promising then the cosine similarity is calculated with IDF weights
 
                     double isPisSim = interset.size() * 1.0 / isPisUnion.size();
-                    if (noCosineSimilarity || isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
+                    if (noCosineSimilarity || cosNoJaccard || isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
                       String simMeasure;
-                      if(noCosineSimilarity){
+                      if (noCosineSimilarity) {
                         simMeasure = "None";
-                      } else if (isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
+                      } else if (cosNoJaccard || isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
                         double pisNorm = 0;
                         double itemsetNormTemp = 0;
                         // calculate the cosine similarity only if the jaccard similarity isn't enough
@@ -837,9 +841,9 @@ public class DivergeBGMap {
                       } else {
                         simMeasure = "Jaccard";
                       }
-                      if (noCosineSimilarity || isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD) {
+                      if (noCosineSimilarity || isPisSim >= ITEMSET_SIMILARITY_BAD_THRESHOLD) { // ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD)
                         mergeCandidates.add(pis);
-                        if (!noCosineSimilarity  && LOG.isTraceEnabled())
+                        if (!noCosineSimilarity && LOG.isTraceEnabled())
                           LOG.trace("{} " + simMeasure + " {} = " + isPisSim,
                               itemset.toString() + fgCountMap.get(itemset),
                               pis.toString() + fgCountMap.get(pis));
@@ -906,12 +910,12 @@ public class DivergeBGMap {
                               * candDocIds.size()) :
                               Math.floor((1 / confThreshold) * iDocIds.size()))
                           :
-                            
+
                           Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                               Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
                                   Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD) *
-                                      (maxDiffFromMinSupp?Math.min(candDocIds.size(), iDocIds.size()):
-                                      Math.max(candDocIds.size(), iDocIds.size()))))));
+                                      (maxDiffFromMinSupp ? Math.min(candDocIds.size(), iDocIds.size()) :
+                                          Math.max(candDocIds.size(), iDocIds.size()))))));
 
                   if (maxDiffCnt == absMaxDiff * hrsPerEpoch) {
                     ++absMaxDiffEnforced;
@@ -1242,7 +1246,7 @@ public class DivergeBGMap {
                               theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
                       } else {
                         // the new alliance will be better.. clear the one from earlier
-                        //TODO: do I need to handle the inverse in this case.. or does it not happen anymore?
+                        // TODO: do I need to handle the inverse in this case.. or does it not happen anymore?
                         allianceTransitive.remove(transHeads);
                         transHeads = null;
                       }
@@ -1538,37 +1542,33 @@ public class DivergeBGMap {
 
             Collection<Set<String>> allianceMembers = allianceTransitiveInverse.get(e.getKey());
             double mutualInfo = 0;
-            double freqSubset = fgIdsMap.get(e.getKey()).size(); 
-            for(Set<String> member: allianceMembers){
+            double freqSubset = fgIdsMap.get(e.getKey()).size();
+            for (Set<String> member : allianceMembers) {
               double freqSuperset = fgIdsMap.get(member).size();
               double conditionalProb;
-              
-              
-//              if(confidentItemsets.containsKey(member)){
-//               conditionalProb = confidentItemsets.get(member);
-//              } else {
-//                LOG.info("An itemset is member in an alliance without being confident.. can this be?)
-                conditionalProb = freqSuperset / freqSubset;
-             
-                
-                mutualInfo += conditionalProb * DoubleMath.log2(conditionalProb / (freqSuperset / fgNumTweets));
+
+// if(confidentItemsets.containsKey(member)){
+// conditionalProb = confidentItemsets.get(member);
+// } else {
+// LOG.info("An itemset is member in an alliance without being confident.. can this be?)
+              conditionalProb = freqSuperset / freqSubset;
+
+              mutualInfo += conditionalProb * DoubleMath.log2(conditionalProb / (freqSuperset / fgNumTweets));
             }
             mutualInfo *= freqSubset / fgNumTweets;
-           
-            
+
             DescriptiveStatistics kldStats = alliedKLD.get(e.getKey());
-            
+
             double kldSubset = kldCache.get(e.getKey());
-            double subsetSelfInfo = - Math.log(freqSubset / fgNumTweets);
+            double subsetSelfInfo = -Math.log(freqSubset / fgNumTweets);
             double subsetSelfInfo2 = subsetSelfInfo * subsetSelfInfo;
-            double kldGain = 0; //kldSubset;
-            double kldGain2 = 0; //kldSubset * kldSubset;
-            for(double membKld: kldStats.getValues()){
+            double kldGain = 0; // kldSubset;
+            double kldGain2 = 0; // kldSubset * kldSubset;
+            for (double membKld : kldStats.getValues()) {
               kldGain += membKld - kldSubset;
-              kldGain2 += Math.pow((membKld - kldSubset),2);
+              kldGain2 += Math.pow((membKld - kldSubset), 2);
             }
-            
-           
+
             double yMeasure = 0;
 // kldStats.getSum() * kldStats.getN();
             double kldSum = kldStats.getSum();
@@ -1598,44 +1598,41 @@ public class DivergeBGMap {
             selectionFormat
                 .format(
                     "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
-                    
-                    kldStats.getVariance(), //2
-                    (kldGain2 + subsetSelfInfo2) / allianceMembers.size(), //3
-                    (kldStats.getSum() - mutualInfo) / allianceMembers.size(), //4
-                    (kldGain + subsetSelfInfo) / allianceMembers.size(), //5
-                    kldGain2 / subsetSelfInfo2/ allianceMembers.size(), //6
-                    kldGain2 / allianceMembers.size(), //7
-                    mutualInfo, //8
-                    
-                    
-//                    mutualInfo/allianceMembers.size(), //11
-//                    kldGain, //12
-//                    kldGain / allianceMembers.size(), //13
-//                    kldGain2, //14
-//                    kldGain2 / allianceMembers.size(), //15
-                    
-                    
-                    yMeasure, //9
-                    kldStats.getSum(), //10
-                    kldStats.getSumsq(), //11
-                     kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(),//12
-                    kldStats.getKurtosis(), //13
-                    kldStats.getSkewness(), //14
-                    kldStats.getMean(), //15
-                    
-                    
-                    kldStats.getMin(), //16
-                    kldStats.getPercentile(0.5), //17
-                    kldStats.getMax(),  //18 
-                    (int) kldStats.getN(), //19
 
-                    confidence, //20
+                    kldStats.getVariance(), // 2
+                    (kldGain2 + subsetSelfInfo2) / allianceMembers.size(), // 3
+                    (kldStats.getSum() - mutualInfo) / allianceMembers.size(), // 4
+                    (kldGain2 + subsetSelfInfo) / allianceMembers.size(), // 5
+                    kldGain2 / kldStats.getSumsq(), // 6
+                    kldGain2 / allianceMembers.size(), // 7
+                    mutualInfo, // 8
+
+// mutualInfo/allianceMembers.size(), //11
+// kldGain, //12
+// kldGain / allianceMembers.size(), //13
+// kldGain2, //14
+// kldGain2 / allianceMembers.size(), //15
+
+                    yMeasure, // 9
+                    kldStats.getSum(), // 10
+                    kldStats.getSumsq(), // 11
+                    kldStats.getMean() + 1.96 * kldStats.getStandardDeviation() / kldStats.getN(),// 12
+                    kldStats.getKurtosis(), // 13
+                    kldStats.getSkewness(), // 14
+                    kldStats.getMean(), // 15
+
+                    kldStats.getMin(), // 16
+                    kldStats.getPercentile(0.5), // 17
+                    kldStats.getMax(), // 18
+                    (int) kldStats.getN(), // 19
+
+                    confidence, // 20
                     calcNormalizedSumTfIdf(mergedItemset, idfFromBG ? bgCountMap : fgCountMap,
-                        idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap), //21
-                    unionDocId.size(), //22
+                        idfFromBG ? bgNumTweets : fgNumTweets, bgIDFMap), // 21
+                    unionDocId.size(), // 22
                     calcEntropy(mergedItemset.elementSet(), entropyFromBg ? bgCountMap : fgCountMap,
-                        entropyFromBg ? bgNumTweets : fgNumTweets), //23
-                    calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets)); //24
+                        entropyFromBg ? bgNumTweets : fgNumTweets), // 23
+                    calcCrossEntropy(mergedItemset.elementSet(), bgCountMap, fgCountMap, bgNumTweets, fgNumTweets)); // 24
 
             Set<Long> headDocIds = Sets.newCopyOnWriteArraySet(fgIdsMap.get(e.getKey()));
             selectionFormat.out().append(headDocIds.toString().substring(1))
