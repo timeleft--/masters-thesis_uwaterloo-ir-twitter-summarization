@@ -248,9 +248,9 @@ public class DivergeBGMap {
 // private static final double CONFIDENCE_LOW_THRESHOLD = 0.1; // upper bound to ???
   private static final double CONFIDENCE_DEFAULT_THRESHOLD = 0.1; // lower bound
 
-  private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
+//  private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
   private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.66; // Cosine similarity
-  private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0;//0.33; // Jaccard similarity
+  private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0;// 0.33; // Jaccard similarity
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
 
@@ -362,7 +362,7 @@ public class DivergeBGMap {
     LOG.info("noJaccard: " + noJaccard);
 
     String thresholds = "";
-    thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
+//    thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
     thresholds += " ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD;
     thresholds += " ITEMSET_SIMILARITY_PROMISING_THRESHOLD=" + ITEMSET_SIMILARITY_PROMISING_THRESHOLD;
     thresholds += " ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH=" + ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH;
@@ -643,12 +643,13 @@ public class DivergeBGMap {
                   Set<String> pis = prevIter.next();
 
                   Set<String> interset;
-                  Set<String> isPisUnion;
+                  Set<String> isPisUnion = null;
 
                   if (!ppJoin || pis.size() < ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH
                       || itemset.size() < ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH) {
                     interset = Sets.intersection(itemset, pis);
-                    isPisUnion = Sets.union(itemset, pis);
+                    if (!noCosineSimilarity)
+                      isPisUnion = Sets.union(itemset, pis);
                   } else {
 
 // if (pis.size() < ITEMSET_SIMILARITY_PROMISING_THRESHOLD * itemset.size()) {
@@ -787,10 +788,13 @@ public class DivergeBGMap {
                     // Itemset similiarity starts by a lightweight Jaccard Similarity similiarity,
                     // then if it is promising then the cosine similarity is calculated with IDF weights
 
-                    double isPisSim = interset.size() * 1.0 / isPisUnion.size();
+                    double isPisSim = interset.size() * 1.0;
+                    if (!noCosineSimilarity)
+                      isPisSim /= isPisUnion.size();
                     if (noJaccard || isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
                       String simMeasure;
-                      if (!noCosineSimilarity && (noJaccard || isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD)) {
+                      double simThreshold=-1;
+                      if (!noCosineSimilarity){ // && (noJaccard || isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD)) {
                         double pisNorm = 0;
                         double itemsetNormTemp = 0;
                         // calculate the cosine similarity only if the jaccard similarity isn't enough
@@ -835,13 +839,14 @@ public class DivergeBGMap {
                         }
                         isPisSim /= Math.sqrt(pisNorm) * itemsetNorm;
                         simMeasure = "Cosine";
-                        
+                        simThreshold = ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD;
                       } else if (noJaccard && noCosineSimilarity) {
                         simMeasure = "None";
                       } else {
                         simMeasure = "Jaccard";
+                        simThreshold = ITEMSET_SIMILARITY_PROMISING_THRESHOLD;
                       }
-                      if ((noCosineSimilarity && noJaccard) || isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD) {
+                      if ((noCosineSimilarity && noJaccard) || isPisSim >= simThreshold) {
                         mergeCandidates.add(pis);
                         if (!(noCosineSimilarity && noJaccard) && LOG.isTraceEnabled())
                           LOG.trace("{} " + simMeasure + " {} = " + isPisSim,
@@ -880,7 +885,8 @@ public class DivergeBGMap {
                 }
 
                 Set<String> theOnlyOneIllMerge = null;
-                int theOnlyOnesDifference = Integer.MAX_VALUE;
+//                int theOnlyOnesDifference = Integer.MAX_VALUE;
+                double theOnlyOneConf = Double.MIN_VALUE;
                 if (growAlliancesAcrossEpochs && allianceTransitive.containsKey(itemset)) {
                   mergeCandidates.addAll(allianceTransitive.get(itemset));
                 }
@@ -898,9 +904,23 @@ public class DivergeBGMap {
                     continue;
                   }
 
-                  int differentDocs = Math.max(candDocIds.size(), iDocIds.size())
-                      - Math.min(candDocIds.size(), iDocIds.size());
+//                  int differentDocs = Math.max(candDocIds.size(), iDocIds.size())
+//                      - Math.min(candDocIds.size(), iDocIds.size());
 
+                  Integer largerDiffSmallerSize = Math.max(candDocIds.size(), iDocIds.size())
+                    - Math.min(candDocIds.size(), iDocIds.size());
+                  Integer differentDocs = largerDiffSmallerSize; 
+                  int smallerDiffLargerSize = 0;
+                  
+                  LinkedList<Long> largerDocIds = iDocIds;
+//                  Set<String> larger = itemset;
+                  LinkedList<Long> smallerDocIds = candDocIds;
+                  
+                  if(candDocIds.size() > iDocIds.size()){
+                    largerDocIds = candDocIds;
+//                    larger = cand;
+                    smallerDocIds = iDocIds;
+                  }
                   double maxDiffCnt =
                       ((ancestorItemsets.contains(cand)) ?
                           // the (true) parent will necessarily be present in all documents of itemset
@@ -914,8 +934,9 @@ public class DivergeBGMap {
                           Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                               Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
                                   Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD) *
-                                      (maxDiffFromMinSupp ? Math.min(candDocIds.size(), iDocIds.size()) :
-                                          Math.max(candDocIds.size(), iDocIds.size()))))));
+                                      largerDocIds.size()))));
+//                                      (maxDiffFromMinSupp ? Math.min(candDocIds.size(), iDocIds.size()) :
+//                                          Math.max(candDocIds.size(), iDocIds.size()))))));
 
                   if (maxDiffCnt == absMaxDiff * hrsPerEpoch) {
                     ++absMaxDiffEnforced;
@@ -929,58 +950,63 @@ public class DivergeBGMap {
                     // TODONE: use a variation of this measure that calculates the time period covered by each itemset
                     // TODONE: overlap of intersection with the current itemset's docids
 
-                    Iterator<Long> iDidIter = iDocIds.iterator();
-                    Iterator<Long> candDidIter = candDocIds.iterator();
-                    long iDid = iDidIter.next(), candDid = candDidIter.next();
+                    Iterator<Long> smallerIter = smallerDocIds.iterator(); 
+//                        iDocIds.iterator();
+                    Iterator<Long> largerIter = largerDocIds.iterator(); 
+//                        candDocIds.iterator();
+                    long smallerDocId = smallerIter.next(), largerDocId= largerIter.next();
 
                     SummaryStatistics waitSecsTillCooc = null;
                     if (honorTemporalSimilarity) {
                       waitSecsTillCooc = new SummaryStatistics();
                     }
-                    long lastCooc = Math.max(iDid, candDid) >>> 22;
-                    while ((candDid > 0 && iDid > 0) &&
+                    long lastCooc = Math.max(smallerDocId, largerDocId) >>> 22;
+                    while ((largerDocId > 0 && smallerDocId > 0) &&
                         ((honorTemporalSimilarity &&
                         (waitSecsTillCooc.getN() == 0 || waitSecsTillCooc.getMean() < temporalSimilarityThreshold))
                         || differentDocs <= maxDiffCnt)) {
-                      if (iDid == candDid) {
+//                        || largerDiffSmallerSize <= maxDiffCnt)) {
+                      if (smallerDocId == largerDocId) {
 // intersDocId.add(iDid);
 // unionDocId.add(iDid);
                         if (honorTemporalSimilarity) {
-                          waitSecsTillCooc.addValue(((iDid >>> 22) - lastCooc) / 1000);
+                          waitSecsTillCooc.addValue(((smallerDocId >>> 22) - lastCooc) / 1000);
                         }
-                        if (iDidIter.hasNext()) {
-                          iDid = iDidIter.next();
+                        if (smallerIter.hasNext()) {
+                          smallerDocId = smallerIter.next();
                         } else {
-                          iDid = -1;
+                          smallerDocId = -1;
 // break;
                         }
-                        if (candDidIter.hasNext()) {
-                          candDid = candDidIter.next();
+                        if (largerIter.hasNext()) {
+                          largerDocId = largerIter.next();
                           if (honorTemporalSimilarity) {
                             // how long will it wait for me this time?
-                            lastCooc = candDid >>> 22;
+                            lastCooc = largerDocId >>> 22;
                           }
                         } else {
-                          candDid = -1;
+                          largerDocId = -1;
 // break;
                         }
 
-                      } else if (iDid < candDid) {
+                      } else if (smallerDocId < largerDocId) {
 // unionDocId.add(iDid);
-                        ++differentDocs;
-                        if (iDidIter.hasNext()) {
-                          iDid = iDidIter.next();
+//                        ++differentDocs;
+                        ++smallerDiffLargerSize;
+                        if (smallerIter.hasNext()) {
+                          smallerDocId = smallerIter.next();
                         } else {
-                          iDid = -1;
+                          smallerDocId = -1;
 // break;
                         }
                       } else {
 // unionDocId.add(candDid);
-                        ++differentDocs;
-                        if (candDidIter.hasNext()) {
-                          candDid = candDidIter.next();
+//                        ++differentDocs;
+                        ++largerDiffSmallerSize;
+                        if (largerIter.hasNext()) {
+                          largerDocId = largerIter.next();
                         } else {
-                          candDid = -1;
+                          largerDocId = -1;
 // break;
                         }
 // if (honorTemporalSimilarity) {
@@ -989,7 +1015,7 @@ public class DivergeBGMap {
 // }
                       }
                     }
-                    if (honorTemporalSimilarity && (iDid > 0 || candDid > 0)) {
+                    if (honorTemporalSimilarity && (smallerDocId > 0 || largerDocId > 0)) {
                       long minMaxIDid = Math.min(iDocIds.getLast(), candDocIds.getLast());
                       // Assume that I would have come the next second if there were more docs in both,
                       // or after the average wait time, whichever is longer
@@ -1064,9 +1090,15 @@ public class DivergeBGMap {
 // }
                   // If similar enough, attach to the merge candidate and put both in pending queue
                   if (differentDocs <= maxDiffCnt) {
+                    
+                    double confidence = (largerDocIds.size() - differentDocs.doubleValue()) / largerDocIds.size();
+                    if(confidence < confThreshold){
+                      continue;
+                    }
                     // Try and join and existing alliance
                     Set<String> bestAllianceHead = cand;
-                    int currentBestDifference = differentDocs;
+//                    int currentBestDifference = differentDocs;
+                    double currentBestScore = confidence;
 
                     if (!ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE) {
                       Set<Set<String>> candidateTransHeads = allianceTransitive.get(cand);
@@ -1081,7 +1113,8 @@ public class DivergeBGMap {
                         if (mergeCandidates.contains(candidateTransHeads)) {
                           if (!allowFormingMultipleAlliances) {
                             // pretend that you are a very bad candidate.. so that your head wins the alliance:
-                            currentBestDifference = Integer.MAX_VALUE;
+//                            currentBestDifference = Integer.MAX_VALUE;
+                            currentBestScore = Double.MIN_VALUE;
                           }
                         } else {
 
@@ -1177,12 +1210,13 @@ public class DivergeBGMap {
                                     (exitingAllianceHead.size() < bestAllianceHead.size()))
                                     || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
                                     (exitingAllianceHead.size() > bestAllianceHead.size()))
-                                    || existingHeadNonOverlap < currentBestDifference))) {
+                                    || existingHeadNonOverlap < 7020))) { //TODO: calc confidences currentBestDifference))) {
                               // or equals prefers existing allinaces to forming new ones
 
                               if (allowFormingMultipleAlliances) { // TODO: this needs tweaking if more than one
 // existing
-                                currentBestDifference = existingHeadNonOverlap;
+//                                currentBestDifference = existingHeadNonOverlap;
+                                currentBestScore = 7020;
                               } // else: keeping the difference of cand, which should be better, so that
                               // other candidates have harder time beating the existing alliance
 
@@ -1196,10 +1230,12 @@ public class DivergeBGMap {
                         (theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size()))
                         || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
                         (theOnlyOneIllMerge == null || bestAllianceHead.size() > theOnlyOneIllMerge.size()))
-                        || (currentBestDifference < theOnlyOnesDifference)) {
+                        || (currentBestScore > theOnlyOneConf)) {
+//                        || (currentBestDifference < theOnlyOnesDifference)) {
 
                       theOnlyOneIllMerge = bestAllianceHead;
-                      theOnlyOnesDifference = currentBestDifference;
+//                      theOnlyOnesDifference = currentBestDifference;
+                      theOnlyOneConf = currentBestScore;
                     }
                   } else if (LOG.isTraceEnabled()) {
                     if (differentDocs < bestUnofficialCandidateDiff) {
@@ -1227,7 +1263,8 @@ public class DivergeBGMap {
                                     Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
                                         Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
                                             Math.max(fgIdsMap.get(theOnlyOneIllMerge).size(), iDocIds.size()))))),
-                        theOnlyOnesDifference,
+//                        theOnlyOnesDifference,
+                                            theOnlyOneConf,
                         theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
                   // /////////// Store that you joined this alliance
                   Set<Set<String>> transHeads = allianceTransitive.get(itemset);
