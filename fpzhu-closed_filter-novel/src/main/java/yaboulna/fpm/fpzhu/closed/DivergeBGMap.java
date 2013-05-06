@@ -250,7 +250,7 @@ public class DivergeBGMap {
 
   private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
   private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.66; // Cosine similarity
-  private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0;// 0.33; // Jaccard similarity
+  private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0;//0.33; // Jaccard similarity
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
 
@@ -835,19 +835,19 @@ public class DivergeBGMap {
                         }
                         isPisSim /= Math.sqrt(pisNorm) * itemsetNorm;
                         simMeasure = "Cosine";
-
+                        
                       } else if (noJaccard && noCosineSimilarity) {
                         simMeasure = "None";
                       } else {
                         simMeasure = "Jaccard";
                       }
-                      if (noCosineSimilarity || isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD)
+                      if ((noCosineSimilarity && noJaccard) || isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD) {
                         mergeCandidates.add(pis);
-                      if (!noCosineSimilarity && LOG.isTraceEnabled())
-                        LOG.trace("{} " + simMeasure + " {} = " + isPisSim,
-                            itemset.toString() + fgCountMap.get(itemset),
-                            pis.toString() + fgCountMap.get(pis));
-
+                        if (!(noCosineSimilarity && noJaccard) && LOG.isTraceEnabled())
+                          LOG.trace("{} " + simMeasure + " {} = " + isPisSim,
+                              itemset.toString() + fgCountMap.get(itemset),
+                              pis.toString() + fgCountMap.get(pis));
+                      }
                     }
 
                     if ((stopMatchingParentFSimLow && parentItemset != null &&
