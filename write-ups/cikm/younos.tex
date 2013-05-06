@@ -62,6 +62,9 @@
 %\DeclareCaptionType{copyrightbox}
 %\usepackage{subcaption}
 
+
+\usepackage{multirow}
+
 \begin{document}
 %
 % --- Author Metadata here ---
@@ -877,13 +880,48 @@ On November $9^{th}$, no major events were happening but many overlapping minor 
 
 % (we refer to it as the \emph{MTVEMA voting invitation} to save space).
 %To start off, the Laker's ``coach Mike Brown'' got fired and it was expected that either ``Phil Jackson [or] Jerry Sloan'' will succeed him. Another career end gets attention as ``CIA director David Petraeus resigns'', and an The MTV Europe Music Awards (MTVEMA) was also taking place and he also broke up with Selena Gomez. Therefore, this period contains events of different types that overlap, and we can use it to assess the effectiveness of our methods without access to ground truth data. The itemset alliances shown are the top 10 per hour ranked by point wise KL-Divergence against the results of mining the month of October. 
+\begin{table}
+
+\begin{center}
+\small
+\begin{tabular}{|p{.6cm}|p{2.5cm}|p{5cm}|}
+
+\hline
+\multirow{3}{*}{\texttt{13:00}} 	&  0, 1, de, jong 			& De Jong scores for Ajax \\ \cline{2-3} %http://www.dailymail.co.uk/sport/football/article-2228815/Manchester-City-2-Ajax-2--match-report-Siem-Jong-Yaya-Toure-Sergio-Aguero-Champions-League.html
+					   	& geordie, shore		& Season 5 of the TV series starts \\ \cline{2-3}
+						& get, out, and, vote		& Still early in the U.S. elections day \\\hline
+
+\multirow{3}{*}{\texttt{17:00}} 	&  if, obama, wins		& Speculations regarding elections \\ \cline{2-3}
+					   	& @noemiking20, club, my, spots		&  Pyramidal marketing scam. Retweeted by people to make money.  \\ \cline{2-3}
+						& the, polls, close		& Polls to start closing at 6 PM \\\hline %http://www.huffingtonpost.com/2012/11/06/what-time-do-polls-close_n_2080894.html
+
+\multirow{3}{*}{\texttt{19:00}} 	&  A partir de que idade voc\^{e}a considera algu\'{e}m velho?		& Internet meme from Brazil, discussing when to start considering a person old. \\ \cline{2-3}
+					   	& food, stamps		& Discussions pertaining to elections \\ \cline{2-3}
+						& linda, mcmahon, senate		&  Linda McMahon loses CT senate race \\\hline
+
+\multirow{3}{*}{\texttt{20:00}} 	& obama, got, this		&  Announcing states that Obama got \\ \cline{2-3}
+					   	& projected, winner		& Early projections about who will win \\ \cline{2-3}
+						& moving, to, canada		&  Reaction to projections \\\hline
+
+
+\multirow{3}{*}{\texttt{21:00}} 	& elizabeth, warren		&  MA senate elections winner \\ \cline{2-3}
+					   	& popular, vote		& vs Electoral Vote \\ \cline{2-3}
+						& who, is, the, president?		&  Who? Who? Who? \\\hline
+						
+						
+\end{tabular}
+\end{center}
+\caption{Top 3 itemsets for hours in November 6th}
+ \label{table:nov6}
+\end{table}
+
 
 \begin{table}
 \begin{center}
 \small
 \begin{tabular}{|p{.6cm}|p{7.5cm}|}
 \hline %\textbf{Top 3 itemsets for hours in November 6th,  2012} \\\hline
-\texttt{12:00} & and, get, out, vote - @laliminati, lali - geordie, shore \\\hline 
+\multirow{3}{*}{\texttt{12:00}} & and, get, out, vote \\ & @laliminati, lali \\ & geordie, shore \\\hline 
 \texttt{12:30} & 0, 1, de, jong - geordie, shore - if, obama, wins \\\hline 
 \texttt{13:00} & de, gol, pepe - hala, madrid - geordie, shore \\\hline 
 \texttt{13:30} & de, gol, pepe - geordie, shore - for, i, voted \\\hline 
@@ -910,7 +948,7 @@ On November $9^{th}$, no major events were happening but many overlapping minor 
 \texttt{00:00} & come, to, yet - behind, flag, hair, her, in, obama - flag, that, weave \\\hline
  \end{tabular}
  \caption{Top 3 itemsets for hours in November 6th}
- \label{table:nov6}
+ \label{table:nov6Old}
  \end{center}
  \end{table}
  

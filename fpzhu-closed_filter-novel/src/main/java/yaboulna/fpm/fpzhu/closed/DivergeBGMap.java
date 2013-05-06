@@ -250,7 +250,7 @@ public class DivergeBGMap {
 
   private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
 // private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.66; // Cosine similarity
-  private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0;// 0.33; // Jaccard similarity
+  private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0.33; // Jaccard similarity
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
 
@@ -280,7 +280,7 @@ public class DivergeBGMap {
   static boolean idfFromBG = false;
   static boolean entropyFromBg = false;
   static boolean growAlliancesAcrossEpochs = false;
-  static boolean filterLowKLD = false;
+  static boolean filterLowKLD = true;
   static boolean fallBackToItemsKLD = false;
   static boolean cntUnMaximal = true;
   static boolean honorTemporalSimilarity = false;
@@ -291,9 +291,9 @@ public class DivergeBGMap {
   static boolean TOTALLY_IGNORE_1ITEMSETS = false;
   static boolean IGNORE_1ITEMSETS_VERY_HIGH_CNT = false;
   static boolean allianceKLDPositiveOnly = false;
-  static boolean maxDiffFromMinSupp = true;
-  static boolean noCosineSimilarity = true;
-  static boolean noJaccardSim = false;
+  static boolean maxDiffFromMinSupp = false;
+  static boolean noCosineSimilarity = false;
+  static boolean cosNoJaccard = true;
 
   /**
    * @param args
@@ -327,7 +327,7 @@ public class DivergeBGMap {
       idfFromBG = args[3].contains("IdfBg");
       entropyFromBg = args[3].contains("EntBg");
       growAlliancesAcrossEpochs = args[3].contains("Grow");
-      filterLowKLD = args[3].contains("KldPosOnly");
+      filterLowKLD = !args[3].contains("NFLKld");
       fallBackToItemsKLD = args[3].contains("ITKld");
       cntUnMaximal = !args[3].contains("MaxOnly");
       honorTemporalSimilarity = args[3].contains("Temporal");
@@ -336,9 +336,9 @@ public class DivergeBGMap {
       TOTALLY_IGNORE_1ITEMSETS = args[3].contains("Ignore1Tot");
       IGNORE_1ITEMSETS_VERY_HIGH_CNT = args[3].contains("Ignore1VHi");
       allianceKLDPositiveOnly = args[3].contains("KLDPosOnly");
-      maxDiffFromMinSupp = !args[3].contains("MaxSupp");
-      noCosineSimilarity = !args[3].contains("LowCos");
-      noJaccardSim = args[3].contains("NoJaccard");
+      maxDiffFromMinSupp = args[3].contains("MinSupp");
+      noCosineSimilarity = args[3].contains("NoCos");
+      cosNoJaccard = !args[3].contains("Jaccard");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -359,7 +359,7 @@ public class DivergeBGMap {
     LOG.info("allianceKLDPositiveOnly: " + allianceKLDPositiveOnly);
     LOG.info("maxDiffFromMinSupp: " + maxDiffFromMinSupp);
     LOG.info("noCosineSimilarity: " + noCosineSimilarity);
-    LOG.info("NoJaccard: " + noJaccardSim);
+    LOG.info("cosNoJaccard: " + cosNoJaccard);
 
     String thresholds = "";
     thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
@@ -644,13 +644,12 @@ public class DivergeBGMap {
                   Set<String> pis = prevIter.next();
 
                   Set<String> interset;
-                  Set<String> isPisUnion = null;
+                  Set<String> isPisUnion;
 
                   if (!ppJoin || pis.size() < ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH
                       || itemset.size() < ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH) {
                     interset = Sets.intersection(itemset, pis);
-                    if (!noCosineSimilarity)
-                      isPisUnion = Sets.union(itemset, pis);
+                    isPisUnion = Sets.union(itemset, pis);
                   } else {
 
 // if (pis.size() < ITEMSET_SIMILARITY_PROMISING_THRESHOLD * itemset.size()) {
@@ -789,13 +788,12 @@ public class DivergeBGMap {
                     // Itemset similiarity starts by a lightweight Jaccard Similarity similiarity,
                     // then if it is promising then the cosine similarity is calculated with IDF weights
 
-                    double isPisSim = interset.size() * 1.0;
-                    if (!noCosineSimilarity)
-                      isPisSim /= isPisUnion.size();
-                    if (// noCosineSimilarity ||
-                    noJaccardSim || isPisSim > 0) { // >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD
+                    double isPisSim = interset.size() * 1.0 / isPisUnion.size();
+                    if (noCosineSimilarity || cosNoJaccard || isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
                       String simMeasure;
-                      if (!noCosineSimilarity && isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
+                      if (noCosineSimilarity) {
+                        simMeasure = "None";
+                      } else if (cosNoJaccard || isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
                         double pisNorm = 0;
                         double itemsetNormTemp = 0;
                         // calculate the cosine similarity only if the jaccard similarity isn't enough
@@ -840,15 +838,12 @@ public class DivergeBGMap {
                         }
                         isPisSim /= Math.sqrt(pisNorm) * itemsetNorm;
                         simMeasure = "Cosine";
-                      } else if (noJaccardSim) {
-                        simMeasure = "None";
                       } else {
                         simMeasure = "Jaccard";
                       }
-                      if ((noJaccardSim && noCosineSimilarity) || isPisSim > 0) { // = ITEMSET_SIMILARITY_BAD_THRESHOLD) {
-// // ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD)
+                      if (noCosineSimilarity || isPisSim >= ITEMSET_SIMILARITY_BAD_THRESHOLD) { // ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD)
                         mergeCandidates.add(pis);
-                        if (!(noJaccardSim && noCosineSimilarity) && LOG.isTraceEnabled())
+                        if (!noCosineSimilarity && LOG.isTraceEnabled())
                           LOG.trace("{} " + simMeasure + " {} = " + isPisSim,
                               itemset.toString() + fgCountMap.get(itemset),
                               pis.toString() + fgCountMap.get(pis));
