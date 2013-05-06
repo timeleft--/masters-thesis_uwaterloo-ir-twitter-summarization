@@ -249,8 +249,8 @@ public class DivergeBGMap {
   private static final double CONFIDENCE_DEFAULT_THRESHOLD = 0.1; // lower bound
 
   private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
-// private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.66; // Cosine similarity
-  private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0.33; // Jaccard similarity
+  private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.66; // Cosine similarity
+  private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0;// 0.33; // Jaccard similarity
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
 
@@ -280,7 +280,7 @@ public class DivergeBGMap {
   static boolean idfFromBG = false;
   static boolean entropyFromBg = false;
   static boolean growAlliancesAcrossEpochs = false;
-  static boolean filterLowKLD = true;
+  static boolean filterLowKLD = false;
   static boolean fallBackToItemsKLD = false;
   static boolean cntUnMaximal = true;
   static boolean honorTemporalSimilarity = false;
@@ -293,7 +293,7 @@ public class DivergeBGMap {
   static boolean allianceKLDPositiveOnly = false;
   static boolean maxDiffFromMinSupp = false;
   static boolean noCosineSimilarity = false;
-  static boolean cosNoJaccard = true;
+  static boolean noJaccard = true;
 
   /**
    * @param args
@@ -327,7 +327,7 @@ public class DivergeBGMap {
       idfFromBG = args[3].contains("IdfBg");
       entropyFromBg = args[3].contains("EntBg");
       growAlliancesAcrossEpochs = args[3].contains("Grow");
-      filterLowKLD = !args[3].contains("NFLKld");
+      filterLowKLD = args[3].contains("KldPosOnly");
       fallBackToItemsKLD = args[3].contains("ITKld");
       cntUnMaximal = !args[3].contains("MaxOnly");
       honorTemporalSimilarity = args[3].contains("Temporal");
@@ -338,7 +338,7 @@ public class DivergeBGMap {
       allianceKLDPositiveOnly = args[3].contains("KLDPosOnly");
       maxDiffFromMinSupp = args[3].contains("MinSupp");
       noCosineSimilarity = args[3].contains("NoCos");
-      cosNoJaccard = !args[3].contains("Jaccard");
+      noJaccard = !args[3].contains("Jaccard");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -359,12 +359,11 @@ public class DivergeBGMap {
     LOG.info("allianceKLDPositiveOnly: " + allianceKLDPositiveOnly);
     LOG.info("maxDiffFromMinSupp: " + maxDiffFromMinSupp);
     LOG.info("noCosineSimilarity: " + noCosineSimilarity);
-    LOG.info("cosNoJaccard: " + cosNoJaccard);
+    LOG.info("noJaccard: " + noJaccard);
 
     String thresholds = "";
     thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
-    thresholds += " ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD=ITEMSET_SIMILARITY_BAD_THRESHOLD";// +
-// ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD;
+    thresholds += " ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD;
     thresholds += " ITEMSET_SIMILARITY_PROMISING_THRESHOLD=" + ITEMSET_SIMILARITY_PROMISING_THRESHOLD;
     thresholds += " ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH=" + ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH;
     thresholds += " ITEMSET_SIMILARITY_BAD_THRESHOLD=" + ITEMSET_SIMILARITY_BAD_THRESHOLD;
@@ -789,11 +788,9 @@ public class DivergeBGMap {
                     // then if it is promising then the cosine similarity is calculated with IDF weights
 
                     double isPisSim = interset.size() * 1.0 / isPisUnion.size();
-                    if (noCosineSimilarity || cosNoJaccard || isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
+                    if (noJaccard || isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
                       String simMeasure;
-                      if (noCosineSimilarity) {
-                        simMeasure = "None";
-                      } else if (cosNoJaccard || isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD) {
+                      if (!noCosineSimilarity && (noJaccard || isPisSim < ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD)) {
                         double pisNorm = 0;
                         double itemsetNormTemp = 0;
                         // calculate the cosine similarity only if the jaccard similarity isn't enough
@@ -838,16 +835,19 @@ public class DivergeBGMap {
                         }
                         isPisSim /= Math.sqrt(pisNorm) * itemsetNorm;
                         simMeasure = "Cosine";
+
+                      } else if (noJaccard && noCosineSimilarity) {
+                        simMeasure = "None";
                       } else {
                         simMeasure = "Jaccard";
                       }
-                      if (noCosineSimilarity || isPisSim >= ITEMSET_SIMILARITY_BAD_THRESHOLD) { // ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD)
+                      if (noCosineSimilarity || isPisSim >= ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD)
                         mergeCandidates.add(pis);
-                        if (!noCosineSimilarity && LOG.isTraceEnabled())
-                          LOG.trace("{} " + simMeasure + " {} = " + isPisSim,
-                              itemset.toString() + fgCountMap.get(itemset),
-                              pis.toString() + fgCountMap.get(pis));
-                      }
+                      if (!noCosineSimilarity && LOG.isTraceEnabled())
+                        LOG.trace("{} " + simMeasure + " {} = " + isPisSim,
+                            itemset.toString() + fgCountMap.get(itemset),
+                            pis.toString() + fgCountMap.get(pis));
+
                     }
 
                     if ((stopMatchingParentFSimLow && parentItemset != null &&
