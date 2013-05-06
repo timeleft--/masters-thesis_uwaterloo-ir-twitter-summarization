@@ -653,7 +653,7 @@ $\frac{|T_{s}|}{|T_{s_{p}}|} $ is the called confidence of the rule ``$s_{p} \ri
 %some algorithms for mining itemsets based on a variation called \emph{all confidence} have been proposed \cite{kim2004ccmine}. The strongly closed property builds on the notion of confidence by choosing itemsets which would result in rules of high confidence. The minimum acceptable confidence of the resulting rule is a parameter $\kappa$ that can vary between 0 and 1 to increase the strength of the strongly closed property.
 
 %Using a lower bound on confidence of a longer itemset given a closed subset its least frequent closed subset (maximum confidence of this superset) 
-Even though choosing \emph{high confidence} itemsets filters out many redundant itemsets formed because of slight variations of the same topic, it is still does not completely solve the problem of redundancy. The intersection of the sets of transactions containing two \emph{high confidence} itemsets can be different by only 1 transction from either of the sets. For example, the closed itemset \{Obama, Romney\} can have three closed supersets: \{Obama, Romney, debate, \#elections2012\}, \{Obama, Romney, debate\} and \{Obama, Romney, \#elections2012\}. Figure \ref{fig:jelena} illustrates how all supersets can be \emph{high confidence}, while they are still redundant itemsets mined from almost the same Tweets. Each circle in the figure represents the set of Tweets containing the itemset formed by concatenating the words in the circle with the words in its container. The figure also shows, as dashed circles, examples of itemsets that would be filtered out by the\emph{high confidence} property.
+Even though choosing \emph{high confidence} itemsets filters out many redundant itemsets formed because of slight variations of the same topic, it is still does not completely solve the problem of redundancy. The intersection of the sets of transactions containing two \emph{high confidence} itemsets can be different by only 1 transction from either of the sets. For example, the closed itemset \{Obama, Romney\} can have three closed supersets: \{Obama, Romney, debate, \#elections2012\}, \{Obama, Romney, debate\} and \{Obama, Romney, \#elections2012\}. Figure \ref{fig:jelena} illustrates how all supersets can be \emph{high confidence}, while they are still redundant itemsets mined from almost the same Tweets. Each circle in the figure represents the set of Tweets containing the itemset formed by concatenating the words in the circle with the words in its container. The figure also shows, as dashed circles, examples of itemsets that would be filtered out by the \emph{high confidence} property.
 \begin{figure}[htb]
 \label{fig:jelena}
 \centering
@@ -686,8 +686,28 @@ Even though choosing \emph{high confidence} itemsets filters out many redundant 
 \caption{High and low confidence itemsets}
 \end{figure}
 
-To remove such redundancy, we merge similar itemsets into \emph{strongly closed} itemset clusters. The \emph{strongly closed} itemset is a bag of items formed by taking the union of all cluster members. This concentrates the numerous itemsets about a certain topic into a few units. We do the clustering in the postings list space to avoid merging itemsets including different aspects or opinions about a topic. The clustering scheme we use is similar to \cite{bayardo2007scaling}, but it is much simpler. First, we do an all pairs similarity search on the itemsets, using IDF weighted cosine similarity. Similar itemsets are then clustered  such that \emph{high confidence} is achieved between cluster members. The notion of \emph{confidence} still applies even though clusters include itemsets that are not supersets of one another, but its accurate definition has to be used:
+To remove such redundancy, we merge similar itemsets into \emph{strongly closed} itemset clusters. The \emph{strongly closed} itemset is a bag of items formed by taking the union of all cluster members. 
+%This concentrates the numerous itemsets about a certain topic into a few units. 
+We do the clustering in the postings list space to avoid merging itemsets 
+%including different aspects or opinions about a topic. 
+about different topics or different aspects or opinions in the same topic. 
+The clustering scheme we use is similar to \cite{bayardo2007scaling}, but it is much simpler. 
+For each itemset, we find the itemsets produced before it and overlapping with it, even in one item, such that the \emph{high confidence} condition holds. The itemset joins the cluster containing the itemset with which it achieves the highest confidence. The notion of \emph{confidence} applies for itemsets that are not supersets of one another, but it is defined as: %follows \cite{cohen2001finding}:
 \begin{equation}c(s_i \rightarrow s_j) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_i}|}\end{equation}
+
+Thus, we formally define \emph{strong closed} itemset clusters as:
+\begin{multline}\label{eq:strongClosedFormal}
+\mathcal{S} \gets \, all\,  S \, such\,  that\, 
+\\S = \{i:\, i \in \bigcup_{j}{s_j}\; where \; \forall_{s_j}\, \textbf{argmax}_{s_k} c(s_j \rightarrow s_k)  \in S \\\; and\; c(s_j \rightarrow s_k) \le \kappa \} 
+\end{multline}
+ 
+
+%\begin{multline}\label{eq:strongClosedFormal}S = \{i:\, i \in \bigcup{s}\; where \; \forall_{j,k}\, c(s_j \rightarrow s_k)  \le \kappa \} \\
+%\mathcal{S} = \{S: s_j \; where \; \textbf{argmax}_{j,k} c(s_j \rightarrow s_k) \; \forall \; s_j \in \mathcal{C}, s_k \in S\}
+%\end{multline}
+
+%First, we do an all pairs similarity search on the itemsets, using IDF weighted cosine similarity. 
+%Itemsets are clustered  such that \emph{high confidence} is achieved between cluster members and the cluster centroid. We make use of the structure of itemsets for selecting the centroid. The cluster centroid is the most supported itemsets select the The cluster centroid 
 
 %to calculate it between such itemsets the actual (dis-)overlap of the postings lists must be determined. 
 %For example, itemsets that differ because of items not pertaining to the topic, such as ``was'' and ``got'' in the Obama-elected example. 
@@ -696,79 +716,94 @@ To remove such redundancy, we merge similar itemsets into \emph{strongly closed}
 %\begin{equation}\label{eq:IDF}IDF(i) = \log{\frac{\|E\|}{\|D_i\|}}\end{equation}
 %\begin{equation}\label{eq:cosine}cos(S_1,S_2) = \frac{\sqrt{\sum_{i \in S_1 \cap S_2} IDF(i)^2 }}{\sqrt{\sum_{i \in S_1} IDF(i)^2} * \sqrt{\sum_{i \in S_2} IDF(i)^2}} \end{equation}
 %To avoid forming alliances that are not coherent about a certain topic, 
-To see if the \emph{high confidence} condition will be violated, it is enough to check if the difference between the posting lists of two itemsets is above a certain threshold.
-%The merge is permitted only if the difference is below 
-The maximum number of different documents allowed for two itemsets being merged, so that they satisfy the \emph{high confidence} condition, is given by equation \ref{eq:maxDiffCnt}. In case of merging an itemset with its superset, this difference can be calculated directly from the sizes of the posting lists.
+
+
+Algorithm  \ref{algo:alliance}  shows the implementation for forming \emph{strong closed} itemset clusters.
+To see if the \emph{high confidence} condition will be violated, it is enough to check if the difference between the posting lists of two itemsets is above the number given by equation \ref{eq:maxDiffCnt}. In case of merging an itemset with its superset, this difference can be calculated directly from the sizes of the posting lists.
 % using the confidence formula.
 %by subtracting the support of the superset from that of the itemset. 
-Otherwise, the difference can be efficiently calculated from the postings lists since they are sorted, and in fact it is enough to check if the difference exceeds the maximum number allowed. Equation \ref{eq:strongClosedFormal} gives a formal definition of \emph{strong closed} itemset cluster.
+Otherwise, the difference can be efficiently calculated from the postings lists since they are sorted, and it is enough to check if the difference exceeds the maximum number allowed. 
+
 % The maximum number of different documents is given by equation \ref{eq:maxDiffCnt}. 
 %An empirical performance evaluation is provided in section \ref{sec:perf}. 
 %\begin{equation}\label{eq:maxDiffCnt}\Delta(S_1,S_2,\kappa) = (1 - \kappa) * max(\|D_{S_1}\|,\|D_{S_2}\|), \, \kappa \in [0,1[\end{equation}
-\begin{equation}\label{eq:maxDiffCnt}\Delta(S_1,S_2,\kappa) = (1 - \kappa) * max(|T_{s_1}|,|T_{s_2}|)
+\begin{equation}\label{eq:maxDiffCnt}\Delta(S_1,S_2,\kappa) = (1 - \kappa) * \min(|T_{s_1}|,|T_{s_2}|)
 %, \, \kappa \in [0,1[
 \end{equation}
-\begin{multline}\label{eq:strongClosedFormal}S = \{i:\, i \in \bigcup{s}\; where \; \forall_{j,k}\, c(s_j \rightarrow s_k)  \le \kappa \} \\
-\mathcal{S} = \{S: s_j \; where \; \textbf{argmax}_{j,k} c(s_j \rightarrow s_k) \; \forall \; s_j \in \mathcal{C}, s_k \in S\}
-\end{multline}
 
-After joining an alliance an itemset seizes to exist outside of the alliance, so that an itemset can be part of only one alliance. However, when checking which itemsets to consider for merging with a still unallied itemset, its similarity is calculated with the individual itemsets rather than the alliance. Otherwise, an itemset could fail to join an existing alliance because the similarity between the larger bag of items and the itemset is likely to be lower than the similarity between individual member itemsets and the itemset. This can cause cascading many alliances that should have been separate into one large alliance. Such an oversized alliance could also be about different topics. Empirically, we observe that one and only one oversized alliance about different topics is formed. This alliance catches many itemsets made up of low IDF terms, thus not interesting. Topics with high IDF terms in them cannot have high cosine similarity with topics of only low IDF terms. The size of the bag of items in this alliance is significantly larger than other alliances, making it easy to distinguish and discard it.
+
+\begin{algorithm}
+\SetAlgoLined
+\LinesNumbered
+\KwIn{$\kappa$: Minimum closed strength} %$\theta$: Minimum cosine similarity, \\
+\KwData{F: Frequent Itemsets produced by LCM}
+\KwResult{$\mathcal{S}$: Strong closed itemset clusters}
+\For{$i \gets 2$ to $|F|$}{
+	$K \gets \emptyset$ \tcp*{Candidates for merging with $s_i$}
+	$P \gets \emptyset$ \tcp*{Subsets of current itemset}
+	\For{$j \gets 1$ to $i - 1$}{
+		\If{$|s_i \cap s_j| > 0$}{
+			$K$.add($S_j$)\;
+			\If{$|s_i \cap s_j| = min(|s_i|, |s_j|)$ and $|s_i| > |s_j|$}{
+				$P$.add($S_j$)\;
+%				\lIf{$\|S_i\| > \|S_j\|$}{$T$.add($S_j$)}
+			}
+		}
+%		\ElseIf{cos($S_i,S_j$) $\ge \theta$}{
+%			$C$.add($S_j$)\;
+%		}
+	}
+	$minDiff \gets \infty$ \tcp*{Best candidate's score}
+	\ForEach{$s_k \in K$}{
+		\uIf{$s_k \in P$}{
+			$\delta \gets |T_{s_k}| - |T_{s_i}|$\;
+		}	
+		\Else{
+			$\delta \gets$ difference($T_{s_i},T_{s_k},\Delta$) \tcp*{Stops early}
+		}
+		\If{$\delta \le \Delta(s_i, s_k, \kappa)$ and $\delta < minDiff$}{
+			$s_m \gets s_k$ \tcp*{Best merge candidate}
+			$minDiff \gets \delta$\;
+		}
+	}
+	\If{$minDiff < \infty$}{
+		$\mathcal{S}[s_m].itemset \gets \mathcal{S}[s_m].itemset \cup s_i \cup s_m$\;
+	}
+}
+\Return{$\mathcal{S}$}\;
+\caption{Forming strong closed itemset clusters}
+\label{algo:alliance}
+\end{algorithm}
+
+
+
+%After joining an alliance an itemset seizes to exist outside of the alliance, so that an itemset can be part of only one alliance. However, when checking which itemsets to consider for merging with a still unallied itemset, its similarity is calculated with the individual itemsets rather than the alliance. Otherwise, an itemset could fail to join an existing alliance because the similarity between the larger bag of items and the itemset is likely to be lower than the similarity between individual member itemsets and the itemset. This can cause cascading many alliances that should have been separate into one large alliance. Such an oversized alliance could also be about different topics. Empirically, we observe that one and only one oversized alliance about different topics is formed. This alliance catches many itemsets made up of low IDF terms, thus not interesting. Topics with high IDF terms in them cannot have high cosine similarity with topics of only low IDF terms. The size of the bag of items in this alliance is significantly larger than other alliances, making it easy to distinguish and discard it.
 %It is difficult to reason about how alliances are formed, specially after fi
 
 %Expanding on the previous observation that adding a high IDF term to an itemset with low IDF terms only prevents achieving a high enough cosine similarity, we introduce an optimization that improves both runtime, memory requirements and filtering power. Unlike the original LCM algorithm, our extension requires keeping previous itemsets in memory so that newly generated ones are compared to them to find candidates for alliance. Instead of keeping all previous itemsets in memory we keep only a limited number, $b$. This obviously improves runtime and memory requirements, but it also improves the quality of itemsets chosen for alliance. Given the way PPC-Extension produces itemsets, an alliance candidate appearing more than $b$ itemsets earlier must be similar because of a term that has at least $\log_2(b+1)$  extension items \emph{smaller} than the one that got added to form the current itemset. This lower bound assumes that all possible itemsets created by appending any combination of the $\log_2(b+1)$ will be closed and will have enough support. In this case, there will be 1 combination where all the items are appended, $\log_2(b+1)$ combinations where one item is missing, $\log_2(b+1)$ choose 2 combinations where 2 items are missing, ... etc. For all of these combinations to be closed itemsets, the 1 combination where all the items are appended has to have minimum support, the  $\log_2(b+1)$ combinations where 1 item is missing will each have support 1 more than minimum, the combinations where 2 items are missing will each have support 2 more than minimum, ... etc. Therefore the minimum drop in frequency between a closed itemsets and its subset produced $b$ steps earlier is given by:
 %\begin{equation}\|D_{S_x}\| - \|D_{S_(x-b)}\| = \alpha \frac{\|E\|}{E.span} + \sum_{a=1}^{\log_2(b+1) - 1}a\binom{\log_2(b+1)}{a} \end{equation}
 %To minimize the difference in frequency between the current itemset and the alliance candidate, we assume that the 1 combination will appear $\ciel{b/2}$ times,  Therefore the difference in frequency between  $b$ 
 
-
 %A similar situation also happens if the intersection ???
 %must have a frequency of occurrence at least $b$ more than the current itemset's frequency. 
 
-Algorithm \ref{algo:alliance} shows the described algorithm for merging itemsets alliances. Table  \ref{table:allianceQuality} shows the number of closed itemsets of length at least 2 without filtering any of them out, as well as after applying the KLD filter and the strongly closed filter, and the number of itemsets alliances. The table also shows the average quality of the itemsets after each stage of reduction. The quality is calculated as Basic Elements? PERPLEXITY? CASCADE MEASURE? 
-
-\begin{algorithm}
-\SetAlgoLined
-\LinesNumbered
-\KwIn{$\theta$: Minimum cosine similarity, \\$\kappa$: Minimum closed strength}
-\KwData{S: Frequent Itemsets produced by LCM}
-\KwResult{A: Frequent Itemsets alliances}
-\For{$i \gets 2$ to $\|S\|$}{
-	$C \gets \emptyset$ \tcp*{Candidates for merging with $S_i$}
-	$T \gets \emptyset$ \tcp*{Subsets of current itemset}
-	\For{$j \gets 1$ to $i - 1$}{
-		\uIf{$\|S_i \cap S_j\| = min(\|S_i\|, \|S_j\|)$}{
-			$C$.add($S_j$)\;
-			\lIf{$\|S_i\| > \|S_j\|$}{$T$.add($S_j$)}
-		}
-		\ElseIf{cos($S_i,S_j$) $\ge \theta$}{
-			$C$.add($S_j$)\;
-		}
-	}
-	$M.score \gets \infty$ \tcp*{Best merge candidate's score}
-	\ForEach{$S_c \in C$}{
-		\uIf{$S_c \in T$}{
-			$\delta \gets \|D_{S_c}\| - \|D_{S_i}\|$\;
-		}	
-		\Else{
-			$\delta \gets$ difference($D_{S_i},D_{S_c}$) \tcp*{Stops early}
-		}
-		\If{$\delta \le \Delta(S_i, S_c, \kappa)$ and $\delta < M.score$}{
-			$M \gets S_c$\;
-			$M.score \gets \delta$\;
-		}
-	}
-	\If{$M.score < \infty$}{
-		A[M].$itemset \gets $A[M].$itemset \cup S_i \cup M$\;
-	}
-}
-\Return{A}\;
-\caption{Merging itemsets into alliances}
-\label{algo:alliance}
-\end{algorithm}
-
+%Algorithm \ref{algo:alliance} shows the described algorithm for merging itemsets alliances. Table  \ref{table:allianceQuality} shows the number of closed itemsets of length at least 2 without filtering any of them out, as well as after applying the KLD filter and the strongly closed filter, and the number of itemsets alliances. The table also shows the average quality of the itemsets after each stage of reduction. The quality is calculated as Basic Elements? PERPLEXITY? CASCADE MEASURE? 
 
 \subsection{Bounding runtime and memory}
 \label{}
-Expanding on the previous observation that adding a high IDF term to an itemset with low IDF terms only prevents achieving a high enough cosine similarity, we introduce an optimization that improves both runtime, memory requirements and filtering power. Unlike the original LCM algorithm, our extension requires keeping previous itemsets in memory so that newly generated ones are compared to them to find candidates for alliance. Instead of keeping all previous itemsets in memory we keep only a limited number, $b$. This obviously improves runtime and memory requirements, and it can also improve the quality of itemsets chosen for alliance. If the total ordering follows the descending order of items' frequencies, then, because of the way PPC-Extension produces itemsets, for an itemset $S_x$ and any candidate subset $S_{(x-b)}$ that was produced $b$ itemsets earlier $\|D_{S_{(x-b)}}\| - \|D_{S_x}\| \ge b$. This lower bound is achieved when the intersection of the documents containing the current itemset $S_x$ and all the $b-1$ supersets before it is exactly the subset $S_{(x-b)}$, and there are no more itemsets with the same intersection. In this case each of the $b$ supersets must have support at most $\|D_{S_{(x-b)}}\| - 1$ to be considered closed, but because there are $b$ of them then actually their support is $\|D_{S_{(x-b)}}\| - b$. Since the minimum support difference is $b$, then the maximum confidence of $S_x$ is $\frac{\|D_{S_{(x-b)}}\| - b}{\|D_{S_{(x-b)}}\|} $. Therefore for a given $\kappa$ we can determine the buffer size $b$ as the frequency of itemsets keeps decreasing. In our implementation we use a fixed $b$ of 1000.
+%Expanding on the previous observation that adding a high IDF term to an itemset with low IDF terms only prevents achieving a high enough cosine similarity, 
+We exploit the way PPC-Extension produces itemset to introduce an optimization that improves both runtime, memory requirements and filtering power of the high confidence condition. Unlike the original LCM algorithm, filtering low confidence itemsets requires keeping mining resluts in memory to calculate the confidence of newly generated ones.
+% forming strong closed clusters requires keeping itemsets in memory so that newly generated ones are clustered with them.
+% to find candidates for merging. 
+Instead of keeping all previous itemsets in memory we keep only a limited number, $b$ (for buffer size). This obviously improves runtime and memory requirements, and it can also improve the choice of itemsets. If the total ordering of items follows the descending order of items' frequencies, then the call tree of recursive LCM calls will be very similar to the FP-tree. Given the length constraint on Tweets, then the FP-Tree can only be shallow and wide. 
+%For a large enough $b$, 
+%if an itemset is produced $b$ steps ago then this itemset's overlap with the current itemset is very likely a language construct. Since the tree is shallow, then 
+Therefore, an itemset that has a large number of supersets cannot be appearing with only a limited set of words (topic), but it has to be covering a breadth of possible descendants. Thus this itemset is very likely to be a language construct. Even if it is a language construct that appears with high confidence with some topical words, this high confidence doesn't carry interesting information; for example, \{the, of\} that appears within \{the, united, states, of, america\}. Even if it is a topical word with very high frequency, then interesting information will be divided into several topics given its large number of direct descendants. In either case, filtering closed itemsets that have high confidence with such a ubiquitous itemset will not omit any information. If the filtered itemset is part of an informative one then it will be produced when the longer itemset is found to have high confidence with the filtered one.
+
+We use a buffer size $b=1000$ in all experiments, which leads to a runtime of about 1 to 3 milliseconds per itemset for filtering out low confidence itemsets and creating strong closed clusters. The number of selected itemsets is also reduced by almost half on average. The difference between the two selections is made up mostly of stop words. A few itemsets including topical words are also filtered, such as the closed itemset \{president, Obama\} since Obama is an example of a ubiquitous topical word. Such itemsets lack any information on their own and is included in other informative ones. Finally, this enhancement is not necessary for satisfactory performance. With an unlimited buffer, the runtime is XXX. 
+%Furthermore, the clustering is improved for some itemsets because of filtering noisy ones. For example, ``ballot''
+%only be a very frequent set of items. The number
+%, because of the way PPC-Extension produces itemsets, for an itemset $S_x$ and any candidate subset $S_{(x-b)}$ that was produced $b$ itemsets earlier $\|D_{S_{(x-b)}}\| - \|D_{S_x}\| \ge b$. This lower bound is achieved when the intersection of the documents containing the current itemset $S_x$ and all the $b-1$ supersets before it is exactly the subset $S_{(x-b)}$, and there are no more itemsets with the same intersection. In this case each of the $b$ supersets must have support at most $\|D_{S_{(x-b)}}\| - 1$ to be considered closed, but because there are $b$ of them then actually their support is $\|D_{S_{(x-b)}}\| - b$. Since the minimum support difference is $b$, then the maximum confidence of $S_x$ is $\frac{\|D_{S_{(x-b)}}\| - b}{\|D_{S_{(x-b)}}\|} $. Therefore for a given $\kappa$ we can determine the buffer size $b$ as the frequency of itemsets keeps decreasing. In our implementation we use a fixed $b$ of 1000.
 
 
 % The difference between documents containing a certain strongly closed itemset and the intersection can be as little as one document. Thus all variations can have high confidence. On the other hand, using an upper bound on confidence is totally counter intuitive, since this means that if only one document exists with a shorter itemset then the longer itemset will be omitted. 
@@ -777,8 +812,33 @@ Expanding on the previous observation that adding a high IDF term to an itemset 
 
 %We build on the confidence property by merging high confidence itemsets that are extensions of the same itemset into an itemset \emph{alliance}. The itemset alliance is a bag of items formed by taking the union of all member itemsets. This concentrates the numerous high confidence closed and maximal itemsets about a certain topic into one unit. Furthermore, we also include in the alliance all itemsets with high cosine similarity to its members. This merges together itemsets that differ because of items that come earlier in the total ordering and are not pertaining to the topic, such as ``with'' and ``and'' in the Bieber-Gomez example. To avoid forming alliances that are not coherent about a certain topic, we go beyond the numerical calculation of confidence and we actually calculate the overlap between the posting lists of itemsets being merged. In case of merging an itemset with its subset 
 %With a reasonably high support, the 
- 
-\subsection{Ranking alliances}
+\subsection{Effect of confidence threshold}%Choice of $\kappa$}
+Figure \ref{fig:numStrongHConf} shows the number of high confidence itemsets (of length more than 1) at different values of $\kappa$. Even at low values of $\kappa$, the number is much lower than the number of closed itemsets (6147 from figure \ref{fig:ngramsLen}, but only 2440 after removing 1-itemsets). This encourages us to use a low value of $\kappa$, since the biggest reduction in number of itemset has already happened by filtering out itemsets that don't make up any significant proportion of their subsets'  support. We use $\kappa=0.2$ for the rest of the paper. 
+
+The number of strong closed itemset clusters, and its ratio to the number of high confidence itemsets are also shown. While the number of high confidence itemsets decrease as $\alpha$ increases, the ratio stays almost fixed. This indicates that regardless of the selectivity of the high confidence condition (or any other condition used) there will always be itemsets that can be clustered together, stressing the effect of language use. At $\kappa=0.2$, we are left with ~10\% of the closed itemsets of length 2 or more. The next two sections will show how to make sense of them.
+%the selectivity of strong closed itemset clusters is $~\frac{200}/{2440}
+
+\begin{figure}
+% Generated with LaTeXDraw 2.0.8
+% Sun May 05 22:12:01 EDT 2013
+% \usepackage[usenames,dvipsnames]{pstricks}
+% \usepackage{epsfig}
+% \usepackage{pst-grad} % For gradients
+% \usepackage{pst-plot} % For axes
+\scalebox{0.5} % Change this value to rescale the drawing.
+{
+\begin{pspicture}(0,-5.37)(16.96,5.37)
+\rput(8.48,0.0){\includegraphics{num-itemsets_high-conf+strong-closed_against-kappa.eps}}
+\end{pspicture} 
+}
+
+
+\label{fig:numStrongHConf}
+\caption{Number of strong closed itemsets and high confidence itemsets at different values of $\kappa$}
+%. The ratio of the two numbers is shown on top of the bar}
+\end{figure}
+
+\section{Temporal Ranking}
 \label{sec:allianceRank}
 So far we have been reducing the number of itemsets, and we succeeded to reduce it to about 1\% of the original number (in alliances). We now discuss how to rank the itemset alliances, making use of the structure of the alliance. 
 %We have experimented with various ranking schemes applied directly to itemsets (before and after reduction) and none of them resulted in a satisfactory ranking. 
