@@ -126,133 +126,143 @@ The mined itemsets provide the vocabulary associated with events and can be used
 We also propose a quality ranking scheme that makes the mining results presentable to human users. We don't call this a summary because we don't take into account the quality measures of summaries such as coherence and cohesion. However, the top ranked itemsets cover a variety of open topics, and within one topic different opinions are reported as separate contrastive itemsets.  
 % TODO: By the date of the camera ready version, please have a url to put and tell people to go to and look! However,
 
-The rest of the paper is organized as follows: We start by an overview of properties of text in social media and describe the dataset we use in section \ref{sec:socmed}. Then we explain the Frequent Itemset Mining algorithm which we build upon in section \ref{sec:fim}. 
-In the next 3 sections we describe the adaptations we propose for making the algorithm suitable for mining social media text. In section \ref{sec:ngrams} we describe how using term N-Grams of variable lengths filters out many language constructs. In section \ref{sec:KLD} we describe the use of differential temporal features to rank interesting itemsets. In section \ref{sec:strong} we propose the strong closed property and show how to reduce the number of itemsets without loosing important ones. After that we show an example of the results of applying our methods in section \ref{sec:emperical}. In section \ref{sec:related} we discuss related work that applied Frequent Itemsets Mining on text. Finally, we finish by the conclusion and future work in section \ref{sec:concfut}.
+\textbf{Paper outline.} The first three sections provide the necessary background for the rest of the paper. We start by discussing related work in section \ref{sec:related}, then we explain Frequent Itemset Mining and the algorithm on which we build our work in sections \ref{sec:fim} and \ref{sec:lcm} respectively. In sections \ref{sec:socmine}, \ref{sec:strong} and \ref{sec:rank} we propose solutions to different problems faced when applying frequent itemset mining to social media text. We present the outline of those sections graphically using a frequency ordered prefix tree of the itemsets. Each path from root to a leaf in such a tree represents an Itemsets, where each itemset is ordered in non-increasing order of the frequency of items. Itemsets having the same prefix share the nodes representing this prefix. This representation is typical in the literature, and it is actually a very good representation of the Frequent Itemset Mining problem. Figure \ref{fig:outline} shows conceptually how section  \ref{sec:socmine}, \ref{sec:strong} and \ref{sec:rank}  addresses different parts of the problem. In section \ref{sec:concfut}, we conclude and suggest future directions.
+
+%The rest of the paper is organized as follows: We start by an overview of properties of text in social media and describe the dataset we use in section \ref{sec:socmed}. Then we explain the Frequent Itemset Mining algorithm which we build upon in section \ref{sec:fim}. 
+%In the next 3 sections we describe the adaptations we propose for making the algorithm suitable for mining social media text. In section \ref{sec:ngrams} we describe how using term N-Grams of variable lengths filters out many language constructs. In section \ref{sec:KLD} we describe the use of differential temporal features to rank interesting itemsets. In section \ref{sec:strong} we propose the strong closed property and show how to reduce the number of itemsets without loosing important ones. After that we show an example of the results of applying our methods in section \ref{sec:emperical}. In section \ref{sec:related} we discuss related work that applied Frequent Itemsets Mining on text. Finally, we finish by the conclusion and future work in section \ref{sec:concfut}.
 
 %Mining user generated content has been a hot topic since the beginning of Web 2.0. \textbf{didn't I say I dislike such inaugrational sentences.. ehem!} Businesses are interested in getting direct insights from consumers without incurring costs for surveys, and so are governments, celebrities, and above all advertisers and market analysts. Researchers are interested because methods developed for other media does not necessarily work for social media. This is particularly correct for Twitter because of its length restriction, high volume and lack of structure. The length restriction has resulted in a very particular language use as detailed in \ref{sec:socmed}, but it seems to have also played a dual role in encouraging people to keep Tweeting about everything they do, think or feel. This resulted in a very high volume of Tweets\footnote{We receive an average of 100,000 Tweets per hour from Spritzer}, most of which is personal updates but some of which represent what is happening now. The speed of news on Twitter has been known to exceed the news on professional news agencies \cite{firststory}, and it even travels faster than earthquakes \cite{earthquake}. First stories that appear in Twitter rather than official news are covered by Twitter user present at the event, and able to provide content that cannot be acquired after the fact such as the picture of the emergency landing on the Hudson river \cite{hudson}. Such stories are noticed because of the natural collaborative filtering act of retweeting good content, and the use of the community developed convention of Hashtags. The Twitter website makes use of this by following the rise in the volume of keywords, and featuring keywords whose rise in volume accelerates more than any other. However, this does not catch topics with sustained interest. It also fails to catch important topics for which the interest is peaking within a certain niche of users. Further it is almost always polluted by uninteresting topics that are made trending. In this paper we propose...
 
 \begin{figure*}
 \centering
 % Generated with LaTeXDraw 2.0.8
-% Thu May 02 21:16:47 EDT 2013
+% Mon May 06 20:21:17 EDT 2013
 % \usepackage[usenames,dvipsnames]{pstricks}
 % \usepackage{epsfig}
 % \usepackage{pst-grad} % For gradients
 % \usepackage{pst-plot} % For axes
 \scalebox{1} % Change this value to rescale the drawing.
 {
-\begin{pspicture}(0,-4.41)(17.873497,4.4013004)
-\pstriangle[linewidth=0.04,dimen=outer](8.57,-4.41)(17.14,8.82)
-\psline[linewidth=0.04cm](0.78,-3.59)(16.32,-3.61)
-\psline[linewidth=0.04cm,linestyle=dashed,dash=0.16cm 0.16cm](6.88,2.57)(10.24,2.59)
+\begin{pspicture}(0,-4.41)(17.948048,4.4013004)
+\pstriangle[linewidth=0.04,dimen=outer](8.617168,-4.41)(17.14,8.82)
+\psline[linewidth=0.04cm](0.827168,-3.59)(16.367168,-3.61)
+\psline[linewidth=0.04cm,linestyle=dashed,dash=0.16cm 0.16cm](6.927168,2.57)(10.287168,2.59)
 \usefont{T1}{ptm}{m}{n}
-\rput(8.465957,-4.005){Items with low frequency; excluded by Frequent Itemset Mining since they are below the support threshold}
-\psline[linewidth=0.04cm,linestyle=dashed,dash=0.16cm 0.16cm](2.44,-2.03)(14.78,-2.01)
+\rput(8.60748,-4.005){Items with low frequency in the data are excluded by Frequent Itemset Mining, and hence not part of the tree}
+\psline[linewidth=0.04cm,linestyle=dashed,dash=0.16cm 0.16cm](2.487168,-2.03)(14.8271675,-2.01)
 \usefont{T1}{ptm}{m}{n}
-\rput(4.0392385,4.075){Items with the highest frequencies within transactions }
+\rput(3.4739747,4.075){The top of the tree is not as small as it seems.}
 \usefont{T1}{ptm}{m}{n}
-\rput(3.7760057,3.675){sharing a common prefix are most likely language }
+\rput(3.6774805,3.655){It contains a large number of itemsets which are}
 \usefont{T1}{ptm}{m}{n}
-\rput(3.4375684,3.295){constructs, but they can also be topical words}
+\rput(2.5279298,3.295){most likely language constructs.}
 \usefont{T1}{ptm}{m}{n}
-\rput(13.305957,4.075){In section 3 we reduce the number of itemsets produced}
+\rput(12.646406,4.055){In section \ref{sec:socmine} we reduce the number of itemsets}
 \usefont{T1}{ptm}{m}{n}
-\rput(12.990498,3.675){through flattening the peakedness of this head.}
+\rput(13.064883,3.675){made up of items from the head of the Zipfean}
 \usefont{T1}{ptm}{m}{n}
-\rput(2.1082716,0.675){The closed property selects }
+\rput(2.1554394,0.675){The closed property selects }
 \usefont{T1}{ptm}{m}{n}
-\rput(1.8648047,0.295){non-redundant itemsets, }
+\rput(1.9119726,0.295){non-redundant itemsets, }
 \usefont{T1}{ptm}{m}{n}
-\rput(3.0692382,2.295){Itemsets whose lowest frequency item is}
+\rput(3.1164062,2.295){Itemsets whose lowest frequency item is}
 \usefont{T1}{ptm}{m}{n}
-\rput(2.732578,1.895){within the mid-range of frequencies}
+\rput(2.779746,1.895){within the mid-range of frequencies}
 \usefont{T1}{ptm}{m}{n}
-\rput(2.409707,1.515){contain interesting information,}
+\rput(2.456875,1.515){contain interesting information,}
 \usefont{T1}{ptm}{m}{n}
-\rput(2.4226954,1.095){but there are too many of them.}
+\rput(2.4698632,1.095){but there are too many of them.}
 \usefont{T1}{ptm}{m}{n}
-\rput(1.8226953,-0.105){but it is easily violated.}
+\rput(1.8698633,-0.105){but it is easily violated.}
 \usefont{T1}{ptm}{m}{n}
-\rput(14.025957,2.295){In section 4 we propose the strong closed}
+\rput(13.823125,2.335){In section \ref{sec:strong} we propose the strong closed}
 \usefont{T1}{ptm}{m}{n}
-\rput(14.607364,1.895){property. It selects only itemsets comprizing}
+\rput(14.255615,1.895){itemsets, which are clusters of itemsets}
 \usefont{T1}{ptm}{m}{n}
-\rput(14.774668,1.495){a high proportion of the support of their}
+\rput(14.45792,1.495){such that every itemset makes up a}
 \usefont{T1}{ptm}{m}{n}
-\rput(14.486103,1.075){closed subsets, after combining...}
+\rput(14.534248,1.055){high proportion of the support of}
 \usefont{T1}{ptm}{m}{n}
-\rput(14.701895,0.695){For redundancy because of the}
+\rput(14.734629,0.695){its subsets. This eleminates cl-}
 \usefont{T1}{ptm}{m}{n}
-\rput(14.806572,0.295){use of language, clustering}
+\rput(14.88792,0.295){sed itemsets generated by a }
 \usefont{T1}{ptm}{m}{n}
-\rput(15.167656,-0.105){of the remaining itemsets}
+\rput(15.1511135,-0.105){slight violation of the cl-}
 \usefont{T1}{ptm}{m}{n}
-\rput(15.264932,-0.525){solves the problem, as}
+\rput(15.304863,-0.525){osed condition. It also}
 \usefont{T1}{ptm}{m}{n}
-\rput(1.5603125,-0.505){It also doesn't solve}
+\rput(1.6074805,-0.505){It also doesn't solve}
 \usefont{T1}{ptm}{m}{n}
-\rput(1.3780762,-0.905){redundancy from }
+\rput(1.4252441,-0.925){redundancy from }
 \usefont{T1}{ptm}{m}{n}
-\rput(1.2769824,-1.705){in language.}
+\rput(1.0541503,-1.705){in language.}
 \usefont{T1}{ptm}{m}{n}
-\rput(1.2849317,-1.305){slight variations}
+\rput(1.3320996,-1.305){slight variations}
 \usefont{T1}{ptm}{m}{n}
-\rput(15.70628,-0.925){discussed in section 8.}
+\rput(15.58497,-0.945){reduces redundancy}
 \usefont{T1}{ptm}{m}{n}
-\rput(8.459648,-2.345){After mining itemsets based on support and reducing their redundancy, we rank}
+\rput(8.506817,-2.345){After mining itemsets based on support and reducing their redundancy, we rank}
 \usefont{T1}{ptm}{m}{n}
-\rput(8.603467,-3.265){specially in text where frequency has a Zipfean distribution. Section 9 describes our ranking scheme.}
+\rput(8.663008,-3.285){and features intrinsic to itemsets don't result in a good ranking. We propose a ranking scheme in section \ref{sec:rank}.}
 \usefont{T1}{ptm}{m}{n}
-\rput(8.574101,-2.805){the remiaining itemsets using temporal features. The majority of itemsets has low support, }
+\rput(8.621269,-2.805){the remiaining itemsets using temporal features. The majority of itemsets has low support, }
 \usefont{T1}{pcr}{m}{n}
-\rput(8.502881,3.535){the}
+\rput(8.550049,3.535){the}
 \usefont{T1}{pcr}{m}{n}
-\rput(7.644902,2.835){obama}
+\rput(7.6920705,2.835){obama}
 \usefont{T1}{pcr}{m}{n}
-\rput(8.208155,1.035){won}
+\rput(8.255322,1.035){won}
 \usefont{T1}{pcr}{m}{n}
-\rput(7.4023533,1.875){president}
+\rput(7.4495215,1.875){president}
 \usefont{T1}{pcr}{m}{n}
-\rput(10.234902,-1.625){\#mtvema}
+\rput(10.28207,-1.625){\#mtvema}
 \usefont{T1}{pcr}{m}{n}
-\rput(9.792881,2.175){bieber}
+\rput(9.840049,2.175){bieber}
 \usefont{T1}{pcr}{m}{n}
-\rput(10.138154,1.475){justin}
+\rput(10.185322,1.475){justin}
 \usefont{T1}{pcr}{m}{n}
-\rput(11.074903,0.655){selena}
+\rput(11.12207,0.655){selena}
 \usefont{T1}{pcr}{m}{n}
-\rput(7.9116306,0.115){elections}
+\rput(7.958799,0.115){elections}
 \usefont{T1}{pcr}{m}{n}
-\rput(7.711367,-0.925){\#elections2012}
+\rput(7.7585354,-0.925){\#elections2012}
 \usefont{T1}{pcr}{m}{n}
-\rput(11.507587,0.055){gomez}
+\rput(11.554756,0.055){gomez}
 \usefont{T1}{pcr}{m}{n}
-\rput(5.996133,0.615){barack}
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.56,4.35)(7.78,3.05)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(7.68,2.65)(7.32,2.03)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(6.84,1.63)(6.4,0.81)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.38,0.83)(8.34,0.37)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.26,-0.11)(8.28,-0.69)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.62,2.59)(8.42,1.25)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.56,4.29)(8.5,3.71)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.62,4.35)(9.82,2.41)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(9.18,0.85)(10.0,-1.39)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(11.14,0.43)(11.3,0.19)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(6.04,0.43)(5.4,-1.03)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(9.96,1.97)(10.22,1.61)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(9.44,2.01)(9.12,1.21)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(10.42,1.29)(10.74,0.83)
+\rput(6.0433006,0.615){barack}
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.607168,4.35)(7.827168,3.05)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(7.727168,2.65)(7.367168,2.03)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(6.887168,1.63)(6.447168,0.81)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.427168,0.83)(8.387168,0.37)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.307168,-0.11)(8.3271675,-0.69)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.667168,2.59)(8.467168,1.25)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.607168,4.29)(8.547168,3.71)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.667168,4.35)(9.867168,2.41)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(9.227168,0.85)(10.047168,-1.39)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(11.187168,0.43)(11.347168,0.19)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(6.0871677,0.43)(5.447168,-1.03)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(10.007168,1.97)(10.267168,1.61)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(9.487168,2.01)(9.167168,1.21)
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(10.467168,1.29)(10.787168,0.83)
 \usefont{T1}{pcr}{m}{n}
-\rput(8.844902,2.815){obama}
+\rput(8.892071,2.815){obama}
 \usefont{T1}{pcr}{m}{n}
-\rput(9.168155,1.055){won}
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.54,3.29)(8.56,2.93)
+\rput(9.2153225,1.055){won}
+\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.587168,3.29)(8.607168,2.93)
 \usefont{T1}{pcr}{m}{n}
-\rput(5.4113674,-1.365){\#elections2012}
+\rput(5.458535,-1.365){\#elections2012}
+\usefont{T1}{ptm}{m}{n}
+\rput(12.963448,3.295){distribution by flattening the distribution.}
+\usefont{T1}{ptm}{m}{n}
+\rput(15.73415,-1.705){in language.}
+\usefont{T1}{ptm}{m}{n}
+\rput(15.563946,-1.325){from variations}
 \end{pspicture} 
 }
+
 \caption{Roadmap of the paper overlaid on an frequency ordered prefix tree}
 %, where the higher the item in the tree the more its frequency is. The}
+\label{fig:outline}
 \end{figure*}
 
 \section{Related Work}
@@ -261,7 +271,7 @@ Frequent Itemset Mining is a very large body of work that goes back to the early
 %While this class of algorithms performs better than the Apriori based ones,
 The memory requirements of FP-Growth algorithm suffers from the sparsity of the data, since the data structure is succinct only if it can find common prefixes within the constraints of its invariant. 
 %Also, it is not suitable for 
-A less known algorithm that is robust against data sparsity is LCM \cite{uno2004lcm}, which we will describe in detail in section \ref{sec:lcm}. We use the implementation submitted to the workshop for Frequent Itemset Mining Implementations (FIMI) '04 \cite{DBLP:conf/fimi/2004}, which is the workshop's award winner. In section \ref{sec:runtime} we show that our extensions do not degrade the performance of LCM by comparing the extended LCM to the runner up at FIMI '04 \cite{grahne2004reducing}. 
+A less known algorithm that is robust against data sparsity is LCM \cite{uno2004lcm}, which we will describe in detail in section \ref{sec:lcm}. We use the implementation submitted to the workshop for Frequent Itemset Mining Implementations (FIMI) '04 \cite{DBLP:conf/fimi/2004}, which is the workshop's award winner. 
 %The extended LCM still beats the runner up
 %and we found to perform very well on the Twitter dataset we have is LCM \cite{uno2004lcm}
 
@@ -302,13 +312,13 @@ The actual support threshold used for mining any given epoch is thus $\alpha$ mu
 We now introduce the notation used in this paper:
 
 \begin{itemize}
-\item $I = \{i_1,i_2,..,i_n\}$: The set of all items (vocabulary).
-\item $t_a = \{i_{a1},i_{a2},..\}$: A transaction made up of as a set of items, not necessarily terms. Each transaction has a sequential id denoted by the subscript letter.
+\item $W = \{w_1,w_2,.., w_n\}$: The set of all items (vocabulary).
+\item $t_a = \{w_{a1},w_{a2},..\}$: A transaction made up of as a set of items, not necessarily terms. Each transaction has a sequential id denoted by the subscript letter.
 \item $E^{span} = \langle t_a, t_b, ..\rangle$: An epoch of data of a certain span, such as an hour, made up of a sequence of transactions.
 \item $s \subset I$: An itemset, its support is given by $|T_s|$.
 \item $T_s = \{t: s \subseteq t\}$: All transactions containing itemset s.
 \item $|.|$: Cardinality operator; gives the size of the operand.
-%\item $\|.\| = \sum_{x \in .}{|x|}$: The Manhattan norm.
+%\item $|.| = \sum_{x \in .}{|x|}$: The Manhattan norm.
 
 \end{itemize}
 
@@ -317,22 +327,24 @@ We now introduce the notation used in this paper:
 The two basic operations of Frequent Itemset Mining algorithms are \emph{Candidate Generation} and \emph{Solution Pruning}. The original Apriori algorithm by Agrawal et al. \cite{agrawal1994fast} generates candidates of length \emph{K} (\emph{K}-itemsets) by merging frequent itemsets of length \emph{(K-1)} (\emph{(K-1)}-itemsets) that differ in only 1 item, usually the last item given a certain total ordering of items. By using only frequent  \emph{(K-1)}-itemsets for generating candidate \emph{K}-itemsets a lot of possible \emph{K}-itemsets are implicitly pruned, based on that all subsets of a frequent itemset has to be frequent (the Apriori property). This still generates a very large number of candidates, specially in early iterations of the algorithm. Consider, for example, the generation of candidate \emph{2}-itemsets from a database. This requires producing all unordered pairs of \emph{1}-itemsets (terms), after pruning out rare ones with frequency less than the support threshold. In many domains, including text mining, the number of fequent \emph{1}-itemsets is large enough to prohibit generating a number of candidates in the order of this number squared. In text mining, a rather low support threshold has to be used, because the frequency of terms follow a long tailed Zipfean distribution.
 
 \section{Basic Algorithm}
-To overcome the bottleneck of \emph{Candidate Generation}, many algorithms are proposed to take hints from the transaction space rather than operating blindly in the item space, each based on a certain property that helps pruning out more candidates. In this paper we expand on LCM \cite{lcm}, an algorithm based on a property of a certain class of itemsets called \emph{Closed Itemsets}. A formal definition of closed itemsets is given in equation \ref{eq:Closed}: 
+\label{sec:lcm}
+To overcome the bottleneck of \emph{Candidate Generation}, many algorithms are proposed to take hints from the transaction space rather than operating blindly in the item space. Some algorithms do that by traversing a data structure representing the transactions \cite{han2000mining}, and others do that by generating itemsets having % each based on 
+a certain property that helps pruning out more candidates. In this paper we expand on LCM \cite{uno2004lcm}, an algorithm based on a property of a class of itemsets called \emph{Closed Itemsets} \cite{pasquier1999discovering}. A closed itemset contains any item that is present in all the transactions containing this itemset. A formal definition of closed itemsets is given in equation \ref{eq:Closed}: 
 
-\begin{equation}\label{eq:Closed}\mathcal{C} = \{S_c:\, \nexists \, S_d \, where \, S_c  \subset S_d \, and \, \|D_{S_c}\| = \|D_{S_d}\|\}\end{equation}
+\begin{equation}\label{eq:Closed}\mathcal{C} = \{s_c:\, \nexists \, s_d \, where \, s_c  \subset s_d \, and \, |T_{s_c}| = |T_{s_d}|\}\end{equation}
 
 The properties of Closed Itemsets are the following:
 \begin{enumerate}
-\item An itemset is closed if adding any item to it will reduce its support. 
+\item Adding any item to a closed itemset reduces its support. 
 \item A subset of a closed itemset is not necessarily closed, but one or more closed subset must exist for any itemset (formally this could be the empty set, given that any item that appears in all transactions is removed in a preprocessing step). 
 \item If a closed \emph{K}-itemset can be extended any further then one of its supersets will be closed, however not necessarily a \emph{(K+1)} superset. Itemsets that cannot be extended any further are called \emph{Maximal Itemsets}, and they are a subclass of closed itemsets.
 \end{enumerate}
 
-Besides being much smaller than the solution space of frequent itemsets, the solution space of closed itemsets can be navigated efficiently. By using an arbitrary total ordering of items, any closed itemset can be considered an extension of exactly one of its subsets. Thus, only this subset is extended during candidate generation. All the other subsets do not need to be extended by items that would lead to the longer closed itemset.  This is called \emph{Prefix Preserving Closure Extension (PPC-Extension)} and it is proposed and formally proved in \cite{lcm}. This is achieved by following three rules, which we state after a few definitions to facilitate their statement. First, an item is \emph{larger/smaller} than another item if it comes later/earlier in the total ordering. This terminology comes from that LCM is most efficient if the items are ordered in ascending order of their frequency. Second, the \emph{suffix} of an itemset is one or more items whose removal does not result in an itemset with higher support. Notice that they will necessarily be at the end of the itemset, regardless of the total ordering. Finally, we call the first item added to the suffix of the itemset its \emph{suffix head}. With this terminology, the rules for \emph{PPC-Extentsion} are:
+Besides being much smaller than the solution space of frequent itemsets, the solution space of closed itemsets can be navigated efficiently. By using an arbitrary total ordering of items, any closed itemset can be considered an extension of exactly one of its subsets. Thus, only this subset is extended during candidate generation. All the other subsets do not need to be extended by items that would lead to the longer closed itemset.  This is called \emph{Prefix Preserving Closure Extension (PPC-Extension)} and it is proposed and formally proved in \cite{uno2004lcm}. This is achieved by following three rules, which we state after a few definitions to facilitate their statement. First, an item is \emph{larger/smaller} than another item if it comes later/earlier in the total ordering. This terminology comes from that LCM is most efficient if the items are ordered in ascending order of their frequency. Second, the \emph{suffix} of an itemset is one or more items whose removal does not result in an itemset with higher support. Notice that they will necessarily be at the end of the itemset, regardless of the total ordering. Finally, we call the first item added to the suffix of the itemset its \emph{suffix head}. With this terminology, the rules for \emph{PPC-Extentsion} are:
 \begin{enumerate}
 %\item The total ordering is used to generate \emph{1}-itemsets 
 \item An itemset can be extend only by items \emph{larger} than its \emph{suffix head}. Extending by \emph{smaller} items will lead to closed itemsets already generated.
-\item After forming an itemset $S$, add to its \emph{suffix} all items whose frequency within $D_S$ is equal to $\|D_S\|$. %Maintain the order of addition within the suffix.
+\item After forming an itemset $S$, add to its \emph{suffix} all items whose frequency within $D_S$ is equal to $|D_S|$. %Maintain the order of addition within the suffix.
 %\item If the order of the suffix does not follow the total ordering, prune this solution branch. 
 \item If any item in the \emph{suffix} is \emph{smaller} than the suffix head, prune this solution branch. All closed itemsets within this branch have already been generated.
 %\item When extending by an item that has \emph{friends}, within the context of the current itemset, all \emph{friends} are added since they appear only together.  
@@ -351,7 +363,7 @@ Besides being much smaller than the solution space of frequent itemsets, the sol
 Table \ref{table:PPCExample} is an example of how \emph{PPC-Extentsion} is used to generate closed itemsets starting from the  \emph{1}-itemset `barack'. The upper table enumerates $D_{barack}$. %, the documents containing `barack'. 
 The lower table shows steps of itemsets generation. The current solution along with its frequency is in column 2, solutions marked by an * are the closed itemsets emitted. All possible extension items and their frequencies are in column 3 with the one being considered bolded. Column 4 is a comment explaining the step. At each step, a pass is done on $D_{itemset}$ to enumerate and count possible extension items.
 % After the counting step, the rules of PPC-Extension are followed to decide whether to output an itemset as a closed one or not. 
-To enforce a support threshold infrequent extension items are removed, but in this example there isn't such a threshold. Notice that the number of steps is linear in the number of closed itemsets, and the only additional storage required besides the storage of the documents is that of the possible extension items. Of course this is a simplified example, but it shows in essence how LCM achieves its low run time and memory requirements. We refer the interested reader to \cite{lcm} for a theoretical proof that the algorithm runs in linear time in the number of closed itemsets, and that this number is quadratic in the number of transactions. Performance on a real data set is shown in section \ref{sec:socmine}. We proceed by describing how to implement this algorithm using an inverted index.
+To enforce a support threshold infrequent extension items are removed, but in this example there isn't such a threshold. Notice that the number of steps is linear in the number of closed itemsets, and the only additional storage required besides the storage of the documents is that of the possible extension items. Of course this is a simplified example, but it shows in essence how LCM achieves its low run time and memory requirements. We refer the interested reader to \cite{uno2004lcm} for a theoretical proof that the algorithm runs in linear time in the number of closed itemsets, and that this number is quadratic in the number of transactions. Performance on a real data set is shown in section \ref{sec:socmine}. We proceed by describing how to implement this algorithm using an inverted index.
 
 %all closed itemsets were generated in 5 steps (not counting steps shown only for explanation), with only one redundant step  
 %The most important contribution of LCM is that it generates closed itemsets from 
@@ -373,7 +385,7 @@ Step&Current Solution&Possible Extension Items&Comments\\ \hline
 %`obama' and `romney' are \emph{friend} items in this context. \\ \hline
 %3 & \{barack, mitt\} (2) & \sout{obama} $\rightarrow$ \textbf{romney} & Rule 3: `obama' skipped. If ordered by \\\hline
 3 & \{barack,mitt,obama\} (1) & romney (1)                       & Rule 2: `romney' appears in all $D_{itemset}$\\\hline
-%freq. of `romney' = $\|D_{itemset}\|$ \\\hline
+%freq. of `romney' = $|D_{itemset}|$ \\\hline
 4 & \{barack,mitt,obama,romney\}(1)* & & Rule 2: `obama'  is the \emph{suffex head} \\\hline
 5 & \{barack\} (4) & mitt (2), \textbf{obama} (3), romney (2) & Nothing more to add, back to `barack' \\\hline
 %, extension item `obama'. \\\hline
@@ -392,7 +404,7 @@ Closed itemsets containing `barack'
 \end{table*}
 
 \subsection{Implementation details}
-We show in algorithm \ref{algo:lcmix} how to implement LCM and PPO-Extension using an inverted index. The algorithm takes as input an epoch of data and a support threshold as a ratio $\alpha$. It outputs the closed itemsets with support more than the threshold. Along with each itemset in the solution, it also outputs the transactions in which it occurs - which is represented as $\langle items, \|D_{itemset}\| \rangle$. The symbol $\succ$ denotes that the lefthand side  succeeds the righthand side in the total ordering.
+We show in algorithm \ref{algo:lcmix} how to implement LCM and PPO-Extension using an inverted index. The algorithm takes as input an epoch of data and a support threshold as a ratio $\alpha$. It outputs the closed itemsets with support more than the threshold. Along with each itemset in the solution, it also outputs the transactions in which it occurs - which is represented as $\langle items, |T_{itemset}| \rangle$. The symbol $\succ$ denotes that the lefthand side  succeeds the righthand side in the total ordering.
 
 The algorithm also lends itself to distributed implementations easily. For example, a Map/Reduce implementation is easy since the only operations are counting (line 14) and projection (line 22). However, the fast execution time and the low memory requirements of the algorithm makes it possible that a distributed implementation will cause an overhead. In the implementation shown, it is not necessary that the index's tokens list follow the total ordering; all itemsets of length 1 will be considered anyway. 
 %The first line assumes that any item present in all documents is removed in a preprocessing step
@@ -409,34 +421,34 @@ The algorithm also lends itself to distributed implementations easily. For examp
 C $\gets \{\langle \emptyset, E\rangle\}$ \tcp*{$\emptyset$ is a closed itemset!}
 X $\gets$ Inverted index of E\;
 %(\tcp{follow total ordering})
-\ForEach{$i \in X.tokens$}{
-	$D_{\{i\}} \gets$ X.postingsList[$i$]\;
-	\lIf{$\|D_{\{i\}}\| \geq \alpha \frac{\|E\|}{E.span}$}{
-		LCM($\{i\}, i, D_{\{i\}}$)
+\ForEach{$w \in X.tokens$}{
+	$T_{\{w\}} \gets$ X.postingsList[$w$]\;
+	\lIf{$|T_{\{w\}}| \geq \alpha \frac{|E|}{E.span}$}{
+		LCM($\{w\}, w, T_{\{w\}}$)
 	}
 }
 \Return{C}\;
 
-\Fn{LCM(S: Current itemset,   $i_{sh}$: Suffix head, \\ $D_S$: Documents (transactions) containing S)}{
-	frequency[$1 \ldots i_n$] $\gets$ 0\;
-	suffix $\gets \{ i_{sh}\}$\;
-	\ForEach{$d \in D_S$}{
+\Fn{LCM(s: Current itemset,   $w_{sh}$: Suffix head, \\ $T_s$: Transactions (Tweets) containing s)}{
+	frequency[$1 \ldots w_n$] $\gets$ 0\;
+	suffix $\gets \{ w_{sh}\}$\;
+	\ForEach{$t \in T_s$}{
 %(\tcp*{Documents can be stored according to total ordering})
-		\ForEach{$i \in d$}{ % such that $i \succ i_{sh}$}{
-			frequency[$i$]++\;
-			\lIf{frequency[$i$] $ = \|D_S\|$}{
-				suffix.add($i$)	
+		\ForEach{$w \in d$}{ % such that $i \succ i_{sh}$}{
+			frequency[$w$]++\;
+			\lIf{frequency[$w$] $ = |T_s|$}{
+				suffix.add($w$)	
 			}
 		}
 	}
-	\lIf{$\exists j: i_{sh} \succ suffix[j]$ }{
+	\lIf{$\exists v \in suffix: w_{sh} \succ v$ }{
 		\Return
 	}
-	C.add($\langle S \cup suffix, D_S\rangle$)\;
-	\ForEach{$i \succ i_{sh}$ and $i \notin $ suffix}{
-		\If{frequency[$i$] $\geq \alpha \frac{\|E\|}{E.span}$}{
-			$D \gets D_S \cap i$	\tcp*{Results of query $S$ AND $i$}
-			LCM($S \cup suffix \cup \{i\}, i, D$) 
+	C.add($\langle s \cup suffix, T_s\rangle$)\;
+	\ForEach{$v \succ w_{sh}$ and $v \notin $ suffix}{
+		\If{frequency[$v$] $\geq \alpha \frac{|E|}{E.span}$}{
+			$D \gets T_s \cap v$	\tcp*{Results of query $s$ AND $v$}
+			LCM($s \cup suffix \cup \{v\}, v, D$) 
 		}
 	}
 }
@@ -456,7 +468,7 @@ Throughout this paper we use data we have been collecting from the Twitter publi
 % at 00:00 HST. We use Hawaii Standard Time as our reference 
 We use only Tweets written in Latin script to facilitate tokenization using white space and other word boundaries. We collected only the Tweet text to avoid reliance on any features specific to a certain social medium, and make the algorithms applicable to other media where text is short such as comments and Facebook or Google+ status updates. The only preprocessing performed was removing duplicate original Tweets (not retweets) using a Bloom filter. This removes spam Tweets sent by BotNets, such as advertisements about Raspberry Ketone diets.
 
-We apply the algorithms to epochs of data, so they are not strictly stream processing algorithms. However, we regard the process as mining a sliding window that is moved forward by time steps of short span. The time step must be longer than the time needed to mine an epoch of data, and the performance of our algorithms makes it possible to use a time step of a few seconds for epochs up to a day long. Figure \ref{fig:runtimeEpochs} shows the runtime of LCM on epochs of increasing length, and we will show in section \ref{sec:} that our extensions don't degrade the performance. The times reported in figure \ref{fig:runtimeEpochs} are averages across all epochs of the specified length in the months of October, November and December, using a time step that is half the epoch length. The variance is very low and the confidence bands are not shown because they appear as dots on top of the bars. 
+We apply the algorithms to epochs of data, so they are not strictly stream processing algorithms. However, we regard the process as mining a sliding window that is moved forward by time steps of short span. The time step must be longer than the time needed to mine an epoch of data, and the performance of our algorithms makes it possible to use a time step of a few seconds for epochs up to a day long. Figure \ref{fig:runtimeEpochs} shows the runtime of LCM on epochs of increasing length, and we will show in section \ref{sec:bounding} that our extensions don't degrade the performance. The times reported in figure \ref{fig:runtimeEpochs} are averages across all epochs of the specified length in the months of October, November and December, using a time step that is half the epoch length. The variance is very low and the confidence bands are not shown because they appear as dots on top of the bars. 
  %much shorter than time needed for human perception. 
 % arbitrary span is processed in much less time than its span.
 
@@ -495,7 +507,7 @@ Therefore, the epoch span should be minimized. However, when the epoch span is s
 A large number of itemsets are language constructs that bear no information, such as ``such as''.  By treating sequential language constructs, and any other multiword expression, as one item we eliminate a large number of such itemsets. Actually, we also eliminate itemsets that are made up of all the different fragments of the language construct along with other items; for example, \{we, did, it, \#teamobama\} can produce 10 other combination of length 2 or more. There are many measures of association that can be used to detect multiword expressions, but each measure is good only under certain conditions and has special properties \cite{ramisch2012broad}. We experimented with various measures, and in fact we found out that a very good measure for identifying multiword Named Entities is Yule's Q; a measure of association and disassociation derived from the odds ratio. However, we have finally found that for the purpose of preprocessing before Frequent Itemsets Mining what works best is tokenizing the documents into term N-Grams with varying N. 
 
 We start by tokenizing into unigrams, and counting their frequencies. Then we use the probability of the same word used to determine the support threshold, $P(`obama') = 0.0001$, and assume that this is where the head of the Zipfean distribution starts. For each unigram belonging to the head, we create two term bigrams by attaching to it the unigrams before and after it. We repeat this foreach N $\ge$ 1 by creating two (N+1)-Grams for all N-Grams with probabilities above the threshold until there are no more such N-Grams. We do not prevent overlap, because there is no guarantee that the N-Gram created makes any sense. At each N, the probability threshold is adjusted to account for the increase in the number of tokens and the overall increase in the grand sum of counts, since each high frequency N-Gram is replaced by two lower frequency ones. Let the original probability threshold be $\eta$, then the adjusted $\eta_N$ is:
-\begin{equation}\eta_N = \eta * \frac{\sum_{\{i:\, i \,\in\, I\, and\, i.length \,\le\, N\}}{freq(i)}}{\sum_{\{i:\, i\, \in\, I \,and \,i.length\,=\,1\}}{freq(i)}}\end{equation}
+\begin{equation}\eta_N = \eta * \frac{\sum_{\{w:\, w \,\in\, W\, and\, w.length \,\le\, N\}}{freq(w)}}{\sum_{\{v:\, v\, \in\, W \,and \,v.length\,=\,1\}}{freq(v)}}\end{equation}
 % At each N, the probability threshold is adjusted by the ratio of the sum of the counts of all terms of length up to (N+1), to the the sum of the counts of all terms of length up to N-Gram.
 
 %as described above 
@@ -514,7 +526,7 @@ We start by tokenizing into unigrams, and counting their frequencies. Then we us
 %We start by tokenizing into unigrams, then we
 %producing term N-Grams from the window surrounding any token 
 %create two term bigrams for each unigram appearing with a probability above a certain threshold, $\eta$, by attaching to it the unigrams before and after it. We do this recursively by increasing N and creating two (N+1)-Grams for each N-Gram above the threshold until there are no more N-Grams above the threshold. 
-%At each value of N, the threshold $\eta$ is adjusted by the ratio of the number of tokens of length up to N and the number of unigrams; $\eta_{N} = \|\eta_1\| * \frac{\| I_{N}\|}{\|I_{1}\|}$.
+%At each value of N, the threshold $\eta$ is adjusted by the ratio of the number of tokens of length up to N and the number of unigrams; $\eta_{N} = |\eta_1| * \frac{| I_{N}|}{|I_{1}|}$.
 % thus flattening the Zipfian distribution a little. 
 %Following we present an example of tokenizing ``Barack Obama president of the United States'':
 
@@ -532,7 +544,7 @@ We start by tokenizing into unigrams, and counting their frequencies. Then we us
 Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length of N-Grams from 1 to 5 on the number of tokens, the number of closed itemsets of length more than 1, and the runtime of mining 1 hour epochs of data. The values shown are averages across all 1 hour epochs in the month of November. The value of $\eta$ used is 0.0001.
 %The value of $\eta$ used is 0.0001, which is the probability of the term `obama' within the whole collection of Tweets. 
 %The support threshold used for mining in this experiment and all other experiments is also derived from the probability of the term `obama', since it is a known to be steadily frequent and talked about in all languages. The average number of Tweets per hour is 100000, so the term `obama' is expected to appear 10 times per hour on average. We use a minimum support threshold of 10, which translates into $\alpha = 0.0002$.
-Figure \ref{fig:ngramsLen}(a) shows that the number of distinct items increases a lot when N moves from 1 to 2, then keeps increasing slightly until it starts decreasing at N=5. The decrease happens because all 4-Grams with probability above the threshold are parts of Tweets from services that use the same text and append a URL, such as Tweets reporting scores from Game Insight\footnote{http://www.game-insight.com/}. Such Tweets are tokenized into more 4-Grams than 5-Gram, and the 4-Grams appearing in them don't appear elsewhere; thus each two of them are reduced into one 5-Gram.  Figure \ref{fig:ngramsLen}(b) shows that the number of itemsets keeps decreasing as expected.  Figure \ref{fig:ngramsLen}(c) shows that runtime also decreases as N goes from 1 to 5, since LCM runtime is proportional to the number of closed itemsets, and is not affected by the sparsity of data. The runtimes in this figure are slightly less from those in figure \ref{fig:runtimeEpochs} because they don't include the time taken for writing the posting lists.
+Figure \ref{fig:ngramsLen}(a) shows that the number of distinct items increases a lot when N moves from 1 to 2, then keeps increasing slightly until it starts decreasing at N=5. The decrease happens because all 4-Grams with probability above the threshold are parts of Tweets from services that use the same text and append a URL, such as Tweets reporting scores from Game Insight\footnote{http://www.game-insight.com/}. Such Tweets are tokenized into more 4-Grams than 5-Gram, and the 4-Grams appearing in them don't appear elsewhere; thus each two of them are reduced into one 5-Gram.  Figure \ref{fig:ngramsLen}(b) shows that the number of itemsets keeps decreasing as expected.  Figure \ref{fig:ngramsLen}(c) shows that runtime also decreases as N goes from 1 to 5, since LCM runtime is proportional to the number of closed itemsets, and is not affected by the sparsity of data. The runtimes in this figure are slightly less from those in figure \ref{fig:runtimeEpochs} because they don't include the time taken for writing the posting list of each itemset.
 % robust against  the increasing
 %At N=5 there is a slight increase of 44 milliseconds in the average runtime. We did not try to justify the increase and we suspect that it is caused by a slight difference in the condition of the shared machine at the time of running the experiment with N=5.
 %yet statistically significant increase. We suspect that this increase is due to the  
@@ -595,7 +607,7 @@ Figure \ref{fig:ngramsLen}(a) shows that the number of distinct items increases 
 \rput(31.89,0.50416017){\includegraphics{perf_ngramlen1-5_runtime-millis_supp10+_1hr.eps}}
 \end{pspicture} 
 }
-\caption{Effect of the maximum N-Gram length on the mining of 1hr epochs of data}
+\caption{Effect of the increasing maximum N-Gram length on the mining of 1hr epochs of data}
 \label{fig:ngramsLen}
 \end{figure*}
 
@@ -651,7 +663,7 @@ We state this condition formally as follows. Let $\kappa$ be a parameter that ca
 \begin{equation*}\mathcal{K} = \{s:\frac{|T_{s}|}{|T_{s_{p}}|} \ge \kappa \; where \; s_{p} \subset s \, and \, |T_{s_{p}}| < |T_{s_{a}} |\, \forall \, s_{a} \subset s \}\end{equation*}
 
 Notice that
-% within the documents containing a closed itemset, $D_{itemset}$, the probability of a closed superset ($\|D_{superset}\| / \|D_{itemset}\|$) 
+% within the documents containing a closed itemset, $D_{itemset}$, the probability of a closed superset ($|D_{superset}| / |D_{itemset}|$) 
 $\frac{|T_{s}|}{|T_{s_{p}}|} $ is the called confidence of the rule ``$s_{p} \rightarrow s$.'' This property is the basic property used for association rules mining, and it is used in the definition of $\delta$-free sets. Mining itemsets based on the confidence of rules they induce has long been recognized as a method for finding ``interesting patterns'' \cite{cohen2001finding}, but since this property is not anti-monotone a variation has to be used (for example, \emph{all confidence} \cite{kim2004ccmine}).
 %some algorithms for mining itemsets based on a variation called \emph{all confidence} have been proposed \cite{kim2004ccmine}. The strongly closed property builds on the notion of confidence by choosing itemsets which would result in rules of high confidence. The minimum acceptable confidence of the resulting rule is a parameter $\kappa$ that can vary between 0 and 1 to increase the strength of the strongly closed property.
 
@@ -695,13 +707,14 @@ We do the clustering in the postings list space to avoid merging itemsets
 %including different aspects or opinions about a topic. 
 about different topics or different aspects or opinions in the same topic. 
 The clustering scheme we use is similar to \cite{bayardo2007scaling}, but it is much simpler. 
-For each itemset, we find the itemsets produced before it and overlapping with it, even in one item, such that the \emph{high confidence} condition holds. The itemset joins the cluster containing the itemset with which it achieves the highest confidence. The notion of \emph{confidence} applies for itemsets that are not supersets of one another, but it is defined as: %follows \cite{cohen2001finding}:
-\begin{equation}c(s_i \rightarrow s_j) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_i}|}\end{equation}
-
+For each itemset, we find the itemsets produced before it and overlapping with it, even in one item, such that the \emph{high confidence} condition holds. The itemset joins the cluster containing the itemset with which it achieves the highest confidence. \emph{Confidence} between itemsets that are not supersets of one another is defined as  \cite{cohen2001finding}:
+\begin{equation}c(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
+%However, 
+%\begin{equation} \equiv \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_i} \cup T_{s_j}|}\end{equation}
 Thus, we formally define \emph{strong closed} itemset clusters as:
 \begin{multline}\label{eq:strongClosedFormal}
 \mathcal{S} \gets \, all\,  S \, such\,  that\, 
-\\S = \{i:\, i \in \bigcup_{j}{s_j}\; where \; \forall_{s_j}\, \textbf{argmax}_{s_k} c(s_j \rightarrow s_k)  \in S \\\; and\; c(s_j \rightarrow s_k) \le \kappa \} 
+\\S = \{w:\, w \in \bigcup_{i}{s_i}\; where \; \forall_{s_i}\, \textbf{argmax}_{s_j} c(s_j \rightarrow s_i) = s_j  \in S \\\; and\; c(s_j \rightarrow s_i) \le \kappa \} 
 \end{multline}
  
 
@@ -716,7 +729,7 @@ Thus, we formally define \emph{strong closed} itemset clusters as:
 %For example, itemsets that differ because of items not pertaining to the topic, such as ``was'' and ``got'' in the Obama-elected example. 
 %The use of cosine similarity limits the candidates for merging to a few itemsets that are very likely about the same topic, 
 %since the Inverse Document Frequency (IDF) value of terms pertaining to a certain topics is typically much higher than the IDF value of other terms. The IDF and cosine similarity formulae used are given in equations \ref{eq:IDF} and \ref{eq:cosine} respectively.
-%\begin{equation}\label{eq:IDF}IDF(i) = \log{\frac{\|E\|}{\|D_i\|}}\end{equation}
+%\begin{equation}\label{eq:IDF}IDF(i) = \log{\frac{|E|}{|D_i|}}\end{equation}
 %\begin{equation}\label{eq:cosine}cos(S_1,S_2) = \frac{\sqrt{\sum_{i \in S_1 \cap S_2} IDF(i)^2 }}{\sqrt{\sum_{i \in S_1} IDF(i)^2} * \sqrt{\sum_{i \in S_2} IDF(i)^2}} \end{equation}
 %To avoid forming alliances that are not coherent about a certain topic, 
 
@@ -725,12 +738,12 @@ Algorithm  \ref{algo:alliance}  shows the implementation for forming \emph{stron
 To see if the \emph{high confidence} condition will be violated, it is enough to check if the difference between the posting lists of two itemsets is above the number given by equation \ref{eq:maxDiffCnt}. In case of merging an itemset with its superset, this difference can be calculated directly from the sizes of the posting lists.
 % using the confidence formula.
 %by subtracting the support of the superset from that of the itemset. 
-Otherwise, the difference can be efficiently calculated from the postings lists since they are sorted, and it is enough to check if the difference exceeds the maximum number allowed. 
+Otherwise, the difference can be efficiently calculated from the postings lists since they are sorted, and it is enough to check if the difference exceeds the maximum number allowed by the required confidence: 
 
 % The maximum number of different documents is given by equation \ref{eq:maxDiffCnt}. 
 %An empirical performance evaluation is provided in section \ref{sec:perf}. 
-%\begin{equation}\label{eq:maxDiffCnt}\Delta(S_1,S_2,\kappa) = (1 - \kappa) * max(\|D_{S_1}\|,\|D_{S_2}\|), \, \kappa \in [0,1[\end{equation}
-\begin{equation}\label{eq:maxDiffCnt}\Delta(S_1,S_2,\kappa) = (1 - \kappa) * \min(|T_{s_1}|,|T_{s_2}|)
+%\begin{equation}\label{eq:maxDiffCnt}\Delta(S_1,S_2,\kappa) = (1 - \kappa) * max(|D_{S_1}|,|D_{S_2}|), \, \kappa \in [0,1[\end{equation}
+\begin{equation}\label{eq:maxDiffCnt}\Delta(c(s_j \rightarrow s_i) \le \kappa) = (1 - \kappa)  |T_{s_j}|%* \max(|T_{s_1}|,|T_{s_2}|)
 %, \, \kappa \in [0,1[
 \end{equation}
 
@@ -749,14 +762,14 @@ Otherwise, the difference can be efficiently calculated from the postings lists 
 			$K$.add($S_j$)\;
 			\If{$|s_i \cap s_j| = min(|s_i|, |s_j|)$ and $|s_i| > |s_j|$}{
 				$P$.add($S_j$)\;
-%				\lIf{$\|S_i\| > \|S_j\|$}{$T$.add($S_j$)}
+%				\lIf{$|S_i| > |S_j|$}{$T$.add($S_j$)}
 			}
 		}
 %		\ElseIf{cos($S_i,S_j$) $\ge \theta$}{
 %			$C$.add($S_j$)\;
 %		}
 	}
-	$minDiff \gets \infty$ \tcp*{Best candidate's score}
+	$maxConf \gets 0$ \tcp*{Best candidate's score}
 	\ForEach{$s_k \in K$}{
 		\uIf{$s_k \in P$}{
 			$\delta \gets |T_{s_k}| - |T_{s_i}|$\;
@@ -764,13 +777,19 @@ Otherwise, the difference can be efficiently calculated from the postings lists 
 		\Else{
 			$\delta \gets$ difference($T_{s_i},T_{s_k},\Delta$) \tcp*{Stops early}
 		}
-		\If{$\delta \le \Delta(s_i, s_k, \kappa)$ and $\delta < minDiff$}{
-			$s_m \gets s_k$ \tcp*{Best merge candidate}
-			$minDiff \gets \delta$\;
+		
+		\If{$\delta \le \Delta(c(s_k \rightarrow s_i) \le \kappa)$}{ %and $\delta < minDiff$}{
+			$conf \gets \frac{|T_{s_k}| - \delta}{ |T_{s_k}|}$\;
+			\If{$conf > maxConf$}{
+				$s_m \gets s_k$ \tcp*{Best merge candidate}
+				$maxConf \gets conf$ \;%\delta$\; 
+			}
 		}
 	}
-	\If{$minDiff < \infty$}{
+	%\If{$minDiff < \infty$}{
+	\If{$maxConf > 0$}{
 		$\mathcal{S}[s_m].itemset \gets \mathcal{S}[s_m].itemset \cup s_i \cup s_m$\;
+		$\mathcal{S}[s_m].postingsList \gets \mathcal{S}[s_m].postingsList \cup s_i.postingsList \cup s_m.postingsList$\;
 	}
 }
 \Return{$\mathcal{S}$}\;
@@ -784,7 +803,7 @@ Otherwise, the difference can be efficiently calculated from the postings lists 
 %It is difficult to reason about how alliances are formed, specially after fi
 
 %Expanding on the previous observation that adding a high IDF term to an itemset with low IDF terms only prevents achieving a high enough cosine similarity, we introduce an optimization that improves both runtime, memory requirements and filtering power. Unlike the original LCM algorithm, our extension requires keeping previous itemsets in memory so that newly generated ones are compared to them to find candidates for alliance. Instead of keeping all previous itemsets in memory we keep only a limited number, $b$. This obviously improves runtime and memory requirements, but it also improves the quality of itemsets chosen for alliance. Given the way PPC-Extension produces itemsets, an alliance candidate appearing more than $b$ itemsets earlier must be similar because of a term that has at least $\log_2(b+1)$  extension items \emph{smaller} than the one that got added to form the current itemset. This lower bound assumes that all possible itemsets created by appending any combination of the $\log_2(b+1)$ will be closed and will have enough support. In this case, there will be 1 combination where all the items are appended, $\log_2(b+1)$ combinations where one item is missing, $\log_2(b+1)$ choose 2 combinations where 2 items are missing, ... etc. For all of these combinations to be closed itemsets, the 1 combination where all the items are appended has to have minimum support, the  $\log_2(b+1)$ combinations where 1 item is missing will each have support 1 more than minimum, the combinations where 2 items are missing will each have support 2 more than minimum, ... etc. Therefore the minimum drop in frequency between a closed itemsets and its subset produced $b$ steps earlier is given by:
-%\begin{equation}\|D_{S_x}\| - \|D_{S_(x-b)}\| = \alpha \frac{\|E\|}{E.span} + \sum_{a=1}^{\log_2(b+1) - 1}a\binom{\log_2(b+1)}{a} \end{equation}
+%\begin{equation}|D_{S_x}| - |D_{S_(x-b)}| = \alpha \frac{|E|}{E.span} + \sum_{a=1}^{\log_2(b+1) - 1}a\binom{\log_2(b+1)}{a} \end{equation}
 %To minimize the difference in frequency between the current itemset and the alliance candidate, we assume that the 1 combination will appear $\ciel{b/2}$ times,  Therefore the difference in frequency between  $b$ 
 
 %A similar situation also happens if the intersection ???
@@ -793,7 +812,7 @@ Otherwise, the difference can be efficiently calculated from the postings lists 
 %Algorithm \ref{algo:alliance} shows the described algorithm for merging itemsets alliances. Table  \ref{table:allianceQuality} shows the number of closed itemsets of length at least 2 without filtering any of them out, as well as after applying the KLD filter and the strongly closed filter, and the number of itemsets alliances. The table also shows the average quality of the itemsets after each stage of reduction. The quality is calculated as Basic Elements? PERPLEXITY? CASCADE MEASURE? 
 
 \subsection{Bounding runtime and memory}
-\label{}
+\label{sec:bounding}
 %Expanding on the previous observation that adding a high IDF term to an itemset with low IDF terms only prevents achieving a high enough cosine similarity, 
 We exploit the way PPC-Extension produces itemset to introduce an optimization that improves both runtime, memory requirements and filtering power of the high confidence condition. Unlike the original LCM algorithm, filtering low confidence itemsets requires keeping mining resluts in memory to calculate the confidence of newly generated ones.
 % forming strong closed clusters requires keeping itemsets in memory so that newly generated ones are clustered with them.
@@ -803,10 +822,31 @@ Instead of keeping all previous itemsets in memory we keep only a limited number
 %if an itemset is produced $b$ steps ago then this itemset's overlap with the current itemset is very likely a language construct. Since the tree is shallow, then 
 Therefore, an itemset that has a large number of supersets cannot be appearing with only a limited set of words (topic), but it has to be covering a breadth of possible descendants. Thus this itemset is very likely to be a language construct. Even if it is a language construct that appears with high confidence with some topical words, this high confidence doesn't carry interesting information; for example, \{the, of\} that appears within \{the, united, states, of, america\}. Even if it is a topical word with very high frequency, then interesting information will be divided into several topics given its large number of direct descendants. In either case, filtering closed itemsets that have high confidence with such a ubiquitous itemset will not omit any information. If the filtered itemset is part of an informative one then it will be produced when the longer itemset is found to have high confidence with the filtered one.
 
-We use a buffer size $b=1000$ in all experiments, which leads to a runtime of about 1 to 3 milliseconds per itemset for filtering out low confidence itemsets and creating strong closed clusters. The number of selected itemsets is also reduced by almost half on average. The difference between the two selections is made up mostly of stop words. A few itemsets including topical words are also filtered, such as the closed itemset \{president, Obama\} since Obama is an example of a ubiquitous topical word. Such itemsets lack any information on their own and is included in other informative ones. Finally, this enhancement is not necessary for satisfactory performance. With an unlimited buffer, the runtime is XXX. 
+We use a buffer size $b=1000$ in all experiments, which leads to a runtime of about 1 to 3 milliseconds per itemset for filtering out low confidence itemsets and creating strong closed clusters. The number of selected itemsets is also reduced by almost half on average. The difference between the two selections is made up mostly of stop words. A few itemsets including topical words are also filtered, such as the closed itemset \{president, Obama\} since Obama is an example of a ubiquitous topical word. Such itemsets lack any information on their own and is included in other informative ones. Finally, this enhancement is not necessary for satisfactory performance. With an unlimited buffer, the average runtime is 5.2 seconds for filtering 4265 itemsets (the average number of closed itemsets from an hour long epoch).
+
+Figure \ref{fig:lcmvsfpzhu} shows the total runtime of the LCM algorithm plus the strong closed itemsets clustering (LCM + Clustering) at different epoch spans. The runtime of LCM alone is also plotted for reference. We also plot the performance of another Frequent Itemset Mining algorithm, FP-Zhu \cite{grahne2004reducing}, which was the runner up at FIMI '04   \cite{DBLP:conf/fimi/2004}. We include it to show that our extensions do not degrade the performance of LCM even in the context of competitions. The Y-Axis is in logarithmic scale to keep the scale of the plot suitable for seeing slight differences. The output of LCM is the input to the clustering algorithm, so it is affected by the number of closed itemsets produced. This explains why it takes slightly longer time for clustering results from the 15 minutes epoch and then takes a constant time for epochs of longer span.
+
+\begin{figure}
+% Generated with LaTeXDraw 2.0.8
+% Mon May 06 21:30:49 EDT 2013
+% \usepackage[usenames,dvipsnames]{pstricks}
+% \usepackage{epsfig}
+% \usepackage{pst-grad} % For gradients
+% \usepackage{pst-plot} % For axes
+\scalebox{0.8} % Change this value to rescale the drawing.
+{
+\begin{pspicture}(0,-3.56)(10.68,3.56)
+\rput(5.34,0.0){\includegraphics{runtime_lcm-lcm+filter-fpzhu_seconds.eps}}
+\end{pspicture} 
+}
+\caption{Runtime of itemset mining and clustering at different epoch spans}
+\label{fig:lcmvsfpzhu}
+\end{figure}
+% select args, count(*), avg(value), stddev(value) from perf_mon where args like '%oct-nov-dec/%Jaccard+_%ULBuff%' and key = 'CPUMillisFilter' group by args order by args;
+ 
 %Furthermore, the clustering is improved for some itemsets because of filtering noisy ones. For example, ``ballot''
 %only be a very frequent set of items. The number
-%, because of the way PPC-Extension produces itemsets, for an itemset $S_x$ and any candidate subset $S_{(x-b)}$ that was produced $b$ itemsets earlier $\|D_{S_{(x-b)}}\| - \|D_{S_x}\| \ge b$. This lower bound is achieved when the intersection of the documents containing the current itemset $S_x$ and all the $b-1$ supersets before it is exactly the subset $S_{(x-b)}$, and there are no more itemsets with the same intersection. In this case each of the $b$ supersets must have support at most $\|D_{S_{(x-b)}}\| - 1$ to be considered closed, but because there are $b$ of them then actually their support is $\|D_{S_{(x-b)}}\| - b$. Since the minimum support difference is $b$, then the maximum confidence of $S_x$ is $\frac{\|D_{S_{(x-b)}}\| - b}{\|D_{S_{(x-b)}}\|} $. Therefore for a given $\kappa$ we can determine the buffer size $b$ as the frequency of itemsets keeps decreasing. In our implementation we use a fixed $b$ of 1000.
+%, because of the way PPC-Extension produces itemsets, for an itemset $S_x$ and any candidate subset $S_{(x-b)}$ that was produced $b$ itemsets earlier $|D_{S_{(x-b)}}| - |D_{S_x}| \ge b$. This lower bound is achieved when the intersection of the documents containing the current itemset $S_x$ and all the $b-1$ supersets before it is exactly the subset $S_{(x-b)}$, and there are no more itemsets with the same intersection. In this case each of the $b$ supersets must have support at most $|D_{S_{(x-b)}}| - 1$ to be considered closed, but because there are $b$ of them then actually their support is $|D_{S_{(x-b)}}| - b$. Since the minimum support difference is $b$, then the maximum confidence of $S_x$ is $\frac{|D_{S_{(x-b)}}| - b}{|D_{S_{(x-b)}}|} $. Therefore for a given $\kappa$ we can determine the buffer size $b$ as the frequency of itemsets keeps decreasing. In our implementation we use a fixed $b$ of 1000.
 
 
 % The difference between documents containing a certain strongly closed itemset and the intersection can be as little as one document. Thus all variations can have high confidence. On the other hand, using an upper bound on confidence is totally counter intuitive, since this means that if only one document exists with a shorter itemset then the longer itemset will be omitted. 
@@ -842,41 +882,58 @@ The number of strong closed itemset clusters, and its ratio to the number of hig
 \end{figure}
 
 \section{Temporal Ranking}
-\label{sec:allianceRank}
-So far we have been reducing the number of itemsets, and we succeeded to reduce it to about 1\% of the original number (in alliances). We now discuss how to rank the itemset alliances, making use of the structure of the alliance. 
+\label{sec:rank}
+%So far we have been reducing the number of itemsets, and we succeeded to reduce it to about 1\% of the original number (in alliances). We now discuss how to rank the itemset alliances, making use of the structure of the alliance. 
 %We have experimented with various ranking schemes applied directly to itemsets (before and after reduction) and none of them resulted in a satisfactory ranking. 
-Again, we exploit the pointwise KL Divergence from a background model. The pointwise KLD of the probability of an itemset $S_i$ in the background model $Q$ from its probability in the current epoch $P$ can be considered the information gain: 
-\begin{multline}IG(P(S_i),Q(S_i)) = KLD(P(S_i)||Q(S_i)) \\ = - (H(P(S_i)) - H(P(S_i),Q(S_i))) \\ = \sum{P(S_i) \log{P(S_i)}} - \sum{P(S_i) \log{Q(S_i)}} \end{multline}
+%We exploit temporal features for ranking itemsets. exploit t
+For ranking itemsets according to the importance of each itemset in within the mined epoch, we use itemsets' pointwise KL Divergence from a background model. The pointwise KLD of the probability of an itemset $s_i$ in the background model $Q$ from its probability in the current epoch $P$ can be considered the information gain, IG: 
+\begin{multline}IG(P(s_i),Q(s_i))  = - (H(P(s_i)) - H(P(s_i),Q(s_i))) \\ = \sum{P(s_i) \log{P(s_i)}} - \sum{P(s_i) \log{Q(s_i)}}  = KLD(P(s_i)||Q(s_i))\end{multline}
 
-We note that the joint probability of the itemset and its superset is equal to the probability of the superset; $P(S_i,S_j) = P(S_j)$. Thus, the information gain of the appearance of an itemset and its superset is essentially the information gain of the superset.  Also, their Pointwise Mutual Information is the Self Information of the subset:
+To generalized this to the case of strong closed itemset clusters, we have to take the overlap between the itemsets of the cluster into account when calculating the information gain of the whole cluster.
+We note that the joint probability of the itemset, $s_i$, and its superset, $s_j$, is equal to the probability of the superset; $P(s_i,s_j) = P(s_j)$ and $Q(s_i,s_j) = Q(s_j)$. 
+Thus, the information gain of the appearance of an itemset and its superset together is essentially the information gain of the superset; $IG(P(s_i,s_j),Q(s_i,s_j)) = IG(P(s_j),Q(s_j))$.  Also, their Pointwise Mutual Information is the Self Information of the subset:
 \begin{multline}
-PMI(S_i, S_j) = \log{ \frac{P(S_i,S_j)}{P(S_i)P(S_j)} } = -\log{P(S_i)} = I(S_i)
+PMI(s_i, s_j) = \log{ \frac{P(s_i,s_j)}{P(s_i)P(s_j)} } = -\log{P(s_i)} = I(s_i)
 \end{multline}
 
-Therefore, the information gain of a superset is different from the information gain of its subset by the information gained (or lost) because of the additional items. Thus, the information gain of the appearance of all itemsets in an alliance of $m$ itemets, $S_{i1},S_{i2},...S_{im}$, can be calculated as the information gain of its smallest subset, $S_{min}$, plus the differences between the KLDs of member subsets and the smallest subset. We use the squares of the differences, because the pointwise KLD value might be positive or negative, depending on whether the subset appears with lower or higher probability than in the background. Thus the information gain of an alliance is given by:
-\begin{multline*}IG(P(S_{i1},...S_{im}),Q(S_{i1},...S_{im})) = I(S_{min}) + \\ %S_{i2},
-\sum_{j = i1..im}{(KLD(P(S_j)||Q(S_j)) - KLD(P(S_{min})||Q(S_{min})))^{2}} \end{multline*}
+Therefore, the information gain of a superset is different from the information gain of its subset by the information gained (or lost) because of the additional items. Thus, the information gain of the appearance of all itemsets in a strong closed itemset cluster, $S=\{s_i1,..,s_im\}$, 
+%an alliance of $m$ itemets, $S_{i1},S_{i2},...S_{im}$, 
+can be calculated as the information gain of its smallest subset, $s_{min}$, plus the differences between the KLDs of member subsets and the smallest subset. We use the squares of the differences, because the pointwise KLD value can be positive or negative and we only care about the magnitude of the difference
+%, depending on whether the subset appears with lower or higher probability than the background. 
+To give the self information of the smallest subset the same influence, we also square it. Thus the information gain of a strong closed itemset is given by:
+\begin{multline*}IG^2(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im})) = I^2(s_{min}) + \\ %S_{i2},
+\sum_{j = i1..im}{(KLD(P(s_j)||Q(s_j)) - KLD(P(s_{min})||Q(s_{min})))^{2}} \end{multline*}
 %the squares of
 %The difference is squared because the difference in information gain can be negative, however the information content is positive:
 %can be explained in terms of mutual information. It is the mutual information between the itemset's appearance in  and 
 %structure of the alliance produced by PPC-Extension if the total ordering follows the descending order of items' frequencies.
 
-Finally, the average information gain of an itemset in an alliance is give by:
-\begin{equation}\label{eq:avgIG}\overline{IG}_{alliance} = \frac{IG(P(S_{i1},...S_{im}),Q(S_{i1},...S_{im}))}{m}\end{equation}
+The formula above can be used directly for ranking clusters, but it will favour largers one.We normalize by the size of the cluster giving our final ranking formula for strong closed itemsets:
+%the average information gain of an itemset in an alliance is give by:
+\begin{equation}\label{eq:avgIG}\overline{IG}(S) = \frac{IG^2(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im}))}{m}\end{equation}
 
-The ranking of itemset alliances according to equation \ref{eq:avgIG} gives superior results to many other ranking schemes we tried, including ones based on scores derived from the itemset content directly. An intuitive explanation is that this ranking scheme gives high scores to itemsets alliances made up of a minimum set with small KLD and supersets with large KLD. According to the structure of the alliance produced by PPC-Extension if the total ordering follows the descending order of items' frequencies, the small KLD minimum subset will be an entity with sustained interest, and the high KLD supersets will be new appearing with probabilities very different from their background probabilities. In the next section we show the results of applying this ranking scheme along with the methods described in previous sections.
+%The ranking of strong closed itemsets according to equation \ref{eq:avgIG} gives superior results to many other ranking schemes we tried, including ones based on scores derived from the itemset content directly. 
 
-\section{Empirical Evaluation}
+%An intuitive explanation is that this ranking scheme gives high scores to clusters made up of a minimum set with small KLD and supersets with large KLD. According to the structure of the alliance produced by PPC-Extension if the total ordering follows the descending order of items' frequencies, the small KLD minimum subset will be an entity with sustained interest, and the high KLD supersets will be new appearing with probabilities very different from their background probabilities. In the next section we show the results of applying this ranking scheme along with the methods described in previous sections.
+
+\subsection{Empirical Evaluation}
 \label{sec:empirical}
-We have shown in the last 3 sections how to improve the efficiency of Frequent Itemsets Mining on social media data, by reducing the number of itemsets produced. To show the performance of the proposed methods in 
+%We have shown in the last 3 sections how to improve the efficiency of Frequent Itemsets Mining on social media data, by reducing the number of itemsets produced. To show the performance of the proposed methods in 
 %filtering out itemsets that are uninteresting and 
-choosing important itemsets, we apply them on Tweets posted on the $6^{th}$ and $9^{th}$ of November 2012. In tables \ref{table:nov6} and \ref{table:nov9} we show the results of mining overlapping 1 hour epochs. Because of space limitation we show only the top 3 itemsets, ranked as described in section \ref{sec:allianceRank}, for each hour. Times are in the EST zone.
+%choosing important itemsets, we apply them on Tweets posted on the $6^{th}$ and $9^{th}$ of November 2012. In tables \ref{table:nov6} and \ref{table:nov9} we show the results of mining overlapping 1 hour epochs. Because of space limitation we show only the top 3 itemsets, ranked as described in section \ref{sec:allianceRank}, for each hour.
+For the lack of ground truth data, the performance of the ranking (and the quality of the filtering and clustering on which it is based) is shown by example. The background model we use is the results of mining the previous month, using a \emph{minimum support} value of 1 occurrence (in the least volume hour). Mining the background model at such a low support increases the number of produced itemsets, which is desirable for a background model. All probabilities are smoothed by add-one smoothing. 
+
+Tables \ref{table:nov6} and \ref{table:nov9}  show the top 3 itemsets for 1 hour epochs in the days of November 6th and 9th. The itemsets shown are the first appearances of the most interesting itemsets; that is, an hour is shown only if its top 3 feature novel interesting itemsets. The first column is the beginning of the hour, EST time. The second column is the top itemsets. The third column is a commentary to explain the itemsets, but we omit it from table \ref{table:nov9} to save space since the itemsets are self explanatory.
+%, only for space limitation. The rest of the itemsets contain other formulations of the same pieces of news. An omitted hour doesn't  omitted hours either don't contain interesting news or conti.
 %by point wise KL-Divergence against the results of mining the month of October. 
 
-On November $6^{th}$, the US presidential elections took place and we can see how its events unwind from ``get out and vote'' to the projection of ``obama to win'' and the votes counts (only ``163, 172'' made it to the top 3 at 20:30), all the way to the ``acceptance speech'' and the social media attention given to the ``lady behind obama  with a flag in her hair''. Early in the day, the ``goal [de] Pepe'' scored for ``Real Madrid'' and other itemsets about UEFA Champions football games appear in the top 3. At 22:30 the news that ``weed is legal in Colorado'' breaks into the top 3 because of its novelty, even though this is short after Obama's victory was declared. Throughout the day itemsets about the elections as well as about other topics are ranked high, even if they are topics in a language other than English and thus with a smaller supporting user base (such as the topic in Portuguese about when to consider a person old [velho]).
+On November $6^{th}$, the US presidential elections took place and we can see how its events unwind from ``get out and vote'' to the projections and debates, all the way to the ``acceptance speech''. Early in the day, itemsets about UEFA Champions football matches and a TV show appear in the top 3 along with itemsets about the still uneventful elections. Actually, the matches keep occupying top positions and timely updates of their scores appear in the top 30 itemsets, until they end and the elections heats up. Short after the results of the elections became clear, news that ``weed is legal in Colorado'' occupies the top position. This exemplifies the power of social media as a collaborative filter, picking the important news even if it is unexpected. The user centric definition of importance is eminent in  the great attention given to the ``lady behind Obama  with a flag in her hair'' during the acceptance speech. 
+% Throughout the day itemsets about the elections as well as about other topics are ranked high, even if they are topics in a language other than English and thus with a smaller supporting user base (such as the topic in Portuguese about when to consider a person old [velho]).
 %UEFA Champions football games! We can 
 
-On November $9^{th}$, no major events were happening but many overlapping minor ones happened. The day starts by news about the end of two careers; the Laker's ``coach Mike Brown'' got fired  and ``CIA director David Petraeus resigns''. The relationship of Justin Bieber also ends as he ``broke, up [with], Selena'' at 22:00 (the name of  Bieber is included in other itemsets  not in the top 3). The MTV Europe Music Awards (MTVEMA) was also taking place and votes were solicited from audience through Twitter. This is an example of a topic where people have different opinions, as the hour 15:00 shows. The top 3 itemsets of this hour are supporting ``Katy  Perry'', ``Lady Gaga'' and ``Justin Bieber'' respectively, and they are all reported as separate itemsets. The neutral itemset only soliciting votes is also mined and appears in the top 3 of other hours. By the end of the day many congratulations for the Indonesian Hero's day (``Hari Pahlawan'') appear, and the Turkish commemoration day of Ataturk is also mentioned as the 10th starts in these countries. 
+On November $9^{th}$, no major events were happening but many overlapping minor ones happened. The day starts by news about the end of two careers; the Laker's ``coach Mike Brown'' got fired  and ``CIA director David Petraeus resigns''. The relationship of Justin Bieber also ends as he ``broke, up, with, Selena, Gomez'' at 22:00. This overlaps with his participation in the MTV Europe Music Awards (MTVEMA), and both topics occupied high rankings. MTVEMA is particularly interesting because votes were solicited from audience through Twitter. This is an example of a topic where people have different opinions, as the hour 15:00 shows. The top 3 itemsets of this hour are supporting ``Katy  Perry'', ``Justin Bieber'' and ``Lady Gaga'' respectively. They are all reported as separate itemsets, showing how clustering using the postings lists avoid forming incohesive clusters.
+%The neutral itemset only soliciting votes is also mined and appears in the top 3 of other hours. 
+By the end of the day many congratulations for the Indonesian Hero's day (``Hari Pahlawan'') appear, and the Turkish commemoration day of Ataturk is also mentioned as the 10th of November starts in these countries. These are examples of itemsets from languages with a relatively low number of users, showing how the absolute popularity of a topic doesn't affect its rank. If itemsets from only a specific language is desired, language identification can be applies on the itemsets and Tweets from their postings lists. Moving language identification downstream avoids affecting the results of mining because of error in an upstream component.
 
 % (we refer to it as the \emph{MTVEMA voting invitation} to save space).
 %To start off, the Laker's ``coach Mike Brown'' got fired and it was expected that either ``Phil Jackson [or] Jerry Sloan'' will succeed him. Another career end gets attention as ``CIA director David Petraeus resigns'', and an The MTV Europe Music Awards (MTVEMA) was also taking place and he also broke up with Selena Gomez. Therefore, this period contains events of different types that overlap, and we can use it to assess the effectiveness of our methods without access to ground truth data. The itemset alliances shown are the top 10 per hour ranked by point wise KL-Divergence against the results of mining the month of October. 
@@ -884,6 +941,7 @@ On November $9^{th}$, no major events were happening but many overlapping minor 
 
 \begin{center}
 \small
+\def\arraystretch{1.1}
 \begin{tabular}{|p{.6cm}|p{2.5cm}|p{5cm}|}
 
 \hline
@@ -892,10 +950,10 @@ On November $9^{th}$, no major events were happening but many overlapping minor 
 						& get, out, and, vote		& Still early in the U.S. elections day \\\hline
 
 \multirow{3}{*}{\texttt{17:00}} 	&  if, obama, wins		& Speculations regarding elections \\ \cline{2-3}
-					   	& @noemiking20, club, my, spots		&  Pyramidal marketing scam. Retweeted by people to make money.  \\ \cline{2-3}
+					   	& USERNAME, spots, my, club		&  Pyramidal marketing scam. Retweeted by people to make money.  \\ \cline{2-3}
 						& the, polls, close		& Polls to start closing at 6 PM \\\hline %http://www.huffingtonpost.com/2012/11/06/what-time-do-polls-close_n_2080894.html
 
-\multirow{3}{*}{\texttt{19:00}} 	&  A partir de que idade voc\^{e}a considera algu\'{e}m velho?		& Internet meme from Brazil, discussing when to start considering a person old. \\ \cline{2-3}
+\multirow{3}{*}{\texttt{19:00}} 	&  A partir de que idade voc\^{e} considera algu\'{e}m velho?		& Internet meme from Brazil, discussing when to start considering a person old. \\ \cline{2-3}
 					   	& food, stamps		& Discussions pertaining to elections \\ \cline{2-3}
 						& linda, mcmahon, senate		&  Linda McMahon loses CT senate race \\\hline
 
@@ -937,21 +995,29 @@ On November $9^{th}$, no major events were happening but many overlapping minor 
 
 \begin{center}
 \small
+\def\arraystretch{1.1}
 \begin{tabular}{|p{.6cm}|p{7.5cm}|}
 
 \hline
-\texttt{12:00} & breaking, news, head, coach, mike, brown, have, fired  \\\hline
-\texttt{14:00} & cia, director, david, petraeus, resigns \\\hline
+\multirow{3}{*}{\texttt{12:00}} 
+& \#iwillneverunderstand, why\\\cline{2-2}
+& breaking, news, head, coach, mike, brown, have, fired  \\\cline{2-2}
+& USERNAME, spots, available, my, club \\\hline
+\multirow{3}{*}{\texttt{14:00}} 
+& cia, director, david, petraeus, resigns \\\cline{2-2}
+& voc\^{e}, acha, que \\\cline{2-2}
+& \#tvoh [the voice of Holland], babette \\\hline
 \multirow{3}{*}{\texttt{15:00}} & \#emawinkaty, i, think, katy, perry, will, be, the, big,  \#mtvema, winner, tweet, your, pick, at, URL
 \\ \cline{2-2}
 & \#emawinbieber, i, think, justin, bieber, ... [same as above] \\ \cline{2-2}
 & \#emawingaga, ... [same as above]  \\\hline														
-\multirow{2}{*}{\texttt{22:00}} & justin, bieber, and, selena, gomez, broke, up
+\multirow{3}{*}{\texttt{22:00}} & justin, bieber, and, selena, gomez, broke, up
 \\ \cline{2-2}
-& selamat, hari, pahlawan \\ \hline
+& selamat, hari, pahlawan \\\cline{2-2}
+& aniyoruz, kemal, mustafa [ataturk] \\ \hline
 \end{tabular}
 \end{center}
-\caption{November 9th from the top 3 itemsets}
+\caption{Top 3 itemsets for hours in November 9th}
  \label{table:nov9}
 \end{table}
  

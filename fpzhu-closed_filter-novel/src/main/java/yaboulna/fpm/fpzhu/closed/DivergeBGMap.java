@@ -907,9 +907,9 @@ public class DivergeBGMap {
 //                  int differentDocs = Math.max(candDocIds.size(), iDocIds.size())
 //                      - Math.min(candDocIds.size(), iDocIds.size());
 
-                  Integer largerDiffSmallerSize = Math.max(candDocIds.size(), iDocIds.size())
-                    - Math.min(candDocIds.size(), iDocIds.size());
-                  Integer differentDocs = largerDiffSmallerSize; 
+                  MutableInt largerDiffSmallerSize = new MutableInt( Math.max(candDocIds.size(), iDocIds.size())
+                    - Math.min(candDocIds.size(), iDocIds.size()));
+                  MutableInt differentDocs = largerDiffSmallerSize; 
                   int smallerDiffLargerSize = 0;
                   
                   LinkedList<Long> largerDocIds = iDocIds;
@@ -964,7 +964,7 @@ public class DivergeBGMap {
                     while ((largerDocId > 0 && smallerDocId > 0) &&
                         ((honorTemporalSimilarity &&
                         (waitSecsTillCooc.getN() == 0 || waitSecsTillCooc.getMean() < temporalSimilarityThreshold))
-                        || differentDocs <= maxDiffCnt)) {
+                        || differentDocs.intValue() <= maxDiffCnt)) {
 //                        || largerDiffSmallerSize <= maxDiffCnt)) {
                       if (smallerDocId == largerDocId) {
 // intersDocId.add(iDid);
@@ -1002,7 +1002,7 @@ public class DivergeBGMap {
                       } else {
 // unionDocId.add(candDid);
 //                        ++differentDocs;
-                        ++largerDiffSmallerSize;
+                        largerDiffSmallerSize.increment();
                         if (largerIter.hasNext()) {
                           largerDocId = largerIter.next();
                         } else {
@@ -1039,7 +1039,7 @@ public class DivergeBGMap {
                           + " differs in at least {} docs from {} with seconds till coocurrence of: " +
                           waitSecsTillCooc.toString().replace('\n', '|'), differentDocs,
                           cand.toString() + candDocIds.size());
-                      if (differentDocs <= maxDiffCnt) {
+                      if (differentDocs.intValue() <= maxDiffCnt) {
                         LOG.trace("Similar docids");
                       } else {
                         LOG.trace("Dissimilar docids");
@@ -1048,7 +1048,7 @@ public class DivergeBGMap {
                         LOG.trace("Similar in time");
                       } else {
                         LOG.trace("Dissimilar in time");
-                        if (differentDocs <= maxDiffCnt) {
+                        if (differentDocs.intValue() <= maxDiffCnt) {
                           LOG.trace("Dissimilar in time but not in DocIds.. woaaahh!!");
                         }
                       }
@@ -1089,7 +1089,7 @@ public class DivergeBGMap {
 //
 // }
                   // If similar enough, attach to the merge candidate and put both in pending queue
-                  if (differentDocs <= maxDiffCnt) {
+                  if (differentDocs.intValue() <= maxDiffCnt) {
                     
                     double confidence = (largerDocIds.size() - differentDocs.doubleValue()) / largerDocIds.size();
                     if(confidence < confThreshold){
@@ -1238,8 +1238,8 @@ public class DivergeBGMap {
                       theOnlyOneConf = currentBestScore;
                     }
                   } else if (LOG.isTraceEnabled()) {
-                    if (differentDocs < bestUnofficialCandidateDiff) {
-                      bestUnofficialCandidateDiff = differentDocs;
+                    if (differentDocs.intValue() < bestUnofficialCandidateDiff) {
+                      bestUnofficialCandidateDiff = differentDocs.intValue();
                       bestUnofficialCandidate = cand;
                     }
                   }
