@@ -291,12 +291,9 @@ public class DivergeBGMap {
   static boolean TOTALLY_IGNORE_1ITEMSETS = false;
   static boolean IGNORE_1ITEMSETS_VERY_HIGH_CNT = false;
   static boolean allianceKLDPositiveOnly = false;
-  static boolean precedenceHigherSupp = false;
-//  static boolean precedenceLonger = false;
-  static boolean precedenceLowerSupp = false;
-  static boolean precedenceShorter = false;
-  static boolean noCosineSimilarity = true;
-  static boolean noJaccard = false;
+  static boolean maxDiffFromMinSupp = false;
+  static boolean noCosineSimilarity = false;
+  static boolean noJaccard = true;
 
   /**
    * @param args
@@ -339,12 +336,9 @@ public class DivergeBGMap {
       TOTALLY_IGNORE_1ITEMSETS = args[3].contains("Ignore1Tot");
       IGNORE_1ITEMSETS_VERY_HIGH_CNT = args[3].contains("Ignore1VHi");
       allianceKLDPositiveOnly = args[3].contains("KLDPosOnly");
-      precedenceHigherSupp = args[3].contains("PreHiSupp");
-      precedenceLowerSupp = args[3].contains("PreLoSupp");
-//      precedenceLonger = args[3].contains("PreLon");
-      precedenceShorter = args[3].contains("PreShorter");
-      noCosineSimilarity = !args[3].contains("LowCos");
-      noJaccard = args[3].contains("NoJaccard");
+      maxDiffFromMinSupp = args[3].contains("MinSupp");
+      noCosineSimilarity = args[3].contains("NoCos");
+      noJaccard = !args[3].contains("Jaccard");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -363,10 +357,7 @@ public class DivergeBGMap {
     LOG.info("TOTALLY_IGNORE_1ITEMSETS: " + TOTALLY_IGNORE_1ITEMSETS);
     LOG.info("IGNORE_1ITEMSETS_VERY_HIGH_CNT: " + IGNORE_1ITEMSETS_VERY_HIGH_CNT);
     LOG.info("allianceKLDPositiveOnly: " + allianceKLDPositiveOnly);
-    LOG.info("precedenceHigherSupp: " + precedenceHigherSupp);
-    LOG.info("precedenceLowerSupp: "+ precedenceLowerSupp);
-    LOG.info("precedenceShorter: "+ precedenceShorter);
-//    LOG.info("precedenceLonger: " + precedenceLonger);
+    LOG.info("maxDiffFromMinSupp: " + maxDiffFromMinSupp);
     LOG.info("noCosineSimilarity: " + noCosineSimilarity);
     LOG.info("noJaccard: " + noJaccard);
 
@@ -797,9 +788,9 @@ public class DivergeBGMap {
                     // Itemset similiarity starts by a lightweight Jaccard Similarity similiarity,
                     // then if it is promising then the cosine similarity is calculated with IDF weights
 
-                    double isPisSim = interset.size();
+                    double isPisSim = interset.size() * 1.0;
                     if (!noCosineSimilarity)
-                      isPisSim /= isPisUnion.size() * 1.0;
+                      isPisSim /= isPisUnion.size();
                     if (noJaccard || isPisSim >= ITEMSET_SIMILARITY_PROMISING_THRESHOLD) {
                       String simMeasure;
                       double simThreshold=-1;
@@ -913,41 +904,17 @@ public class DivergeBGMap {
                     continue;
                   }
 
-                 
-                  Set<String> prec = cand;
-                  Set<String> ante = itemset;
-                  
-                  
-                  if((precedenceHigherSupp && fgIdsMap.get(prec).size() < fgIdsMap.get(ante).size())
-                     || (precedenceLowerSupp && fgIdsMap.get(prec).size() > fgIdsMap.get(ante).size())) {
-                    Set<String> temp = prec;
-                    prec = ante;
-                    ante = temp;
-                  }
-                  
-                  if(precedenceShorter && prec.size() > ante.size()){
-                    Set<String> temp = prec;
-                    prec = ante;
-                    ante = temp;
-                  } // else if(precedenceLonger)
-                   
-                  
-                  LinkedList<Long> precDocIds = fgIdsMap.get(prec);
-                  LinkedList<Long> anteDocIds = fgIdsMap.get(ante);
-                  
-                  //TODO: MutableInt precDiffAnte = precD
-                  
 //                  int differentDocs = Math.max(candDocIds.size(), iDocIds.size())
 //                      - Math.min(candDocIds.size(), iDocIds.size());
 
-//                  MutableInt largerDiffSmallerSize = new MutableInt( Math.max(candDocIds.size(), iDocIds.size())
-//                    - Math.min(candDocIds.size(), iDocIds.size()));
-////                  MutableInt differentDocs = largerDiffSmallerSize; 
-//                  int smallerDiffLargerSize = 0;
+                  MutableInt largerDiffSmallerSize = new MutableInt( Math.max(candDocIds.size(), iDocIds.size())
+                    - Math.min(candDocIds.size(), iDocIds.size()));
+                  MutableInt differentDocs = largerDiffSmallerSize; 
+                  int smallerDiffLargerSize = 0;
                   
-//                  LinkedList<Long> largerDocIds = iDocIds;
-////                  Set<String> larger = itemset;
-//                  LinkedList<Long> smallerDocIds = candDocIds;
+                  LinkedList<Long> largerDocIds = iDocIds;
+//                  Set<String> larger = itemset;
+                  LinkedList<Long> smallerDocIds = candDocIds;
                   
                   if(candDocIds.size() > iDocIds.size()){
                     largerDocIds = candDocIds;
