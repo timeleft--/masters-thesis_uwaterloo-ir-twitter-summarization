@@ -292,8 +292,8 @@ public class DivergeBGMap {
   static boolean IGNORE_1ITEMSETS_VERY_HIGH_CNT = false;
   static boolean allianceKLDPositiveOnly = false;
   static boolean maxDiffFromMinSupp = false;
-  static boolean noCosineSimilarity = false;
-  static boolean noJaccard = true;
+  static boolean noCosineSimilarity = true;
+  static boolean noJaccard = false;
 
   /**
    * @param args
@@ -337,8 +337,8 @@ public class DivergeBGMap {
       IGNORE_1ITEMSETS_VERY_HIGH_CNT = args[3].contains("Ignore1VHi");
       allianceKLDPositiveOnly = args[3].contains("KLDPosOnly");
       maxDiffFromMinSupp = args[3].contains("MinSupp");
-      noCosineSimilarity = args[3].contains("NoCos");
-      noJaccard = !args[3].contains("Jaccard");
+      noCosineSimilarity = !args[3].contains("LowCos");
+      noJaccard = args[3].contains("NoJaccard");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
