@@ -904,23 +904,23 @@ public class DivergeBGMap {
                     continue;
                   }
 
-//                  int differentDocs = Math.max(candDocIds.size(), iDocIds.size())
-//                      - Math.min(candDocIds.size(), iDocIds.size());
-
-                  MutableInt largerDiffSmallerSize = new MutableInt( Math.max(candDocIds.size(), iDocIds.size())
-                    - Math.min(candDocIds.size(), iDocIds.size()));
-                  MutableInt differentDocs = largerDiffSmallerSize; 
-                  int smallerDiffLargerSize = 0;
-                  
-                  LinkedList<Long> largerDocIds = iDocIds;
-//                  Set<String> larger = itemset;
-                  LinkedList<Long> smallerDocIds = candDocIds;
-                  
-                  if(candDocIds.size() > iDocIds.size()){
-                    largerDocIds = candDocIds;
-//                    larger = cand;
-                    smallerDocIds = iDocIds;
-                  }
+                  MutableInt differentDocs = new MutableInt(Math.max(candDocIds.size(), iDocIds.size())
+                      - Math.min(candDocIds.size(), iDocIds.size()));
+//
+//                  MutableInt largerDiffSmallerSize = new MutableInt( Math.max(candDocIds.size(), iDocIds.size())
+//                    - Math.min(candDocIds.size(), iDocIds.size()));
+//                  MutableInt differentDocs = largerDiffSmallerSize; 
+//                  int smallerDiffLargerSize = 0;
+//                  
+//                  LinkedList<Long> largerDocIds = iDocIds;
+////                  Set<String> larger = itemset;
+//                  LinkedList<Long> smallerDocIds = candDocIds;
+//                  
+//                  if(candDocIds.size() > iDocIds.size()){
+//                    largerDocIds = candDocIds;
+////                    larger = cand;
+//                    smallerDocIds = iDocIds;
+//                  }
                   double maxDiffCnt =
                       ((ancestorItemsets.contains(cand)) ?
                           // the (true) parent will necessarily be present in all documents of itemset
@@ -934,9 +934,9 @@ public class DivergeBGMap {
                           Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                               Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
                                   Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD) *
-                                      largerDocIds.size()))));
-//                                      (maxDiffFromMinSupp ? Math.min(candDocIds.size(), iDocIds.size()) :
-//                                          Math.max(candDocIds.size(), iDocIds.size()))))));
+//                                      largerDocIds.size()))));
+                                      (maxDiffFromMinSupp ? Math.min(candDocIds.size(), iDocIds.size()) :
+                                          Math.max(candDocIds.size(), iDocIds.size()))))));
 
                   if (maxDiffCnt == absMaxDiff * hrsPerEpoch) {
                     ++absMaxDiffEnforced;
@@ -950,10 +950,12 @@ public class DivergeBGMap {
                     // TODONE: use a variation of this measure that calculates the time period covered by each itemset
                     // TODONE: overlap of intersection with the current itemset's docids
 
-                    Iterator<Long> smallerIter = smallerDocIds.iterator(); 
-//                        iDocIds.iterator();
-                    Iterator<Long> largerIter = largerDocIds.iterator(); 
-//                        candDocIds.iterator();
+                    Iterator<Long> smallerIter =
+//                        smallerDocIds.iterator(); 
+                        iDocIds.iterator();
+                    Iterator<Long> largerIter = 
+//                        largerDocIds.iterator(); 
+                        candDocIds.iterator();
                     long smallerDocId = smallerIter.next(), largerDocId= largerIter.next();
 
                     SummaryStatistics waitSecsTillCooc = null;
@@ -992,7 +994,8 @@ public class DivergeBGMap {
                       } else if (smallerDocId < largerDocId) {
 // unionDocId.add(iDid);
 //                        ++differentDocs;
-                        ++smallerDiffLargerSize;
+                        differentDocs.increment();
+//                        ++smallerDiffLargerSize;
                         if (smallerIter.hasNext()) {
                           smallerDocId = smallerIter.next();
                         } else {
@@ -1002,7 +1005,8 @@ public class DivergeBGMap {
                       } else {
 // unionDocId.add(candDid);
 //                        ++differentDocs;
-                        largerDiffSmallerSize.increment();
+                        differentDocs.increment();
+//                        largerDiffSmallerSize.increment();
                         if (largerIter.hasNext()) {
                           largerDocId = largerIter.next();
                         } else {
@@ -1091,7 +1095,8 @@ public class DivergeBGMap {
                   // If similar enough, attach to the merge candidate and put both in pending queue
                   if (differentDocs.intValue() <= maxDiffCnt) {
                     
-                    double confidence = (largerDocIds.size() - differentDocs.doubleValue()) / largerDocIds.size();
+                    double confidence = (candDocIds.size() + iDocIds.size() - differentDocs.doubleValue()) / candDocIds.size(); 
+//                        (largerDocIds.size() - differentDocs.doubleValue()) / largerDocIds.size();
                     if(confidence < confThreshold){
                       continue;
                     }
