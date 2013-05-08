@@ -904,8 +904,9 @@ public class DivergeBGMap {
                     continue;
                   }
 
-                  MutableInt differentDocs = new MutableInt(Math.max(candDocIds.size(), iDocIds.size())
-                      - Math.min(candDocIds.size(), iDocIds.size()));
+                  MutableInt differentDocs = new MutableInt(Math.max(0, candDocIds.size() - iDocIds.size()));
+//                      Math.max(candDocIds.size(), iDocIds.size())
+//                      - Math.min(candDocIds.size(), iDocIds.size()));
 //
 //                  MutableInt largerDiffSmallerSize = new MutableInt( Math.max(candDocIds.size(), iDocIds.size())
 //                    - Math.min(candDocIds.size(), iDocIds.size()));
@@ -994,7 +995,7 @@ public class DivergeBGMap {
                       } else if (smallerDocId < largerDocId) {
 // unionDocId.add(iDid);
 //                        ++differentDocs;
-                        differentDocs.increment();
+//                        differentDocs.increment();
 //                        ++smallerDiffLargerSize;
                         if (smallerIter.hasNext()) {
                           smallerDocId = smallerIter.next();
@@ -1095,7 +1096,9 @@ public class DivergeBGMap {
                   // If similar enough, attach to the merge candidate and put both in pending queue
                   if (differentDocs.intValue() <= maxDiffCnt) {
                     
-                    double confidence = (candDocIds.size() + iDocIds.size() - differentDocs.doubleValue()) / candDocIds.size(); 
+                    double confidence =
+                        (candDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
+                        //(candDocIds.size() + iDocIds.size() - differentDocs.doubleValue()) / candDocIds.size(); 
 //                        (largerDocIds.size() - differentDocs.doubleValue()) / largerDocIds.size();
                     if(confidence < confThreshold){
                       continue;
