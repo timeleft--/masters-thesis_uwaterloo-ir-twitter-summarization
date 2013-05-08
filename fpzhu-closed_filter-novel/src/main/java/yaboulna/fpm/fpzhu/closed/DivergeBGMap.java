@@ -936,8 +936,9 @@ public class DivergeBGMap {
                               Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
                                   Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD) *
 //                                      largerDocIds.size()))));
-                                      (maxDiffFromMinSupp ? Math.min(candDocIds.size(), iDocIds.size()) :
-                                          Math.max(candDocIds.size(), iDocIds.size()))))));
+//                                      (maxDiffFromMinSupp ? Math.min(candDocIds.size(), iDocIds.size()) :
+//                                          Math.max(candDocIds.size(), iDocIds.size()))))));
+                                      candDocIds.size()))));
 
                   if (maxDiffCnt == absMaxDiff * hrsPerEpoch) {
                     ++absMaxDiffEnforced;
