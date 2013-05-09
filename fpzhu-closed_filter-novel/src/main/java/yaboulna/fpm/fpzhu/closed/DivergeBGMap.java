@@ -948,7 +948,7 @@ public class DivergeBGMap {
 
                             Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                 Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                    Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD) *
+                                    Math.floor(confThreshold * //(1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD) *
 // largerDocIds.size()))));
 // (maxDiffFromMinSupp ? Math.min(candDocIds.size(), iDocIds.size()) :
 // Math.max(candDocIds.size(), iDocIds.size()))))));
@@ -1425,7 +1425,8 @@ public class DivergeBGMap {
                     LinkedList<Long> pDocIds = fgIdsMap.get(precedent);
                     LinkedList<Long> aDocIds = fgIdsMap.get(antecedent);
 
-                    double maxDistance = Math.floor((1 - confThreshold) * pDocIds.size());
+                    double maxDistance = (ancestorItemsets.contains(other)? Math.floor((1 - confThreshold) * pDocIds.size()):
+                      confThreshold * pDocIds.size());
                     // Using Manhattan distance / overlap similarity
                     int distance = pDocIds.size() - aDocIds.size();
 

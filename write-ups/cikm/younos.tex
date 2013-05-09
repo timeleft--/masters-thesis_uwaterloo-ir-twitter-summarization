@@ -101,9 +101,10 @@
 % the body of your article BEFORE References or any Appendices.
 \maketitle
 \begin{abstract}
-Abstract
+Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  Tweets are short and repetitious - lacking context and structure  - making it difficult to generate a coherent synopsis of events within a given time period.  Although some established algorithms for frequent item set analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces an complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a straightforward filtering step that preserves these terms only when they may form part of an relevant collocation.  To further reduce trivial results, we strengthen the closure properties of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on a simple information gain measure, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide a coherent pictures of events within that period, with potential application to tasks such as temporal summarization and query expansion for search.
 \end{abstract}
 
+\newpage
 \section{Introduction}
 
 The nature of text in social media poses a challenge when applying traditional search and text mining algorithms. Text in social media is usually short, lacks context and structure, and is created at a very high rate. The sheer volume of social media streams mandates the use of efficient algorithms, and the short length of individual documents makes it possible to apply Frequent Itemsets Mining. This family of algorithms is very fast and efficient, however it is not readily suited for application on text. The problem with Frequent Itemsets Mining is the large number of itemsets it produces.
@@ -649,126 +650,116 @@ This is also necessary since an itemset will have different N-Gram set represent
 
 \section{Strongly closed itemsets}
 \label{sec:strong}
-The closed property of an itemset is very easily violated by modifying one transaction that contains the itemset and removing one of its items. While an update operation is not supported in the model of frequent itemsets mining, a similar effect happens when people are writing about a certain fine grained topic. For example, on November 6th, 2012 many people where tweeting that ``(\underline{Barack} Obama) was elected (\underline{as president \underline{of the United States \underline{of America}}})''. If all the Tweets which use the verb phrase ``was elected'' to report the event also contain the two names (in parenthesis) in full, then there will be one closed itemset with all 12 items. However, either or both the names can be shortened by omitting an underlined part and still convey the meaning. We can consider Tweets with any combination of shortened names to be modifications of the \emph{maximal} closed itemset. Therefore instead of 1 maximal itemset about the event there will be 8 closed ones. Now consider that it is possible to say that ``Obama was elected'' as well as ``Obama got elected'', resulting in 2 maximal itemsets because of a slight variation in the language. Thus, maximal itemsets also has redundancy. We therefore need a condition that is not as easily violated as the closed and maximal conditions for selecting itemsets.
+The closed property of an itemset is very easily violated by modifying one transaction that contains the itemset and removing one of its items. While an update operation is not supported in the model of frequent itemsets mining, a similar effect happens when people are writing about a certain fine grained topic. For example, on November 6th, 2012 many people where tweeting that ``(\underline{Barack} Obama) was elected (\underline{as president \underline{of the United States \underline{of America}}})''. If all the Tweets which use the verb phrase ``was elected'' to report the event also contain the two names (in parenthesis) in full, then there will be one  \emph{maximal}  itemset with all 12 items. However, either or both the names can be shortened by omitting an underlined part and still convey the meaning. 
+%We can consider Tweets with any combination of shortened names to be modifications of the \emph{maximal} closed itemset. 
+Therefore instead of 1 maximal itemset about the event there will be 8 closed ones. Nevertheless, mining only \emph{maximal} doesn't solve the problem of redundancy. Consider that it is possible to say that ``Obama was elected'' as well as ``Obama got elected'', resulting in 2 maximal itemsets because of a slight variation in the language. Empirically, this is evident in the relatively small difference between the number of closed itemsets and maximal itemsets of length 2 or more (i.e. excluding itemsets that are only merely a frequent term); the means across all hour long epochs in Tweets posted in November are 2439.17 closed itemsets and 1831.92 maximal itemsets. 
 
+We now define a condition that is not as easily violated as the closed and maximal conditions for selecting itemsets.
 %For example, on November 9th, 2012 many people where tweeting that ``Justin Bieber and Selena Gomez broke up''. If all Tweets which use the verb "break up" to report the topic also contain the two names in full, then there will be one closed itemset with all 6 items. However, a Tweet can contain any of 8 other combinations of the four names that fully convey the meaning. We can consider that Tweets with any of these combinations are modifications of the \emph{maximal} closed itemset. Therefore instead of 1 maximal itemset about the topic there will be 9 closed ones. Now consider that it is possible to say that "Justin and Selena broke up" as well as "Justin broke up with Selena", resulting in 2 maximal itemsets. This increase in the number of maximal itemsets because of slight variations in the language is intensified by the length limit on Tweets, specially when people try to make space for their comment about a Tweet they are retweeting. We therefore need a property between the easily violated closed property and the very strict maximal property which also results in a large number of redundant itemsets. 
 % This will result in the creation of two closed itemsets, a new shorter with support that one higher than the original itemset
-
-We define a \emph{high confidence} itemset as a closed itemset whose frequency comprises more than a certain proportion of the frequency of its least frequent subset.
+We define a \emph{distinct} itemset as a closed itemset whose frequency comprises more than a certain proportion of the frequency of its least frequent subset. 
 %, or which has at least one strongly closed superset. 
-This property chooses closed itemsets which violate the closed property of their subsets by a significant amount. 
-%It also filters out itemsets that are short language constructs, because their components appear very frequently and none of their numerous supersets comprise a significant proportion of their high frequency. 
-We state this condition formally as follows. Let $\kappa$ be a parameter that can vary between 0 and 1 to increase the selectivity of the condition. Then the set of  \emph{high confidence} itemsets is:
+This condition chooses closed itemsets which substantially violate the closed property of their subsets. The proportion is a parameter, $\kappa$, that controls the selectivity of the condition. Formally, the set of \emph{distinct} itemsets, $\mathcal{K}$, is defined as follows:
+%We state this condition formally as follows:
+%Let $\kappa$ be a parameter that can vary between 0 and 1 to increase the selectivity of the condition. Then the set of  \emph{high confidence} itemsets is:
 %\begin{equation}\mathcal{S} = \{s:\frac{|T_{s}|}{|T_{s_{parent}}|} \, where \, s_{parent} \subset s \, and \, |T_{s_{parent}}| < |T_{s_{ancestor}} | \forall s_{ancestor} \subset s \}\end{equation}
 \begin{equation*}\mathcal{K} = \{s:\frac{|T_{s}|}{|T_{s_{p}}|} \ge \kappa \; where \; s_{p} \subset s \, and \, |T_{s_{p}}| < |T_{s_{a}} |\, \forall \, s_{a} \subset s \}\end{equation*}
+%It also filters out itemsets that are short language constructs, because their components appear very frequently and none of their numerous supersets comprise a significant proportion of their high frequency. 
 
-Notice that
-% within the documents containing a closed itemset, $D_{itemset}$, the probability of a closed superset ($|D_{superset}| / |D_{itemset}|$) 
-$\frac{|T_{s}|}{|T_{s_{p}}|} $ is the called confidence of the rule ``$s_{p} \rightarrow s$.'' This property is the basic property used for association rules mining, and it is used in the definition of $\delta$-free sets. Mining itemsets based on the confidence of rules they induce has long been recognized as a method for finding ``interesting patterns'' \cite{cohen2001finding}, but since this property is not anti-monotone a variation has to be used (for example, \emph{all confidence} \cite{kim2004ccmine}).
-%some algorithms for mining itemsets based on a variation called \emph{all confidence} have been proposed \cite{kim2004ccmine}. The strongly closed property builds on the notion of confidence by choosing itemsets which would result in rules of high confidence. The minimum acceptable confidence of the resulting rule is a parameter $\kappa$ that can vary between 0 and 1 to increase the strength of the strongly closed property.
+Figure \ref{fig:sham} illustrates \emph{distinct} itemsets, in solid lines, and closed itemsets that don't satisfy the distinctiveness condition, in dashed lines. Each area in the figure represents the transactions containing the itemset formed by concatenating the items in all intersecting ellipses.  
+%the circle with the words in its container. 
+The figure represents itemsets related to Donald Trump's famous 
+%meltdown 
+Tweets when Obama's victory was clear\footnote{http://www.huffingtonpost.com/2012/11/07/donald-trump-election-revolution\_n\_2085864.html}.  The figure shows the effect of the lack of context and structure in conversations happening on Twitter. Because there was originally no way to refer to a certain Tweet, a Tweet that sparks conversation on Twitter had  to be quoted in a retweet along with the retweeter's comment on it. This tradition still continues even though now Tweets can reference each other. 
+%Because there was originally no way to refer to a certain Tweet, retweets (forwards) had to quote the Tweet being discussed, and this tradition still continues even though now Tweets reference each other. 
+Due to the 140 characters length limit of Tweets the quotation usually has to be made as short as possible by selecting only the most discriminative words. This selection is an act of collaborative filtering, but it results in many trivially different subsets from the original Tweet. The additions of retweeters also form many different supersets of the of the original Tweet, some of which represent highly supported opinions. 
 
-%Using a lower bound on confidence of a longer itemset given a closed subset its least frequent closed subset (maximum confidence of this superset) 
-Even though choosing \emph{high confidence} itemsets filters out many redundant itemsets formed because of slight variations of the same topic, it is still does not completely solve the problem of redundancy. The intersection of the sets of transactions containing two \emph{high confidence} itemsets can be different by only 1 transction from either of the sets. For example, the closed itemset \{Obama, Romney\} can have three closed supersets: \{Obama, Romney, debate, \#elections2012\}, \{Obama, Romney, debate\} and \{Obama, Romney, \#elections2012\}. Figure \ref{fig:jelena} illustrates how all supersets can be \emph{high confidence}, while they are still redundant itemsets mined from almost the same Tweets. Each circle in the figure represents the set of Tweets containing the itemset formed by concatenating the words in the circle with the words in its container. The figure also shows, as dashed circles, examples of itemsets that would be filtered out by the \emph{high confidence} property.
-\begin{figure}[htb]
-\label{fig:jelena}
+We remove the redundancy in \emph{distinct} itemsets by merging similar ones into \emph{strongly closed} itemset clusters. The similarity of a \emph{distinct} itemset, $s_d$, and another distinct or closed itemset, $s_c$, is measured as the overlap of the transactions containing both of them with the transactions containing $s_c$.  A \emph{distinct} itemset is clustered with another itemset if one exists such that the non-overlap is less than the distinctive threshold $\kappa$. If more than one satisfies this condition, the  \emph{distinct} itemset is clustered with the one with the least support. When  a \emph{distinct} itemset is clustered with an itemset which is already part of a cluster, the \emph{distinct} itemset is added to the existing cluster. Finally, the \emph{strongly closed} itemset is the 
+%bag of items formed by taking the 
+union of all cluster members, and its support is the size of the union of their postings lists. Formally:
+\begin{equation}S_l = \{w:\, w \in \bigcup_{s_i \in r_l}{s_i} \; where \; r_l \, is \, a\, cluster\}\end{equation}
+
+To formally define the \emph{strongly closed} itemset clusters, we first introduce the related concept of \emph{association rule confidence}. Confidence is the basic property used for association rules mining, and it is used in the definition of $\delta$-free sets. Mining itemsets based on the confidence of rules they induce has long been recognized as a method for finding ``interesting patterns'' \cite{cohen2001finding}, but since this property is not anti-monotone a variation has to be used (for example, \emph{all confidence} \cite{kim2004ccmine}).The confidence of the rule ``$s_{p} \rightarrow s$'' is  defined as:
+\begin{equation}\label{eq:conf}conf(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
+
+The clustering scheme described selects the cluster that contains the itemset which maximizes the confidence of the rule $c(s_c \rightarrow s_d)$, with a lower bound on the confidence needed to join a cluster. Formally, the clustering result are: 
+\begin{multline}\label{eq:strongClosedFormal}
+\mathcal{R} = \{r: r = \bigcup{(s_c, s_d)}\; where\; \\ \forall_{(s_c,s_d)} \, s_c = \textbf{argmax}_{s_k} conf(s_k \rightarrow s_d) \\\;and \;conf(s_c \rightarrow s_d) \ge\le \kappa\}
+\end{multline}
+
+This clustering can be implemented efficiently using techniques similar to the ones proposed by Bayardo et al. \cite{bayardo2007scaling}. The main ideas are to limit the comparisons to a few candidates, and to terminate the comparison early if the similarity threshold will not be met. In our case the postings lists are longer than the transactions, so we generate the candidates from the similarity of the transactions. When calculating the similarity between two postings lists, we can terminate early if the difference exceeds the value given by equation \ref{eq:maxDiffCnt}. It gives the maximum difference allowed between between the transactions containing the precedent and those containing the antecedent to achieve the distinctiveness threshold $\kappa$. It is easily derived from equation \ref{eq:conf}.
+
+\begin{equation}\label{eq:maxDiffCnt}\Delta(s_j, \kappa) = (1 - \kappa)  |T_{s_j}|
+\end{equation}
+
+Algorithm  \ref{algo:alliance}  shows a possible implementation. For each itemset, $s_i$, we find the itemsets produced before it and overlapping with it, even in one item. Out of those candidates, $s_c$, we find the one that maximizes $conf(s_c \rightarrow s_i)$ such that the \emph{distinct} condition \textbf{doesn't} hold(s). Notice that confidence is not a symmetric measure, but it is only meaningful to check the confidence of the rule from the higher support shorter itemset to the lower support longer itemset. Higher support shorter itemsets will be produced before the itemset being clustered because of the way PPO-Extension produces itemsets, when the total ordering follows the descending order of items' frequency. The functions difference() terminates early, and it also doesn't need to traverse the postings lists at all when calculating the difference between an itemset and one of its subsets. In this case the size of the difference will be $|T_{s_c}| - |T_{s_i}|$.
+
+
+
+\begin{figure}
 \centering
 % Generated with LaTeXDraw 2.0.8
-% Mon Apr 29 15:14:17 EDT 2013
+% Thu May 09 12:02:46 EDT 2013
 % \usepackage[usenames,dvipsnames]{pstricks}
 % \usepackage{epsfig}
 % \usepackage{pst-grad} % For gradients
 % \usepackage{pst-plot} % For axes
-\scalebox{1} % Change this value to rescale the drawing.
+\scalebox{0.9} % Change this value to rescale the drawing.
 {
-\begin{pspicture}(0,-1.26)(4.64,1.26)
-\psframe[linewidth=0.018,dimen=outer](4.64,1.26)(0.0,-1.26)
-\pscircle[linewidth=0.018,dimen=outer](1.48,-0.12){0.94}
-\pscircle[linewidth=0.018,dimen=outer](1.96,-0.12){0.9}
-\pscircle[linewidth=0.018,linestyle=dashed,dash=0.16cm 0.16cm,dimen=outer](3.81,0.39){0.27}
+\begin{pspicture}(0,-2.649212)(9.077745,2.95)
+\psframe[linewidth=0.04,dimen=outer](8.843161,2.95)(0.2431605,-2.61)
 \usefont{T1}{ptm}{m}{n}
-\rput(1.2158496,1.005){Obama, Romney}
+\rput(4.103317,1.675){sham, and, travesty}
 \usefont{T1}{ptm}{m}{n}
-\rput(1.1,-0.295){debate}
+\rput(1.7484828,2.575){@realdonaldtrump}
+\pscircle[linewidth=0.04,dimen=outer](4.1031604,0.01){2.28}
+\rput{55.644855}(2.9522903,-5.6005197){\psellipse[linewidth=0.04,dimen=outer](6.782275,-0.0031560312)(1.9103949,2.0626228)}
+\rput{34.21703}(0.13301769,-1.7201583){\psellipse[linewidth=0.04,dimen=outer](2.8607624,-0.6440031)(2.908739,0.81)}
+\pscircle[linewidth=0.04,dimen=outer](4.5031605,-0.33){1.58}
 \usefont{T1}{ptm}{m}{n}
-\rput(2,0.1){\small \#elections2012}
+\rput(4.527965,-0.865){not,}
+\pscircle[linewidth=0.04,linestyle=dashed,dash=0.16cm 0.16cm,dimen=outer](2.6031604,0.81){0.48}
 \usefont{T1}{ptm}{m}{n}
-\rput(3.655244,0.825){governor}
-\pscircle[linewidth=0.018,linestyle=dashed,dash=0.16cm 0.16cm,dimen=outer](3.83,-0.47){0.29}
+\rput(1.0566566,1.455){fraud}
+\pscircle[linewidth=0.04,linestyle=dashed,dash=0.16cm 0.16cm,dimen=outer](1.0631605,1.45){0.46}
 \usefont{T1}{ptm}{m}{n}
-\rput(3.6618066,-0.875){president}
+\rput(2.623102,0.815){hair}
+\pscircle[linewidth=0.04,dimen=outer](7.3231606,-1.35){1.02}
+\usefont{T1}{ptm}{m}{n}
+\rput(7.337262,-1.025){the, world, }
+\usefont{T1}{ptm}{m}{n}
+\rput(7.264635,-1.325){is, laughing}
+\rput{34.21703}(0.8391447,-4.3701773){\psellipse[linewidth=0.04,dimen=outer](7.5185595,-0.8219682)(1.3607179,0.95923364)}
+\rput{34.21703}(0.3818179,-4.274056){\psellipse[linewidth=0.04,dimen=outer](7.133755,-1.5167968)(1.2777647,0.86427283)}
+\usefont{T1}{ptm}{m}{n}
+\rput(7.207018,-1.645){at}
+\usefont{T1}{ptm}{m}{n}
+\rput(8.076705,-0.165){us}
+\usefont{T1}{ptm}{m}{n}
+\rput(6.371842,-2.105){you}
+\usefont{T1}{ptm}{m}{n}
+\rput(1.4102015,-1.625){elections}
+\usefont{T1}{ptm}{m}{n}
+\rput(6.9122915,1.255){rt}
+\usefont{T1}{ptm}{m}{n}
+\rput(4.4461293,-1.265){democracy}
 \end{pspicture} 
 }
-\caption{High and low confidence itemsets}
+
+\caption{Closed, distinct and strongly closed sets}
+\label{fig:sham}
 \end{figure}
-
-To remove such redundancy, we merge similar itemsets into \emph{strongly closed} itemset clusters. The \emph{strongly closed} itemset is a bag of items formed by taking the union of all cluster members. 
-%This concentrates the numerous itemsets about a certain topic into a few units. 
-We do the clustering in the postings list space to avoid merging itemsets 
-%including different aspects or opinions about a topic. 
-about different topics or different aspects or opinions in the same topic. 
-The clustering scheme we use is similar to \cite{bayardo2007scaling}, but it is much simpler. 
-For each itemset, we find the itemsets produced before it and overlapping with it, even in one item, such that the \emph{high confidence} condition holds. The itemset joins the cluster containing the itemset with which it achieves the highest confidence. \emph{Confidence} between itemsets that are not supersets of one another is defined as  \cite{cohen2001finding}:
-\begin{equation}c(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
-%However, 
-%\begin{equation} \equiv \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_i} \cup T_{s_j}|}\end{equation}
-Thus, we formally define \emph{strong closed} itemset clusters as:
-\begin{multline}\label{eq:strongClosedFormal}
-\mathcal{S} \gets \, all\,  S \, such\,  that\, 
-\\S = \{w:\, w \in \bigcup_{i}{s_i}\; where \; \forall_{s_i}\, \textbf{argmax}_{s_j} c(s_j \rightarrow s_i) = s_j  \in S \\\; and\; c(s_j \rightarrow s_i) \le \kappa \} 
-\end{multline}
- 
-
-%\begin{multline}\label{eq:strongClosedFormal}S = \{i:\, i \in \bigcup{s}\; where \; \forall_{j,k}\, c(s_j \rightarrow s_k)  \le \kappa \} \\
-%\mathcal{S} = \{S: s_j \; where \; \textbf{argmax}_{j,k} c(s_j \rightarrow s_k) \; \forall \; s_j \in \mathcal{C}, s_k \in S\}
-%\end{multline}
-
-%First, we do an all pairs similarity search on the itemsets, using IDF weighted cosine similarity. 
-%Itemsets are clustered  such that \emph{high confidence} is achieved between cluster members and the cluster centroid. We make use of the structure of itemsets for selecting the centroid. The cluster centroid is the most supported itemsets select the The cluster centroid 
-
-%to calculate it between such itemsets the actual (dis-)overlap of the postings lists must be determined. 
-%For example, itemsets that differ because of items not pertaining to the topic, such as ``was'' and ``got'' in the Obama-elected example. 
-%The use of cosine similarity limits the candidates for merging to a few itemsets that are very likely about the same topic, 
-%since the Inverse Document Frequency (IDF) value of terms pertaining to a certain topics is typically much higher than the IDF value of other terms. The IDF and cosine similarity formulae used are given in equations \ref{eq:IDF} and \ref{eq:cosine} respectively.
-%\begin{equation}\label{eq:IDF}IDF(i) = \log{\frac{|E|}{|D_i|}}\end{equation}
-%\begin{equation}\label{eq:cosine}cos(S_1,S_2) = \frac{\sqrt{\sum_{i \in S_1 \cap S_2} IDF(i)^2 }}{\sqrt{\sum_{i \in S_1} IDF(i)^2} * \sqrt{\sum_{i \in S_2} IDF(i)^2}} \end{equation}
-%To avoid forming alliances that are not coherent about a certain topic, 
-
-
-Algorithm  \ref{algo:alliance}  shows the implementation for forming \emph{strong closed} itemset clusters.
-To see if the \emph{high confidence} condition will be violated, it is enough to check if the difference between the posting lists of two itemsets is above the number given by equation \ref{eq:maxDiffCnt}. In case of merging an itemset with its superset, this difference can be calculated directly from the sizes of the posting lists.
-% using the confidence formula.
-%by subtracting the support of the superset from that of the itemset. 
-Otherwise, the difference can be efficiently calculated from the postings lists since they are sorted, and it is enough to check if the difference exceeds the maximum number allowed by the required confidence: 
-
-% The maximum number of different documents is given by equation \ref{eq:maxDiffCnt}. 
-%An empirical performance evaluation is provided in section \ref{sec:perf}. 
-%\begin{equation}\label{eq:maxDiffCnt}\Delta(S_1,S_2,\kappa) = (1 - \kappa) * max(|D_{S_1}|,|D_{S_2}|), \, \kappa \in [0,1[\end{equation}
-\begin{equation}\label{eq:maxDiffCnt}\Delta(c(s_j \rightarrow s_i) \le \kappa) = (1 - \kappa)  |T_{s_j}|%* \max(|T_{s_1}|,|T_{s_2}|)
-%, \, \kappa \in [0,1[
-\end{equation}
 
 
 \begin{algorithm}
 \SetAlgoLined
 \LinesNumbered
 \KwIn{$\kappa$: Minimum closed strength} %$\theta$: Minimum cosine similarity, \\
-\KwData{F: Frequent Itemsets produced by LCM}
-\KwResult{$\mathcal{S}$: Strong closed itemset clusters}
-\For{$i \gets 2$ to $|F|$}{
-	$K \gets \emptyset$ \tcp*{Candidates for merging with $s_i$}
-	$P \gets \emptyset$ \tcp*{Subsets of current itemset}
-	\For{$j \gets 1$ to $i - 1$}{
-		\If{$|s_i \cap s_j| > 0$}{
-			$K$.add($S_j$)\;
-			\If{$|s_i \cap s_j| = min(|s_i|, |s_j|)$ and $|s_i| > |s_j|$}{
-				$P$.add($S_j$)\;
-%				\lIf{$|S_i| > |S_j|$}{$T$.add($S_j$)}
-			}
-		}
-%		\ElseIf{cos($S_i,S_j$) $\ge \theta$}{
-%			$C$.add($S_j$)\;
-%		}
-	}
+\KwData{$\mathcal{C}$: Closed Itemsets produced by LCM}
+\KwResult{$\mathcal{R}$: Strong closed itemset clusters}
+\For{$i \gets 2$ to $|\mathcal{C}|$}{
+	$K \gets \{s_k: s_k \in \mathcal{C} \, and \, k < i \, and \, |s_k \cap s_i| > 0\}$\;
+	
 	$maxConf \gets 0$ \tcp*{Best candidate's score}
 	\ForEach{$s_k \in K$}{
 		\uIf{$s_k \in P$}{
