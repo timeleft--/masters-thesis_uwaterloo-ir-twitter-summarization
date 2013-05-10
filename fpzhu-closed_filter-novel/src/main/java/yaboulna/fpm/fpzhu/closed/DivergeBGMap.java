@@ -299,6 +299,7 @@ public class DivergeBGMap {
   static boolean noCosineSimilarity = true;
   static boolean noJaccard = false;
   static boolean clusteringLocally = true;
+  static boolean clusterWithOneSelf = true;
   static boolean satisfyMinDiff = false;
 
   /**
@@ -370,6 +371,7 @@ public class DivergeBGMap {
     LOG.info("noJaccard: " + noJaccard);
     LOG.info("clusteringLocally: " + clusteringLocally);
     LOG.info("satisfyMinDiff: " + satisfyMinDiff);
+    LOG.info("clusterWithOneSelf: " + clusterWithOneSelf);
 
     String thresholds = "";
 // thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
@@ -777,16 +779,16 @@ public class DivergeBGMap {
                         parentItemset = pis;
                         // first parent to encounter will be have the lowest support, thus gives highest confidence
                         double pisFreq = fgCountMap.get(pis);
-                        maxConfidence = conf; //fgCountMap.get(itemset) / pisFreq;
+                        maxConfidence = conf; // fgCountMap.get(itemset) / pisFreq;
                         if (LOG.isTraceEnabled())
                           LOG.trace("{} found parent {}, with confidence: " + maxConfidence,
                               itemset.toString() + fgCountMap.get(itemset), pis.toString() + pisFreq);
-                      } else  if(maxConfidence < conf) {
+                      } else if (maxConfidence < conf) {
                         if (LOG.isTraceEnabled())
                           LOG.trace("{} found another parent {}, with higher confidence: "
                               + conf + " > " + maxConfidence,
                               itemset.toString() + fgCountMap.get(itemset), pis.toString() + fgCountMap.get(pis));
-                        
+
                         maxConfidence = conf;
                         parentItemset = pis;
                       }
@@ -903,7 +905,7 @@ public class DivergeBGMap {
 // } else { // if (maxConfidence < CLOSED_CONFIDENCE_THRESHOLD) {
                 if (parentItemset != null) {
                   itemsetParentMap.put(itemset, parentItemset);
-                  if(maxConfidence < confThreshold){
+                  if (maxConfidence < confThreshold) {
                     continue;
                   }
                 }
@@ -954,20 +956,20 @@ public class DivergeBGMap {
 // smallerDocIds = iDocIds;
 // }
                     double maxDiffCnt =
-//                        ((ancestorItemsets.contains(cand)) ?
-//                            // the (true) parent will necessarily be present in all documents of itemset
-//// differentDocs = candDocIds.size() - iDocIds.size();
-//// Math.floor((itemset.size() == 2?confThreshold: (1 - confThreshold)) * candDocIds.size())
-//                            (!PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE ? Math.floor((1 - confThreshold)
-//                                * candDocIds.size()) :
-//                                Math.floor((1 / confThreshold) * iDocIds.size()))
-//                            :
-                            (satisfyMinDiff ? Double.MAX_VALUE :
-                                Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-                                    Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                        Math.floor((1- (1 - confThreshold))
-                                            //* iDocIds.size())))); // could be the min or all the other funky stuff.. even
-                                            * candDocIds.size()))));
+                        // ((ancestorItemsets.contains(cand)) ?
+// // the (true) parent will necessarily be present in all documents of itemset
+// // differentDocs = candDocIds.size() - iDocIds.size();
+// // Math.floor((itemset.size() == 2?confThreshold: (1 - confThreshold)) * candDocIds.size())
+// (!PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE ? Math.floor((1 - confThreshold)
+// * candDocIds.size()) :
+// Math.floor((1 / confThreshold) * iDocIds.size()))
+// :
+                        (satisfyMinDiff ? Double.MAX_VALUE :
+                            Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                                Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                    Math.floor((1 - (1 - confThreshold))
+                                        // * iDocIds.size())))); // could be the min or all the other funky stuff.. even
+                                        * candDocIds.size()))));
 // cand
                     double minDiffCnt =
                         ((!satisfyMinDiff || ancestorItemsets.contains(cand)) ? -1 :
@@ -1146,7 +1148,7 @@ public class DivergeBGMap {
                           (candDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
                       // (candDocIds.size() + iDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
 // (largerDocIds.size() - differentDocs.doubleValue()) / largerDocIds.size();
-                      if (confidence < (1-confThreshold)) {
+                      if (confidence < (1 - confThreshold)) {
                         continue;
                       }
                       // Try and join and existing alliance
@@ -1595,6 +1597,69 @@ public class DivergeBGMap {
 
                 if (!allied) {
                   unalliedItemsets.put(itemset, maxConfidence);// klDiver);
+                  if (clusterWithOneSelf) {
+                    Set<String> theOnlyOneIllMerge = itemset;
+                    if (theOnlyOneIllMerge != null) {
+                      if (LOG.isTraceEnabled())
+                        LOG.trace(
+                            itemset.toString()
+                                + iDocIds.size()
+                                + " Clustering with itself ");
+                      // /////////// Store that you joined this alliance
+
+                      // Cannot happen with the hard clusters (since the only one)
+                      // if (transHeads.contains(theOnlyOneIllMerge)) {
+                      // // // this itemset is already part of the alliance, in an earlier iteration
+                      // continue;
+                      // }
+
+                      java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
+                          .get(theOnlyOneIllMerge);
+
+                      if (alliedItemsets == null) { // always true but duh
+                        // ////// Create a new alliance
+                        LinkedList<Long> theOnlyOnesDocIds = iDocIds;
+                        alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
+                            HashMultiset.create(theOnlyOneIllMerge), Sets.newHashSet(theOnlyOnesDocIds));
+                        growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
+
+                        DescriptiveStatistics kldStats = new DescriptiveStatistics();
+
+                        if (allianceKLDPositiveOnly) {
+                          if (positiveKLDivergence.containsKey(theOnlyOneIllMerge)) {
+                            kldStats.addValue(positiveKLDivergence.get(theOnlyOneIllMerge));
+                          }
+                        } else {
+                          kldStats.addValue(kldCache.get(theOnlyOneIllMerge));
+                        }
+
+                        alliedKLD.put(theOnlyOneIllMerge, kldStats);
+
+                        if (!itemsetParentMap.containsKey(theOnlyOneIllMerge)) {
+                          if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
+                              && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
+                            itemsetParentMap.put(theOnlyOneIllMerge, parentItemset);
+                          } else {
+                            itemsetParentMap.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
+                          }
+                        }
+//                        unalliedItemsets.remove(theOnlyOneIllMerge);
+                      } else { // to avoid dupliate addition
+                        alliedItemsets.getKey().addAll(itemset);
+                        alliedItemsets.getValue().addAll(iDocIds);
+
+                        if (allianceKLDPositiveOnly) {
+                          if (positiveKLDivergence.containsKey(itemset)) {
+                            alliedKLD.get(theOnlyOneIllMerge).addValue(positiveKLDivergence.get(itemset));
+                          }
+                        } else {
+                          alliedKLD.get(theOnlyOneIllMerge).addValue(kldCache.get(itemset));
+                        }
+                      }
+// allied = true;
+
+                    }
+                  }
                 }
 
                 if (!ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE || !allied) {

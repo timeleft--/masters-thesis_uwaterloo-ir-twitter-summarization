@@ -775,20 +775,17 @@ The functions difference() terminates early, and it also doesn't need to travers
 \KwResult{$\mathcal{R}$: Strong closed itemset clusters}
 \For{$i \gets 2$ to $|\mathcal{C}|$}{
 	$C \gets \{s_c: s_c \in \mathcal{C} \, and \, c < i \, and \, |s_c \cap s_i| > 0\}$\;
+	$P \gets \{s_p: s_p \in \mathcal{C} \, and \, p < i \, and \, s_p \cap s_i = s_i\}$\;
+	$s_p \gets \textbf{argmax}_{s_p \in P}\frac{|T_{s_i}|}{|T_{s_p}|}$ \tcp*{Direct parent}
+	\uIf{$\frac{|T_{s_i}|}{|T_{s_p}|} < \kappa$}{continue\tcp*{Not distinct}}
 	%$s_m
 	$maxConf \gets 0$ \tcp*{Best candidate's score}
 	\ForEach{$s_c \in C$}{
-		\uIf{$s_c \cap s_i = s_c$}{
-			$\Delta \gets (1-\kappa) |T_{s_c}|$ \tcp*{Distinctiveness}
-			$\delta \gets |T_{s_c}| - |T_{s_i}|$\tcp*{Candidate is a subset}
-		}	
-		\Else{
-			$\Delta \gets (1 - (1-\kappa)) |T_{s_i}|$ \tcp*{Similarity}
-			$\delta \gets$ difference($T_{s_i},T_{s_c \cup s_i},\Delta$) \tcp*{Stops early}
-		}
+		$\Delta \gets (1 - (1-\kappa)) |T_{s_c}|$ \tcp*{Similarity}
+		$\delta \gets$ difference($T_{s_c},T_{s_c \cup s_i},\Delta$) \tcp*{Stops early}
 		
 		\If{$\delta \le \Delta$}{ %and $\delta < minDiff$}{
-			$conf \gets \frac{|T_{s_k}| - \delta}{ |T_{s_k}|}$\;
+			$conf \gets \frac{|T_{s_c}| - \delta}{ |T_{s_c}|}$\;
 			\If{$conf > maxConf$}{
 				$s_m \gets s_k$ \tcp*{Best merge candidate}
 				$maxConf \gets conf$ \;%\delta$\; 
@@ -797,8 +794,9 @@ The functions difference() terminates early, and it also doesn't need to travers
 	}
 	%\If{$minDiff < \infty$}{
 	\If{$maxConf > 0$}{
-		$\mathcal{S}[s_m].itemset \gets \mathcal{S}[s_m].itemset \cup s_i \cup s_m$\;
-		$\mathcal{S}[s_m].postingsList \gets \mathcal{S}[s_m].postingsList \cup s_i.postingsList \cup s_m.postingsList$\;
+		$\mathcal{R}[s_i] = \mathcal{R}[s_m]$ \tcp*{Cluster $s_i$ with $s_m$}
+		$\mathcal{R}[s_m].itemset \gets \mathcal{S}[s_m].itemset \cup s_i \cup s_m$\;
+		$\mathcal{R}[s_m].postingsList \gets \mathcal{S}[s_m].postingsList \cup s_i.postingsList \cup s_m.postingsList$\;
 	}
 }
 \Return{$\mathcal{S}$}\;
