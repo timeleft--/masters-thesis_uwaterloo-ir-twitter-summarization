@@ -767,37 +767,34 @@ public class DivergeBGMap {
 
                     mergeCandidates.add(pis);
 
-                    double conf =fgCountMap.get(itemset).doubleValue()
-                        / fgCountMap.get(pis).doubleValue();
-                    
-                    if(conf> maxConfidence)
-                      maxConfidence = conf;
-                    
                     if (pis.size() < itemset.size()) {
 
                       ancestorItemsets.add(pis);
 
+                      double conf = fgCountMap.get(itemset).doubleValue()
+                          / fgCountMap.get(pis).doubleValue();
                       if (parentItemset == null) {
                         parentItemset = pis;
                         // first parent to encounter will be have the lowest support, thus gives highest confidence
                         double pisFreq = fgCountMap.get(pis);
-//                        maxConfidence = fgCountMap.get(itemset) / pisFreq;
+                        maxConfidence = conf; //fgCountMap.get(itemset) / pisFreq;
                         if (LOG.isTraceEnabled())
-                          LOG.trace("{} found parent {}, with confidence: " + conf, // maxConfidence,
+                          LOG.trace("{} found parent {}, with confidence: " + maxConfidence,
                               itemset.toString() + fgCountMap.get(itemset), pis.toString() + pisFreq);
-                      } else {
+                      } else  if(maxConfidence < conf) {
                         if (LOG.isTraceEnabled())
-                          LOG.trace("{} found another parent {}, with confidence: " + conf,
-//                              + fgCountMap.get(itemset).doubleValue()
-//                              / fgCountMap.get(pis).doubleValue(),
+                          LOG.trace("{} found another parent {}, with higher confidence: "
+                              + conf + " > " + maxConfidence,
                               itemset.toString() + fgCountMap.get(itemset), pis.toString() + fgCountMap.get(pis));
+                        
+                        maxConfidence = conf;
+                        parentItemset = pis;
                       }
                     } else {
-                      
-                      
                       if (LOG.isTraceEnabled())
                         LOG.trace("{} is NOT longer that its 'parent' {}, with confidence: "
-                            + conf,
+                            + fgCountMap.get(itemset).doubleValue()
+                            / fgCountMap.get(pis).doubleValue(),
                             itemset.toString() + fgCountMap.get(itemset),
                             pis.toString() + fgCountMap.get(pis));
                     }
