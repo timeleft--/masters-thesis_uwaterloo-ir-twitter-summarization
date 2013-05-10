@@ -1597,7 +1597,8 @@ public class DivergeBGMap {
 
                 if (!allied) {
                   unalliedItemsets.put(itemset, maxConfidence);// klDiver);
-                  if (clusterWithOneSelf) {
+                  if (clusterWithOneSelf 
+                      && parentItemset != null) { //make use the optimization
                     Set<String> theOnlyOneIllMerge = itemset;
                     if (theOnlyOneIllMerge != null) {
                       if (LOG.isTraceEnabled())
@@ -1639,7 +1640,7 @@ public class DivergeBGMap {
                           if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
                               && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
                             itemsetParentMap.put(theOnlyOneIllMerge, parentItemset);
-                          } else {
+                          } else { //Cannot happen but leae it
                             itemsetParentMap.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
                           }
                         }
