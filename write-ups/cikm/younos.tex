@@ -101,7 +101,7 @@
 % the body of your article BEFORE References or any Appendices.
 \maketitle
 \begin{abstract}
-Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  Tweets are short and repetitious - lacking context and structure  - making it difficult to generate a coherent synopsis of events within a given time period.  Although some established algorithms for frequent item set analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces an complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a straightforward filtering step that preserves these terms only when they may form part of an relevant collocation.  To further reduce trivial results, we strengthen the closure properties of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on a simple information gain measure, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide a coherent pictures of events within that period, with potential application to tasks such as temporal summarization and query expansion for search.
+Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  Tweets are short and repetitious - lacking context and structure  - making it difficult to generate a sensible synopsis of events within a given time period.  Although some established algorithms for frequent item set analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces a complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a straightforward filtering step that preserves these terms only when they may form part of a relevant collocation.  To further reduce trivial results, we strengthen the closure condition of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on a simple information gain measure, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of Tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide understandable and meaningful pictures of events within that period, with potential application to tasks such as temporal summarization and query expansion for search.
 \end{abstract}
 
 \newpage
@@ -674,25 +674,35 @@ Tweets when Obama's victory was clear\footnote{http://www.huffingtonpost.com/201
 %Because there was originally no way to refer to a certain Tweet, retweets (forwards) had to quote the Tweet being discussed, and this tradition still continues even though now Tweets reference each other. 
 Due to the 140 characters length limit of Tweets the quotation usually has to be made as short as possible by selecting only the most discriminative words. This selection is an act of collaborative filtering, but it results in many trivially different subsets from the original Tweet. The additions of retweeters also form many different supersets of the of the original Tweet, some of which represent highly supported opinions. 
 
-We remove the redundancy in \emph{distinct} itemsets by merging similar ones into \emph{strongly closed} itemset clusters. The similarity of a \emph{distinct} itemset, $s_d$, and another distinct or closed itemset, $s_c$, is measured as the overlap of the transactions containing both of them with the transactions containing $s_c$.  A \emph{distinct} itemset is clustered with another itemset if one exists such that its overlap with it is \emph{less} than the distinctive threshold $\kappa$. If more than one satisfies this condition, the  \emph{distinct} itemset is clustered with the one with the least support. When  a \emph{distinct} itemset is clustered with an itemset which is already part of a cluster, the \emph{distinct} itemset is added to the existing cluster. Finally, the \emph{strongly closed} itemset is the 
+We remove the redundancy in \emph{distinct} itemsets by merging similar ones into \emph{strongly closed} itemset clusters. The similarity of a \emph{distinct} itemset, $s_d$, and another distinct or closed itemset, $s_c$, is measured as the overlap of the \emph{transactions} containing both of them with the transactions containing $s_d$.  A \emph{distinct} itemset is clustered with another itemset if one exists such that the overlap exceeds a similarity threshold, which we take to be $1-\kappa$ (the indistinctiveness of $s_c$ from $s_d$).
+%(thus $\kappa \in \, ]0, 0.5]$ which is the reasonable range). 
+If more than one satisfies this condition, the  \emph{distinct} itemset is clustered with the one with the highest overlap. When  a \emph{distinct} itemset is clustered with an itemset which is already part of a cluster, the \emph{distinct} itemset is added to the existing cluster. Finally, the \emph{strongly closed} itemset is the 
 %bag of items formed by taking the 
 union of all cluster members, and its support is the size of the union of their postings lists. Formally:
 \begin{equation}S_l = \{w:\, w \in \bigcup_{s_i \in r_l}{s_i} \; where \; r_l \, is \, a\, cluster\}\end{equation}
 
-To formally define the \emph{strongly closed} itemset clusters, we first introduce the related concept of \emph{association rule confidence}. Confidence is the basic property used for association rules mining, and it is used in the definition of $\delta$-free sets. Mining itemsets based on the confidence of rules they induce has long been recognized as a method for finding ``interesting patterns'' \cite{cohen2001finding}, but since this property is not anti-monotone a variation has to be used (for example, \emph{all confidence} \cite{kim2004ccmine}).The confidence of an assocation rule ``$s_{j} \rightarrow s_i$'' is  defined as:
+To formally define the \emph{strongly closed} itemset clusters, we first introduce the related concept of \emph{association rule confidence}. Confidence is the basic property used for association rules mining, and it is used in the definition of $\delta$-free sets \cite{boulicaut2003free}. Mining itemsets based on the confidence of rules they induce has long been recognized as a method for finding ``interesting patterns'' \cite{cohen2001finding}, but since this property is not anti-monotone a variation has to be used (for example, \emph{all confidence} \cite{kim2004ccmine}).The confidence of an assocation rule ``$s_{j} \rightarrow s_i$'' is  defined as:
 \begin{equation}\label{eq:conf}conf(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
 
-The clustering scheme described selects the cluster that contains the itemset which maximizes the confidence of the rule $conf(s_c \rightarrow s_d)$, with an upper bound on the overlap to maintain distinctiveness. Formally, the clustering result are: 
+The clustering scheme described selects the cluster that contains the itemset which maximizes the confidence of the rule $conf(s_d \rightarrow s_c)$, with a lower bound on the overlap to maintain distinctiveness. Formally, the clustering result are: 
 \begin{multline}\label{eq:strongClosedFormal}
-\mathcal{R} = \{r: r = \bigcup{(s_c, s_d)}\; where\; s_c \in \mathcal{K} \, and \, s_d \in \mathcal{K} \\\,and\; \forall_{(s_c,s_d)} \, s_c = \textbf{argmax}_{s_k} conf(s_k \rightarrow s_d) \\\;and \;conf(s_c \rightarrow s_d) \le \kappa\}
+\mathcal{R} = \{r: r = \bigcup{(s_c, s_d)}\; where\; s_c \in \mathcal{C} \, and \, s_d \in \mathcal{K} \\\,and\; \forall_{(s_c,s_d)} \, s_c = \textbf{argmax}_{s_k} conf(s_d \rightarrow s_k) \\\;and \;conf(s_d \rightarrow s_c) \ge (1 - \kappa)\}
 \end{multline}
 
-This clustering can be implemented efficiently using techniques similar to the ones proposed by Bayardo et al. \cite{bayardo2007scaling}. The main ideas are to limit the comparisons to a few candidates, and to terminate the comparison early if the similarity threshold will not be met. In our case the postings lists are longer than the transactions, so we generate the candidates from the similarity of the transactions. When calculating the similarity between two postings lists, we can terminate early if the difference exceeds the value given by equation \ref{eq:maxDiffCnt}, which is the maximum difference allowed between the transactions containing the precedent of a rule and those containing the antecedent so that the confidence exceeds the distinctiveness threshold $\kappa$. It is easily derived from equation \ref{eq:conf}.
+This clustering can be implemented efficiently using techniques similar to the ones proposed by Bayardo et al. \cite{bayardo2007scaling}. The main ideas are to limit the comparisons to a few candidates, and to terminate the comparison early if the similarity threshold will not be met. In our case the postings lists are longer than the itemsets, so we generate the candidates from the similarity of the itemsets. When calculating the similarity between two postings lists, we can terminate early if the difference exceeds the value given by equation \ref{eq:maxDiffCnt}, which is derived from equation \ref{eq:conf}. It gives the maximum difference allowed between the transactions containing the antecedent of a rule and their intersection with the consequent
+%those containing both the antecedent and the consequent 
+so that the confidence exceeds a threshold $proportion$. 
+%the maximum difference allowed between the transactions containing the antecedent of a rule and those containing both the antecedent and the consequent so that the confidence exceeds the distinctiveness threshold $\kappa$. It is easily derived from equation \ref{eq:conf}.
 
-\begin{equation}\label{eq:maxDiffCnt}\Delta(s_j, \kappa) = (1 - \kappa)  |T_{s_j}|
+\begin{equation}\label{eq:maxDiffCnt}\Delta(s_{antecedent},  proportion)
+%similarity = (1 - \kappa)) 
+\le proportion *  |T_{s_{antecedent}}|
 \end{equation}
 
-Algorithm  \ref{algo:alliance}  shows a possible implementation. For each itemset, $s_i$, we find the itemsets produced before it and overlapping with it, even in one item. Out of those candidates, $s_c$, we find the one that maximizes $conf(s_c \rightarrow s_i)$ such that the \emph{distinct} condition \textbf{doesn't} hold(s). Notice that confidence is not a symmetric measure, but it is only meaningful to check the confidence of the rule from the higher support shorter itemset to the lower support longer itemset. Higher support shorter itemsets will be produced before the itemset being clustered because of the way PPO-Extension produces itemsets, when the total ordering follows the descending order of items' frequency. The functions difference() terminates early, and it also doesn't need to traverse the postings lists at all when calculating the difference between an itemset and one of its subsets. In this case the size of the difference will be $|T_{s_c}| - |T_{s_i}|$.
+Algorithm  \ref{algo:alliance}  shows a possible implementation. For each itemset, $s_i$, we find the itemsets produced before it and overlapping with it, even in one item. Out of those candidates, $s_c$, we find the one that maximizes $conf(s_i \rightarrow s_c)$ such that the \emph{similarity} condition holds - that is, the \emph{distinctiveness} condition \emph{doesn't} hold. Notice that confidence is not a symmetric measure, and we only check the confidence of the rule that an itemset implies the best clustering candidate. 
+% but it is only meaningful to check the confidence of the rule from 
+%the higher support shorter itemset to the lower support longer itemset. Higher support shorter itemsets will be produced before the itemset being clustered because of the way PPO-Extension produces itemsets, when the total ordering follows the descending order of items' frequency. 
+The functions difference() terminates early, and it also doesn't need to traverse the postings lists at all when calculating the difference between an itemset and one of its subsets. In this case the size of the difference will be $|T_{s_c}| - |T_{s_i}|$.
 
 
 
@@ -754,19 +764,21 @@ Algorithm  \ref{algo:alliance}  shows a possible implementation. For each itemse
 \begin{algorithm}
 \SetAlgoLined
 \LinesNumbered
-\KwIn{$\kappa$: Minimum closed strength} %$\theta$: Minimum cosine similarity, \\
+\KwIn{$\kappa$: Minimum distinctiveness threshold} % closed strength} %$\theta$: Minimum cosine similarity, \\
 \KwData{$\mathcal{C}$: Closed Itemsets produced by LCM}
 \KwResult{$\mathcal{R}$: Strong closed itemset clusters}
 \For{$i \gets 2$ to $|\mathcal{C}|$}{
 	$K \gets \{s_k: s_k \in \mathcal{C} \, and \, k < i \, and \, |s_k \cap s_i| > 0\}$\;
-	
+	%$s_m
 	$maxConf \gets 0$ \tcp*{Best candidate's score}
 	\ForEach{$s_k \in K$}{
-		\uIf{$s_k \in P$}{
+		\uIf{$s_k \cap s_i = s_k$}{
+			$\Delta \gets (1-\kappa) |T_{s_k}|$
+			
 			$\delta \gets |T_{s_k}| - |T_{s_i}|$\;
 		}	
 		\Else{
-			$\delta \gets$ difference($T_{s_i},T_{s_k},\Delta$) \tcp*{Stops early}
+			$\delta \gets$ difference($T_{s_i},\Delta$) \tcp*{Stops early}
 		}
 		
 		\If{$\delta \le \Delta(c(s_k \rightarrow s_i) \le \kappa)$}{ %and $\delta < minDiff$}{

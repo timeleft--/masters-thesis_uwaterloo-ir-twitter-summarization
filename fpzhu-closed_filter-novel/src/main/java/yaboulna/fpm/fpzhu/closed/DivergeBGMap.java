@@ -872,9 +872,10 @@ public class DivergeBGMap {
                       }
                     }
 
-                    if ((stopMatchingParentFSimLow && parentItemset != null &&
+                    if (parentItemset != null && 
+                        ((stopMatchingParentFSimLow && 
                         isPisSim < ITEMSET_SIMILARITY_BAD_THRESHOLD)
-                        || (!unLimitedBufferSize && ++lookBackRecords > MAX_LOOKBACK_FOR_PARENT)) {
+                        || (!unLimitedBufferSize && ++lookBackRecords > MAX_LOOKBACK_FOR_PARENT))) {
                       // TODONE: could this also work without checking foundParent -> NO, very few alliances happen
                       // TODO: are we losing anything by breaking on the first bad similarity
 // if (LOG.isTraceEnabled())
@@ -899,6 +900,9 @@ public class DivergeBGMap {
 // } else { // if (maxConfidence < CLOSED_CONFIDENCE_THRESHOLD) {
                 if (parentItemset != null) {
                   itemsetParentMap.put(itemset, parentItemset);
+                  if(maxConfidence < confThreshold){
+                    continue;
+                  }
                 }
                 if (clusteringLocally) {
                   Set<String> theOnlyOneIllMerge = null;
@@ -921,7 +925,14 @@ public class DivergeBGMap {
                       continue;
                     }
 
-                    MutableInt differentDocs = new MutableInt(Math.max(0, candDocIds.size() - iDocIds.size()));
+                    MutableInt differentDocs = new MutableInt();
+                    if (satisfyMinDiff) {
+                      throw new IllegalArgumentException("TODO");
+                    } else { // any other funky conditions
+                      differentDocs.setValue(Math.max(0, iDocIds.size() - candDocIds.size()));
+                    }
+
+// Math.max(0, candDocIds.size() - iDocIds.size()));
 // Math.max(candDocIds.size(), iDocIds.size())
 // - Math.min(candDocIds.size(), iDocIds.size()));
 //
@@ -940,29 +951,30 @@ public class DivergeBGMap {
 // smallerDocIds = iDocIds;
 // }
                     double maxDiffCnt =
-                        ((ancestorItemsets.contains(cand)) ?
-                            // the (true) parent will necessarily be present in all documents of itemset
-// differentDocs = candDocIds.size() - iDocIds.size();
-// Math.floor((itemset.size() == 2?confThreshold: (1 - confThreshold)) * candDocIds.size())
-                            (!PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE ? Math.floor((1 - confThreshold)
-                                * candDocIds.size()) :
-                                Math.floor((1 / confThreshold) * iDocIds.size()))
-                            :
-                              (satisfyMinDiff? Double.MAX_VALUE :
+//                        ((ancestorItemsets.contains(cand)) ?
+//                            // the (true) parent will necessarily be present in all documents of itemset
+//// differentDocs = candDocIds.size() - iDocIds.size();
+//// Math.floor((itemset.size() == 2?confThreshold: (1 - confThreshold)) * candDocIds.size())
+//                            (!PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE ? Math.floor((1 - confThreshold)
+//                                * candDocIds.size()) :
+//                                Math.floor((1 / confThreshold) * iDocIds.size()))
+//                            :
+                            (satisfyMinDiff ? Double.MAX_VALUE :
                                 Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                     Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                        Math.floor(confThreshold
-                                  * iDocIds.size() ))))); //could be the min or all the other funky stuff.. even cand
-                    double minDiffCnt = 
-                        ((!satisfyMinDiff || ancestorItemsets.contains(cand)) ? -1:
-//                            
-                                Math.max(1, //0.9, // so that maxDiffCnt of 0 enters the loop
-                                    Math.floor(confThreshold * // (1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
+                                        Math.floor((1- (1 - confThreshold))
+                                            * iDocIds.size())))); // could be the min or all the other funky stuff.. even
+// cand
+                    double minDiffCnt =
+                        ((!satisfyMinDiff || ancestorItemsets.contains(cand)) ? -1 :
+                            //
+                            Math.max(1, // 0.9, // so that maxDiffCnt of 0 enters the loop
+                                Math.floor(confThreshold * // (1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
 // *
 // largerDocIds.size()))));
 // (maxDiffFromMinSupp ? Math.min(candDocIds.size(), iDocIds.size()) :
 // Math.max(candDocIds.size(), iDocIds.size()))))));
-                                        candDocIds.size()))); //));
+                                    candDocIds.size()))); // ));
 
                     if (maxDiffCnt == absMaxDiff * hrsPerEpoch) {
                       ++absMaxDiffEnforced;
@@ -1121,9 +1133,9 @@ public class DivergeBGMap {
 // }
                     // If similar enough, attach to the merge candidate and put both in pending queue
                     if (differentDocs.intValue() <= maxDiffCnt
-                     && differentDocs.intValue() >= minDiffCnt) {
+                        && differentDocs.intValue() >= minDiffCnt) {
 
-                      //TODO: do we need to change the criteria to maximize or minize if it's a subset or not? 
+                      // TODO: do we need to change the criteria to maximize or minize if it's a subset or not?
                       double confidence =
                           (candDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
                       // (candDocIds.size() + iDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
@@ -1438,8 +1450,9 @@ public class DivergeBGMap {
                     LinkedList<Long> pDocIds = fgIdsMap.get(precedent);
                     LinkedList<Long> aDocIds = fgIdsMap.get(antecedent);
 
-                    double maxDistance = (ancestorItemsets.contains(other) || !satisfyMinDiff ? Math.floor((1 - confThreshold)
-                        * pDocIds.size()) : Double.MAX_VALUE);
+                    double maxDistance = (ancestorItemsets.contains(other) || !satisfyMinDiff ? Math
+                        .floor((1 - confThreshold)
+                            * pDocIds.size()) : Double.MAX_VALUE);
                     double minDistance = (!satisfyMinDiff || ancestorItemsets.contains(other) ? -1 :
                         confThreshold * pDocIds.size());
                     // Using Manhattan distance / overlap similarity
@@ -1971,7 +1984,7 @@ public class DivergeBGMap {
         LOG.info("Len2+Itemsets: {}", fgCountMap.size() - stronglyClosedItemsetsFilter.numLen1Itemsets);
         LOG.info("UnalliedIS: {}", unalliedItemsets.size());
         LOG.info("UnalliedUnMaximal: {}", unMaximalIS.intValue());
-        LOG.info("unalliedHiConf: {}",unalliedHiConf);
+        LOG.info("unalliedHiConf: {}", unalliedHiConf);
         LOG.info("AlliedLowConf: {}", alliedLowConf);
         LOG.info("OverConfident: {}", overConfident);
         LOG.info("absMaxDiffEnforced: {}", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
@@ -1980,7 +1993,7 @@ public class DivergeBGMap {
         LOG.info("StrongClosedIS: {}", growingAlliances.keySet().size());
 
         if (perfMon) {
-          perfMonKV.storeKeyValue("unalliedHiConf",unalliedHiConf);
+          perfMonKV.storeKeyValue("unalliedHiConf", unalliedHiConf);
           perfMonKV.storeKeyValue("Timestamp", System.currentTimeMillis());
           perfMonKV.storeKeyValue("CPUMillisFilter", filteringCPUTime / 1e6);
           perfMonKV.storeKeyValue("TotalItemsets", fgCountMap.size() + fileReadingPerfMeasures[0]);
