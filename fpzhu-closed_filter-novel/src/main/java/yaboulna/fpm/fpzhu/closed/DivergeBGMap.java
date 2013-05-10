@@ -298,7 +298,8 @@ public class DivergeBGMap {
   static boolean maxDiffFromMinSupp = false;
   static boolean noCosineSimilarity = true;
   static boolean noJaccard = false;
-  static boolean clusteringLocally = false;
+  static boolean clusteringLocally = true;
+  static boolean satisfyMinDiff = false;
 
   /**
    * @param args
@@ -344,7 +345,8 @@ public class DivergeBGMap {
       maxDiffFromMinSupp = args[3].contains("MinSupp");
       noCosineSimilarity = !args[3].contains("LowCos");
       noJaccard = args[3].contains("NoJaccard");
-      clusteringLocally = args[3].contains("ClustLoca");
+      clusteringLocally = !args[3].contains("ClustGloba");
+      satisfyMinDiff = args[3].contains("satisfyMinDiff");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -367,6 +369,7 @@ public class DivergeBGMap {
     LOG.info("noCosineSimilarity: " + noCosineSimilarity);
     LOG.info("noJaccard: " + noJaccard);
     LOG.info("clusteringLocally: " + clusteringLocally);
+    LOG.info("satisfyMinDiff: " + satisfyMinDiff);
 
     String thresholds = "";
 // thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
@@ -945,10 +948,14 @@ public class DivergeBGMap {
                                 * candDocIds.size()) :
                                 Math.floor((1 / confThreshold) * iDocIds.size()))
                             :
-                              Double.MAX_VALUE);
+                              (satisfyMinDiff? Double.MAX_VALUE :
+                                Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                                    Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                        Math.floor((1 - confThreshold)
+                                  * iDocIds.size() ))))); //could be the min or all the other funky stuff.. even cand
                     double minDiffCnt = 
-                        ((ancestorItemsets.contains(cand)) ? -1:
-//                            Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                        ((!satisfyMinDiff || ancestorItemsets.contains(cand)) ? -1:
+//                            
                                 Math.max(1, //0.9, // so that maxDiffCnt of 0 enters the loop
                                     Math.floor(confThreshold * // (1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
 // *
@@ -1431,9 +1438,9 @@ public class DivergeBGMap {
                     LinkedList<Long> pDocIds = fgIdsMap.get(precedent);
                     LinkedList<Long> aDocIds = fgIdsMap.get(antecedent);
 
-                    double maxDistance = (ancestorItemsets.contains(other) ? Math.floor((1 - confThreshold)
+                    double maxDistance = (ancestorItemsets.contains(other) || !satisfyMinDiff ? Math.floor((1 - confThreshold)
                         * pDocIds.size()) : Double.MAX_VALUE);
-                    double minDistance = (ancestorItemsets.contains(other) ? -1 :
+                    double minDistance = (!satisfyMinDiff || ancestorItemsets.contains(other) ? -1 :
                         confThreshold * pDocIds.size());
                     // Using Manhattan distance / overlap similarity
                     int distance = pDocIds.size() - aDocIds.size();
