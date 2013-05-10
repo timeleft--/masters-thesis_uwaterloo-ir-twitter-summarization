@@ -72,9 +72,9 @@
 %\CopyrightYear{2007} % Allows default copyright year (20XX) to be over-ridden - IF NEED BE.
 %\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
 % --- End of Author Metadata ---
-
+\title{Efficient Temporal Synopsis of Social Media Streams}
 %\title{Adapting Frequent Itemsets Mining for Social Media Text by Strengthening the Closed Property}
-\title{Strong Closure and Novelty Ranking for Efficiently Mining a Temporal Synopsis of Social Media }
+%\title{Strong Closure and Novelty Ranking for Efficiently Mining a Temporal Synopsis of Social Media }
 %
 % You need the command \numberofauthors to handle the 'placement
 % and alignment' of the authors beneath the title.
@@ -101,10 +101,16 @@
 % the body of your article BEFORE References or any Appendices.
 \maketitle
 \begin{abstract}
-Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  Tweets are short and repetitious - lacking context and structure  - making it difficult to generate a sensible synopsis of events within a given time period.  Although some established algorithms for frequent item set analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces a complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a straightforward filtering step that preserves these terms only when they may form part of a relevant collocation.  To further reduce trivial results, we strengthen the closure condition of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on a simple information gain measure, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of Tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide understandable and meaningful pictures of events within that period, with potential application to tasks such as temporal summarization and query expansion for search.
+Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  Tweets are short and repetitious - lacking context and structure  - making it difficult to generate a coherent synopsis of events within a given time period.  Although some established algorithms for frequent itemset analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces a complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a straightforward filtering step that preserves these terms only when they may form part of a relevant collocation.  To further reduce trivial results, we propose a novel strengthening of the closure condition of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on a simple information gain measure, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of Tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide understandable and meaningful pictures of events within those periods, with potential application to tasks such as temporal summarization and query expansion for search.
 \end{abstract}
+\category{H.4}{Information Systems Applications}{Miscellaneous}
+%A category including the fourth, optional field follows...
+\category{D.2.8}{Software Engineering}{Metrics}[complexity measures, performance measures]
 
-\newpage
+\terms{Theory}
+
+\keywords{ACM proceedings, \LaTeX, text tagging}
+%\newpage
 \section{Introduction}
 
 The nature of text in social media poses a challenge when applying traditional search and text mining algorithms. Text in social media is usually short, lacks context and structure, and is created at a very high rate. The sheer volume of social media streams mandates the use of efficient algorithms, and the short length of individual documents makes it possible to apply Frequent Itemsets Mining. This family of algorithms is very fast and efficient, however it is not readily suited for application on text. The problem with Frequent Itemsets Mining is the large number of itemsets it produces.
@@ -768,20 +774,20 @@ The functions difference() terminates early, and it also doesn't need to travers
 \KwData{$\mathcal{C}$: Closed Itemsets produced by LCM}
 \KwResult{$\mathcal{R}$: Strong closed itemset clusters}
 \For{$i \gets 2$ to $|\mathcal{C}|$}{
-	$K \gets \{s_k: s_k \in \mathcal{C} \, and \, k < i \, and \, |s_k \cap s_i| > 0\}$\;
+	$C \gets \{s_c: s_c \in \mathcal{C} \, and \, c < i \, and \, |s_c \cap s_i| > 0\}$\;
 	%$s_m
 	$maxConf \gets 0$ \tcp*{Best candidate's score}
-	\ForEach{$s_k \in K$}{
-		\uIf{$s_k \cap s_i = s_k$}{
-			$\Delta \gets (1-\kappa) |T_{s_k}|$
-			
-			$\delta \gets |T_{s_k}| - |T_{s_i}|$\;
+	\ForEach{$s_c \in C$}{
+		\uIf{$s_c \cap s_i = s_c$}{
+			$\Delta \gets (1-\kappa) |T_{s_c}|$ \tcp*{Distinctiveness}
+			$\delta \gets |T_{s_c}| - |T_{s_i}|$\tcp*{Candidate is a subset}
 		}	
 		\Else{
-			$\delta \gets$ difference($T_{s_i},\Delta$) \tcp*{Stops early}
+			$\Delta \gets (1 - (1-\kappa)) |T_{s_i}|$ \tcp*{Similarity}
+			$\delta \gets$ difference($T_{s_i},T_{s_c \cup s_i},\Delta$) \tcp*{Stops early}
 		}
 		
-		\If{$\delta \le \Delta(c(s_k \rightarrow s_i) \le \kappa)$}{ %and $\delta < minDiff$}{
+		\If{$\delta \le \Delta$}{ %and $\delta < minDiff$}{
 			$conf \gets \frac{|T_{s_k}| - \delta}{ |T_{s_k}|}$\;
 			\If{$conf > maxConf$}{
 				$s_m \gets s_k$ \tcp*{Best merge candidate}

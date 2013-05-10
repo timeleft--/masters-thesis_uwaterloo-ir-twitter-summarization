@@ -767,6 +767,12 @@ public class DivergeBGMap {
 
                     mergeCandidates.add(pis);
 
+                    double conf =fgCountMap.get(itemset).doubleValue()
+                        / fgCountMap.get(pis).doubleValue();
+                    
+                    if(conf> maxConfidence)
+                      maxConfidence = conf;
+                    
                     if (pis.size() < itemset.size()) {
 
                       ancestorItemsets.add(pis);
@@ -775,22 +781,23 @@ public class DivergeBGMap {
                         parentItemset = pis;
                         // first parent to encounter will be have the lowest support, thus gives highest confidence
                         double pisFreq = fgCountMap.get(pis);
-                        maxConfidence = fgCountMap.get(itemset) / pisFreq;
+//                        maxConfidence = fgCountMap.get(itemset) / pisFreq;
                         if (LOG.isTraceEnabled())
-                          LOG.trace("{} found parent {}, with confidence: " + maxConfidence,
+                          LOG.trace("{} found parent {}, with confidence: " + conf, // maxConfidence,
                               itemset.toString() + fgCountMap.get(itemset), pis.toString() + pisFreq);
                       } else {
                         if (LOG.isTraceEnabled())
-                          LOG.trace("{} found another parent {}, with confidence: "
-                              + fgCountMap.get(itemset).doubleValue()
-                              / fgCountMap.get(pis).doubleValue(),
+                          LOG.trace("{} found another parent {}, with confidence: " + conf,
+//                              + fgCountMap.get(itemset).doubleValue()
+//                              / fgCountMap.get(pis).doubleValue(),
                               itemset.toString() + fgCountMap.get(itemset), pis.toString() + fgCountMap.get(pis));
                       }
                     } else {
+                      
+                      
                       if (LOG.isTraceEnabled())
                         LOG.trace("{} is NOT longer that its 'parent' {}, with confidence: "
-                            + fgCountMap.get(itemset).doubleValue()
-                            / fgCountMap.get(pis).doubleValue(),
+                            + conf,
                             itemset.toString() + fgCountMap.get(itemset),
                             pis.toString() + fgCountMap.get(pis));
                     }
@@ -872,10 +879,9 @@ public class DivergeBGMap {
                       }
                     }
 
-                    if (parentItemset != null && 
-                        ((stopMatchingParentFSimLow && 
+                    if ((stopMatchingParentFSimLow && parentItemset != null &&
                         isPisSim < ITEMSET_SIMILARITY_BAD_THRESHOLD)
-                        || (!unLimitedBufferSize && ++lookBackRecords > MAX_LOOKBACK_FOR_PARENT))) {
+                        || (!unLimitedBufferSize && ++lookBackRecords > MAX_LOOKBACK_FOR_PARENT)) {
                       // TODONE: could this also work without checking foundParent -> NO, very few alliances happen
                       // TODO: are we losing anything by breaking on the first bad similarity
 // if (LOG.isTraceEnabled())
@@ -929,7 +935,7 @@ public class DivergeBGMap {
                     if (satisfyMinDiff) {
                       throw new IllegalArgumentException("TODO");
                     } else { // any other funky conditions
-                      differentDocs.setValue(Math.max(0, iDocIds.size() - candDocIds.size()));
+                      differentDocs.setValue(Math.max(0, candDocIds.size() - iDocIds.size()));
                     }
 
 // Math.max(0, candDocIds.size() - iDocIds.size()));
@@ -963,7 +969,8 @@ public class DivergeBGMap {
                                 Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                     Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
                                         Math.floor((1- (1 - confThreshold))
-                                            * iDocIds.size())))); // could be the min or all the other funky stuff.. even
+                                            //* iDocIds.size())))); // could be the min or all the other funky stuff.. even
+                                            * candDocIds.size()))));
 // cand
                     double minDiffCnt =
                         ((!satisfyMinDiff || ancestorItemsets.contains(cand)) ? -1 :
@@ -980,7 +987,9 @@ public class DivergeBGMap {
                       ++absMaxDiffEnforced;
                     }
 
-                    if (!ancestorItemsets.contains(cand)) {
+                    if (ancestorItemsets.contains(cand)) {
+                      // Not
+                    } else {
 // // unionDocId.clear();
 // // intersDocId.clear();
 
@@ -1140,7 +1149,7 @@ public class DivergeBGMap {
                           (candDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
                       // (candDocIds.size() + iDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
 // (largerDocIds.size() - differentDocs.doubleValue()) / largerDocIds.size();
-                      if (confidence < confThreshold) {
+                      if (confidence < (1-confThreshold)) {
                         continue;
                       }
                       // Try and join and existing alliance
