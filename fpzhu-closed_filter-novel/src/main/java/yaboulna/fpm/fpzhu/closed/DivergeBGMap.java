@@ -951,7 +951,7 @@ public class DivergeBGMap {
                               (satisfyMinDiff? Double.MAX_VALUE :
                                 Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
                                     Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                        Math.floor((1 - confThreshold)
+                                        Math.floor(confThreshold
                                   * iDocIds.size() ))))); //could be the min or all the other funky stuff.. even cand
                     double minDiffCnt = 
                         ((!satisfyMinDiff || ancestorItemsets.contains(cand)) ? -1:
