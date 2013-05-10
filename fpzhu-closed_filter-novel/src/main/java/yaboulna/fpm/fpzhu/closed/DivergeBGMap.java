@@ -945,15 +945,17 @@ public class DivergeBGMap {
                                 * candDocIds.size()) :
                                 Math.floor((1 / confThreshold) * iDocIds.size()))
                             :
-
-                            Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-                                Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                              Double.MAX_VALUE);
+                    double minDiffCnt = 
+                        ((ancestorItemsets.contains(cand)) ? -1:
+//                            Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                                Math.max(1, //0.9, // so that maxDiffCnt of 0 enters the loop
                                     Math.floor(confThreshold * // (1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
 // *
 // largerDocIds.size()))));
 // (maxDiffFromMinSupp ? Math.min(candDocIds.size(), iDocIds.size()) :
 // Math.max(candDocIds.size(), iDocIds.size()))))));
-                                        candDocIds.size()))));
+                                        candDocIds.size()))); //));
 
                     if (maxDiffCnt == absMaxDiff * hrsPerEpoch) {
                       ++absMaxDiffEnforced;
@@ -983,7 +985,8 @@ public class DivergeBGMap {
                       while ((largerDocId > 0 && smallerDocId > 0) &&
                           ((honorTemporalSimilarity &&
                           (waitSecsTillCooc.getN() == 0 || waitSecsTillCooc.getMean() < temporalSimilarityThreshold))
-                          || differentDocs.intValue() <= maxDiffCnt)) {
+                          || (differentDocs.intValue() <= maxDiffCnt
+                          && differentDocs.intValue() >= minDiffCnt))) {
 // || largerDiffSmallerSize <= maxDiffCnt)) {
                         if (smallerDocId == largerDocId) {
 // intersDocId.add(iDid);
@@ -1110,8 +1113,10 @@ public class DivergeBGMap {
 //
 // }
                     // If similar enough, attach to the merge candidate and put both in pending queue
-                    if (differentDocs.intValue() <= maxDiffCnt) {
+                    if (differentDocs.intValue() <= maxDiffCnt
+                     && differentDocs.intValue() >= minDiffCnt) {
 
+                      //TODO: do we need to change the criteria to maximize or minize if it's a subset or not? 
                       double confidence =
                           (candDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
                       // (candDocIds.size() + iDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
@@ -1427,7 +1432,8 @@ public class DivergeBGMap {
                     LinkedList<Long> aDocIds = fgIdsMap.get(antecedent);
 
                     double maxDistance = (ancestorItemsets.contains(other) ? Math.floor((1 - confThreshold)
-                        * pDocIds.size()) :
+                        * pDocIds.size()) : Double.MAX_VALUE);
+                    double minDistance = (ancestorItemsets.contains(other) ? -1 :
                         confThreshold * pDocIds.size());
                     // Using Manhattan distance / overlap similarity
                     int distance = pDocIds.size() - aDocIds.size();
@@ -1438,7 +1444,7 @@ public class DivergeBGMap {
                       long aDocId = aDocIdsIter.next(), pDocId = pDocIdsIter.next();
 
                       while ((aDocId > 0 && pDocId > 0) &&
-                          (distance <= maxDistance)) {
+                          (distance <= maxDistance && distance >= minDistance)) {
                         if (aDocId == pDocId) {
                           if (aDocIdsIter.hasNext()) {
                             aDocId = aDocIdsIter.next();
@@ -1470,7 +1476,7 @@ public class DivergeBGMap {
                       }
                     }
 
-                    if (distance <= maxDistance) { // check if terminated early
+                    if (distance <= maxDistance && distance >= minDistance) { // check if terminated early
                       double confidence = (pDocIds.size() - distance * 1.0) / pDocIds.size();
                       // check confidence condition
                       if (confidence >= confThreshold) {
