@@ -103,24 +103,35 @@
 \begin{abstract}
 Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  Tweets are short and repetitious - lacking context and structure  - making it difficult to generate a coherent synopsis of events within a given time period.  Although some established algorithms for frequent itemset analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces a complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a straightforward filtering step that preserves these terms only when they may form part of a relevant collocation.  To further reduce trivial results, we propose a novel strengthening of the closure condition of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on a simple information gain measure, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of Tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide understandable and meaningful pictures of events within those periods, with potential application to tasks such as temporal summarization and query expansion for search.
 \end{abstract}
-\category{H.4}{Information Systems Applications}{Miscellaneous}
+%\category{H.4}{Information Systems Applications}{Miscellaneous}
 %A category including the fourth, optional field follows...
-\category{D.2.8}{Software Engineering}{Metrics}[complexity measures, performance measures]
+%\category{D.2.8}{Software Engineering}{Metrics}[complexity measures, performance measures]
 
-\terms{Theory}
+%\terms{Theory}
 
-\keywords{ACM proceedings, \LaTeX, text tagging}
-%\newpage
+%\keywords{ACM proceedings, \LaTeX, text tagging}
+\newpage
 \section{Introduction}
 
-The nature of text in social media poses a challenge when applying traditional search and text mining algorithms. Text in social media is usually short, lacks context and structure, and is created at a very high rate. The sheer volume of social media streams mandates the use of efficient algorithms, and the short length of individual documents makes it possible to apply Frequent Itemsets Mining. This family of algorithms is very fast and efficient, however it is not readily suited for application on text. The problem with Frequent Itemsets Mining is the large number of itemsets it produces.
+The nature of text in social media poses a challenge when applying traditional text mining algorithms. Text in social media is usually short, lacks context and structure, and is created at a very high rate. To tap into the benefit of social media in giving voice to ordinary people, explicit contextual information from the social graph has to be neglected. However, the collective stream from all users is overwhelmed with personal updates 
+%are overwhelmingly more than 
+and timely finding posts about topics of interest requires an efficient mining algorithm.
+%; the bigram ``I'm'' is 
+%posing a challenge on making sense of.
+% The sheer volume of social media streams mandates the use of efficient algorithms, but it also and the short length of individual documents makes it possible to apply Frequent Itemsets Mining. 
+The frequent itemset mining family of algorithms is very fast and efficient, however it is not readily suited for application on text. First of all, the number of itemsets mined is large and grows with the number of distinct items - which is particularly high in the text domain. 
 %, specially that most of them are not interesting. 
-Actually it was originally proposed as a preliminary stage to Association Rules Mining, which sifts through the numerous itemsets and produces a smaller number of association rules. The number of itemsets produced can be reduced by setting a higher threshold on the minimum frequency of an itemset. However, in text this threshold has to be kept low because frequencies follow a long tailed Zipfean distribution. Also, the head of the distribution is made up mostly of stop words; a situation that doesn't happen in the domain of market basket data since the packaging of each item is not enlisted in the receipt!
+Frequent itemset mining was originally proposed as a preliminary stage to association rules mining, which sifts through the numerous itemsets and produces a smaller number of association rules. To reduce the number of itemsets, they could be limited by setting a high frequency threshold, but this is not possible in text mining because frequencies of items follow a long tailed Zipfean distribution. %, and setting a high frequency threshold will filter out a large portion of the tail of the distribution.
+Second, the high frequency of stop words and language constructs is a problem that frequent itemset mining is not equipped for handling; this doesn't happen in the domain of market basket data since the packaging of each item is not enlisted in the receipt.
+%The number of itemsets produced can be reduced by setting a higher threshold on  the minimum frequency of an itemset. However, in text this threshold has to be kept low because frequencies follow a long tailed Zipfean distribution. 
+%Also, the head of the distribution is made up mostly of stop words; a situation that doesn't happen in the domain of market basket data since the packaging of each item is not enlisted in the receipt!
 %The first type of uninteresting itemsets is the language constructs that bear no information, such as ``such as'', and itemsets that are made up of all the different fragments of the language construct along with other items. The latter type is an artifact of itemset mining when the final itemset has such a language construct within it; for example, \{we, did, it, \#teamobama\}.
 %It produces a very high number of itemsets most of them are uninteresting language constructs.
 %The number of itemsets it produces is exponential in the number of items,  
 %For example, one would expect that \{obama, won\}, \{sham, and, travesty, @realDonaldTrump\} and \{flag, in, her, hair\}  are  itemsets mined from Tweets posted on November 6th, 2012 using terms as items. They appear frequently in the last couple of hours of the US elections day, but they are not as frequent as \{of, the\} and other English language constructs. 
-Even if a maximum frequency threshold is set, risking to filter out important itemsets, a lot of non-English language constructs will be mined because the proportion of posts in English is much higher than other languages. In this paper we propose methods for adapting Frequent Itemset Mining to be effective on social media text, without degrading its efficiency. %or relying on features of a particular language.
+Even if a maximum frequency threshold is set, risking to filter out important itemsets, a lot of non-English language constructs will be mined because the proportion of posts in English is much higher than other languages.
+Finally, there is a lot of redundancy in frequent itemsets caused by trivial differences in the language used.
+ In this paper we propose methods for adapting Frequent Itemset Mining to be effective on social media text, without degrading its efficiency. %or relying on features of a particular language.
 
 Unlike trending topics\footnote{http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}  \cite{mathioudakis2010twittermonitor}, the results of Frequent Itemset Mining include itemsets that have high frequency because of sustained relatively high interest as well as a spike of interest. 
 % GOES TO RELATED WORK Unlike bursty events detection methods \cite{klienberg2002},
