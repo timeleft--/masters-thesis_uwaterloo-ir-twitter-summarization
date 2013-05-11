@@ -4,10 +4,14 @@
     version="1.1" baseProfile="full">
     <defs/>
     <g>
-        <g latexdraw:type="picture" id="id5372">
+        <g latexdraw:type="picture" id="id19">
             <image
                 xlink:href="/Users/yia/Code/thesis/write-ups/cikm/runtime_lcm-lcm+filter-fpzhu_seconds.png"
-                x="4.0" y="3.0" height="356" width="534"/>
+                x="4.0" y="3.0" height="452" width="752"/>
+        </g>
+        <g latexdraw:type="text" id="id21" font-family="Times New Roman"
+            fill="black" font-size="18" latexdraw:x="648.0">
+            <text x="648.0" y="426.0"><![CDATA[$\kappa = 0.25$]]></text>
         </g>
     </g>
     <metadata>
