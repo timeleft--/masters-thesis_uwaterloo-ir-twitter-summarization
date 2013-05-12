@@ -261,7 +261,7 @@ public class DivergeBGMap {
 
   private static final double KLDIVERGENCE_MIN = 0; // this is multiplied by frequency not prob
 
-  private static final int MAX_LOOKBACK_FOR_CANDIDATES = 2000;
+  private static final int MAX_LOOKBACK_FOR_CANDIDATES = 1000;
 
   private static final boolean RESEARCH_MODE = true;
 
@@ -494,7 +494,7 @@ public class DivergeBGMap {
     try {
       PerfMonKeyValueStore perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
           Arrays.toString(args)));
-      perfMonKV.batchSizeToWrite = 27; // FIXME: whenever you add a new perf key
+      perfMonKV.batchSizeToWrite = 33; // FIXME: whenever you add a new perf key
       for (File fgF : fgFiles) {
         final File novelFile = new File(fgF.getParentFile(), fgF.getName()
             .replaceFirst("fp_", "novel_" + options + "_"));
@@ -588,7 +588,9 @@ public class DivergeBGMap {
         final MutableInt unMaximalIS = new MutableInt(0);
         final SummaryStatistics bufferSizeNeeded4Candidate = new SummaryStatistics();
         final SummaryStatistics bufferSizeNeeded4Parent = new SummaryStatistics();
-
+        final SummaryStatistics confParent_1K = new SummaryStatistics();
+        final SummaryStatistics confParent1_2K = new SummaryStatistics();
+        final SummaryStatistics confParent2_K = new SummaryStatistics();
         class StronglyClosedItemsetsFilter implements Runnable {
 
           private static final boolean ALLIANCES_MERGE_WITH_HEAD = false;
@@ -788,8 +790,15 @@ public class DivergeBGMap {
                       double conf = fgCountMap.get(itemset).doubleValue()
                           / fgCountMap.get(pis).doubleValue();
                       if (parentItemset == null) {
-                        bufferSizeNeeded4Parent.addValue(lookBackRecords);
                         parentItemset = pis;
+                        bufferSizeNeeded4Parent.addValue(lookBackRecords);
+                        if(lookBackRecords < 1000){
+                          confParent_1K.addValue(conf);
+                        } else if (lookBackRecords < 2000){
+                          confParent1_2K.addValue(conf);
+                        } else {
+                          confParent2_K.addValue(conf);
+                        }
                         // first parent to encounter will be have the lowest support, thus gives highest confidence
                         double pisFreq = fgCountMap.get(pis);
                         maxConfidence = conf; // fgCountMap.get(itemset) / pisFreq;
@@ -804,6 +813,16 @@ public class DivergeBGMap {
 
                         maxConfidence = conf;
                         parentItemset = pis;
+                        
+                        bufferSizeNeeded4Parent.addValue(lookBackRecords);
+                        if(lookBackRecords < 1000){
+                          confParent_1K.addValue(conf);
+                        } else if (lookBackRecords < 2000){
+                          confParent1_2K.addValue(conf);
+                        } else {
+                          confParent2_K.addValue(conf);
+                        }
+
                       }
                     } else {
                       if (LOG.isTraceEnabled())
@@ -2103,6 +2122,12 @@ public class DivergeBGMap {
         LOG.info("absMaxDiffEnforced: {}", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
         LOG.info("KLD+Itemsets: {}", positiveKLDivergence.size());
         LOG.info("HighConfidenceIS: {}", confidentItemsets.size());
+        LOG.info("confParen_1KMean", confParent_1K.getMean());
+        LOG.info("confParen1_2KMean", confParent1_2K.getMean());
+        LOG.info("confParen2_KMean", confParent2_K.getMean());
+        LOG.info("confParen_1KN", confParent_1K.getN());
+        LOG.info("confParen1_2KN", confParent1_2K.getN());
+        LOG.info("confParen2_KN", confParent2_K.getN());
         LOG.info("FilteredIS: {}", filteredIS);
         LOG.info("bufferSizeNeeded4CandidateMax: {}", bufferSizeNeeded4Candidate.getMax());
         LOG.info("bufferSizeNeeded4CandidateMean: {}", bufferSizeNeeded4Candidate.getMean());
@@ -2142,6 +2167,12 @@ public class DivergeBGMap {
           perfMonKV.storeKeyValue("bufferSizeNeeded4ParentMax", bufferSizeNeeded4Parent.getMax());
           perfMonKV.storeKeyValue("bufferSizeNeeded4ParentMean", bufferSizeNeeded4Parent.getMean());
           perfMonKV.storeKeyValue("bufferSizeNeeded4ParentStddev", bufferSizeNeeded4Parent.getStandardDeviation());
+          perfMonKV.storeKeyValue("confParen_1KMean", confParent_1K.getMean());
+          perfMonKV.storeKeyValue("confParen1_2KMean", confParent1_2K.getMean());
+          perfMonKV.storeKeyValue("confParen2_KMean", confParent2_K.getMean());
+          perfMonKV.storeKeyValue("confParen_1KN", confParent_1K.getN());
+          perfMonKV.storeKeyValue("confParen1_2KN", confParent1_2K.getN());
+          perfMonKV.storeKeyValue("confParen2_KN", confParent2_K.getN());
         }
         positiveKLDivergence.clear();
         confidentItemsets.clear();
