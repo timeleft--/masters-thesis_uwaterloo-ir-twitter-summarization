@@ -1601,7 +1601,7 @@ public class DivergeBGMap {
 
                 if (!allied) {
                   unalliedItemsets.put(itemset, maxConfidence);// klDiver);
-                  if (clusterWithOneSelf
+                  if (clusterWithOneSelf && maxConfidence >= confThreshold
                       && parentItemset != null) { // make use the optimization
                     Set<String> theOnlyOneIllMerge = itemset;
                     if (theOnlyOneIllMerge != null) {
