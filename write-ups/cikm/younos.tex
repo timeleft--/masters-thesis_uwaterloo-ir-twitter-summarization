@@ -783,76 +783,12 @@ Formally, the set of \emph{distinct} itemsets, $\mathcal{D}$, is defined as foll
 \begin{equation}\mathcal{D} = \{s: s \in \mathcal{C} \, and \, \exists \; s_{p} \subset s \; where \; \frac{|T_{s}|}{|T_{s_{p}}|} \ge \delta %\, and \, |T_{s_{p}}| < |T_{s_{a}} |\, \forall \, s_{a} \subset s 
 \}\end{equation}
 
-In the example of ``obama, elected'', the itemset \{got, obama\}  will not be \emph{distinct} since ``got'' appears in many other supersets and doesn't imply \{got, obama\} with high confidence. IEven if  The same for \{was, obama\},
-
-%Also, regardless of the  the volume of posts about a topic, the number of itemsets representing it should be limited and only the most \emph{distinctive} ones. the importance of particular opinions represented by itemsets with 
-
-We define a condition to filter out itemsets that are not \emph{distinct} from their subsets and supersets, 
-
-We exploit the way PPC-Extension produces itemset to introduce an optimization that improves both runtime, memory requirements and filtering power of the high confidence condition. Unlike the original LCM algorithm, filtering low confidence itemsets requires keeping mining resluts in memory to calculate the confidence of newly generated ones.
-
-%any of their subsets - notice that
-%, and itemsets which are present in too many supersets.
-
-Itemsets that are not \emph{distinct} from any of their subsets can be filtered out by setting a lower bound on the amount of transactions containing the subset but not the superset, specified as a ratio which we take to be $1 - \kappa$. This is equivalent to filtering out itemsets that are not implied by their subsets with confidence at least $1 - \kappa$. Examples of such itemsets are the ones in dashed lines in figure \ref{fig:sham}.
-
-clustersdescribed can sho
-
-The clustering scheme described selects the cluster that contains the itemset which maximizes the confidence of the rule $conf(s_c \rightarrow s_d)$, with a lower bound on the overlap to maintain distinctiveness. Formally, the clustering result are: 
+We use the \emph{distinct} condition to filter out itemsets that are redundant, then we cluster the remaining ones into \emph{strong closed} itemset clusters. Unlike the original LCM algorithm, filtering low confidence itemsets requires keeping mining results in memory to calculate the confidence of newly generated ones. In our experience with the Twitter dataset, it was not necessary to keep all previous itemsets in memory, but rather the last 1000. Thus, the runtime and memory requirement is still bounded. 
 
 
+\subsection{Implementation}
 
-We notice that itemsets related to each fine grained topic overlap with one another, forming a hierarchical cluster. In the figure there are two clusters about two Tweets that Donald Trump sent in the same hour. The retweet indicator joins the two clusters together, since it appears in itemsets pertaining to both Tweets. and any functional word can join any
-
-
-
-
-\emph{distinct} itemsets, in solid lines, and closed itemsets that don't satisfy the distinctiveness condition, in dashed lines. %the circle with the words in its container. 
-The figure represents
-%The term ``rt'' indicates a retweet (forwarding a Tweet).
-% Figure \ref{fig:sham} 
-
-
- on November 6th, 2012 many people where tweeting that ``(\underline{Barack} Obama) was elected (\underline{as president \underline{of the United States \underline{of America}}})''. If all the Tweets which use the verb phrase ``was elected'' to report the event also contain the two names (in parenthesis) in full, then there will be one  \emph{maximal}  itemset with all 12 items. However, either or both the names can be shortened by omitting an underlined part and still convey the meaning. 
-%We can consider Tweets with any combination of shortened names to be modifications of the \emph{maximal} closed itemset. 
-Therefore instead of 1 maximal itemset about the event there will be 8 closed ones. Nevertheless, mining only \emph{maximal} itemsets doesn't solve the problem of redundancy. Consider that it is possible to say that ``Obama was elected'' as well as ``Obama got elected'', resulting in 2 maximal itemsets because of a slight variation in the language. Empirically, this is evident in the relatively small difference between the number of closed itemsets and maximal itemsets of length 2 or more (i.e. excluding itemsets that are merely a frequent term); the means across all hour long epochs in 
-%Tweets posted in November 
-our data are 2439.17 closed itemsets and 1831.92 maximal itemsets. 
-
-
-%For example, on November 9th, 2012 many people where tweeting that ``Justin Bieber and Selena Gomez broke up''. If all Tweets which use the verb "break up" to report the topic also contain the two names in full, then there will be one closed itemset with all 6 items. However, a Tweet can contain any of 8 other combinations of the four names that fully convey the meaning. We can consider that Tweets with any of these combinations are modifications of the \emph{maximal} closed itemset. Therefore instead of 1 maximal itemset about the topic there will be 9 closed ones. Now consider that it is possible to say that "Justin and Selena broke up" as well as "Justin broke up with Selena", resulting in 2 maximal itemsets. This increase in the number of maximal itemsets because of slight variations in the language is intensified by the length limit on Tweets, specially when people try to make space for their comment about a Tweet they are retweeting. We therefore need a property between the easily violated closed property and the very strict maximal property which also results in a large number of redundant itemsets. 
-% This will result in the creation of two closed itemsets, a new shorter with support that one higher than the original itemset
-Trivial violations of the closure condition can be filtered out by setting a lower bound on the amount of transactions containing the subset but not the superset, specified as a ratio $\kappa$. This is equivalent to filtering out itemsets that are not part of any rule with confidence at least $\kappa$. However, this condition is met by many language constructs, and \emph{even though} the superset occurs in a substantial proportion of the transactions containing the subset they are not distinctive from each other, but rather expected to appear together - notice that we had to flatten N-grams itemsets back to unigram itemsets. 
-
-Given the length constraint on Tweets, then the 
-%FP-Tree can only be shallow and wide. 
-size of itemsets will also be limited. Therefore, an itemset that has a large number of supersets cannot be appearing with only a limited set of words (topic), but it has to be covering a breadth of possible descendants. Thus this itemset is very likely to be a language construct. Even if it is a language construct that appears with high confidence with some topical words 
-%, this high confidence doesn't carry interesting information; for example, \{the, of\} that appears within \{the, united, states, of, america\}. Even if it is a 
-or is an itemset made up topical word with very high frequency, then interesting information will be divided into several subtopics given its large number of direct descendants. In either case, filtering closed itemsets implied with high confidence by such a ubiquitous itemset will not omit any information. Any set of items that convey specific information will be part of an itemset whose longest subset is not part of many other supersets.
-%If the filtered itemset is part of an informative one then it will be produced as part of the longer itemset 
-%is found to have high confidence with the filtered one.
-
-We exploit the way PPC-Extension produces itemsets to filter out collocations that are language constructs and select only meaningful ones. If the total ordering of items follows the descending order of items' frequencies, then the call tree of recursive LCM calls will be very similar to the FP-tree.  
-
-%to introduce an optimization that improves both runtime, memory requirements and filtering power of the high confidence condition. Unlike the original LCM algorithm, filtering low confidence itemsets requires keeping mining resluts in memory to calculate the confidence of newly generated ones.
-% forming strong closed clusters requires keeping itemsets in memory so that newly generated ones are clustered with them.
-% to find candidates for merging. 
-Instead of keeping all previous itemsets in memory we keep only a limited number, $b$ (for buffer size). This obviously improves runtime and memory requirements, and it can also improve the choice of itemsets. I
-%For a large enough $b$, 
-%if an itemset is produced $b$ steps ago then this itemset's overlap with the current itemset is very likely a language construct. Since the tree is shallow, then 
-
-
-We use a buffer size $b=1000$ in all experiments, which leads to a runtime of about 1 to 3 milliseconds per itemset for filtering out low confidence itemsets and creating strong closed clusters. The number of selected itemsets is also reduced by almost half on average. The difference between the two selections is made up mostly of stop words. A few itemsets including topical words are also filtered, such as the closed itemset \{president, Obama\} since Obama is an example of a ubiquitous topical word. Such itemsets lack any information on their own and is included in other informative ones. Finally, this enhancement is not necessary for satisfactory performance. With an unlimited buffer, the average runtime is 5.2 seconds for filtering 4265 itemsets (the average number of closed itemsets from an hour long epoch)
-
-%It also filters out itemsets that are short language constructs, because their components appear very frequently and none of their numerous supersets comprise a significant proportion of their high frequency. 
-
-
-
-
-
-This clustering can be implemented efficiently using techniques similar to the ones proposed by Bayardo et al. \cite{bayardo2007scaling}. The main ideas are to limit the comparisons to a few candidates, and to terminate the comparison early if the similarity threshold will not be met. In our case the postings lists are longer than the itemsets, so we generate candidates for comparison by calculating similarity between itemsets. When calculating the similarity between two postings lists, we can terminate early if the difference exceeds the 
-%value given by equation \ref{eq:maxDiffCnt}, which is derived from equation \ref{eq:conf}. It gives the 
-maximum difference permissible to achieve a similarity of $1-\kappa$, which can be easily derived from equation \ref{eq:conf}. 
+The clustering of itemsets can be implemented efficiently using techniques similar to the ones proposed by Bayardo et al. \cite{bayardo2007scaling}. The main ideas are to limit the comparisons to a few candidates, and to terminate the comparison early if the similarity threshold will not be met. In our case the postings lists are longer than the itemsets, so we generate candidates for comparison by calculating similarity between itemsets. When calculating the similarity between two postings lists, we can terminate early if the difference exceeds the maximum difference permissible to achieve a similarity of $\kappa$, which can be easily derived from equation \ref{eq:conf}. 
 %From equation  \ref{eq:conf} the maximum difference between the transactions containing the antecedent of a rule and their intersection with those containing the consequent, is $\Delta$.
 %those containing both the antecedent and the consequent 
 %so that the confidence exceeds a threshold $proportion$. 
@@ -863,36 +799,14 @@ maximum difference permissible to achieve a similarity of $1-\kappa$, which can 
 %\le proportion *  |T_{s_{antecedent}}|
 %\end{equation}
 
-Algorithm  \ref{algo:alliance}  shows a possible implementation. For each itemset, $s_i$, we find the itemsets produced before it and overlapping with it in one or more item. Out of those candidates, $s_c$, we find the one that maximizes $conf(s_c \rightarrow s_i)$ such that the confidence exceeds $1-\kappa$.
+Algorithm  \ref{algo:alliance}  shows a possible implementation. For each itemset, $s_i$, we find the itemsets produced before it and overlapping with it in one or more item. Out of those candidates, $s_c$, we find the one that maximizes $conf(s_c \rightarrow s_i)$ such that the confidence exceeds $\kappa$.
 %such that the \emph{similarity} condition holds - that is, the \emph{distinctiveness} condition \emph{doesn't} hold. 
 Notice that confidence is not a symmetric measure, and we only check the confidence of the rule that the clustering candidate implies the itemset. 
-% but it is only meaningful to check the confidence of the rule from 
-%the higher support shorter itemset to the lower support longer itemset. Higher support shorter itemsets will be produced before the itemset being clustered because of the way PPO-Extension produces itemsets, when the total ordering follows the descending order of items' frequency. 
-%The functions difference() terminates early, and it also doesn't need to traverse the postings lists at all when calculating the difference between an itemset and one of its subsets. In this case the size of the difference will be $|T_{s_c}| - |T_{s_i}|$.
-
-
-\begin{figure}
-% Generated with LaTeXDraw 2.0.8
-% Sat May 11 09:28:32 EDT 2013
-% \usepackage[usenames,dvipsnames]{pstricks}
-% \usepackage{epsfig}
-% \usepackage{pst-grad} % For gradients
-% \usepackage{pst-plot} % For axes
-\scalebox{.5} % Change this value to rescale the drawing.
-{
-\begin{pspicture}(0,-4.16)(16.6,4.16)
-\rput(8.3,0.0){\includegraphics{kappa_effect.eps}}
-\end{pspicture} 
-}
-\caption{Effect of changing $\kappa$ on mining results }
-\label{fig:kappa}
-\end{figure}
-
 
 \begin{algorithm}
 \SetAlgoLined
 \LinesNumbered
-\KwIn{$\kappa$: Minimum distinctiveness threshold} % closed strength} %$\theta$: Minimum cosine similarity, \\
+\KwIn{$\kappa$: Minimum confidence threshold} % closed strength} %$\theta$: Minimum cosine similarity, \\
 \KwData{$\mathcal{C}$: Closed Itemsets produced by LCM}
 \KwResult{$\mathcal{R}$: Strong closed itemset clusters}
 \For{$i \gets 2$ to $|\mathcal{C}|$}{
@@ -962,7 +876,7 @@ Figure \ref{fig:lcmvsfpzhu} shows the total runtime of the LCM algorithm plus th
 \scalebox{0.6} % Change this value to rescale the drawing.
 {
 \begin{pspicture}(0,-4.52)(16.408476,4.52)
-\rput(7.52,0.0){\includegraphics{/Users/yia/Code/thesis/write-ups/cikm/runtime_lcm-lcm+filter-fpzhu_seconds.eps}}
+\rput(7.52,0.0){\includegraphics{runtime_lcm-lcm+filter-fpzhu_seconds.eps}}
 \usefont{T1}{ptm}{m}{n}
 \rput(14.1,-3.85){\large ($\kappa = 0.25$)}
 \end{pspicture} 
