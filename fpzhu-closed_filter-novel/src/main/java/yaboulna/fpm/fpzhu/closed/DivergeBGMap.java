@@ -11,7 +11,6 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Formatter;
@@ -21,7 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -43,6 +41,8 @@ import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
@@ -51,7 +51,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
-import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
@@ -253,7 +252,7 @@ public class DivergeBGMap {
   private static final double CONFIDENCE_DEFAULT_THRESHOLD = 0.1; // lower bound
 
 // private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
-  private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.33;//66; // Cosine similarity
+  private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.33;// 66; // Cosine similarity
   private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0;// 0.33; // Jaccard similarity
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
@@ -262,7 +261,7 @@ public class DivergeBGMap {
 
   private static final double KLDIVERGENCE_MIN = 0; // this is multiplied by frequency not prob
 
-  private static final int MAX_LOOKBACK_FOR_PARENT = 1000;
+  private static final int MAX_LOOKBACK_FOR_CANDIDATES = 2000;
 
   private static final boolean RESEARCH_MODE = true;
 
@@ -301,6 +300,8 @@ public class DivergeBGMap {
   static boolean clusteringLocally = true;
   static boolean clusterWithOneSelf = true;
   static boolean satisfyMinDiff = false;
+  static boolean alwaysFindParent = true;
+  static int maxSiblingsThreshold = 50;
 
   /**
    * @param args
@@ -349,6 +350,7 @@ public class DivergeBGMap {
       clusteringLocally = !args[3].contains("ClustGloba");
       satisfyMinDiff = args[3].contains("satisfyMinDiff");
       clusterWithOneSelf = !args[3].contains("SelClust");
+      alwaysFindParent = !args[3].contains("BoundedTime");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -373,6 +375,7 @@ public class DivergeBGMap {
     LOG.info("clusteringLocally: " + clusteringLocally);
     LOG.info("satisfyMinDiff: " + satisfyMinDiff);
     LOG.info("clusterWithOneSelf: " + clusterWithOneSelf);
+    LOG.info("alwaysFindParent: " + alwaysFindParent);
 
     String thresholds = "";
 // thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
@@ -413,8 +416,10 @@ public class DivergeBGMap {
       options += "_Secs" + temporalSimilarityThreshold;
     }
     if (!unLimitedBufferSize) {
-      options += "_Buff" + MAX_LOOKBACK_FOR_PARENT;
+      options += "_Buff" + MAX_LOOKBACK_FOR_CANDIDATES;
     }
+
+    options += "_MaxSiblings" + maxSiblingsThreshold;
 
     args = Arrays.copyOf(args, 4);
 
@@ -462,6 +467,7 @@ public class DivergeBGMap {
     final Map<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> growingAlliances = Maps.newHashMap();
     final Map<Set<String>, DescriptiveStatistics> alliedKLD = Maps.newHashMap();
     final Map<Set<String>, Set<String>> itemsetParentMap = Maps.newHashMap();
+    final Multimap<Set<String>, Set<String>> parentItemsetsMap = HashMultimap.create();
     final Map<Set<String>, Set<Set<String>>> allianceTransitive = Maps.newHashMap();
     final Multimap<Set<String>, Set<String>> allianceTransitiveInverse = HashMultimap.create();
     final Map<Set<String>, Double> unalliedItemsets = Maps.newHashMap();
@@ -488,7 +494,7 @@ public class DivergeBGMap {
     try {
       PerfMonKeyValueStore perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
           Arrays.toString(args)));
-      perfMonKV.batchSizeToWrite = 20; // FIXME: whenever you add a new perf key
+      perfMonKV.batchSizeToWrite = 27; // FIXME: whenever you add a new perf key
       for (File fgF : fgFiles) {
         final File novelFile = new File(fgF.getParentFile(), fgF.getName()
             .replaceFirst("fp_", "novel_" + options + "_"));
@@ -544,6 +550,7 @@ public class DivergeBGMap {
           allianceTransitive.clear();
           allianceTransitiveInverse.clear();
           itemsetParentMap.clear();
+          parentItemsetsMap.clear();
           fgCountMap.clear();
           unigramCountStats.clear();
           fgIdsMap.clear();
@@ -579,6 +586,8 @@ public class DivergeBGMap {
         final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
 
         final MutableInt unMaximalIS = new MutableInt(0);
+        final SummaryStatistics bufferSizeNeeded4Candidate = new SummaryStatistics();
+        final SummaryStatistics bufferSizeNeeded4Parent = new SummaryStatistics();
 
         class StronglyClosedItemsetsFilter implements Runnable {
 
@@ -659,6 +668,7 @@ public class DivergeBGMap {
                 int lookBackRecords = 0;
 
                 while (prevIter.hasNext()) { // there are more than one parent: && !foundParent
+                  ++lookBackRecords;
                   Set<String> pis = prevIter.next();
 
                   Set<String> interset;
@@ -769,6 +779,7 @@ public class DivergeBGMap {
                     // one of the parent itemset (in the closed patterns lattice)
 
                     mergeCandidates.add(pis);
+                    bufferSizeNeeded4Candidate.addValue(lookBackRecords);
 
                     if (pis.size() < itemset.size()) {
 
@@ -777,6 +788,7 @@ public class DivergeBGMap {
                       double conf = fgCountMap.get(itemset).doubleValue()
                           / fgCountMap.get(pis).doubleValue();
                       if (parentItemset == null) {
+                        bufferSizeNeeded4Parent.addValue(lookBackRecords);
                         parentItemset = pis;
                         // first parent to encounter will be have the lowest support, thus gives highest confidence
                         double pisFreq = fgCountMap.get(pis);
@@ -872,6 +884,8 @@ public class DivergeBGMap {
                       }
                       if ((noCosineSimilarity && noJaccard) || isPisSim > simThreshold) {
                         mergeCandidates.add(pis);
+                        bufferSizeNeeded4Candidate.addValue(lookBackRecords);
+
                         if (!(noCosineSimilarity && noJaccard) && LOG.isTraceEnabled())
                           LOG.trace("{} " + simMeasure + " {} = " + isPisSim,
                               itemset.toString() + fgCountMap.get(itemset),
@@ -879,9 +893,10 @@ public class DivergeBGMap {
                       }
                     }
 
-                    if ((stopMatchingParentFSimLow && parentItemset != null &&
+                    if ((!alwaysFindParent || parentItemset != null) &&
+                        ((stopMatchingParentFSimLow && parentItemset != null &&
                         isPisSim < ITEMSET_SIMILARITY_BAD_THRESHOLD)
-                        || (!unLimitedBufferSize && ++lookBackRecords > MAX_LOOKBACK_FOR_PARENT)) {
+                        || (!unLimitedBufferSize && lookBackRecords > MAX_LOOKBACK_FOR_CANDIDATES))) {
                       // TODONE: could this also work without checking foundParent -> NO, very few alliances happen
                       // TODO: are we losing anything by breaking on the first bad similarity
 // if (LOG.isTraceEnabled())
@@ -906,6 +921,7 @@ public class DivergeBGMap {
 // } else { // if (maxConfidence < CLOSED_CONFIDENCE_THRESHOLD) {
                 if (parentItemset != null) {
                   itemsetParentMap.put(itemset, parentItemset);
+                  parentItemsetsMap.put(parentItemset, itemset);
                   if (maxConfidence < confThreshold) {
                     continue;
                   }
@@ -1390,8 +1406,10 @@ public class DivergeBGMap {
                         if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
                             && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
                           itemsetParentMap.put(theOnlyOneIllMerge, parentItemset);
+                          parentItemsetsMap.put(parentItemset, theOnlyOneIllMerge);
                         } else {
                           itemsetParentMap.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
+                          parentItemsetsMap.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
                         }
                       }
                       unalliedItemsets.remove(theOnlyOneIllMerge);
@@ -1531,8 +1549,8 @@ public class DivergeBGMap {
                         allied = true; // TODO: only if antecedent??
                       }
                     }
-                  }  
-                  
+                  }
+
                 } // end if(clusterlocally) else
 
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
@@ -1599,8 +1617,8 @@ public class DivergeBGMap {
 
                 if (!allied) {
                   unalliedItemsets.put(itemset, maxConfidence);// klDiver);
-                  if (clusterWithOneSelf && maxConfidence >= confThreshold
-                      && parentItemset != null) { //make use the optimization
+                  if (clusterWithOneSelf && maxConfidence >= confThreshold // this check on confidence is redundant
+                      && parentItemset != null) { // make use the optimization
                     Set<String> theOnlyOneIllMerge = itemset;
                     if (theOnlyOneIllMerge != null) {
                       if (LOG.isTraceEnabled())
@@ -1642,11 +1660,13 @@ public class DivergeBGMap {
                           if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
                               && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
                             itemsetParentMap.put(theOnlyOneIllMerge, parentItemset);
-                          } else { //Cannot happen but leae it
+                            parentItemsetsMap.put(parentItemset, theOnlyOneIllMerge);
+                          } else { // Cannot happen but leae it
                             itemsetParentMap.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
+                            parentItemsetsMap.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
                           }
                         }
-//                        unalliedItemsets.remove(theOnlyOneIllMerge);
+// unalliedItemsets.remove(theOnlyOneIllMerge);
                       } else { // to avoid dupliate addition
                         alliedItemsets.getKey().addAll(itemset);
                         alliedItemsets.getValue().addAll(iDocIds);
@@ -1672,8 +1692,8 @@ public class DivergeBGMap {
                     LOG.trace(itemset.toString() + iDocIds.size()
                         + " doesn't exist outside of its alliance with head " + allianceTransitive.get(itemset));
                 }
-              } //end of if(!filterKLDivergence || KLD > threshold)
-            } //end of for(itemset: fgMap.keys)
+              } // end of if(!filterKLDivergence || KLD > threshold)
+            } // end of for(itemset: fgMap.keys)
 
             if (!clusteringLocally) {
 // Set<Set<String>> clusteredPrec = Sets.newHashSet();
@@ -1759,6 +1779,8 @@ public class DivergeBGMap {
         int alliedLowConf = 0;
         int overConfident = 0;
         int unalliedHiConf = 0;
+        int strongClosedIS = 0;
+        int filteredIS = 0;
         Closer novelClose = Closer.create();
         try {
           Formatter novelFormat = novelClose.register(new Formatter(novelFile, Charsets.UTF_8.name()));
@@ -1785,6 +1807,11 @@ public class DivergeBGMap {
             notTrendingFmt = novelClose.register(new Formatter(notTrendingFile, Charsets.UTF_8.name()));
           }
 
+          final File bigFamilyFormat = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_",
+              "filtered_" + options + "_"));
+          Formatter bigFamilyFmt = novelClose.register(new Formatter(bigFamilyFormat, Charsets.UTF_8.name()));
+
+          strongClosedIS = growingAlliances.keySet().size();
           for (java.util.Map.Entry<Set<String>, java.util.Map.Entry<Multiset<String>, Set<Long>>> e : growingAlliances
               .entrySet()) {
             Multiset<String> mergedItemset = e.getValue().getKey();
@@ -1815,6 +1842,7 @@ public class DivergeBGMap {
             }
 
             Set<String> parentItemset = itemsetParentMap.get(e.getKey());
+
             double confidence = unionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
             if (confidence < confThreshold) {
               ++alliedLowConf;
@@ -1858,6 +1886,19 @@ public class DivergeBGMap {
                       e.getKey().toString() + fgIdsMap.get(e.getKey()).size());
               }
             }
+            DescriptiveStatistics kldStats = alliedKLD.get(e.getKey());
+
+            Collection<Set<String>> siblings = parentItemsetsMap.get(parentItemset);
+            if (siblings.size() > maxSiblingsThreshold) {
+              bigFamilyFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%.15f\t%d\t%d\n",
+                  confidence,
+                  kldStats.getVariance(),
+                  kldStats.getN(),
+                  unionDocId.size());
+              --strongClosedIS;
+              ++filteredIS;
+              continue;
+            }
 
             Collection<Set<String>> allianceMembers = allianceTransitiveInverse.get(e.getKey());
             double mutualInfo = 0;
@@ -1875,8 +1916,6 @@ public class DivergeBGMap {
               mutualInfo += conditionalProb * DoubleMath.log2(conditionalProb / (freqSuperset / fgNumTweets));
             }
             mutualInfo *= freqSubset / fgNumTweets;
-
-            DescriptiveStatistics kldStats = alliedKLD.get(e.getKey());
 
             double kldSubset = kldCache.get(e.getKey());
             double subsetSelfInfo = -Math.log(freqSubset / fgNumTweets);
@@ -2064,7 +2103,14 @@ public class DivergeBGMap {
         LOG.info("absMaxDiffEnforced: {}", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
         LOG.info("KLD+Itemsets: {}", positiveKLDivergence.size());
         LOG.info("HighConfidenceIS: {}", confidentItemsets.size());
-        LOG.info("StrongClosedIS: {}", growingAlliances.keySet().size());
+        LOG.info("FilteredIS: {}", filteredIS);
+        LOG.info("bufferSizeNeeded4CandidateMax: {}", bufferSizeNeeded4Candidate.getMax());
+        LOG.info("bufferSizeNeeded4CandidateMean: {}", bufferSizeNeeded4Candidate.getMean());
+        LOG.info("bufferSizeNeeded4CandidateStddev: {}", bufferSizeNeeded4Candidate.getStandardDeviation());
+        LOG.info("bufferSizeNeeded4ParentMax: {}", bufferSizeNeeded4Parent.getMax());
+        LOG.info("bufferSizeNeeded4ParentMean: {}", bufferSizeNeeded4Parent.getMean());
+        LOG.info("bufferSizeNeeded4ParentStddev: {}", bufferSizeNeeded4Parent.getStandardDeviation());
+        LOG.info("StrongClosedIS: {}", strongClosedIS);// growingAlliances.keySet().size());
 
         if (perfMon) {
           perfMonKV.storeKeyValue("unalliedHiConf", unalliedHiConf);
@@ -2087,7 +2133,15 @@ public class DivergeBGMap {
           perfMonKV.storeKeyValue("absMaxDiffEnforced", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
           perfMonKV.storeKeyValue("KLD+Itemsets", positiveKLDivergence.size());
           perfMonKV.storeKeyValue("HighConfidenceIS", confidentItemsets.size());
-          perfMonKV.storeKeyValue("StrongClosedIS", growingAlliances.keySet().size());
+          perfMonKV.storeKeyValue("StrongClosedIS", strongClosedIS); // growingAlliances.keySet().size());
+          perfMonKV.storeKeyValue("FilteredIS", filteredIS);
+          perfMonKV.storeKeyValue("bufferSizeNeeded4CandidateMax", bufferSizeNeeded4Candidate.getMax());
+          perfMonKV.storeKeyValue("bufferSizeNeeded4CandidateMean", bufferSizeNeeded4Candidate.getMean());
+          perfMonKV
+              .storeKeyValue("bufferSizeNeeded4CandidateStddev", bufferSizeNeeded4Candidate.getStandardDeviation());
+          perfMonKV.storeKeyValue("bufferSizeNeeded4ParentMax", bufferSizeNeeded4Parent.getMax());
+          perfMonKV.storeKeyValue("bufferSizeNeeded4ParentMean", bufferSizeNeeded4Parent.getMean());
+          perfMonKV.storeKeyValue("bufferSizeNeeded4ParentStddev", bufferSizeNeeded4Parent.getStandardDeviation());
         }
         positiveKLDivergence.clear();
         confidentItemsets.clear();

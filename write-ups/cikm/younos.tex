@@ -666,7 +666,8 @@ This is also necessary since an itemset will have different N-Gram set represent
 %\end{figure}
 
 
-\section{Strongly closed itemsets}
+\section{Strengthening closure}
+%Strongly closed itemsets}
 \label{sec:strong}
 The closed property of an itemset is easily violated by modifying one transaction that contains the itemset and removing one of its items. While an update operation is not supported in the model of frequent itemsets mining, a similar effect happens when people are writing about a certain fine grained topic. For example, on November 6th, 2012 many people where tweeting that ``(\underline{Barack} Obama) was elected (\underline{as president \underline{of the United States \underline{of America}}})''. If all the Tweets which use the verb phrase ``was elected'' to report the event also contain the two names (in parenthesis) in full, then there will be one  \emph{maximal}  itemset with all 12 items. However, either or both the names can be shortened by omitting an underlined part and still convey the meaning. 
 %We can consider Tweets with any combination of shortened names to be modifications of the \emph{maximal} closed itemset. 
@@ -674,12 +675,34 @@ Therefore instead of 1 maximal itemset about the event there will be 8 closed on
 %Tweets posted in November 
 our data are 2439.17 closed itemsets and 1831.92 maximal itemsets. 
 
-We now define a condition that is not as easily violated as the closed and maximal conditions for selecting itemsets.
+We define two conditions that are not as easily violated as the closed and maximal conditions for selecting itemsets. The two conditions build on the concept of \emph{association rule confidence}. Confidence is the basic property used for association rules mining, and it is used in the definition of $\delta$-free sets \cite{boulicaut2003free}. Mining itemsets based on the confidence of rules they induce has long been recognized as a method for finding ``interesting patterns'' \cite{cohen2001finding}, but since this property is not anti-monotone a variation has to be used (for example, \emph{all confidence} \cite{kim2004ccmine}).The confidence of an assocation rule that the presence of an itemset, $s_{j}$, implies the presence of another itemset, $s_i$, is  defined as:
+\begin{equation}\label{eq:conf}conf(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
+
+\subsection{Distinct itemsets}
 %For example, on November 9th, 2012 many people where tweeting that ``Justin Bieber and Selena Gomez broke up''. If all Tweets which use the verb "break up" to report the topic also contain the two names in full, then there will be one closed itemset with all 6 items. However, a Tweet can contain any of 8 other combinations of the four names that fully convey the meaning. We can consider that Tweets with any of these combinations are modifications of the \emph{maximal} closed itemset. Therefore instead of 1 maximal itemset about the topic there will be 9 closed ones. Now consider that it is possible to say that "Justin and Selena broke up" as well as "Justin broke up with Selena", resulting in 2 maximal itemsets. This increase in the number of maximal itemsets because of slight variations in the language is intensified by the length limit on Tweets, specially when people try to make space for their comment about a Tweet they are retweeting. We therefore need a property between the easily violated closed property and the very strict maximal property which also results in a large number of redundant itemsets. 
 % This will result in the creation of two closed itemsets, a new shorter with support that one higher than the original itemset
+Trivial violations of the closure condition can be filtered out by setting a lower bound on the amount of transactions containing the subset but not the superset, specified as a ratio $\kappa$. This is equivalent to filtering out itemsets that are not part of any rule with confidence at least $\kappa$. However, this condition is met by many language constructs, and \emph{even though} the superset occurs in a substantial proportion of the transactions containing the subset they are not distinctive from each other, but rather expected to appear together - notice that we had to flatten N-grams itemsets back to unigram itemsets. Given the length constraint on Tweets, then the 
+%FP-Tree can only be shallow and wide. 
+size of itemsets will also be limited. Therefore, an itemset that has a large number of supersets cannot be appearing with only a limited set of words (topic), but it has to be covering a breadth of possible descendants. Thus this itemset is very likely to be a language construct. Even if it is a language construct that appears with high confidence with some topical words 
+%, this high confidence doesn't carry interesting information; for example, \{the, of\} that appears within \{the, united, states, of, america\}. Even if it is a 
+or is an itemset made up topical word with very high frequency, then interesting information will be divided into several subtopics given its large number of direct descendants. In either case, filtering closed itemsets implied with high confidence by such a ubiquitous itemset will not omit any information. Any set of items that convey specific information will be part of an itemset whose longest subset is not part of many other supersets.
+%If the filtered itemset is part of an informative one then it will be produced as part of the longer itemset 
+%is found to have high confidence with the filtered one.
+
+We exploit the way PPC-Extension produces itemsets to filter out collocations that are language constructs and select only meaningful ones. If the total ordering of items follows the descending order of items' frequencies, then the call tree of recursive LCM calls will be very similar to the FP-tree.  
+
+%to introduce an optimization that improves both runtime, memory requirements and filtering power of the high confidence condition. Unlike the original LCM algorithm, filtering low confidence itemsets requires keeping mining resluts in memory to calculate the confidence of newly generated ones.
+% forming strong closed clusters requires keeping itemsets in memory so that newly generated ones are clustered with them.
+% to find candidates for merging. 
+Instead of keeping all previous itemsets in memory we keep only a limited number, $b$ (for buffer size). This obviously improves runtime and memory requirements, and it can also improve the choice of itemsets. I
+%For a large enough $b$, 
+%if an itemset is produced $b$ steps ago then this itemset's overlap with the current itemset is very likely a language construct. Since the tree is shallow, then 
+
+
+We use a buffer size $b=1000$ in all experiments, which leads to a runtime of about 1 to 3 milliseconds per itemset for filtering out low confidence itemsets and creating strong closed clusters. The number of selected itemsets is also reduced by almost half on average. The difference between the two selections is made up mostly of stop words. A few itemsets including topical words are also filtered, such as the closed itemset \{president, Obama\} since Obama is an example of a ubiquitous topical word. Such itemsets lack any information on their own and is included in other informative ones. Finally, this enhancement is not necessary for satisfactory performance. With an unlimited buffer, the average runtime is 5.2 seconds for filtering 4265 itemsets (the average number of closed itemsets from an hour long epoch)
 We define a \emph{distinct} itemset as a closed itemset whose frequency comprises more than a certain proportion of the frequency of its least frequent subset. 
 %, or which has at least one strongly closed superset. 
-This condition chooses closed itemsets which substantially violate the closed condition of their subsets. The proportion is a parameter, $\kappa$, that controls the selectivity of the \emph{distinctiveness} condition. Formally, the set of \emph{distinct} itemsets, $\mathcal{D}$, is defined as follows:
+This condition chooses closed itemsets which substantially violate the closed condition of their subsets. The proportion is a parameter, , that controls the selectivity of the \emph{distinctiveness} condition. Formally, the set of \emph{distinct} itemsets, $\mathcal{D}$, is defined as follows:
 %We state this condition formally as follows:
 %Let $\kappa$ be a parameter that can vary between 0 and 1 to increase the selectivity of the condition. Then the set of  \emph{high confidence} itemsets is:
 %\begin{equation}\mathcal{S} = \{s:\frac{|T_{s}|}{|T_{s_{parent}}|} \, where \, s_{parent} \subset s \, and \, |T_{s_{parent}}| < |T_{s_{ancestor}} | \forall s_{ancestor} \subset s \}\end{equation}
@@ -763,8 +786,6 @@ If more than one satisfies this condition, the  \emph{distinct} itemset is clust
 union of all cluster members, and its support is the size of the union of their postings lists. Formally:
 \begin{equation}S_l = \{w:\, w \in \bigcup_{s_i \in r_l}{s_i} \; where \; r_l \, is \, a\, cluster\}\end{equation}
 
-To formally define the \emph{strongly closed} itemset clusters, we first introduce the related concept of \emph{association rule confidence}. Confidence is the basic property used for association rules mining, and it is used in the definition of $\delta$-free sets \cite{boulicaut2003free}. Mining itemsets based on the confidence of rules they induce has long been recognized as a method for finding ``interesting patterns'' \cite{cohen2001finding}, but since this property is not anti-monotone a variation has to be used (for example, \emph{all confidence} \cite{kim2004ccmine}).The confidence of an assocation rule ``$s_{j} \rightarrow s_i$'' is  defined as:
-\begin{equation}\label{eq:conf}conf(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
 
 The clustering scheme described selects the cluster that contains the itemset which maximizes the confidence of the rule $conf(s_c \rightarrow s_d)$, with a lower bound on the overlap to maintain distinctiveness. Formally, the clustering result are: 
 \begin{multline}\label{eq:strongClosedFormal}
@@ -868,15 +889,7 @@ We use $\kappa = 0.25$ for the rest of the paper, which is an arbitrary choice b
 \subsection{Bounding runtime and memory}
 \label{sec:bounding}
 %Expanding on the previous observation that adding a high IDF term to an itemset with low IDF terms only prevents achieving a high enough cosine similarity, 
-We exploit the way PPC-Extension produces itemset to introduce an optimization that improves both runtime, memory requirements and filtering power of the high confidence condition. Unlike the original LCM algorithm, filtering low confidence itemsets requires keeping mining resluts in memory to calculate the confidence of newly generated ones.
-% forming strong closed clusters requires keeping itemsets in memory so that newly generated ones are clustered with them.
-% to find candidates for merging. 
-Instead of keeping all previous itemsets in memory we keep only a limited number, $b$ (for buffer size). This obviously improves runtime and memory requirements, and it can also improve the choice of itemsets. If the total ordering of items follows the descending order of items' frequencies, then the call tree of recursive LCM calls will be very similar to the FP-tree. Given the length constraint on Tweets, then the FP-Tree can only be shallow and wide. 
-%For a large enough $b$, 
-%if an itemset is produced $b$ steps ago then this itemset's overlap with the current itemset is very likely a language construct. Since the tree is shallow, then 
-Therefore, an itemset that has a large number of supersets cannot be appearing with only a limited set of words (topic), but it has to be covering a breadth of possible descendants. Thus this itemset is very likely to be a language construct. Even if it is a language construct that appears with high confidence with some topical words, this high confidence doesn't carry interesting information; for example, \{the, of\} that appears within \{the, united, states, of, america\}. Even if it is a topical word with very high frequency, then interesting information will be divided into several topics given its large number of direct descendants. In either case, filtering closed itemsets that have high confidence with such a ubiquitous itemset will not omit any information. If the filtered itemset is part of an informative one then it will be produced when the longer itemset is found to have high confidence with the filtered one.
-
-We use a buffer size $b=1000$ in all experiments, which leads to a runtime of about 1 to 3 milliseconds per itemset for filtering out low confidence itemsets and creating strong closed clusters. The number of selected itemsets is also reduced by almost half on average. The difference between the two selections is made up mostly of stop words. A few itemsets including topical words are also filtered, such as the closed itemset \{president, Obama\} since Obama is an example of a ubiquitous topical word. Such itemsets lack any information on their own and is included in other informative ones. Finally, this enhancement is not necessary for satisfactory performance. With an unlimited buffer, the average runtime is 5.2 seconds for filtering 4265 itemsets (the average number of closed itemsets from an hour long epoch).
+.
 
 Figure \ref{fig:lcmvsfpzhu} shows the total runtime of the LCM algorithm plus the strong closed itemsets clustering (LCM + Clustering) at different epoch spans. The runtime of LCM alone is also plotted for reference. We also plot the performance of another frequent itemset mining algorithm, FP-Zhu \cite{grahne2004reducing}, which was the runner up at FIMI '04   \cite{DBLP:conf/fimi/2004}. We include it to show that our extensions do not degrade the performance of LCM even in the context of competitions. The Y-Axis is in logarithmic scale to keep the scale of the plot suitable for seeing slight differences. The output of LCM is the input to the clustering algorithm, so it is affected by the number of closed itemsets produced. This explains why it takes slightly longer time for clustering results from the 15 minutes epoch and then takes a constant time for epochs of longer span.
 
