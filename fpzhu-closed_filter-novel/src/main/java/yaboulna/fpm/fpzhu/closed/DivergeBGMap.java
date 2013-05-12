@@ -253,7 +253,7 @@ public class DivergeBGMap {
   private static final double CONFIDENCE_DEFAULT_THRESHOLD = 0.1; // lower bound
 
 // private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
-  private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.33;//66; // Cosine similarity
+  private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.33;// 66; // Cosine similarity
   private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0;// 0.33; // Jaccard similarity
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
@@ -905,37 +905,38 @@ public class DivergeBGMap {
 // } else { // if (maxConfidence < CLOSED_CONFIDENCE_THRESHOLD) {
                 if (parentItemset != null) {
                   itemsetParentMap.put(itemset, parentItemset);
-                  if (maxConfidence < confThreshold) {
-                    continue;
-                  }
+// if (maxConfidence < confThreshold) {
+// continue;
+// }
                 }
-                if (clusteringLocally) {
-                  Set<String> theOnlyOneIllMerge = null;
+                if (maxConfidence >= confThreshold) {
+                  if (clusteringLocally) {
+                    Set<String> theOnlyOneIllMerge = null;
 // int theOnlyOnesDifference = Integer.MAX_VALUE;
-                  double theOnlyOneConf = Double.MIN_VALUE;
-                  if (growAlliancesAcrossEpochs && allianceTransitive.containsKey(itemset)) {
-                    mergeCandidates.addAll(allianceTransitive.get(itemset));
-                  }
-
-                  if (LOG.isTraceEnabled())
-                    LOG.trace(itemset.toString() + iDocIds.size() + " merge candidates: " + mergeCandidates);
-
-                  int bestUnofficialCandidateDiff = Integer.MAX_VALUE;
-                  Set<String> bestUnofficialCandidate = null;
-                  for (Set<String> cand : mergeCandidates) {
-
-                    LinkedList<Long> candDocIds = fgIdsMap.get(cand);
-                    if (candDocIds == null || candDocIds.isEmpty()) {
-                      LOG.warn("Using a file with truncated inverted indexes");
-                      continue;
+                    double theOnlyOneConf = Double.MIN_VALUE;
+                    if (growAlliancesAcrossEpochs && allianceTransitive.containsKey(itemset)) {
+                      mergeCandidates.addAll(allianceTransitive.get(itemset));
                     }
 
-                    MutableInt differentDocs = new MutableInt();
-                    if (satisfyMinDiff) {
-                      throw new IllegalArgumentException("TODO");
-                    } else { // any other funky conditions
-                      differentDocs.setValue(Math.max(0, candDocIds.size() - iDocIds.size()));
-                    }
+                    if (LOG.isTraceEnabled())
+                      LOG.trace(itemset.toString() + iDocIds.size() + " merge candidates: " + mergeCandidates);
+
+                    int bestUnofficialCandidateDiff = Integer.MAX_VALUE;
+                    Set<String> bestUnofficialCandidate = null;
+                    for (Set<String> cand : mergeCandidates) {
+
+                      LinkedList<Long> candDocIds = fgIdsMap.get(cand);
+                      if (candDocIds == null || candDocIds.isEmpty()) {
+                        LOG.warn("Using a file with truncated inverted indexes");
+                        continue;
+                      }
+
+                      MutableInt differentDocs = new MutableInt();
+                      if (satisfyMinDiff) {
+                        throw new IllegalArgumentException("TODO");
+                      } else { // any other funky conditions
+                        differentDocs.setValue(Math.max(0, candDocIds.size() - iDocIds.size()));
+                      }
 
 // Math.max(0, candDocIds.size() - iDocIds.size()));
 // Math.max(candDocIds.size(), iDocIds.size())
@@ -955,8 +956,8 @@ public class DivergeBGMap {
 // // larger = cand;
 // smallerDocIds = iDocIds;
 // }
-                    double maxDiffCnt =
-                        // ((ancestorItemsets.contains(cand)) ?
+                      double maxDiffCnt =
+                          // ((ancestorItemsets.contains(cand)) ?
 // // the (true) parent will necessarily be present in all documents of itemset
 // // differentDocs = candDocIds.size() - iDocIds.size();
 // // Math.floor((itemset.size() == 2?confThreshold: (1 - confThreshold)) * candDocIds.size())
@@ -964,118 +965,118 @@ public class DivergeBGMap {
 // * candDocIds.size()) :
 // Math.floor((1 / confThreshold) * iDocIds.size()))
 // :
-                        (satisfyMinDiff ? Double.MAX_VALUE :
-                            Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-                                Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                    Math.floor((1 - (1 - confThreshold))
-                                        // * iDocIds.size())))); // could be the min or all the other funky stuff.. even
-                                        * candDocIds.size()))));
+                          (satisfyMinDiff ? Double.MAX_VALUE :
+                              Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                                  Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                      Math.floor((1 - (1 - confThreshold))
+                                          // * iDocIds.size())))); // could be the min or all the other funky stuff.. even
+                                          * candDocIds.size()))));
 // cand
-                    double minDiffCnt =
-                        ((!satisfyMinDiff || ancestorItemsets.contains(cand)) ? -1 :
-                            //
-                            Math.max(1, // 0.9, // so that maxDiffCnt of 0 enters the loop
-                                Math.floor(confThreshold * // (1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
+                      double minDiffCnt =
+                          ((!satisfyMinDiff || ancestorItemsets.contains(cand)) ? -1 :
+                              //
+                              Math.max(1, // 0.9, // so that maxDiffCnt of 0 enters the loop
+                                  Math.floor(confThreshold * // (1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
 // *
 // largerDocIds.size()))));
 // (maxDiffFromMinSupp ? Math.min(candDocIds.size(), iDocIds.size()) :
 // Math.max(candDocIds.size(), iDocIds.size()))))));
-                                    candDocIds.size()))); // ));
+                                      candDocIds.size()))); // ));
 
-                    if (maxDiffCnt == absMaxDiff * hrsPerEpoch) {
-                      ++absMaxDiffEnforced;
-                    }
+                      if (maxDiffCnt == absMaxDiff * hrsPerEpoch) {
+                        ++absMaxDiffEnforced;
+                      }
 
-                    if (ancestorItemsets.contains(cand)) {
-                      // Not
-                    } else {
+                      if (ancestorItemsets.contains(cand)) {
+                        // Not
+                      } else {
 // // unionDocId.clear();
 // // intersDocId.clear();
 
-                      // Intersection and union calculation (depends on that docIds are sorted)
-                      // TODONE: use a variation of this measure that calculates the time period covered by each itemset
-                      // TODONE: overlap of intersection with the current itemset's docids
+                        // Intersection and union calculation (depends on that docIds are sorted)
+                        // TODONE: use a variation of this measure that calculates the time period covered by each itemset
+                        // TODONE: overlap of intersection with the current itemset's docids
 
-                      Iterator<Long> smallerIter =
-                          // smallerDocIds.iterator();
-                          iDocIds.iterator();
-                      Iterator<Long> largerIter =
-                          // largerDocIds.iterator();
-                          candDocIds.iterator();
-                      long smallerDocId = smallerIter.next(), largerDocId = largerIter.next();
+                        Iterator<Long> smallerIter =
+                            // smallerDocIds.iterator();
+                            iDocIds.iterator();
+                        Iterator<Long> largerIter =
+                            // largerDocIds.iterator();
+                            candDocIds.iterator();
+                        long smallerDocId = smallerIter.next(), largerDocId = largerIter.next();
 
-                      SummaryStatistics waitSecsTillCooc = null;
-                      if (honorTemporalSimilarity) {
-                        waitSecsTillCooc = new SummaryStatistics();
-                      }
-                      long lastCooc = Math.max(smallerDocId, largerDocId) >>> 22;
-                      while ((largerDocId > 0 && smallerDocId > 0) &&
-                          ((honorTemporalSimilarity &&
-                          (waitSecsTillCooc.getN() == 0 || waitSecsTillCooc.getMean() < temporalSimilarityThreshold))
-                          || (differentDocs.intValue() <= maxDiffCnt
-                          && differentDocs.intValue() >= minDiffCnt))) {
+                        SummaryStatistics waitSecsTillCooc = null;
+                        if (honorTemporalSimilarity) {
+                          waitSecsTillCooc = new SummaryStatistics();
+                        }
+                        long lastCooc = Math.max(smallerDocId, largerDocId) >>> 22;
+                        while ((largerDocId > 0 && smallerDocId > 0) &&
+                            ((honorTemporalSimilarity &&
+                            (waitSecsTillCooc.getN() == 0 || waitSecsTillCooc.getMean() < temporalSimilarityThreshold))
+                            || (differentDocs.intValue() <= maxDiffCnt
+                            && differentDocs.intValue() >= minDiffCnt))) {
 // || largerDiffSmallerSize <= maxDiffCnt)) {
-                        if (smallerDocId == largerDocId) {
+                          if (smallerDocId == largerDocId) {
 // intersDocId.add(iDid);
 // unionDocId.add(iDid);
-                          if (honorTemporalSimilarity) {
-                            waitSecsTillCooc.addValue(((smallerDocId >>> 22) - lastCooc) / 1000);
-                          }
-                          if (smallerIter.hasNext()) {
-                            smallerDocId = smallerIter.next();
-                          } else {
-                            smallerDocId = -1;
-// break;
-                          }
-                          if (largerIter.hasNext()) {
-                            largerDocId = largerIter.next();
                             if (honorTemporalSimilarity) {
-                              // how long will it wait for me this time?
-                              lastCooc = largerDocId >>> 22;
+                              waitSecsTillCooc.addValue(((smallerDocId >>> 22) - lastCooc) / 1000);
                             }
-                          } else {
-                            largerDocId = -1;
+                            if (smallerIter.hasNext()) {
+                              smallerDocId = smallerIter.next();
+                            } else {
+                              smallerDocId = -1;
 // break;
-                          }
+                            }
+                            if (largerIter.hasNext()) {
+                              largerDocId = largerIter.next();
+                              if (honorTemporalSimilarity) {
+                                // how long will it wait for me this time?
+                                lastCooc = largerDocId >>> 22;
+                              }
+                            } else {
+                              largerDocId = -1;
+// break;
+                            }
 
-                        } else if (smallerDocId < largerDocId) {
+                          } else if (smallerDocId < largerDocId) {
 // unionDocId.add(iDid);
 // ++differentDocs;
 // differentDocs.increment();
 // ++smallerDiffLargerSize;
-                          if (smallerIter.hasNext()) {
-                            smallerDocId = smallerIter.next();
-                          } else {
-                            smallerDocId = -1;
+                            if (smallerIter.hasNext()) {
+                              smallerDocId = smallerIter.next();
+                            } else {
+                              smallerDocId = -1;
 // break;
-                          }
-                        } else {
+                            }
+                          } else {
 // unionDocId.add(candDid);
 // ++differentDocs;
-                          differentDocs.increment();
+                            differentDocs.increment();
 // largerDiffSmallerSize.increment();
-                          if (largerIter.hasNext()) {
-                            largerDocId = largerIter.next();
-                          } else {
-                            largerDocId = -1;
+                            if (largerIter.hasNext()) {
+                              largerDocId = largerIter.next();
+                            } else {
+                              largerDocId = -1;
 // break;
-                          }
+                            }
 // if (honorTemporalSimilarity) {
 // // Poor cand came but I didn't overlap.. how long will it wait for me?
 // lastCooc = candDid >>> 22;
 // }
+                          }
                         }
-                      }
-                      if (honorTemporalSimilarity && (smallerDocId > 0 || largerDocId > 0)) {
-                        long minMaxIDid = Math.min(iDocIds.getLast(), candDocIds.getLast());
-                        // Assume that I would have come the next second if there were more docs in both,
-                        // or after the average wait time, whichever is longer
-                        waitSecsTillCooc.addValue(Math.max(
-                            (waitSecsTillCooc.getN() > 0 ? waitSecsTillCooc.getMean() : -1),
-                            ((((minMaxIDid >>> 22)) - lastCooc) / 1000) + 1));
+                        if (honorTemporalSimilarity && (smallerDocId > 0 || largerDocId > 0)) {
+                          long minMaxIDid = Math.min(iDocIds.getLast(), candDocIds.getLast());
+                          // Assume that I would have come the next second if there were more docs in both,
+                          // or after the average wait time, whichever is longer
+                          waitSecsTillCooc.addValue(Math.max(
+                              (waitSecsTillCooc.getN() > 0 ? waitSecsTillCooc.getMean() : -1),
+                              ((((minMaxIDid >>> 22)) - lastCooc) / 1000) + 1));
 
-                      }
-                      // Residsue already accounted for in the Max - Min equation
+                        }
+                        // Residsue already accounted for in the Max - Min equation
 // while (iDid > 0 && differentDocs <= maxDiffCnt) {
 // ++differentDocs;
 // if (iDidIter.hasNext()) {
@@ -1085,27 +1086,27 @@ public class DivergeBGMap {
 // break;
 // }
 // }
-                      if (honorTemporalSimilarity && LOG.isTraceEnabled()) {
-                        LOG.trace(itemset.toString() + iDocIds.size()
-                            + " differs in at least {} docs from {} with seconds till coocurrence of: " +
-                            waitSecsTillCooc.toString().replace('\n', '|'), differentDocs,
-                            cand.toString() + candDocIds.size());
-                        if (differentDocs.intValue() <= maxDiffCnt) {
-                          LOG.trace("Similar docids");
-                        } else {
-                          LOG.trace("Dissimilar docids");
-                        }
-                        if ((waitSecsTillCooc.getN() != 0 && waitSecsTillCooc.getMean() < temporalSimilarityThreshold)) {
-                          LOG.trace("Similar in time");
-                        } else {
-                          LOG.trace("Dissimilar in time");
+                        if (honorTemporalSimilarity && LOG.isTraceEnabled()) {
+                          LOG.trace(itemset.toString() + iDocIds.size()
+                              + " differs in at least {} docs from {} with seconds till coocurrence of: " +
+                              waitSecsTillCooc.toString().replace('\n', '|'), differentDocs,
+                              cand.toString() + candDocIds.size());
                           if (differentDocs.intValue() <= maxDiffCnt) {
-                            LOG.trace("Dissimilar in time but not in DocIds.. woaaahh!!");
+                            LOG.trace("Similar docids");
+                          } else {
+                            LOG.trace("Dissimilar docids");
+                          }
+                          if ((waitSecsTillCooc.getN() != 0 && waitSecsTillCooc.getMean() < temporalSimilarityThreshold)) {
+                            LOG.trace("Similar in time");
+                          } else {
+                            LOG.trace("Dissimilar in time");
+                            if (differentDocs.intValue() <= maxDiffCnt) {
+                              LOG.trace("Dissimilar in time but not in DocIds.. woaaahh!!");
+                            }
                           }
                         }
-                      }
 
-                    }
+                      }
 // else if(itemset.size() == 2){ // ancestor of a size 2 itemset.. might be language construct
 // // filter out language constructs.. or that is, keep only named entities by YuleQ
 // double a1b1 = iDocIds.size();
@@ -1139,116 +1140,116 @@ public class DivergeBGMap {
 // grandIntersDocId = Sets.intersection(grandIntersDocId, intersDocId);
 //
 // }
-                    // If similar enough, attach to the merge candidate and put both in pending queue
-                    if (differentDocs.intValue() <= maxDiffCnt
-                        && differentDocs.intValue() >= minDiffCnt) {
+                      // If similar enough, attach to the merge candidate and put both in pending queue
+                      if (differentDocs.intValue() <= maxDiffCnt
+                          && differentDocs.intValue() >= minDiffCnt) {
 
-                      // TODO: do we need to change the criteria to maximize or minize if it's a subset or not?
-                      double confidence =
-                          (candDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
-                      // (candDocIds.size() + iDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
+                        // TODO: do we need to change the criteria to maximize or minize if it's a subset or not?
+                        double confidence =
+                            (candDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
+                        // (candDocIds.size() + iDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
 // (largerDocIds.size() - differentDocs.doubleValue()) / largerDocIds.size();
-                      if (confidence < (1 - confThreshold)) {
-                        continue;
-                      }
-                      // Try and join and existing alliance
-                      Set<String> bestAllianceHead = cand;
+                        if (confidence < (1 - confThreshold)) {
+                          continue;
+                        }
+                        // Try and join and existing alliance
+                        Set<String> bestAllianceHead = cand;
 // int currentBestDifference = differentDocs;
-                      double currentBestScore = confidence;
+                        double currentBestScore = confidence;
 
-                      if (!ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE) {
-                        Set<Set<String>> candidateTransHeads = allianceTransitive.get(cand);
-                        // what did the candidate do wrong to ignore it if it doesn't have earlier allies?
+                        if (!ITEMSETS_SEIZE_TO_EXIST_AFTER_JOINING_ALLIANCE) {
+                          Set<Set<String>> candidateTransHeads = allianceTransitive.get(cand);
+                          // what did the candidate do wrong to ignore it if it doesn't have earlier allies?
 // if(candidateTransHeads == null){
 // candidateTransHeads = allianceTransitive.get(itemset);
 // } else {
 //
 // }
 
-                        if (candidateTransHeads != null) {
-                          if (mergeCandidates.contains(candidateTransHeads)) {
-                            if (!allowFormingMultipleAlliances) {
-                              // pretend that you are a very bad candidate.. so that your head wins the alliance:
+                          if (candidateTransHeads != null) {
+                            if (mergeCandidates.contains(candidateTransHeads)) {
+                              if (!allowFormingMultipleAlliances) {
+                                // pretend that you are a very bad candidate.. so that your head wins the alliance:
 // currentBestDifference = Integer.MAX_VALUE;
-                              currentBestScore = Double.MIN_VALUE;
-                            }
-                          } else {
+                                currentBestScore = Double.MIN_VALUE;
+                              }
+                            } else {
 
-                            for (Set<String> exitingAllianceHead : candidateTransHeads) {
+                              for (Set<String> exitingAllianceHead : candidateTransHeads) {
 
-                              Collection<Long> existingDocIds = (ALLIANCES_MERGE_WITH_HEAD ? fgIdsMap
-                                  .get(exitingAllianceHead) :
-                                  growingAlliances.get(exitingAllianceHead).getValue());
-                              if (LOG.isTraceEnabled())
-                                LOG.trace(itemset.toString() + iDocIds.size()
-                                    + " offered one more merge option {} through candidate {}",
-                                    (ALLIANCES_MERGE_WITH_HEAD ? exitingAllianceHead.toString() :
-                                        growingAlliances.get(exitingAllianceHead).getKey().toString())
-                                        + existingDocIds.size(),
-                                    cand + "diff" + differentDocs);
+                                Collection<Long> existingDocIds = (ALLIANCES_MERGE_WITH_HEAD ? fgIdsMap
+                                    .get(exitingAllianceHead) :
+                                    growingAlliances.get(exitingAllianceHead).getValue());
+                                if (LOG.isTraceEnabled())
+                                  LOG.trace(itemset.toString() + iDocIds.size()
+                                      + " offered one more merge option {} through candidate {}",
+                                      (ALLIANCES_MERGE_WITH_HEAD ? exitingAllianceHead.toString() :
+                                          growingAlliances.get(exitingAllianceHead).getKey().toString())
+                                          + existingDocIds.size(),
+                                      cand + "diff" + differentDocs);
 
-                              int existingHeadNonOverlap = Integer.MAX_VALUE;
-                              int existingMaxDiffCnt = 0;
-                              if (allowFormingMultipleAlliances) {
-                                // This way the alliance will get the score of the current cand, should be better than
+                                int existingHeadNonOverlap = Integer.MAX_VALUE;
+                                int existingMaxDiffCnt = 0;
+                                if (allowFormingMultipleAlliances) {
+                                  // This way the alliance will get the score of the current cand, should be better than
 // score
 // of its alliance head
-                                Iterator<Long> iDidIter = iDocIds.iterator();
+                                  Iterator<Long> iDidIter = iDocIds.iterator();
 
-                                Iterator<Long> existingDidIter = existingDocIds.iterator();
-                                long iDid = iDidIter.next(), existingDid = existingDidIter.next();
+                                  Iterator<Long> existingDidIter = existingDocIds.iterator();
+                                  long iDid = iDidIter.next(), existingDid = existingDidIter.next();
 
-                                existingHeadNonOverlap = Math.max(existingDocIds.size(), iDocIds.size())
-                                    - Math.min(existingDocIds.size(), iDocIds.size());
-                                existingMaxDiffCnt = (int) Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff
+                                  existingHeadNonOverlap = Math.max(existingDocIds.size(), iDocIds.size())
+                                      - Math.min(existingDocIds.size(), iDocIds.size());
+                                  existingMaxDiffCnt = (int) Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff
 // tweets
 // to
 // allow a merger
-                                    Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                        Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD) *
-                                            Math.max(existingDocIds.size(), iDocIds.size()))));
-                                if (existingMaxDiffCnt == absMaxDiff * hrsPerEpoch) {
-                                  ++absMaxDiffEnforced;
-                                }
+                                      Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                          Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD) *
+                                              Math.max(existingDocIds.size(), iDocIds.size()))));
+                                  if (existingMaxDiffCnt == absMaxDiff * hrsPerEpoch) {
+                                    ++absMaxDiffEnforced;
+                                  }
 
-                                while ((existingDid > 0 && iDid > 0)
-                                    && (existingHeadNonOverlap <= existingMaxDiffCnt)) {
-                                  if (iDid == existingDid) {
-                                    // intersDocId.add(iDid);
-                                    // unionDocId.add(iDid);
-                                    if (iDidIter.hasNext()) {
-                                      iDid = iDidIter.next();
-                                    } else {
-                                      iDid = -1;
+                                  while ((existingDid > 0 && iDid > 0)
+                                      && (existingHeadNonOverlap <= existingMaxDiffCnt)) {
+                                    if (iDid == existingDid) {
+                                      // intersDocId.add(iDid);
+                                      // unionDocId.add(iDid);
+                                      if (iDidIter.hasNext()) {
+                                        iDid = iDidIter.next();
+                                      } else {
+                                        iDid = -1;
 // break;
-                                    }
-                                    if (existingDidIter.hasNext()) {
-                                      existingDid = existingDidIter.next();
-                                    } else {
-                                      existingDid = -1;
+                                      }
+                                      if (existingDidIter.hasNext()) {
+                                        existingDid = existingDidIter.next();
+                                      } else {
+                                        existingDid = -1;
 // break;
-                                    }
-                                  } else if (iDid < existingDid) {
-                                    // unionDocId.add(iDid);
-                                    ++existingHeadNonOverlap;
-                                    if (iDidIter.hasNext()) {
-                                      iDid = iDidIter.next();
-                                    } else {
-                                      iDid = -1;
+                                      }
+                                    } else if (iDid < existingDid) {
+                                      // unionDocId.add(iDid);
+                                      ++existingHeadNonOverlap;
+                                      if (iDidIter.hasNext()) {
+                                        iDid = iDidIter.next();
+                                      } else {
+                                        iDid = -1;
 // break;
-                                    }
+                                      }
 
-                                  } else {
-                                    // unionDocId.add(candDid);
-                                    ++existingHeadNonOverlap;
-                                    if (existingDidIter.hasNext()) {
-                                      existingDid = existingDidIter.next();
                                     } else {
-                                      existingDid = -1;
+                                      // unionDocId.add(candDid);
+                                      ++existingHeadNonOverlap;
+                                      if (existingDidIter.hasNext()) {
+                                        existingDid = existingDidIter.next();
+                                      } else {
+                                        existingDid = -1;
 // break;
+                                      }
                                     }
                                   }
-                                }
 
 // while (iDid > 0 && existingHeadNonOverlap <= existingMaxDiffCnt) {
 // ++existingHeadNonOverlap;
@@ -1259,283 +1260,286 @@ public class DivergeBGMap {
 // break;
 // }
 // }
-                              } // else: no need to calculate, since we will be biased to the alliance anyway
-                              // just as if the current candidate does not exist; it is only a proxy to find
-                              if ((!allowFormingMultipleAlliances && bestAllianceHead == cand)
-                                  || (existingHeadNonOverlap <= existingMaxDiffCnt &&
-                                  ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
-                                      (exitingAllianceHead.size() < bestAllianceHead.size()))
-                                      || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
-                                      (exitingAllianceHead.size() > bestAllianceHead.size()))
-                                      || existingHeadNonOverlap < 7020))) { // TODO: calc confidences
+                                } // else: no need to calculate, since we will be biased to the alliance anyway
+                                // just as if the current candidate does not exist; it is only a proxy to find
+                                if ((!allowFormingMultipleAlliances && bestAllianceHead == cand)
+                                    || (existingHeadNonOverlap <= existingMaxDiffCnt &&
+                                    ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
+                                        (exitingAllianceHead.size() < bestAllianceHead.size()))
+                                        || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
+                                        (exitingAllianceHead.size() > bestAllianceHead.size()))
+                                        || existingHeadNonOverlap < 7020))) { // TODO: calc confidences
 // currentBestDifference))) {
-                                // or equals prefers existing allinaces to forming new ones
+                                  // or equals prefers existing allinaces to forming new ones
 
-                                if (allowFormingMultipleAlliances) { // TODO: this needs tweaking if more than one
+                                  if (allowFormingMultipleAlliances) { // TODO: this needs tweaking if more than one
 // existing
 // currentBestDifference = existingHeadNonOverlap;
-                                  currentBestScore = 7020;
-                                } // else: keeping the difference of cand, which should be better, so that
-                                // other candidates have harder time beating the existing alliance
+                                    currentBestScore = 7020;
+                                  } // else: keeping the difference of cand, which should be better, so that
+                                  // other candidates have harder time beating the existing alliance
 
-                                bestAllianceHead = exitingAllianceHead;
+                                  bestAllianceHead = exitingAllianceHead;
+                                }
                               }
                             }
                           }
                         }
-                      }
-                      if ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
-                          (theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size()))
-                          || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
-                          (theOnlyOneIllMerge == null || bestAllianceHead.size() > theOnlyOneIllMerge.size()))
-                          || (currentBestScore > theOnlyOneConf)) {
+                        if ((ALLIANCE_PREFER_SHORTER_ITEMSETS &&
+                            (theOnlyOneIllMerge == null || bestAllianceHead.size() < theOnlyOneIllMerge.size()))
+                            || (ALLIANCE_PREFER_LONGER_ITEMSETS &&
+                            (theOnlyOneIllMerge == null || bestAllianceHead.size() > theOnlyOneIllMerge.size()))
+                            || (currentBestScore > theOnlyOneConf)) {
 // || (currentBestDifference < theOnlyOnesDifference)) {
 
-                        theOnlyOneIllMerge = bestAllianceHead;
+                          theOnlyOneIllMerge = bestAllianceHead;
 // theOnlyOnesDifference = currentBestDifference;
-                        theOnlyOneConf = currentBestScore;
-                      }
-                    } else if (LOG.isTraceEnabled()) {
-                      if (differentDocs.intValue() < bestUnofficialCandidateDiff) {
-                        bestUnofficialCandidateDiff = differentDocs.intValue();
-                        bestUnofficialCandidate = cand;
+                          theOnlyOneConf = currentBestScore;
+                        }
+                      } else if (LOG.isTraceEnabled()) {
+                        if (differentDocs.intValue() < bestUnofficialCandidateDiff) {
+                          bestUnofficialCandidateDiff = differentDocs.intValue();
+                          bestUnofficialCandidate = cand;
+                        }
                       }
                     }
-                  }
 
-                  if (theOnlyOneIllMerge != null) {
-                    if (LOG.isTraceEnabled())
-                      LOG.trace(
-                          itemset.toString()
-                              + iDocIds.size()
-                              + " had diff of {} documents with the only one to merge with {}, while the max is: "
-                              +
-                              ((ancestorItemsets.contains(theOnlyOneIllMerge)) ?
-                                  // the (true) parent will necessarily be present in all documents of itemset
-                                  // differentDocs = candDocIds.size() - iDocIds.size();
-                                  (!PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE ? Math.floor((1 - confThreshold)
-                                      * fgIdsMap.get(theOnlyOneIllMerge).size()) :
-                                      Math.floor((1 / confThreshold) * iDocIds.size()))
-                                  :
-                                  Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-                                      Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                          Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
-                                              Math.max(fgIdsMap.get(theOnlyOneIllMerge).size(), iDocIds.size()))))),
-                          // theOnlyOnesDifference,
-                          theOnlyOneConf,
-                          theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
-                    // /////////// Store that you joined this alliance
-                    Set<Set<String>> transHeads = allianceTransitive.get(itemset);
-                    if (transHeads != null) {
-                      if (growAlliancesAcrossEpochs) {
-                        if (transHeads.size() > 1) {
-                          LOG.warn("There should be a maximum of one alliance per itemset.. why do we have these:"
-                              + transHeads);
-                        }
-                        if (transHeads.contains(theOnlyOneIllMerge)) {
-                          // jolly
-                          if (LOG.isTraceEnabled())
-                            LOG.trace(itemset.toString() + iDocIds.size()
-                                + " joining its only one {} in a continuing alliance: " + transHeads.toString()
-                                + fgIdsMap.get(transHeads).size(),
-                                theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
+                    if (theOnlyOneIllMerge != null) {
+                      if (LOG.isTraceEnabled())
+                        LOG.trace(
+                            itemset.toString()
+                                + iDocIds.size()
+                                + " had diff of {} documents with the only one to merge with {}, while the max is: "
+                                +
+                                ((ancestorItemsets.contains(theOnlyOneIllMerge)) ?
+                                    // the (true) parent will necessarily be present in all documents of itemset
+                                    // differentDocs = candDocIds.size() - iDocIds.size();
+                                    (!PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE ? Math.floor((1 - confThreshold)
+                                        * fgIdsMap.get(theOnlyOneIllMerge).size()) :
+                                        Math.floor((1 / confThreshold) * iDocIds.size()))
+                                    :
+                                    Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                                        Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                            Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
+                                                Math.max(fgIdsMap.get(theOnlyOneIllMerge).size(), iDocIds.size()))))),
+                            // theOnlyOnesDifference,
+                            theOnlyOneConf,
+                            theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
+                      // /////////// Store that you joined this alliance
+                      Set<Set<String>> transHeads = allianceTransitive.get(itemset);
+                      if (transHeads != null) {
+                        if (growAlliancesAcrossEpochs) {
+                          if (transHeads.size() > 1) {
+                            LOG.warn("There should be a maximum of one alliance per itemset.. why do we have these:"
+                                + transHeads);
+                          }
+                          if (transHeads.contains(theOnlyOneIllMerge)) {
+                            // jolly
+                            if (LOG.isTraceEnabled())
+                              LOG.trace(itemset.toString() + iDocIds.size()
+                                  + " joining its only one {} in a continuing alliance: " + transHeads.toString()
+                                  + fgIdsMap.get(transHeads).size(),
+                                  theOnlyOneIllMerge.toString() + fgIdsMap.get(theOnlyOneIllMerge).size());
+                          } else {
+                            // the new alliance will be better.. clear the one from earlier
+                            // TODO: do I need to handle the inverse in this case.. or does it not happen anymore?
+                            allianceTransitive.remove(transHeads);
+                            transHeads = null;
+                          }
                         } else {
-                          // the new alliance will be better.. clear the one from earlier
-                          // TODO: do I need to handle the inverse in this case.. or does it not happen anymore?
-                          allianceTransitive.remove(transHeads);
-                          transHeads = null;
+                          LOG.warn("I thought we will never find a cluster (alliance) head from earlier, " +
+                              "but the itemset {} already has {} while the current alleged onlyOneIllMerge is :"
+                              + theOnlyOneIllMerge, itemset, transHeads);
                         }
-                      } else {
-                        LOG.warn("I thought we will never find a cluster (alliance) head from earlier, " +
-                            "but the itemset {} already has {} while the current alleged onlyOneIllMerge is :"
-                            + theOnlyOneIllMerge, itemset, transHeads);
                       }
-                    }
-                    if (transHeads == null) {
-                      transHeads = Sets.newHashSet();
-                      allianceTransitive.put(itemset, transHeads);
-                    }
-                    // Cannot happen with the hard clusters (since the only one)
+                      if (transHeads == null) {
+                        transHeads = Sets.newHashSet();
+                        allianceTransitive.put(itemset, transHeads);
+                      }
+                      // Cannot happen with the hard clusters (since the only one)
 // if (transHeads.contains(theOnlyOneIllMerge)) {
 // // // this itemset is already part of the alliance, in an earlier iteration
 // continue;
 // }
-                    transHeads.add(theOnlyOneIllMerge);
-                    allianceTransitiveInverse.put(theOnlyOneIllMerge, itemset);
+                      transHeads.add(theOnlyOneIllMerge);
+                      allianceTransitiveInverse.put(theOnlyOneIllMerge, itemset);
 
-                    java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
-                        .get(theOnlyOneIllMerge);
+                      java.util.Map.Entry<Multiset<String>, Set<Long>> alliedItemsets = growingAlliances
+                          .get(theOnlyOneIllMerge);
 
-                    if (alliedItemsets == null) {
-                      // ////// Create a new alliance
-                      LinkedList<Long> theOnlyOnesDocIds = fgIdsMap.get(theOnlyOneIllMerge);
-                      alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
-                          HashMultiset.create(theOnlyOneIllMerge), Sets.newHashSet(theOnlyOnesDocIds));
-                      growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
+                      if (alliedItemsets == null) {
+                        // ////// Create a new alliance
+                        LinkedList<Long> theOnlyOnesDocIds = fgIdsMap.get(theOnlyOneIllMerge);
+                        alliedItemsets = new AbstractMap.SimpleEntry<Multiset<String>, Set<Long>>(
+                            HashMultiset.create(theOnlyOneIllMerge), Sets.newHashSet(theOnlyOnesDocIds));
+                        growingAlliances.put(theOnlyOneIllMerge, alliedItemsets);
 
-                      DescriptiveStatistics kldStats = new DescriptiveStatistics();
+                        DescriptiveStatistics kldStats = new DescriptiveStatistics();
+
+                        if (allianceKLDPositiveOnly) {
+                          if (positiveKLDivergence.containsKey(theOnlyOneIllMerge)) {
+                            kldStats.addValue(positiveKLDivergence.get(theOnlyOneIllMerge));
+                          }
+                        } else {
+                          kldStats.addValue(kldCache.get(theOnlyOneIllMerge));
+                        }
+
+                        alliedKLD.put(theOnlyOneIllMerge, kldStats);
+
+                        if (!itemsetParentMap.containsKey(theOnlyOneIllMerge)) {
+                          if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
+                              && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
+                            itemsetParentMap.put(theOnlyOneIllMerge, parentItemset);
+                          } else {
+                            itemsetParentMap.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
+                          }
+                        }
+                        unalliedItemsets.remove(theOnlyOneIllMerge);
+                      }
+                      alliedItemsets.getKey().addAll(itemset);
+                      alliedItemsets.getValue().addAll(iDocIds);
 
                       if (allianceKLDPositiveOnly) {
-                        if (positiveKLDivergence.containsKey(theOnlyOneIllMerge)) {
-                          kldStats.addValue(positiveKLDivergence.get(theOnlyOneIllMerge));
+                        if (positiveKLDivergence.containsKey(itemset)) {
+                          alliedKLD.get(theOnlyOneIllMerge).addValue(positiveKLDivergence.get(itemset));
                         }
                       } else {
-                        kldStats.addValue(kldCache.get(theOnlyOneIllMerge));
+                        alliedKLD.get(theOnlyOneIllMerge).addValue(kldCache.get(itemset));
                       }
 
-                      alliedKLD.put(theOnlyOneIllMerge, kldStats);
+                      allied = true;
 
-                      if (!itemsetParentMap.containsKey(theOnlyOneIllMerge)) {
-                        if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
-                            && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
-                          itemsetParentMap.put(theOnlyOneIllMerge, parentItemset);
-                        } else {
-                          itemsetParentMap.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
+                    } else if (!mergeCandidates.isEmpty()) {
+                      if (LOG.isTraceEnabled())
+                        LOG.trace(
+                            itemset.toString()
+                                + iDocIds.size()
+                                + " no one to merge with, had {} different docs with its best candidate {} while max diff is: "
+                                + ((ancestorItemsets.contains(bestUnofficialCandidate))
+                                    ?
+                                    // the (true) parent will necessarily be present in all documents of itemset
+                                    // differentDocs = candDocIds.size() - iDocIds.size();
+                                    (!PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE ? Math.floor((1 - confThreshold)
+                                        * fgIdsMap.get(bestUnofficialCandidate).size()) :
+                                        Math.floor((1 / confThreshold) * iDocIds.size()))
+                                    :
+                                    Math.min(
+                                        absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
+                                        Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
+                                            Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
+                                                Math.max(fgIdsMap.get(bestUnofficialCandidate).size(), iDocIds.size()))))),
+                            bestUnofficialCandidateDiff,
+                            bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size());
+                    }
+
+                  } else {
+                    // //////////////////////////
+// //////////////////////////
+// //////////////////////////
+// //////////////////////////
+                    // nearestNeighbor clustering
+// //////////////////////////
+// //////////////////////////
+                    // ///////////////////////////////////
+
+                    for (Set<String> other : mergeCandidates) {
+
+                      LinkedList<Long> otherDocIds = fgIdsMap.get(other);
+                      if (otherDocIds == null || otherDocIds.isEmpty()) {
+                        LOG.warn("Using a file with truncated inverted indexes");
+                        continue;
+                      }
+
+                      Set<String> precedent = other;
+                      Set<String> antecedent = itemset;
+
+                      if (otherDocIds.size() < iDocIds.size()) {
+                        precedent = itemset;
+                        antecedent = other;
+                      }
+
+                      LinkedList<Long> pDocIds = fgIdsMap.get(precedent);
+                      LinkedList<Long> aDocIds = fgIdsMap.get(antecedent);
+
+                      double maxDistance = (ancestorItemsets.contains(other) || !satisfyMinDiff ? Math
+                          .floor((1 - confThreshold)
+                              * pDocIds.size()) : Double.MAX_VALUE);
+                      double minDistance = (!satisfyMinDiff || ancestorItemsets.contains(other) ? -1 :
+                          confThreshold * pDocIds.size());
+                      // Using Manhattan distance / overlap similarity
+                      int distance = pDocIds.size() - aDocIds.size();
+
+                      if (!ancestorItemsets.contains(other)) {
+                        Iterator<Long> aDocIdsIter = aDocIds.iterator();
+                        Iterator<Long> pDocIdsIter = pDocIds.iterator();
+                        long aDocId = aDocIdsIter.next(), pDocId = pDocIdsIter.next();
+
+                        while ((aDocId > 0 && pDocId > 0) &&
+                            (distance <= maxDistance && distance >= minDistance)) {
+                          if (aDocId == pDocId) {
+                            if (aDocIdsIter.hasNext()) {
+                              aDocId = aDocIdsIter.next();
+                            } else {
+                              aDocId = -1;
+                            }
+                            if (pDocIdsIter.hasNext()) {
+                              pDocId = pDocIdsIter.next();
+                            } else {
+                              pDocId = -1;
+                            }
+
+                          } else if (aDocId < pDocId) {
+                            if (aDocIdsIter.hasNext()) {
+                              aDocId = aDocIdsIter.next();
+                            } else {
+                              aDocId = -1;
+                            }
+                            ++distance;
+                          } else {
+
+                            if (pDocIdsIter.hasNext()) {
+                              pDocId = pDocIdsIter.next();
+                            } else {
+                              pDocId = -1;
+                            }
+                            ++distance;
+                          }
                         }
                       }
-                      unalliedItemsets.remove(theOnlyOneIllMerge);
-                    }
-                    alliedItemsets.getKey().addAll(itemset);
-                    alliedItemsets.getValue().addAll(iDocIds);
 
-                    if (allianceKLDPositiveOnly) {
-                      if (positiveKLDivergence.containsKey(itemset)) {
-                        alliedKLD.get(theOnlyOneIllMerge).addValue(positiveKLDivergence.get(itemset));
-                      }
-                    } else {
-                      alliedKLD.get(theOnlyOneIllMerge).addValue(kldCache.get(itemset));
-                    }
-
-                    allied = true;
-
-                  } else if (!mergeCandidates.isEmpty()) {
-                    if (LOG.isTraceEnabled())
-                      LOG.trace(
-                          itemset.toString()
-                              + iDocIds.size()
-                              + " no one to merge with, had {} different docs with its best candidate {} while max diff is: "
-                              + ((ancestorItemsets.contains(bestUnofficialCandidate)) ?
-                                  // the (true) parent will necessarily be present in all documents of itemset
-                                  // differentDocs = candDocIds.size() - iDocIds.size();
-                                  (!PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE ? Math.floor((1 - confThreshold)
-                                      * fgIdsMap.get(bestUnofficialCandidate).size()) :
-                                      Math.floor((1 / confThreshold) * iDocIds.size()))
-                                  :
-                                  Math.min(absMaxDiff * hrsPerEpoch, // hard max number of diff tweets to allow a merger
-                                      Math.max(0.9, // so that maxDiffCnt of 0 enters the loop
-                                          Math.floor((1 - confThreshold) * // DOCID_SIMILARITY_GOOD_THRESHOLD)
-                                              Math.max(fgIdsMap.get(bestUnofficialCandidate).size(), iDocIds.size()))))),
-                          bestUnofficialCandidateDiff,
-                          bestUnofficialCandidate.toString() + fgIdsMap.get(bestUnofficialCandidate).size());
-                  }
-
-                } else {
-                  // //////////////////////////
-// //////////////////////////
-// //////////////////////////
-// //////////////////////////
-                  // nearestNeighbor clustering
-// //////////////////////////
-// //////////////////////////
-                  // ///////////////////////////////////
-
-                  for (Set<String> other : mergeCandidates) {
-
-                    LinkedList<Long> otherDocIds = fgIdsMap.get(other);
-                    if (otherDocIds == null || otherDocIds.isEmpty()) {
-                      LOG.warn("Using a file with truncated inverted indexes");
-                      continue;
-                    }
-
-                    Set<String> precedent = other;
-                    Set<String> antecedent = itemset;
-
-                    if (otherDocIds.size() < iDocIds.size()) {
-                      precedent = itemset;
-                      antecedent = other;
-                    }
-
-                    LinkedList<Long> pDocIds = fgIdsMap.get(precedent);
-                    LinkedList<Long> aDocIds = fgIdsMap.get(antecedent);
-
-                    double maxDistance = (ancestorItemsets.contains(other) || !satisfyMinDiff ? Math
-                        .floor((1 - confThreshold)
-                            * pDocIds.size()) : Double.MAX_VALUE);
-                    double minDistance = (!satisfyMinDiff || ancestorItemsets.contains(other) ? -1 :
-                        confThreshold * pDocIds.size());
-                    // Using Manhattan distance / overlap similarity
-                    int distance = pDocIds.size() - aDocIds.size();
-
-                    if (!ancestorItemsets.contains(other)) {
-                      Iterator<Long> aDocIdsIter = aDocIds.iterator();
-                      Iterator<Long> pDocIdsIter = pDocIds.iterator();
-                      long aDocId = aDocIdsIter.next(), pDocId = pDocIdsIter.next();
-
-                      while ((aDocId > 0 && pDocId > 0) &&
-                          (distance <= maxDistance && distance >= minDistance)) {
-                        if (aDocId == pDocId) {
-                          if (aDocIdsIter.hasNext()) {
-                            aDocId = aDocIdsIter.next();
-                          } else {
-                            aDocId = -1;
-                          }
-                          if (pDocIdsIter.hasNext()) {
-                            pDocId = pDocIdsIter.next();
-                          } else {
-                            pDocId = -1;
+                      if (distance <= maxDistance && distance >= minDistance) { // check if terminated early
+                        double confidence = (pDocIds.size() - distance * 1.0) / pDocIds.size();
+                        // check confidence condition
+                        if (confidence >= confThreshold) {
+                          // postpone the decision about clustering until globally decided
+                          Pair<Set<String>, Integer> anteCurrNN = nearestNeighbor.get(antecedent);
+                          boolean nearer = anteCurrNN == null;
+                          if (anteCurrNN != null) {
+                            int retVal = distance - anteCurrNN.getValue();
+                            if (retVal == 0) {
+                              retVal = Math.abs(antecedent.size() - precedent.size())
+                                  - Math.abs(antecedent.size() - anteCurrNN.getFirst().size());
+                            }
+                            // if(retVal == 0){
+                            // retVal =
+                            // }
+                            nearer = retVal < 0;
                           }
 
-                        } else if (aDocId < pDocId) {
-                          if (aDocIdsIter.hasNext()) {
-                            aDocId = aDocIdsIter.next();
-                          } else {
-                            aDocId = -1;
+                          if (nearer) {
+                            nearestNeighbor.put(antecedent, new Pair<Set<String>, Integer>(precedent, distance));
                           }
-                          ++distance;
-                        } else {
 
-                          if (pDocIdsIter.hasNext()) {
-                            pDocId = pDocIdsIter.next();
-                          } else {
-                            pDocId = -1;
-                          }
-                          ++distance;
+                          allied = true; // TODO: only if antecedent??
                         }
                       }
                     }
 
-                    if (distance <= maxDistance && distance >= minDistance) { // check if terminated early
-                      double confidence = (pDocIds.size() - distance * 1.0) / pDocIds.size();
-                      // check confidence condition
-                      if (confidence >= confThreshold) {
-                        // postpone the decision about clustering until globally decided
-                        Pair<Set<String>, Integer> anteCurrNN = nearestNeighbor.get(antecedent);
-                        boolean nearer = anteCurrNN == null;
-                        if (anteCurrNN != null) {
-                          int retVal = distance - anteCurrNN.getValue();
-                          if (retVal == 0) {
-                            retVal = Math.abs(antecedent.size() - precedent.size())
-                                - Math.abs(antecedent.size() - anteCurrNN.getFirst().size());
-                          }
-                          // if(retVal == 0){
-                          // retVal =
-                          // }
-                          nearer = retVal < 0;
-                        }
-
-                        if (nearer) {
-                          nearestNeighbor.put(antecedent, new Pair<Set<String>, Integer>(precedent, distance));
-                        }
-
-                        allied = true; // TODO: only if antecedent??
-                      }
-                    }
-                  }
-                }
+                  } // end if(clusterlocally) else
 
 // maxConfidence = grandUionDocId.size() * 1.0 / fgIdsMap.get(parentItemset).size();
 
-                if (maxConfidence >= confThreshold) {
+// if (maxConfidence >= confThreshold) {
                   confidentItemsets.put(itemset, maxConfidence);
 // // write out the itemset (orig or merged) into selection file(s),
 // // because it is high confidence either from the beginning or after merging
@@ -1593,12 +1597,12 @@ public class DivergeBGMap {
                       pis = origParent;
                     }
                   }
-                }
+                } // end if (maxConfidence >= confThreshold) {
 
                 if (!allied) {
                   unalliedItemsets.put(itemset, maxConfidence);// klDiver);
-                  if (clusterWithOneSelf 
-                      && parentItemset != null) { //make use the optimization
+                  if (clusterWithOneSelf
+                      && parentItemset != null) { // make use the optimization
                     Set<String> theOnlyOneIllMerge = itemset;
                     if (theOnlyOneIllMerge != null) {
                       if (LOG.isTraceEnabled())
@@ -1640,11 +1644,11 @@ public class DivergeBGMap {
                           if (parentItemset != null && theOnlyOneIllMerge.size() > parentItemset.size()
                               && theOnlyOnesDocIds.size() < fgIdsMap.get(parentItemset).size()) {
                             itemsetParentMap.put(theOnlyOneIllMerge, parentItemset);
-                          } else { //Cannot happen but leae it
+                          } else { // Cannot happen but leae it
                             itemsetParentMap.put(theOnlyOneIllMerge, theOnlyOneIllMerge);
                           }
                         }
-//                        unalliedItemsets.remove(theOnlyOneIllMerge);
+// unalliedItemsets.remove(theOnlyOneIllMerge);
                       } else { // to avoid dupliate addition
                         alliedItemsets.getKey().addAll(itemset);
                         alliedItemsets.getValue().addAll(iDocIds);
@@ -1670,8 +1674,8 @@ public class DivergeBGMap {
                     LOG.trace(itemset.toString() + iDocIds.size()
                         + " doesn't exist outside of its alliance with head " + allianceTransitive.get(itemset));
                 }
-              }
-            }
+              } // end of if(!filterKLDivergence || KLD > threshold)
+            } // end of for(itemset: fgMap.keys)
 
             if (!clusteringLocally) {
 // Set<Set<String>> clusteredPrec = Sets.newHashSet();
