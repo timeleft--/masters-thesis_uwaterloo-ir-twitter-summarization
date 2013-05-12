@@ -348,6 +348,7 @@ public class DivergeBGMap {
       noJaccard = args[3].contains("NoJaccard");
       clusteringLocally = !args[3].contains("ClustGloba");
       satisfyMinDiff = args[3].contains("satisfyMinDiff");
+      clusterWithOneSelf = !args[3].contains("SelClust");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
