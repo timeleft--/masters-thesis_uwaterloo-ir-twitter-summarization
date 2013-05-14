@@ -17,7 +17,7 @@
 
 \maketitle
 \begin{abstract}
-Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  Tweets are short and repetitious - lacking context and structure  - making it difficult to generate a coherent synopsis of events within a given time period.  Although some established algorithms for frequent itemset analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces a complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a filtering step that preserves these terms only when they may form part of a relevant collocation.  To further reduce trivial results, we propose a novel strengthening of the closure condition of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on information gain, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of Tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide understandable and meaningful pictures of events within those periods, with potential application to tasks such as temporal summarization and query expansion for search.
+Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  tweets are short and repetitious - lacking context and structure  - making it difficult to generate a coherent synopsis of events within a given time period.  Although some established algorithms for frequent itemset analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces a complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a filtering step that preserves these terms only when they may form part of a relevant collocation.  To further reduce trivial results, we propose a novel strengthening of the closure condition of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on information gain, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide understandable and meaningful pictures of events within those periods, with potential application to tasks such as temporal summarization and query expansion for search.
 \end{abstract}
 %\category{H.4}{Information Systems Applications}{Miscellaneous}
 %A category including the fourth, optional field follows...
@@ -34,7 +34,7 @@ traditional text mining algorithms.
 Text in social media is usually short, lacks context and structure,
 and is created at a very high rate.
 To realize the benefits of social media in giving a voice to ordinary people,
-explicit contextual information from the social graph has to be neglected.
+this work focuses on the content of posts.
 However, the collective stream from all users is overwhelmed with personal
 updates, and timely finding posts about topics of interest requires an
 efficient mining algorithm.
@@ -49,9 +49,7 @@ To reduce the number of itemsets, they may be limited by setting a high
 frequency threshold, but this is not possible in text mining because
 frequencies of items follow a long-tailed Zipfean distribution.
 Second, the high frequency of stop words and language constructs is a problem
-that frequent itemset mining is not equipped to handle;
-a problem which does not occur with traditional market-basket data since the
-packaging of each item is not enlisted in the receipt.
+that frequent itemset mining is not equipped to handle.
 Even if a maximum frequency threshold is set, incurring the risk that we
 will filter out important itemsets, many of non-English constructs will be
 mined because the proportion of posts in English is much higher than
@@ -97,9 +95,9 @@ items.
 Itemsets having the same prefix share the nodes representing this prefix.
 This representation is typical in the literature, and it is actually a very
 good representation of the frequent itemset mining problem.
-Figure \ref{fig:outline} shows conceptually how section  \ref{sec:socmine},
-\ref{sec:strong} and \ref{sec:rank}  addresses different parts of the
-problem. In section \ref{sec:concfut}, we conclude our presentation and
+Figure \ref{fig:outline} shows conceptually how our contributions in sections  \ref{sec:socmine},
+\ref{sec:strong} and \ref{sec:rank}  affects different parts of the
+problem. We overlay the contributions on such a figure to make it clear how each one addresses a particular challenge of applying frequent itemset mining to text data from social media. In section \ref{sec:concfut}, we conclude our presentation and
 suggest future directions.
 
 \begin{figure*}
@@ -154,7 +152,7 @@ suggest future directions.
 \usefont{T1}{ptm}{m}{n}
 \rput(15.304863,-0.525){osed condition. It also}
 \usefont{T1}{ptm}{m}{n}
-\rput(1.6074805,-0.505){It also doesn't solve}
+\rput(1.6074805,-0.505){It also does not solve}
 \usefont{T1}{ptm}{m}{n}
 \rput(1.4252441,-0.925){redundancy from }
 \usefont{T1}{ptm}{m}{n}
@@ -166,7 +164,7 @@ suggest future directions.
 \usefont{T1}{ptm}{m}{n}
 \rput(8.506817,-2.345){After mining itemsets based on support and reducing their redundancy, we rank}
 \usefont{T1}{ptm}{m}{n}
-\rput(8.663008,-3.285){and features intrinsic to itemsets don't result in a good ranking. We propose a ranking scheme in section \ref{sec:rank}.}
+\rput(8.663008,-3.285){and features intrinsic to itemsets do not result in a good ranking. We propose a ranking scheme in section \ref{sec:rank}.}
 \usefont{T1}{ptm}{m}{n}
 \rput(8.621269,-2.805){the remiaining itemsets using temporal features. The majority of itemsets has low support, }
 \usefont{T1}{pcr}{m}{n}
@@ -223,7 +221,7 @@ suggest future directions.
 \end{pspicture} 
 }
 
-\caption{Roadmap of the paper overlaid on an frequency ordered prefix tree}
+\caption{Most important contributions overlaid on a frequency ordered prefix tree}
 \label{fig:outline}
 \end{figure*}
 
@@ -314,19 +312,19 @@ Because of the dynamic nature of social media, rather than giving the whole
 database as input to mining algorithms, the input is an \emph{epoch} of data;
 data with timestamps within a certain period of time.
 The epoch's \emph{span} is the length of this period in hours,
-and the \emph{volume} at this epoch is the number of transactions in the epoch
+and the \emph{volume velocity} at this epoch is the number of transactions in the epoch
 divided by its \emph{span}.
 
 A \emph{frequent itemset} is a set of items that occur together a number of
 times higher than a given threshold, called the \emph{support} threshold.
-We adapt the support threshold to the dynamicity of the \emph{volume} at
+We adapt the support threshold to the dynamicity of the \emph{volume velocity} at
 different times of the day.
 We define the \emph{minimum support threshold} as the threshold at the hour
-of the least \emph{volume} during the day.
+of the least \emph{volume velocity} during the day.
 The \emph{minimum support} is supplied as an absolute number, $a$, and then
-converted to a ratio, $\alpha = \frac{a}{avg(volume_{daily-minimum})}$.
+converted to a ratio, $\alpha = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
 The actual support threshold used for mining any given epoch is thus
-$\alpha$ multiplied by the \emph{epoch}'s \emph{volume}. 
+$\alpha$ multiplied by the \emph{epoch}'s \emph{volume velocity}. 
 We now introduce the notation used in this paper:
 \begin{itemize}
 \item $W = \{w_1,w_2,\ldots, w_n\}$: The set of all items. Can be terms or term N-grams in this paper.
@@ -459,7 +457,7 @@ Step&Current Solution&Possible Extension Items&Comments\\ \hline
 7 & \{barack, obama, romney\} (2)* & \sout{mitt} (1) & Rule 1: Nothing more to add. \\\hline
 8 & \{barack\} (4) & mitt (2), obama (3), \textbf{romney} (2) & Back to `barack', adding `romney' \\\hline
 9 & \{barack, romney\} (2) &  \sout{mitt} (1), obama (2) & Rule 2: add obama to suffix after `romney' \\\hline
-10 & \{barack, romney, obama\} (2) &  \sout{mitt} (1)  & Rule 3: suffix isn't ordered, prune solution\\\hline
+10 & \{barack, romney, obama\} (2) &  \sout{mitt} (1)  & Rule 3: suffix is not ordered, prune solution\\\hline
 
 \end{tabular}
 \begin{tabular}{c}
@@ -508,7 +506,7 @@ X $\gets$ Inverted index of E\;
 }
 \Return{C}\;
 
-\Fn{LCM(s: Current itemset,   $w_{sh}$: Suffix head, \\ $T_s$: Transactions (Tweets) containing s)}{
+\Fn{LCM(s: Current itemset,   $w_{sh}$: Suffix head, \\ $T_s$: Transactions (tweets) containing s)}{
 	frequency[$1 \ldots w_n$] $\gets$ 0\;
 	suffix $\gets \{ w_{sh}\}$\;
 	\ForEach{$t \in T_s$}{
@@ -573,8 +571,8 @@ This is determined as follows: We picked a topical term that is known to
 steadily appear with a rather high frequency, and is talked about in all
 languages; i.e., `obama'.
 The maximum likelihood estimate of the probability of the term `obama' within
-the whole collection of Tweets is 0.0001.
-The average number of Tweets per hour is 100000, so the term `obama' is
+the whole collection of tweets is 0.0001.
+The average number of tweets per hour is 100000, so the term `obama' is
 expected to appear 10 times per hour on average.
 Thus, we use a minimum support threshold of 10, which translates into
 $\alpha = 0.0002$.
@@ -690,7 +688,7 @@ are parts of tweets from services that use the same text and append a URL,
 such as tweets reporting scores from
 Game Insight\footnote{http://www.game-insight.com/}.
 Such tweets are tokenized into more 4-grams than 5-grams, and the 4-grams
-appearing in them don't appear elsewhere.
+appearing in them do not appear elsewhere.
 Thus, each pair is reduced to one 5-gram.
 Figure \ref{fig:ngramsLen}(b) shows that the number of itemsets continues to
 decrease as expected.
@@ -698,7 +696,7 @@ Figure \ref{fig:ngramsLen}(c) shows that runtime also decreases as N goes
 from 1 to 5, since LCM runtime is proportional to the number of closed
 itemsets, and is not affected by the sparsity of data.
 The runtimes in this figure are slightly less from those in
-figure \ref{fig:runtimeEpochs} because they don't include the time taken for
+figure \ref{fig:runtimeEpochs} because they do not include the time taken for
 writing the posting list of each itemset.
 
 
@@ -735,7 +733,7 @@ formed by concatenating the items in all intersecting ellipses.
 The figure shows the effect of the lack of context and structure in
 conversations happening on Twitter.
 Because there was originally no way to refer to a certain tweet,
-a Tweet that sparked a conversation on Twitter had to be quoted in a retweet
+a tweet that sparked a conversation on Twitter had to be quoted in a retweet
 along with the retweeter's comment.
 This tradition still continues even though tweets can now explicitly reference
 one another. 
@@ -1127,7 +1125,7 @@ Indonesian Hero's day (``Hari Pahlawan'') appear, and the Turkish
 commemoration day of Ataturk is also mentioned as the 10th of November has
 started in these countries.
 These are examples of itemsets from languages with a relatively low number of
-users, showing how the absolute popularity of a topic doesn't affect its rank.
+users, showing how the absolute popularity of a topic does not affect its rank.
 If itemsets from only a specific language is desired,
 language identification can be applied on the itemsets and tweets from their
 postings lists.
@@ -1169,7 +1167,7 @@ mining because of error in an upstream component.
 						& back, in, office		&   Obama is back in office\\\hline
 
 \multirow{3}{*}{\texttt{22:30}} 	& once, you, go, black		& A popular cultural reference.\\ \cline{2-3} %  .. you never go back. 
-					   	& @realdonaldtrump, this, elections, ... [his famous Tweet] 		& Donald Trump is a Republican and he couldn't accept Obama's victory\\ \cline{2-3}
+					   	& @realdonaldtrump, this, elections, ... [his famous tweet] 		& Donald Trump is a Republican and he could not accept Obama's victory\\ \cline{2-3}
 						& concession, speech, write		&   The losing candidate has to concede before the winner declares victory \\\hline
 						
 \multirow{3}{*}{\texttt{23:00}} 	& weed, is, legal, in, colorado		&  This piece of news got the attention as soon as it was announced  \\ \cline{2-3}
@@ -1225,23 +1223,23 @@ mining because of error in an upstream component.
 We have proposed a method for efficiently creating temporal synposes of social
 media streams, based on a frequent itemset mining algorithm that is suitable
 for sparse data, LCM.
-Our method summarizes an hour of Twitter data (100,000 Tweets on average) into
+Our method summarizes an hour of Twitter data (100,000 tweets on average) into
 224 itemsets in 1945.68 milliseconds on average,
 and scales for longer epochs of data.
 The direct application of LCM on one-hour epochs of Twitter data results in
 an average of 61505.16 closed itemsets and takes 2506.58 milliseconds on
 average.
-The improvement is due to using variable length N-grams to mitigate the effect
-of the skewness of the frequency distribution of unigrams,
-and strengthening  the closure condition such that it selects only itemsets
-that are distinctively different from its subsets and other itemsets.
-The distinctiveness between two itemsets based on a parameter
-$\kappa$, which controls the selectivity of the distinctiveness condition.
+The improvement is due to the following contributions: 
+(1) strengthening  the closure condition such that it selects an itemset only if
+it is distinctively different from its subsets and other itemsets, and 
+(2) using variable length N-grams to mitigate the effect
+of the skewness of the frequency distribution of unigrams.
+The distinctiveness between two itemsets is based on a parameter, $\kappa$, which controls tolerance to redundancy. %Even though the use or variable length N-grams
 
-We also propose a method for ranking itemsets based on their temporal novelty.
+Another important contribution is a method for ranking itemsets based on their temporal novelty.
 The top 3 itemsets from the hours of election day and another less eventful
 day shows that the synopses captures important events, and might reasonably
-be directly presented to users as a summary
+be directly presented to users as a summary.
 A possible future direction is to use itemsets that appear as a sequence for
 building extractive coherent summaries of the social media stream at
 different times.
