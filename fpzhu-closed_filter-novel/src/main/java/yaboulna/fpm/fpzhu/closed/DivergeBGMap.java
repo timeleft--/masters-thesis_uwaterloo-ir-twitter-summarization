@@ -270,6 +270,10 @@ public class DivergeBGMap {
   private static final boolean ALLIANCE_PREFER_SHORTER_ITEMSETS = false;
   private static final boolean ALLIANCE_PREFER_LONGER_ITEMSETS = false;
 
+  private static final boolean ALLIANCES_MERGE_WITH_HEAD = false;
+  private static final boolean PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE = false;
+  private static final boolean REAL_CANADIAN_KLD = true;
+
   private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
 
   private static final boolean ENFORCE_HIGHER_SUPPORT = false;
@@ -300,7 +304,8 @@ public class DivergeBGMap {
   static boolean clusteringLocally = true;
   static boolean clusterWithOneSelf = true;
   static boolean satisfyMinDiff = false;
-  static boolean alwaysFindParent = true;
+  static boolean filterLargeNumSiblings = false;
+  static boolean alwaysFindParent = false;
   static int maxSiblingsThreshold = 33;
 
   /**
@@ -350,9 +355,10 @@ public class DivergeBGMap {
       clusteringLocally = !args[3].contains("ClustGloba");
       satisfyMinDiff = args[3].contains("satisfyMinDiff");
       clusterWithOneSelf = !args[3].contains("SelClust");
-      alwaysFindParent = !args[3].contains("BoundedTime");
+      alwaysFindParent = args[3].contains("FindPapa");
       int maxSibIx = args[3].indexOf("MaxSib");
-      if(maxSibIx != -1){
+      if (maxSibIx != -1) {
+        filterLargeNumSiblings = true;
         maxSiblingsThreshold = Integer.parseInt(args[3].substring(maxSibIx + 6, maxSibIx + 8));
       }
     }
@@ -380,6 +386,7 @@ public class DivergeBGMap {
     LOG.info("satisfyMinDiff: " + satisfyMinDiff);
     LOG.info("clusterWithOneSelf: " + clusterWithOneSelf);
     LOG.info("alwaysFindParent: " + alwaysFindParent);
+    LOG.info("filterLargeNumSiblings: " + filterLargeNumSiblings);
 
     String thresholds = "";
 // thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
@@ -389,8 +396,10 @@ public class DivergeBGMap {
     thresholds += " ITEMSET_SIMILARITY_BAD_THRESHOLD=" + ITEMSET_SIMILARITY_BAD_THRESHOLD;
 // thresholds += " DOCID_SIMILARITY_GOOD_THRESHOLD="+DOCID_SIMILARITY_GOOD_THRESHOLD;
     thresholds += " CONFIDENCE_HIGH_THRESHOLD=" + confThreshold;
-    thresholds += " MaxSiblings=" + maxSiblingsThreshold;
-
+    if (filterLargeNumSiblings) {
+      thresholds += " MaxSiblings=" + maxSiblingsThreshold;
+    }
+    
     LOG.info("Thresholds: " + thresholds);
 
     int bgLenSecs = 4 * 7 * 24 * 3600;
@@ -424,7 +433,9 @@ public class DivergeBGMap {
       options += "_Buff" + MAX_LOOKBACK_FOR_CANDIDATES;
     }
 
-    options += "_MaxSiblings" + maxSiblingsThreshold;
+    if (filterLargeNumSiblings) {
+      options += "_MaxSiblings" + maxSiblingsThreshold;
+    }
 
     args = Arrays.copyOf(args, 4);
 
@@ -598,8 +609,6 @@ public class DivergeBGMap {
         final SummaryStatistics confParent3_K = new SummaryStatistics();
         class StronglyClosedItemsetsFilter implements Runnable {
 
-          private static final boolean ALLIANCES_MERGE_WITH_HEAD = false;
-          private static final boolean PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE = false;
           private boolean done;
           private int numLen1Itemsets = 0;
           private int absMaxDiffEnforced = 0;
@@ -626,7 +635,11 @@ public class DivergeBGMap {
                 }
               }
               if (bgCount != null) {
-                klDiver = fgFreq * (Math.log(fgFreq / bgCount) + bgFgLogP);
+                klDiver = fgFreq;
+                if (REAL_CANADIAN_KLD) {
+                  klDiver /= fgNumTweets;
+                }
+                klDiver *= (Math.log(fgFreq / bgCount) + bgFgLogP);
               }
               kldCache.put(itemset, klDiver);
 
@@ -797,9 +810,9 @@ public class DivergeBGMap {
                       if (parentItemset == null) {
                         parentItemset = pis;
                         bufferSizeNeeded4Parent.addValue(lookBackRecords);
-                        if(lookBackRecords < 1000){
+                        if (lookBackRecords < 1000) {
                           confParent_1K.addValue(conf);
-                        } else if (lookBackRecords < 2000){
+                        } else if (lookBackRecords < 2000) {
                           confParent1_3K.addValue(conf);
                         } else {
                           confParent3_K.addValue(conf);
@@ -818,11 +831,11 @@ public class DivergeBGMap {
 
                         maxConfidence = conf;
                         parentItemset = pis;
-                        
+
                         bufferSizeNeeded4Parent.addValue(lookBackRecords);
-                        if(lookBackRecords < 1000){
+                        if (lookBackRecords < 1000) {
                           confParent_1K.addValue(conf);
-                        } else if (lookBackRecords < 2000){
+                        } else if (lookBackRecords < 2000) {
                           confParent1_3K.addValue(conf);
                         } else {
                           confParent3_K.addValue(conf);
@@ -1913,7 +1926,7 @@ public class DivergeBGMap {
             DescriptiveStatistics kldStats = alliedKLD.get(e.getKey());
 
             Collection<Set<String>> siblings = parentItemsetsMap.get(parentItemset);
-            if (siblings.size() > maxSiblingsThreshold) {
+            if (filterLargeNumSiblings && siblings.size() > maxSiblingsThreshold) {
               bigFamilyFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%.15f\t%d\t%d\n",
                   confidence,
                   kldStats.getVariance(),
@@ -2213,6 +2226,7 @@ public class DivergeBGMap {
           fgItemCnt = (int) itemsetCnt;
         }
         // Multiplying by many hight numbers makes this value absolutlely high: fgItemCnt.doubleValue() *
+        // I suspect that multiplying by many probabilities will also make the value tiny: if (REAL_CANADIAN_KLD)
         itemKLD = (Math.log(fgItemCnt.doubleValue() / bgItemCnt.doubleValue()) + bgFgLogP);
         kldCache.put(itemAsSet, itemKLD);
       }
