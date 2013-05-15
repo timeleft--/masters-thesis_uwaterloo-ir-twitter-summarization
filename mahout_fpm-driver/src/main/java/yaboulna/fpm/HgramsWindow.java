@@ -350,7 +350,7 @@ public class HgramsWindow {
             }
 
             cmd += " " + tmpFile.getAbsolutePath()
-                + " " + support + " " + epochOutLocal;
+                + " -s " + support + " -o " + epochOutLocal;
 
             LOG.info("Executing command: " + cmd);
 
