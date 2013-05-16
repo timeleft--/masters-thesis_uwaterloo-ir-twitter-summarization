@@ -136,6 +136,7 @@ public class HgramsWindow {
     } else {
       fimiExe = "/home/yaboulna/fimi/fp-zhu/fim_closed";
     }
+    boolean cmdMtv = fimiExe.contains("mtv");
 
     int minSupp = 5;
     double suppPct = 0.0001; // when multiplied by the volume gives at least 5 (at the trough of the day)
@@ -350,7 +351,9 @@ public class HgramsWindow {
             }
 
             cmd += " " + tmpFile.getAbsolutePath()
-                + " -s " + support + " -o " + epochOutLocal;
+                + (cmdMtv?
+                 " -s " + (support/transIter.getRowsRead()) + " -o " + epochOutLocal:
+                   " " + support + " " + epochOutLocal);
 
             LOG.info("Executing command: " + cmd);
 
@@ -466,7 +469,11 @@ public class HgramsWindow {
                   LOG.info("Translated {} frequent itemsets, but didn't flush yet", lnNum);
                 }
 
-                if (ln.charAt(0) == ' ') {
+                if (ln.charAt(0) == '#') {
+                  //comment line.. dump to LOG
+                  LOG.info(cmd + " - comment: " + ln);
+                  continue;
+                } else if (ln.charAt(0) == ' ') {
                   if (lnNum == 1) {
                     ln = ln.substring(1);
                   } else {
@@ -496,8 +503,15 @@ public class HgramsWindow {
                   // only the ogram and its frequency
                   continue;
                 }
-                int c;
-                for (c = 0; c < codes.length - 1; ++c) {
+                int c, cstart, cend;
+                if(cmdMtv){
+                  cstart = 1;
+                  cend = codes.length;
+                } else {
+                  cstart = 0;
+                  cend = codes.length - 1;
+                }
+                for (c = cstart; c < cend; ++c) {
                   String item = decodeMap.get(Integer.parseInt(codes[c]));
                   if (item.charAt(0) == '#') {
                     hashtags.add(item);
@@ -549,9 +563,15 @@ public class HgramsWindow {
                 }
 // if (distinctSortedTokens.size() != 1) { // 0 is good, becuase it is the number of Tweets
 
+                String freq;
+                if(cmdMtv){
+                  freq = Math.round(Float.parseFloat(codes[0]) * transIter.getRowsRead()) + "";
+                } else {
+                  freq = codes[c].substring(0, codes[c].length() - 1).substring(1);
+                }
                 decodeWriter.write((distinctSortedTokens.size() == 0 ? "NUMTWEETS" :
                     commaJoiner.join(distinctSortedTokens)) + "\t"
-                    + codes[c].substring(0, codes[c].length() - 1).substring(1));
+                    + freq);
                 ++itemsetCount;
                 pendingEndLn = true; // distinctSortedTokens.size() != 1;
 // will be written only after making sure there aren't transaction ids for this itemset: + "\n");
