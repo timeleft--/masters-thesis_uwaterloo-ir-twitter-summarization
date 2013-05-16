@@ -11,6 +11,7 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Formatter;
@@ -1866,9 +1867,9 @@ public class DivergeBGMap {
 
               double fgProb = unionDocId.size() * 1.0 / fgNumTweets;
               if (fgProb > historyAvg2StdDev) {
-                trendingFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); // ,unionDocId);
+                trendingFmt.format(printMultiset(mergedItemset, fgCountMap) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); // ,unionDocId);
               } else {
-                notTrendingFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); // unionDocId);
+                notTrendingFmt.format(printMultiset(mergedItemset, fgCountMap) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); // unionDocId);
               }
 
               hs.addValue(fgProb);
@@ -1927,7 +1928,7 @@ public class DivergeBGMap {
 
             Collection<Set<String>> siblings = parentItemsetsMap.get(parentItemset);
             if (filterLargeNumSiblings && siblings.size() > maxSiblingsThreshold) {
-              bigFamilyFmt.format(printMultiset(mergedItemset) + "\t%.15f\t%.15f\t%d\t%d\n",
+              bigFamilyFmt.format(printMultiset(mergedItemset, fgCountMap) + "\t%.15f\t%.15f\t%d\t%d\n",
                   confidence,
                   kldStats.getVariance(),
                   kldStats.getN(),
@@ -1989,7 +1990,7 @@ public class DivergeBGMap {
 // }
 // // klDiver *= (Math.log(unionDocId.size() * 1.0 / bgCount) + bgFgLogP);
 
-            selectionFormat.out().append(printMultiset(mergedItemset));
+            selectionFormat.out().append(printMultiset(mergedItemset, fgCountMap));
             selectionFormat
                 .format(
                     "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
@@ -2286,21 +2287,46 @@ public class DivergeBGMap {
     }
     return retVal / sumTf;
   }
+  
+  static class FrequencyDescComparator implements Comparator<String>{
+    final Map<Set<String>, Integer> fgCountMap;
+    FrequencyDescComparator(Map<Set<String>, Integer> fgCountMap){
+      this.fgCountMap = fgCountMap;
+    }
+    
+    @Override
+    public int compare(String o1, String o2) {
+      Set<String> o1Set = Collections.singleton(o1);
+      Set<String> o2Set = Collections.singleton(o2);
+      Integer o1Freq = fgCountMap.get(o1);
+      Integer o2Freq = fgCountMap.get(o2);
+      if(o1Freq == null){
+        o1Freq = Integer.MIN_VALUE;
+      } 
+      if (o2Freq == null){
+        o2Freq = Integer.MIN_VALUE;  
+      } 
+      return -o1Freq.compareTo(o2Freq);
+    }
+  }
 
-  private static CharSequence printHashset(Set<String> itemset) {
-    String[] elts = itemset.toArray(new String[itemset.size()]);
+  private static CharSequence printHashset(Set<String> itemset, Map<Set<String>, Integer> fgCountMap) {
+    List<String> elts = Arrays.asList(itemset.toArray(new String[itemset.size()]));
     StringBuilder retVal = new StringBuilder();
-    Arrays.sort(elts);
+    Collections.sort(elts, new FrequencyDescComparator(fgCountMap));
+//    Arrays.sort(elts);
     for (String e : elts) {
       retVal.append("," + e + "(1)");
     }
     return retVal.substring(1);
   }
 
-  private static CharSequence printMultiset(Multiset<String> mset) {
-    String[] elts = mset.elementSet().toArray(new String[mset.entrySet().size()]);
+  private static CharSequence printMultiset(Multiset<String> mset, Map<Set<String>, Integer> fgCountMap) {
+    List<String> elts = Arrays.asList(mset.elementSet().toArray(new String[mset.entrySet().size()]));
     StringBuilder retVal = new StringBuilder();
-    Arrays.sort(elts);
+    Collections.sort(elts, new FrequencyDescComparator(fgCountMap));
+    
+
     for (String e : elts) {
       retVal.append("," + e + "(" + mset.count(e) + ")");
     }
