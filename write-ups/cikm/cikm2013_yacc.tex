@@ -253,12 +253,12 @@ As a starting point for our work, we use the implementation of LCM submitted
 to the workshop for Frequent Itemset Mining Implementations (FIMI) in
 2004~\cite{DBLP:conf/fimi/2004}, which was the workshop's award winner. 
 
-The problem of many itemsets, with noise and redundancy, is addressed either
-by clustering~\cite{yan2005summarizing} the itemsets or by mining only
-itemsets that satisfy a certain condition.
+The problem of having many itemsets, with redundancy and noise, can be addressed by
+picking out  representative itemsets that satisfy a certain condition,
+which reduces redundancy in the mining results (itemsets and their support information).
 The closure condition~\cite{pasquier1999discovering} is a prominent condition
 upon which many other conditions are based.
-Most similar to the strongly closed itemsets we propose in this paper
+Most similar to the \emph{distinct} itemsets we propose in this paper
 are the $\delta$-covered~\cite{xin2005mining} and the
 $\delta$-free~\cite{boulicaut2003free} sets.
 The $\delta$-covered condition is exactly the opposite of the strong closure
@@ -267,13 +267,43 @@ set size'' \cite{liu2012finding}.
 The $\delta$-free condition is similar to the strongly closed condition,
 but it is used to eliminate different itemsets, since its motivation
 is to provide a compressed representation of itemsets by sacrificing support
-information. The motivation of most research on finding representative itemsets involves
+information. The mining results of our method include the postings list of
+occurrences of each itemset.
+
+Another approach to picking the elect itemsets is by choosing ones that 
+can be used to compress the data. The KRIMP algorithm~\cite{vreeken2011krimp} is 
+a good example of methods that follow this approach. Our goal is different because
+we aim to filter out itemsets pertaining to personal updates, which make up a large
+portion of social media data. A similar goal is sought by Mampaey et al. in~\cite{mampaey2011tell} 
+where a maximum entropy model is used to judge if an itemset is redundant, finally choosing the
+top K itemsets according to the KL-Diverge between the itemset's  frequency and  the model's estimate.
+
+Yan et al.~\cite{yan2005summarizing} also chooses K \emph{master} patterns as representatives of the data. A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemsets}. The K clusters have to cover the whole data, choosing K to minimize the restoration error of support information. To improve performance, the calculation of the distance between itemsets is approximated to avoid accessing the data. We can achieve high performance without approximation because we apply clustering to subsets of the data that are very likely to be close to each other.
+ 
+The itemsets
+are actually 
+In our work, we reduce 
+both redundancy and noise
+one of the
+provide
+a good ``summary'' of the data. However, the definition of ``summary'' in most of 
+the work that takes this approach is 
+considersAn account of different methods for using itemsets to ``summarize'' 
+(or compress) data can b, which is an expansion on their metho 
+
+The motivation of most research on finding representative itemsets involves
 compressing itemsets mined from a general dataset.
 This motivation leads to decisions different from those required to mine the
 most informative itemsets mined from text.
-\cite{vreeken2011krimp}
-\cite{mampaey2011tell}
-The use of frequent itemsets as 
+
+selecting a itemset that 
+by selecting itemsets clustering~\cite{yan2005summarizing} the itemsets or by mining only
+
+Itemsets
+
+
+
+The use of frequent itemsets as a ``summary'' of text data has also been considered before. 
 For example, in Li et al.~\cite{li2010mining} itemsets are mined from
 paragraphs of newswire text, and are used to determine term weights for query
 expansion.

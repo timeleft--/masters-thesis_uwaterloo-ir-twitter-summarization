@@ -192,16 +192,7 @@ public class HgramsWindow {
       perfMonKV.batchSizeToWrite = 8; //FIXME: whenever you add a new perf key
       for (; windowStartUx < windowEndUx; windowStartUx += stepSec) {
         LOG.info("Strting Mining period from: {} to {}", windowStartUx, windowStartUx + epochLen);
-        Path epochOut = new Path(outRoot, "fp_" + epochLen + "_" + windowStartUx);
-        if (fs.exists(epochOut)) {
-          if (SKIP_EXISTING_OUTPUT) {
-            LOG.info("Done mining period from: {} to {}.. output already exists", windowStartUx, windowStartUx
-                + epochLen);
-            continue;
-          } else {
-            LOG.error("Shouldn't be possible to be at this line of code: HALT and SKIP should work better togeher");
-          }
-        }
+        
 
         DateMidnight startDay = new DateMidnight(windowStartUx * 1000, DateTimeZone.forID("HST"));
         // TODONE: Do we need the days to be all the days of the mined period, or just the sliding step. Do we cheat?
@@ -230,6 +221,18 @@ public class HgramsWindow {
           if (relSupp) {
             support = Math.max(3, transIter.getAbsSupport(suppPct));
           }
+          
+          Path epochOut = new Path(outRoot, "fp_" + epochLen + "_" + windowStartUx + "_supp" + support);
+          if (fs.exists(epochOut)) {
+            if (SKIP_EXISTING_OUTPUT) {
+              LOG.info("Done mining period from: {} to {}.. output already exists", windowStartUx, windowStartUx
+                  + epochLen);
+              continue;
+            } else {
+              LOG.error("Shouldn't be possible to be at this line of code: HALT and SKIP should work better togeher");
+            }
+          }
+          
           int maxNumIdsToWriteOut = 200000 * support; // To avoid writing out ids for language itemsets FIXME: 2 is
 // arbitrary
           LOG.info("Window support: {}", support);
@@ -435,7 +438,7 @@ public class HgramsWindow {
 // LOG.error("Error while executing cmd: " + cmdRunnable.error);
 // }
 
-            File epochOutText = new File(epochOut.toUri().toString().substring("file:".length()) + "_supp" + support);
+            File epochOutText = new File(epochOut.toUri().toString().substring("file:".length())); // + "_supp" + support);
 
             if (!epochOutLocal.exists()) {
               LOG.info("The output file {} doesn't exist. Done mining epoch with no result.",
