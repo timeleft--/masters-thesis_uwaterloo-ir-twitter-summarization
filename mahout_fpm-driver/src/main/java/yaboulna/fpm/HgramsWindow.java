@@ -137,7 +137,7 @@ public class HgramsWindow {
       fimiExe = "/home/yaboulna/fimi/fp-zhu/fim_closed";
     }
     boolean cmdMtv = fimiExe.contains("mtv");
-
+    boolean cmdMtvSortOnly = fimiExe.contains("mtv_sorted");
     int minSupp = 5;
     double suppPct = 0.0001; // when multiplied by the volume gives at least 5 (at the trough of the day)
     int support = -1;
@@ -355,7 +355,10 @@ public class HgramsWindow {
 
             cmd += " " + tmpFile.getAbsolutePath()
                 + (cmdMtv?
-                 " -s " + (support * 1.0/transIter.getRowsRead()) + " -o " + epochOutLocal:
+                 " -s " + (support * 1.0/transIter.getRowsRead()) + " -o " + epochOutLocal +
+                 (cmdMtvSortOnly?
+                 " -c /home/yaboulna/fim_out/lcm_closed_cikm/1hr+30min_ngram5-relsupp10_11032233-11151120_cluster-nondistinct/sel_HandOpt_conf0.2_Buff1000_" +
+                 + epochLen + "_" + windowStartUx + "_supp" + support: ""):
                    " " + support + " " + epochOutLocal);
 
             LOG.info("Executing command: " + cmd);

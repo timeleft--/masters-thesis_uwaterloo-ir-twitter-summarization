@@ -69,7 +69,7 @@ For example, the collection of mining results from different epochs of time
 can be used for temporal query and document
 expansion~\cite{choi2012temporal, efron2012improving}.
 The results from each epoch can be treated as a document, facilitating the
-creation of a ``temporal profile''\cite{jones2007temporal} of the query
+creation of a ``temporal profile''~\cite{jones2007temporal} of the query
 or a document being expanded.
 For summarization, frequent itemsets can provide a good foundation for summary
 creation.
@@ -254,17 +254,17 @@ to the workshop for Frequent Itemset Mining Implementations (FIMI) in
 2004~\cite{DBLP:conf/fimi/2004}, which was the workshop's award winner. 
 
 The problem of having many itemsets, with redundancy and noise, can be addressed by
-picking out  representative itemsets that satisfy a certain condition,
-which reduces redundancy in the mining results (itemsets and their support information).
+picking out  representative itemsets that satisfy a certain condition
+that reduces redundancy in the mining results (itemsets and their support information).
 The closure condition~\cite{pasquier1999discovering} is a prominent condition
 upon which many other conditions are based.
 Most similar to the \emph{distinct} itemsets we propose in this paper
 are the $\delta$-covered~\cite{xin2005mining} and the
 $\delta$-free~\cite{boulicaut2003free} sets.
-The $\delta$-covered condition is exactly the opposite of the strong closure
+The $\delta$-covered condition is exactly the opposite of the \emph{distinct}
 condition, and it ``relaxes the closure condition to further reduce pattern
 set size'' \cite{liu2012finding}.
-The $\delta$-free condition is similar to the strongly closed condition,
+The $\delta$-free condition is similar to the \emph{distinct} condition,
 but it is used to eliminate different itemsets, since its motivation
 is to provide a compressed representation of itemsets by sacrificing support
 information. The mining results of our method include the postings list of
@@ -282,8 +282,8 @@ In this work we focus on efficiency, allowing the summary to include larger numb
 of itemsets than the values of K for which MTV is efficient.
 This is crucial for scalability to the volumes of data typical in social media streams.
 
-Yan et al.~\cite{yan2005summarizing} also choose K \emph{master} patterns as representatives of the data. A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemsets}. 
-While the use of clustering is similarly motivated by the trivial difference between itemsets, the K \emph{master} itemsets  have to cover the whole data, unlike the \emph{strongly closed itemsets} which actually avoid clustering together different topics or different opinions within in a topic.
+Likewise, Yan et al.~\cite{yan2005summarizing} choose K \emph{master} patterns as representatives of the data. A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemset}. 
+While the use of clustering is similarly motivated by the trivial difference between itemsets, the K \emph{master} itemsets  have to cover the whole data, unlike the \emph{strongly closed itemsets} which actually avoid clustering together different topics or different opinions within a topic.
 %Yan:
 % A method is proposed for choosing K by minimizing the restoration error of support information, 
 %To improve performance, the calculation of the distance between itemsets is approximated to avoid accessing the data. We can achieve high performance without approximation because we apply clustering to subsets of the data that are very likely to be close to each other.
@@ -297,7 +297,7 @@ While the use of clustering is similarly motivated by the trivial difference bet
 Our work complements the work done by Yang et al.~\cite{yang2012framework} for using frequent itemsets as a temporal summary. They have proposed a framework for storing mining results of temporally consecutive batches of data using a pyramidal time window. Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
 The choice of itemsets from each batch is based on their utility in compressing the data, and they use non-negative matrix factorization to extract topics related to a query. We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
 
-The use of frequent itemsets for improving search performance has also been considered before. 
+The use of frequent itemsets for improving search performance has been considered before. 
 For example, in Li et al.~\cite{li2010mining} itemsets are mined from
 paragraphs of newswire text, and are used to determine term weights for query
 expansion.
@@ -482,7 +482,7 @@ ratio $\alpha$.
 It outputs the closed itemsets with support above the threshold.
 Along with each itemset in the solution, it also outputs the transactions
 in which it occurs~---~which is represented as $\langle items,
-|T_{itemset}| \rangle$.
+T_{itemset} \rangle$.
 The symbol $\succ$ denotes that the lefthand side  succeeds the righthand
 side in the total ordering.
 
@@ -517,7 +517,7 @@ X $\gets$ Inverted index of E\;
 	frequency[$1 \ldots w_n$] $\gets$ 0\;
 	suffix $\gets \{ w_{sh}\}$\;
 	\ForEach{$t \in T_s$}{
-		\ForEach{$w \in d$}{ 
+		\ForEach{$w \in t$}{ 
 			frequency[$w$]++\;
 			\lIf{frequency[$w$] $ = |T_s|$}{
 				suffix.add($w$)	
@@ -530,8 +530,8 @@ X $\gets$ Inverted index of E\;
 	C.add($\langle s \cup suffix, T_s\rangle$)\;
 	\ForEach{$v \succ w_{sh}$ and $v \notin $ suffix}{
 		\If{frequency[$v$] $\geq \alpha \frac{|E|}{E.span}$}{
-			$D \gets T_s \cap v$	\tcp*{Results of query $s$ AND $v$}
-			LCM($s \cup suffix \cup \{v\}, v, D$) 
+			$T \gets T_s \cap v$	\tcp*{Results of query $s$ AND $v$}
+			LCM($s \cup suffix \cup \{v\}, v, T$) 
 		}
 	}
 }
@@ -554,7 +554,8 @@ and to make the algorithms applicable to other media where text is short such
 as Facebook or Google+ status updates.
 The only preprocessing we performed was to remove duplicate original tweets
 (not retweets) using a Bloom filter.
-This filtering removes spam tweets sent by botnets.
+This filtering removes spam tweets sent by botnets, averaging at 2.86\% of the stream. 
+%3352.61069856614 / 116920.214769629
 
 We apply the algorithms to epochs of data, so they are not strictly stream
 processing algorithms.
@@ -572,16 +573,16 @@ using a time step that is half the epoch length.
 The variance is very low and the confidence bands are not shown because they
 appear as dots on top of the bars. 
 
-The support threshold used throughout this paper, unless otherwise specified,
+The support threshold used throughout this paper%, unless otherwise specified,
 is $\alpha=0.0002$.
 This is determined as follows: We picked a topical term that is known to
 steadily appear with a rather high frequency, and is talked about in all
 languages; i.e., `obama'.
 The maximum likelihood estimate of the probability of the term `obama' within
 the whole collection of tweets is 0.0001.
-The average number of tweets per hour is 100000, so the term `obama' is
-expected to appear 10 times per hour on average.
-Thus, we use a minimum support threshold of 10, which translates into
+The average number of tweets per hour is 116920.21, so the term `obama' is
+expected to appear 12 times per hour on average.
+Thus, we use a minimum support threshold of 12, which translates into
 $\alpha = 0.0002$.
 
 In the rest of this paper we mine epochs of 1 hour span.
@@ -599,7 +600,7 @@ the results.
 Regardless of the length of the epoch,
 many minded itemsets are combinations of function words.
 In the next section, we outline how we reduce the number of itemsets and
-eliminate the effect of function words by using applying N-gram filtering.
+eliminate the effect of function words by N-gram filtering.
 
 \begin{figure}
 \centering
@@ -653,14 +654,9 @@ of the language construct along with other items;
 for example, \{we, did, it, \#teamobama\} can produce 10 other combinations of
 length 2 or more.
 There are many measures of association that can be used to detect multiword
-expressions, but each measure is good only under certain conditions and has
-special properties~\cite{ramisch2012broad}.
+expressions, but each measure is good only under certain conditions~\cite{ramisch2012broad,tan2002selecting}.
 After preliminary experiments with various measures, we determined that
-Yule's Q \cite{tan2002selecting} provides a reasonable method for
-identifying multiword named entities.
-Yule's Q is a measure of association and disassociation derived from the
-odds ratio.
-However, after further experimentation we determined that the best performance
+the best performance
 could be obtained by tokenizing the documents into term N-grams with varying N. 
 
 We start by tokenizing into unigrams, and counting their frequencies.
@@ -744,7 +740,7 @@ a tweet that sparked a conversation on Twitter had to be quoted in a retweet
 along with the retweeter's comment.
 This tradition still continues even though tweets can now explicitly reference
 one another. 
-Due to the 140 characters length limit of tweets the quotation usually has to
+Due to the 140 characters length limit of tweets the quotation is usually 
 edited to be as short as possible by selecting only the most discriminative
 words. 
 
@@ -857,8 +853,9 @@ them to the mining results of all one-hour long epochs in the Twitter data.
 The average number of itemsets mined from an hour-long epoch is
 2439.17 closed itemsets of length 2 or more;
 that is, excluding itemsets that are merely a frequent item.
-The number of length 2 or more maximal itemsets is 1831.92,
-which we provide just as a reference to the result of a basic way of filtering.
+
+%The number of length 2 or more maximal itemsets is 1831.92,
+%which we provide just as a reference to the result of a basic way of filtering.
 
 Figure \ref{fig:kappa} show the effect of varying $\kappa$ on the mean number
 of \emph{distinct} and \emph{strong closed} itemsets.
@@ -873,7 +870,7 @@ We use $\kappa = 0.25$ in the remainder of the paper,
 which is an arbitrary choice based on the definition not the data.
 The average number of itemsets (\emph{strongly closed} and unclustered
 \emph{distinct}) mined from one-hour epochs at this value of
-$\kappa$ is only 224.48 which is about 10\% of the number of closed itemsets.
+$\kappa$ is only 224.48, which is about 10\% of the number of closed itemsets.
 
 
 \begin{figure}
@@ -930,7 +927,7 @@ $\kappa$ is only 224.48 which is about 10\% of the number of closed itemsets.
 \SetAlgoLined
 \LinesNumbered
 \KwIn{$\kappa$: Minimum distinctiveness threshold} 
-\KwData{$\mathcal{C}$: Closed Itemsets produced by LCM}
+\KwData{$\mathcal{C}$: Closed itemsets produced by LCM}
 \KwResult{$\mathcal{R}$: Strong closed itemset clusters}
 \For{$i \gets 2$ to $|\mathcal{C}|$}{
 	$C \gets \{s_c: s_c \in \mathcal{C} \, and \, c < i \, and \, |s_c \cap s_i| > 0\}$\;
@@ -1026,7 +1023,7 @@ averages at 5.2 seconds for filtering a one-hour epoch.
 \section{Temporal Ranking}
 \label{sec:rank}
 The previous filtering steps reduce the number of itemsets to under 1\% of their
-original numbers.
+original number.
 In this section, we present a method for ranking itemset clusters according to
 their novelty when compared to other time periods.
 These itemsets can then be presented to users in rank order, providing a
@@ -1041,7 +1038,7 @@ model $Q$ from its probability in the current epoch $P$ can be considered as
 the information gain, IG: 
 \begin{align}IG(P(s_i),Q(s_i))  = - (H(P(s_i)) - H(P(s_i),Q(s_i))) \notag\\ = \sum{P(s_i) \log{P(s_i)}} - \sum{P(s_i) \log{Q(s_i)}} \notag\\ = KLD(P(s_i)||Q(s_i))\end{align}
 
-To generalized this formula to the case of strongly closed itemset clusters,
+To calculate the collective IG of a strongly closed itemset cluster,
 we have to take the overlap between the itemsets of the cluster into account
 when calculating the information gain of the whole cluster.
 We note that the joint probability of the itemset, $s_i$, and its superset,
@@ -1178,7 +1175,7 @@ mining because of error in an upstream component.
 						& back, in, office		&   Obama is back in office\\\hline
 
 \multirow{3}{*}{\texttt{22:30}} 	& once, you, go, black		& A popular cultural reference.\\ \cline{2-3} %  .. you never go back. 
-					   	& @realdonaldtrump, this, elections, ... [his famous tweet] 		& Donald Trump is a Republican and he could not accept Obama's victory\\ \cline{2-3}
+					   	& @realdonaldtrump, this, elections, ... [his famous tweet] 		& Donald Trump is a Republican and he did not accept Obama's victory. This cluster merges 15 \emph{distinct} itemsets.\\ \cline{2-3}
 						& concession, speech, write		&   The losing candidate has to concede before the winner declares victory \\\hline
 						
 \multirow{3}{*}{\texttt{23:00}} 	& weed, is, legal, in, colorado		&  This piece of news got the attention as soon as it was announced  \\ \cline{2-3}
