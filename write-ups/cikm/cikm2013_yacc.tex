@@ -573,7 +573,7 @@ using a time step that is half the epoch length.
 The variance is very low and the confidence bands are not shown because they
 appear as dots on top of the bars. 
 
-The support threshold used throughout this paper%, unless otherwise specified,
+The support threshold used throughout this paper %, unless otherwise specified,
 is $\alpha=0.0002$.
 This is determined as follows: We picked a topical term that is known to
 steadily appear with a rather high frequency, and is talked about in all
@@ -598,7 +598,7 @@ and number of mined itemsets increases, with many noise itemsets appearing in
 the results.
 
 Regardless of the length of the epoch,
-many minded itemsets are combinations of function words.
+many mined itemsets are combinations of function words.
 In the next section, we outline how we reduce the number of itemsets and
 eliminate the effect of function words by N-gram filtering.
 
@@ -967,7 +967,7 @@ $\kappa$ is only 224.48, which is about 10\% of the number of closed itemsets.
 	$\mathcal{R}[s_m].postingsList \gets \mathcal{R}[s_m].postingsList \cup s_i.postingsList \cup s_m.postingsList$\;
 }
 \Return{$\mathcal{R}$}\;
-\caption{Forming strong closed itemset clusters}
+\caption{Forming strongly closed itemset clusters}
 \label{algo:alliance}
 \end{algorithm}
 
@@ -1047,35 +1047,30 @@ summarization steps.
 A good indicator of novelty is the pointwise Kullback-Leibler Divergence (KLD)
 between an itemset's probability in the current epoch and in a longer past
 epoch~---~the background model.
-The pointwise KLD of the probability of an itemset $s_i$ in the background
-model $Q$ from its probability in the current epoch $P$ can be considered as
+The KLD of the probability of an itemset $s_i$ in the background
+model $Q$ from the current epoch's model $P$ can be considered as
 the information gain, IG: 
 \begin{align}IG(P(s_i),Q(s_i))  = - (H(P(s_i)) - H(P(s_i),Q(s_i))) \notag\\ = \sum{P(s_i) \log{P(s_i)}} - \sum{P(s_i) \log{Q(s_i)}} \notag\\ = KLD(P(s_i)||Q(s_i))\end{align}
 
 To calculate the collective IG of a strongly closed itemset cluster,
 we have to take into account that the itemsets of the cluster are not independent. 
-%when calculating the information gain of the whole cluster.
-The joint probability of the itemset, $s_i$, and its superset,
-$s_j$, is equal to the probability of the superset;
-$P(s_i,s_j) = P(s_j)$ and $Q(s_i,s_j) = Q(s_j)$. 
-Thus, the information gain of the appearance of an itemset and its superset
-together is essentially the information gain of the superset;
-$IG(P(s_i,s_j),Q(s_i,s_j)) = IG(P(s_j),Q(s_j))$.
+For simplicity we will consider only the pairwise dependence between 
+every itemset and the smallest common subset.
+%when calculating the IG of the whole cluster.
+The joint probability of an itemset, $s_i$, and its superset,
+$s_j$, is equal to the probability of the superset.
+Thus, the IG of the appearance of an itemset and its superset
+together is essentially the IG of the superset.
 Also, their pointwise mutual information (PMI) is the self information (SI) of
-the subset:
-\begin{align}
-PMI(s_i, s_j) = \log{ \frac{P(s_i,s_j)}{P(s_i)P(s_j)} } = -\log{P(s_i)} = SI(s_i)
-\end{align}
+the subset. Therefore, the IG of a superset is different from the
+IG of its subset by the information gained because
+of the additional items. 
 
-Therefore, the information gain of a superset is different from the
-information gain of its subset by the information gained (or lost) because
-of the additional items.
-Hence, the information gain of a strong closed itemset cluster,
+Hence, the IG of a strongly closed itemset cluster,
 $S=\{s_{i1},..,s_{im}\}$, 
-can be approximated as the information gain of its smallest subset, $s_{min}$,
-plus the differences between the IGs of member subsets and the smallest subset.
-We use the squares of the differences, because the IG value can be positive or
-negative, and we only care about the magnitude of the difference.
+can be approximated as the IG of its smallest subset, $s_{min}$,
+plus the differences between the IGs of member itemsets and the smallest subset.
+We use the squares of the differences, because it can be between two negative number, and we only care about the magnitude of the difference.
 To give the self information of the smallest subset the same influence,
 we also square it.
 Thus, the information gain of a strong closed itemset is given by:
@@ -1085,7 +1080,7 @@ Thus, the information gain of a strong closed itemset is given by:
 The formula above can be used directly for ranking clusters,
 but it will favour larger ones.
 We normalize by the size of the cluster giving our final ranking formula for
-strong closed itemsets:
+strongly closed itemsets:
 \begin{equation}\label{eq:avgIG}\overline{IG}(S) = \frac{IG^2(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im}))}{m}\end{equation}
 
 
