@@ -659,22 +659,42 @@ After preliminary experiments with various measures, we determined that
 the best performance
 could be obtained by tokenizing the documents into term N-grams with varying N. 
 
-We start by tokenizing into unigrams, and counting their frequencies.
-Then we use the probability of the same word used to determine the support
-threshold, $P(`obama') = 0.0001$, and assume that this is where the head of
-the Zipfean distribution starts.
-For each unigram belonging to the head, we create two term bigrams by
+We use term N-gram tokens such that N-grams of high probability are replaced by
+(N+1)-grams, resulting in a distribution with no high peaks.  
+An N-gram is considered to % of length N
+have a high probability if its maximum likelihood estimate from a background
+model is higher than a threshold $\eta_N$. 
+A background language model built from a long epoch of data 
+from the same stream is used for probability estimation.
+The tokenization of a tweet starts by tokenizing it into unigrams, then each
+unigram of high probability is replaced by two term bigrams~--~by
 attaching to it the unigrams before and after it.
-We repeat this for each N $\ge$ 1 by creating two (N+1)-grams for all N-grams
-with probabilities above the threshold until there are no more such N-grams.
-We do not prevent overlap, because there is no guarantee that the N-Gram
-created makes any sense.
+We keep replacing N-grams of high probability by two (N+1)-grams 
+%repeat this for each N $\ge$ 1,for all N-grams
+%with probabilities above the threshold 
+until there are no more such N-grams. %; thus, the distribution is relatively flat.
+
+%Notice that the (N+1)-grams replacing an N-gram overlap with each other, with the unigrams that got 
+%attached to the N-gram and possibly with other N-grams. 
+%However, the  
+%We do not prevent overlap, because there is no guarantee that the N-Gram
+%created makes any sense.After mining term N-grams we flatten the itemsets to sets of unigrams again.
+%This removes overlap between parts of itemsets making it easier to reason
+%about how they relate to each other. 
+%This is also necessary since an itemset will have different N-gram set
+%representations,
+%and its postings list is the union of those of the different representations.
+
+The threshold of high probability is different for each value of N. 
+The threshold for unigrams is determined in a similar fashion to how
+we determined the support threshold. We use $\eta_1 = P(``obama") = 0.0001$.
 At each N, the probability threshold is adjusted to account for the increase
-in the number of tokens and the overall increase in the grand sum of counts,
-since each high frequency N-Gram is replaced by two lower frequency ones.
-Let the original probability threshold be $\eta$, then the adjusted $\eta_N$
-is:
-\begin{equation}\eta_N = \eta \times \frac{\sum_{\{w:\, w \,\in\, W\, and\, w.length \,\le\, N\}}{freq(w)}}{\sum_{\{v:\, v\, \in\, W \,and \,v.length\,=\,1\}}{freq(v)}}\end{equation}
+in the number of tokens and the overall increase in the grand sum of counts (caused by overlap).
+The adjusted $\eta_N$ is:
+\begin{equation}\eta_N = \eta_1 \times \frac{\sum_{\{w:\, w \,\in\, W\, and\, w.length \,\le\, N\}}{freq(w)}}{\sum_{\{v:\, v\, \in\, W \,and \,v.length\,=\,1\}}{freq(v)}}\end{equation}
+
+
+
 
 
 Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length
@@ -703,12 +723,6 @@ figure \ref{fig:runtimeEpochs} because they do not include the time taken for
 writing the posting list of each itemset.
 
 
-After mining term N-grams we flatten the itemsets to sets of unigrams again.
-This removes overlap between parts of itemsets making it easier to reason
-about how they relate to each other. 
-This is also necessary since an itemset will have different N-gram set
-representations,
-and its postings list is the union of those of the different representations.
 
 
 
@@ -1039,9 +1053,9 @@ the information gain, IG:
 \begin{align}IG(P(s_i),Q(s_i))  = - (H(P(s_i)) - H(P(s_i),Q(s_i))) \notag\\ = \sum{P(s_i) \log{P(s_i)}} - \sum{P(s_i) \log{Q(s_i)}} \notag\\ = KLD(P(s_i)||Q(s_i))\end{align}
 
 To calculate the collective IG of a strongly closed itemset cluster,
-we have to take the overlap between the itemsets of the cluster into account
-when calculating the information gain of the whole cluster.
-We note that the joint probability of the itemset, $s_i$, and its superset,
+we have to take into account that the itemsets of the cluster are not independent. 
+%when calculating the information gain of the whole cluster.
+The joint probability of the itemset, $s_i$, and its superset,
 $s_j$, is equal to the probability of the superset;
 $P(s_i,s_j) = P(s_j)$ and $Q(s_i,s_j) = Q(s_j)$. 
 Thus, the information gain of the appearance of an itemset and its superset
@@ -1235,7 +1249,7 @@ We show hours in which the top 3 included interesting itemsets. For brevity, we 
 % to attain an acceptable runtime.
 The input to the algorithm was transactions made up of N-grams up to 5 terms long, which helped the algorithm converge faster since the distribution is flatter. 
 The use of N-grams also overcomes the dominance of language constructs, which are otherwise ranked high in all hours. 
-
+All the topically relevant itemsets chosen by MTV are present in the top 50 \emph{strongly closed itemsets}.
 
  
  \begin{table}
@@ -1256,21 +1270,21 @@ The use of N-grams also overcomes the dominance of language constructs, which ar
 
 
 \texttt{Nov}
-&URL,and,autotweet,checked,followed,me,today,unfollowed,via \\\cline{2-2}
+&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
 \texttt{6th,}
 &house,of,representatives,shouldnt,...[266040877552656385]  \\\cline{2-2} % House of Representatives shouldn't give anything to Obama unless he terminates Obamacare.
 \texttt{23:00} & URL,\#android,\#androidgames,\#gameinsight \\\hline 
 
 
 \texttt{Nov}
-&URL,and,autotweet,checked,followed,me,today,unfollowed,via \\\cline{2-2}
+&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
 \texttt{6th,}
 &URL,\#android,\#androidgames,\#gameinsight  \\\cline{2-2} 
 \texttt{23:30} &@barackobama,@ryanseacrest, what, was, your, first, words, in, reaction, to, re, election, 2\\\hline 
 
 
 \texttt{Nov}
-&URL,and,autotweet,checked,followed,me,today,unfollowed,via \\\cline{2-2}
+&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
 \texttt{6th,}
 &the, best, is, yet, to, come \\\cline{2-2} 
 \texttt{00:00} & URL,\#android,\#androidgames,\#gameinsight \\\hline 
