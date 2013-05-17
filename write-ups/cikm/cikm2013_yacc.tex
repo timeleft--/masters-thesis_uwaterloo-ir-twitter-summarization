@@ -1195,7 +1195,6 @@ mining because of error in an upstream component.
 \end{table}
 
 \begin{table}
-
 \begin{center}
 \small
 \def\arraystretch{1.1}
@@ -1223,7 +1222,72 @@ mining because of error in an upstream component.
 \caption{Top 3 itemsets for hours in November 9th}
  \label{table:nov9}
 \end{table}
+
+
+As a form of comparison, in table \ref{table:mtv} we show the top 3 itemsets picked by the MTV algorithm~\cite{mampaey2011tell} for the same epochs and support.
+%for one-hour epochs. 
+% 
+We show hours in which the top 3 included interesting itemsets. For brevity, we truncate itemsets that are complete tweets and append the tweet id for reference.
+% 
+%It is noteworthy that tweets that spark a conversation contribute multiple redundant itemsets, and several of them are ranked high.
+% (Nov. 6 22:00). This stresses the importance of clustering.
+%The harm from redundancy is amplified by the low values of K that has to be used. 
+% to attain an acceptable runtime.
+The input to the algorithm was transactions made up of N-grams up to 5 terms long, which helped the algorithm converge faster since the distribution is flatter. 
+The use of N-grams also overcomes the dominance of language constructs, which are otherwise ranked high in all hours. 
+
+
  
+ \begin{table}
+ \begin{center}
+\small
+\def\arraystretch{1.1}
+\begin{tabular}{|p{.6cm}|p{7.5cm}|}
+
+\hline
+
+\texttt{Nov}
+& @realdonaldtrump,this,elections,...[266035509162303492] \\\cline{2-2} %This election is a total sham and a travesty. We are not a democracy! 
+\texttt{6th,}
+&we, re, all, in, this, together, ..., bo [266031109979131904]  \\\cline{2-2} % That's how we campaigned, and that's who we are. Thank you. -bo
+\texttt{22:00} & @realdonaldtrump,our,country,is,...[266037143628038144] \\\hline %Our country is now in serious and unprecedented trouble...like never before.
+
+
+
+
+\texttt{Nov}
+&URL,and,autotweet,checked,followed,me,today,unfollowed,via \\\cline{2-2}
+\texttt{6th,}
+&house,of,representatives,shouldnt,...[266040877552656385]  \\\cline{2-2} % House of Representatives shouldn't give anything to Obama unless he terminates Obamacare.
+\texttt{23:00} & URL,\#android,\#androidgames,\#gameinsight \\\hline 
+
+
+\texttt{Nov}
+&URL,and,autotweet,checked,followed,me,today,unfollowed,via \\\cline{2-2}
+\texttt{6th,}
+&URL,\#android,\#androidgames,\#gameinsight  \\\cline{2-2} 
+\texttt{23:30} &@barackobama,@ryanseacrest, what, was, your, first, words, in, reaction, to, re, election, 2\\\hline 
+
+
+\texttt{Nov}
+&URL,and,autotweet,checked,followed,me,today,unfollowed,via \\\cline{2-2}
+\texttt{6th,}
+&the, best, is, yet, to, come \\\cline{2-2} 
+\texttt{00:00} & URL,\#android,\#androidgames,\#gameinsight \\\hline 
+
+
+
+\texttt{Nov}
+& \#emawinbieber, i, think, justin, bieber, ... [see table \ref{table:nov9}] \\\cline{2-2}
+\texttt{9th,}
+&@boyquotations,do,everyone,follow,followers,gain,more \\\cline{2-2} 
+\texttt{15:00} & \#emawinkaty, i, think, katy, perry, ... [see table \ref{table:nov9}] \\\hline 
+\end{tabular}
+\end{center}
+\caption{Top 3 picked by the MTV algorithm}
+ \label{table:mtv}
+\end{table}
+
  
 
 \section{Conclusion and future work}
