@@ -17,7 +17,7 @@
 
 \maketitle
 \begin{abstract}
-Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  tweets are short and repetitious - lacking context and structure  - making it difficult to generate a coherent synopsis of events within a given time period.  Although some established algorithms for frequent itemset analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces a complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a filtering step that preserves these terms only when they may form part of a relevant collocation.  To further reduce trivial results, we propose a novel strengthening of the closure condition of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on information gain, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide understandable and meaningful pictures of events within those periods, with potential application to tasks such as temporal summarization and query expansion for search.
+Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  Tweets are short and repetitious - lacking context and structure  - making it difficult to generate a coherent synopsis of events within a given time period.  Although some established algorithms for frequent itemset analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces a complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a filtering step that preserves these terms only when they may form part of a relevant collocation.  To further reduce trivial results, we propose a novel strengthening of the closure condition of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on information gain, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide understandable and meaningful pictures of events within those periods, with potential application to tasks such as temporal summarization and query expansion for search.
 \end{abstract}
 %\category{H.4}{Information Systems Applications}{Miscellaneous}
 %A category including the fourth, optional field follows...
@@ -270,40 +270,34 @@ is to provide a compressed representation of itemsets by sacrificing support
 information. The mining results of our method include the postings list of
 occurrences of each itemset.
 
-Another approach to picking the elect itemsets is by choosing ones that 
+Another approach to picking the elect itemsets is choosing ones that 
 can be used to compress the data. The KRIMP algorithm~\cite{vreeken2011krimp} is 
 a good example of methods that follow this approach. Our goal is different because
 we aim to filter out itemsets pertaining to personal updates, which make up a large
-portion of social media data. A similar goal is sought by Mampaey et al. in~\cite{mampaey2011tell} 
-where a maximum entropy model is used to judge if an itemset is redundant, finally choosing the
-top K itemsets according to the KL-Diverge between the itemset's  frequency and  the model's estimate.
+portion of social media data. 
+A similar goal is sought by the Maximally informaTiVe itemsets (MTV) algorithm~\cite{mampaey2011tell}. 
+MTV uses a maximum entropy model to judge if an itemset is redundant, finally choosing the
+top K itemsets according to the KL-Diverge between the itemset's  frequency and  the model's estimate. 
+In this work we focus on efficiency, allowing the summary to include larger numbers
+of itemsets than the values of K for which MTV is efficient.
+This is crucial for scalability to the volumes of data typical in social media streams.
 
-Yan et al.~\cite{yan2005summarizing} also chooses K \emph{master} patterns as representatives of the data. A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemsets}. The K clusters have to cover the whole data, choosing K to minimize the restoration error of support information. To improve performance, the calculation of the distance between itemsets is approximated to avoid accessing the data. We can achieve high performance without approximation because we apply clustering to subsets of the data that are very likely to be close to each other.
- 
-The itemsets
-are actually 
-In our work, we reduce 
-both redundancy and noise
-one of the
-provide
-a good ``summary'' of the data. However, the definition of ``summary'' in most of 
-the work that takes this approach is 
-considersAn account of different methods for using itemsets to ``summarize'' 
-(or compress) data can b, which is an expansion on their metho 
+Yan et al.~\cite{yan2005summarizing} also choose K \emph{master} patterns as representatives of the data. A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemsets}. 
+While the use of clustering is similarly motivated by the trivial difference between itemsets, the K \emph{master} itemsets  have to cover the whole data, unlike the \emph{strongly closed itemsets} which actually avoid clustering together different topics or different opinions within in a topic.
+%Yan:
+% A method is proposed for choosing K by minimizing the restoration error of support information, 
+%To improve performance, the calculation of the distance between itemsets is approximated to avoid accessing the data. We can achieve high performance without approximation because we apply clustering to subsets of the data that are very likely to be close to each other.
 
-The motivation of most research on finding representative itemsets involves
-compressing itemsets mined from a general dataset.
-This motivation leads to decisions different from those required to mine the
-most informative itemsets mined from text.
+ %Rhetoric:
+%The motivation of most research on finding representative itemsets involves
+%compressing itemsets mined from a general dataset.
+%This motivation leads to decisions different from those required to mine the
+%most informative itemsets mined from text.
 
-selecting a itemset that 
-by selecting itemsets clustering~\cite{yan2005summarizing} the itemsets or by mining only
+Our work complements the work done by Yang et al.~\cite{yang2012framework} for using frequent itemsets as a temporal summary. They have proposed a framework for storing mining results of temporally consecutive batches of data using a pyramidal time window. Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
+The choice of itemsets from each batch is based on their utility in compressing the data, and they use non-negative matrix factorization to extract topics related to a query. We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
 
-Itemsets
-
-
-
-The use of frequent itemsets as a ``summary'' of text data has also been considered before. 
+The use of frequent itemsets for improving search performance has also been considered before. 
 For example, in Li et al.~\cite{li2010mining} itemsets are mined from
 paragraphs of newswire text, and are used to determine term weights for query
 expansion.
@@ -312,24 +306,6 @@ a training set of related documents, as well as ones from unrelated documents.
 In Lau et al.~\cite{laumicroblog}, related methods for term weighting were
 used in pseudo-relevance feedback for Twitter search,
 and achieved substantial improvements over a baseline.
-On the other hand, in Yang et al.~\cite{yang2012framework} LCM was also used
-to mine Twitter posts, with a few itemsets selected as a ``summary'' of the
-data, but these were selected according to their utility in a
-lossy compression algorithm.
-The quality of the summary seems to be affected by the choice of utility
-function, but the only assessment made in this work was to show that the
-actual transactions can be reconstructed from the summary with an accuracy
-that is expected to be high if the tweet contains ``both recent and frequent
-keywords''.
-In their experiments, non-negative matrix factorization was used to extract
-topics from parts of the summary matching a query (world cup) and specific
-time intervals (before certain matches).
-It is unclear whether the raw summary would cover a variety of topics,
-specially non-trending ones, and no ranking scheme was presented for picking
-interesting topics without specifying a query.
-Moreover, the data is preprocessed by stemming and stop words removal,
-which should require a language identification component upstream, which was
-not discussed.
 
 \section{Frequent itemset mining}
 \label{sec:fim}
@@ -797,6 +773,109 @@ $s_{j}$, implies the presence of another itemset, $s_i$, is  defined as:
 \begin{equation}\label{eq:conf}conf(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
 
 
+\subsection{Distinct Itemsets}
+
+
+The \emph{distinct} condition is a novel strengthening of the closed condition
+so that it is not violated by trivial differences.
+We define a \emph{distinct} itemset as a closed itemset whose frequency
+comprises more than a certain proportion of the frequency of its least
+frequent subset. 
+This condition chooses closed itemsets which substantially violate the closed
+condition of their subsets.
+The proportion is a parameter, $\kappa$, that controls the selectivity of the
+\emph{distinctiveness} condition.
+This can be interpreted as selecting itemsets which are implied by a subset
+with confidence greater than $\kappa$.
+Formally, the set of \emph{distinct} itemsets, $\mathcal{D}$,
+is defined as follows:
+\begin{equation}\mathcal{D} = \{s: s \in \mathcal{C} \, and \, \exists \; s_{p} \subset s \; where \; \frac{|T_{s}|}{|T_{s_{p}}|} \ge \kappa 
+\}\end{equation}
+
+In figure \ref{fig:sham}, \emph{distinct} itemsets are illustrated in solid
+lines, and closed itemsets that do not satisfy the distinctiveness condition in dashed lines.
+It is clear from the figure that considerable redundancy remains in
+\emph{distinct} itemsets.
+
+\subsection{Strongly Closed Itemsets}
+To remove the redundancy in \emph{distinct} itemsets we merge similar ones
+into \emph{strongly closed} itemset clusters.
+The similarity of a \emph{distinct} itemset,
+$s_d$, and another distinct itemset, $s_c$,
+is measured as the overlap of the \emph{transactions} containing both of them
+with the transactions containing $s_c$. 
+A \emph{distinct} itemset is clustered with another itemset if one exists
+such that the overlap exceeds a similarity threshold,
+which we take to be $1-\kappa$ (the indistinctiveness of $s_d$ from $s_c$).
+If more than one satisfies this condition,
+the  \emph{distinct} itemset is clustered with the one having the highest
+overlap ratio.
+When  a \emph{distinct} itemset is clustered with an itemset that is already
+part of a cluster, the \emph{distinct} itemset is added to the existing cluster.
+Finally, the \emph{strongly closed} itemset is the union of all cluster members,
+and its support is the size of the union of their postings lists.
+We define the  desired clustering  and the strongly closed itemset
+represented by each cluster as follows:
+\begin{align*}\label{eq:strongClosedFormal}
+\mathcal{R} = \{r: r = \bigcup_i{(s_i, s_j)}\; where\; s_i \in \mathcal{D} \, and \, s_j \in \mathcal{D} 
+\\\,and\; \forall_{(s_i,s_j)} \, s_j = \textbf{argmax}_{s_k} conf(s_k \rightarrow s_i) \\\,and \;conf(s_j \rightarrow s_i) \ge (1-\kappa)
+\\\, and\;( s_j = r.centroid\; or \; (s_j, r.centroid) \in r )\}
+\end{align*}
+\begin{equation}S_l = \{w:\, w \in \bigcup_{(s_i, s_j) \in r_l}{s_i} \; where \; r_l \in \mathcal{R}\}\end{equation}
+
+This clustering scheme selects the cluster that contains the itemset which
+maximizes the confidence of the rule $conf(s_j \rightarrow s_i)$,
+with a lower bound on the overlap to maintain distinctiveness. 
+This clustering can be implemented efficiently using techniques similar to
+the ones proposed by Bayardo et al. \cite{bayardo2007scaling}.
+The main ideas are to limit the comparisons to a few candidates,
+and to terminate the comparison early if the similarity threshold will not
+be met.
+In our case, the postings lists are longer than the itemsets,
+so we generate candidates for comparison by calculating similarity between
+itemsets.
+When calculating the similarity between two postings lists,
+we can terminate early if the difference exceeds the maximum difference
+permissible to achieve a similarity of $1-\kappa$,
+which can be derived from equation \ref{eq:conf}. 
+
+Algorithm~\ref{algo:alliance}  shows a possible implementation.
+For each itemset, $s_i$, we find the itemsets produced before it
+and overlapping with it in one or more items.
+Then we find the candidate, $s_c$, that maximizes
+$conf(s_c \rightarrow s_i)$ such that the confidence exceeds $1-\kappa$.
+Notice that confidence is not a symmetric measure,
+and we only check the confidence of the rule that the clustering candidate
+implies the itemset. 
+
+
+
+\subsection{Performance Analysis}
+\label{sec:bounding}
+We analyze the performance of the filtering conditions proposed by applying
+them to the mining results of all one-hour long epochs in the Twitter data.
+The average number of itemsets mined from an hour-long epoch is
+2439.17 closed itemsets of length 2 or more;
+that is, excluding itemsets that are merely a frequent item.
+The number of length 2 or more maximal itemsets is 1831.92,
+which we provide just as a reference to the result of a basic way of filtering.
+
+Figure \ref{fig:kappa} show the effect of varying $\kappa$ on the mean number
+of \emph{distinct} and \emph{strong closed} itemsets.
+The number of \emph{distinct} itemsets drops as the distinctiveness threshold
+increases.
+On the other hand, the number of \emph{strong closed} clusters formed increases
+as the similarity (indistinctiveness) threshold decreases.
+The dashed line shows that the number of unclustered distinct itemsets reaches
+zero at $\kappa=0.5$, explaining why the number of clusters changes very
+slightly after that. 
+We use $\kappa = 0.25$ in the remainder of the paper,
+which is an arbitrary choice based on the definition not the data.
+The average number of itemsets (\emph{strongly closed} and unclustered
+\emph{distinct}) mined from one-hour epochs at this value of
+$\kappa$ is only 224.48 which is about 10\% of the number of closed itemsets.
+
+
 \begin{figure}
 \centering
 %\scalebox{0.7} 
@@ -881,105 +960,6 @@ $s_{j}$, implies the presence of another itemset, $s_i$, is  defined as:
 \label{algo:alliance}
 \end{algorithm}
 
-\subsection{Distinct Itemsets}
-
-
-The \emph{distinct} condition is a novel strengthening of the closed condition
-so that it is not violated by trivial differences.
-We define a \emph{distinct} itemset as a closed itemset whose frequency
-comprises more than a certain proportion of the frequency of its least
-frequent subset. 
-This condition chooses closed itemsets which substantially violate the closed
-condition of their subsets.
-The proportion is a parameter, $\kappa$, that controls the selectivity of the
-\emph{distinctiveness} condition.
-This can be interpreted as selecting itemsets which are implied by a subset
-with confidence greater than $\kappa$.
-Formally, the set of \emph{distinct} itemsets, $\mathcal{D}$,
-is defined as follows:
-\begin{equation}\mathcal{D} = \{s: s \in \mathcal{C} \, and \, \exists \; s_{p} \subset s \; where \; \frac{|T_{s}|}{|T_{s_{p}}|} \ge \kappa 
-\}\end{equation}
-
-In figure \ref{fig:sham}, \emph{distinct} itemsets are illustrated in solid
-lines, and closed itemsets that do not satisfy the distinctiveness condition in dashed lines.
-It is clear from the figure that considerable redundancy remains in
-\emph{distinct} itemsets.
-
-\subsection{Strongly Closed Itemsets}
-To remove the redundancy in \emph{distinct} itemsets we merge similar ones
-into \emph{strongly closed} itemset clusters.
-The similarity of a \emph{distinct} itemset,
-$s_d$, and another distinct itemset, $s_c$,
-is measured as the overlap of the \emph{transactions} containing both of them
-with the transactions containing $s_c$. 
-A \emph{distinct} itemset is clustered with another itemset if one exists
-such that the overlap exceeds a similarity threshold,
-which we take to be $1-\kappa$ (the indistinctiveness of $s_d$ from $s_c$).
-If more than one satisfies this condition,
-the  \emph{distinct} itemset is clustered with the one having the highest
-overlap ratio.
-When  a \emph{distinct} itemset is clustered with an itemset that is already
-part of a cluster, the \emph{distinct} itemset is added to the existing cluster.
-Finally, the \emph{strongly closed} itemset is the union of all cluster members,
-and its support is the size of the union of their postings lists.
-We define the  desired clustering  and the strongly closed itemset
-represented by each cluster as follows:
-\begin{align*}\label{eq:strongClosedFormal}
-\mathcal{R} = \{r: r = \bigcup_i{(s_i, s_j)}\; where\; s_i \in \mathcal{D} \, and \, s_j \in \mathcal{D} 
-\\\,and\; \forall_{(s_i,s_j)} \, s_j = \textbf{argmax}_{s_k} conf(s_k \rightarrow s_i) \\\,and \;conf(s_j \rightarrow s_i) \ge (1-\kappa)
-\\\, and\;( s_j = r.centroid\; or \; (s_j, r.centroid) \in r )\}
-\end{align*}
-\begin{equation}S_l = \{w:\, w \in \bigcup_{(s_i, s_j) \in r_l}{s_i} \; where \; r_l \in \mathcal{R}\}\end{equation}
-
-This clustering scheme selects the cluster that contains the itemset which
-maximizes the confidence of the rule $conf(s_j \rightarrow s_i)$,
-with a lower bound on the overlap to maintain distinctiveness. 
-This clustering can be implemented efficiently using techniques similar to
-the ones proposed by Bayardo et al. \cite{bayardo2007scaling}.
-The main ideas are to limit the comparisons to a few candidates,
-and to terminate the comparison early if the similarity threshold will not
-be met.
-In our case, the postings lists are longer than the itemsets,
-so we generate candidates for comparison by calculating similarity between
-itemsets.
-When calculating the similarity between two postings lists,
-we can terminate early if the difference exceeds the maximum difference
-permissible to achieve a similarity of $1-\kappa$,
-which can be derived from equation \ref{eq:conf}. 
-
-Algorithm~\ref{algo:alliance}  shows a possible implementation.
-For each itemset, $s_i$, we find the itemsets produced before it
-and overlapping with it in one or more items.
-Then we find the candidate, $s_c$, that maximizes
-$conf(s_c \rightarrow s_i)$ such that the confidence exceeds $1-\kappa$.
-Notice that confidence is not a symmetric measure,
-and we only check the confidence of the rule that the clustering candidate
-implies the itemset. 
-
-\subsection{Performance Analysis}
-\label{sec:bounding}
-We analyze the performance of the filtering conditions proposed by applying
-them to the mining results of all one-hour long epochs in the Twitter data.
-The average number of itemsets mined from an hour-long epoch is
-2439.17 closed itemsets of length 2 or more;
-that is, excluding itemsets that are merely a frequent item.
-The number of length 2 or more maximal itemsets is 1831.92,
-which we provide just as a reference to the result of a basic way of filtering.
-
-Figure \ref{fig:kappa} show the effect of varying $\kappa$ on the mean number
-of \emph{distinct} and \emph{strong closed} itemsets.
-The number of \emph{distinct} itemsets drops as the distinctiveness threshold
-increases.
-On the other hand, the number of \emph{strong closed} clusters formed increases
-as the similarity (indistinctiveness) threshold decreases.
-The dashed line shows that the number of unclustered distinct itemsets reaches
-zero at $\kappa=0.5$, explaining why the number of clusters changes very
-slightly after that. 
-We use $\kappa = 0.25$ in the remainder of the paper,
-which is an arbitrary choice based on the definition not the data.
-The average number of itemsets (\emph{strongly closed} and unclustered
-\emph{distinct}) mined from one-hour epochs at this value of
-$\kappa$ is only 224.48 which is about 10\% of the number of closed itemsets.
 
 \begin{figure}
 \scalebox{.5} 
