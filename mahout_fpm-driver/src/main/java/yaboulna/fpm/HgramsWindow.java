@@ -137,7 +137,7 @@ public class HgramsWindow {
       fimiExe = "/home/yaboulna/fimi/fp-zhu/fim_closed";
     }
     boolean cmdMtv = fimiExe.contains("mtv");
-    boolean cmdMtvSortOnly = fimiExe.contains("mtv_sorted");
+    boolean cmdMtvSortOnly = cmdMtv && args[2].contains("mtv_sorted");
     int minSupp = 5;
     double suppPct = 0.0001; // when multiplied by the volume gives at least 5 (at the trough of the day)
     int support = -1;
