@@ -17,7 +17,7 @@
 
 \maketitle
 \begin{abstract}
-Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  Tweets are short and repetitious - lacking context and structure  - making it difficult to generate a coherent synopsis of events within a given time period.  Although some established algorithms for frequent itemset analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces a complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a filtering step that preserves these terms only when they may form part of a relevant collocation.  To further reduce trivial results, we propose a novel strengthening of the closure condition of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on information gain, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide understandable and meaningful pictures of events within those periods, with potential application to tasks such as temporal summarization and query expansion for search.
+Search and summarization of streaming social media, such as Twitter, requires the ongoing analysis of large volumes of data with dynamically changing characteristics.  Tweets are short and repetitious~--~lacking context and structure~--~making it difficult to generate a coherent synopsis of events within a given time period.  Although some established algorithms for frequent itemset analysis might provide an efficient foundation for synopsis generation, the unmodified application of standard methods produces a complex mass of rules, dominated by common language constructs and many trivial variations on topically related results.  Moreover, these results are not necessarily specific to events within the time period of interest.  To address these problems, we build upon the Linear time Closed itemset Mining (LCM) algorithm, which is particularly suited to the large and sparse vocabulary of tweets.  LCM generates only closed itemsets, providing an immediate reduction in the number of trivial results.  To reduce the impact of function words and common language constructs, we apply a filtering step that preserves these terms only when they may form part of a relevant collocation.  To further reduce trivial results, we propose a novel strengthening of the closure condition of LCM to retain only those results that exceed a threshold of distinctiveness.  Finally, we perform temporal ranking, based on information gain, to identify results that are particularly relevant to the time period of interest.  We evaluate our work over a collection of tweets gathered in late 2012, exploring the efficiency and filtering characteristic of each processing step, both individually and collectively.  Based on our experience, the resulting synopses from various time periods provide understandable and meaningful pictures of events within those periods, with potential application to tasks such as temporal summarization and query expansion for search.
 \end{abstract}
 %\category{H.4}{Information Systems Applications}{Miscellaneous}
 %A category including the fourth, optional field follows...
@@ -32,7 +32,7 @@ Search and summarization of streaming social media, such as Twitter, requires th
 The nature of text in social media poses a challenge when applying
 traditional text mining algorithms.
 Text in social media is usually short, lacks context and structure,
-and is created at a very high rate.
+and is created at a high rate. %very
 To realize the benefits of social media in giving a voice to ordinary people,
 this work focuses on the content of posts.
 However, the collective stream from all users is overwhelmed with personal
@@ -41,7 +41,7 @@ efficient mining algorithm.
 The frequent itemset mining family of algorithms is fast and efficient,
 however it is not readily suited for application on text.
 First, the number of itemsets mined is large and grows with the number of
-distinct items~---~which is particularly high in the text domain.
+distinct items~--~which is particularly high in the text domain.
 Frequent itemset mining was originally proposed as a preliminary stage for
 association rules mining, which sifts through the numerous itemsets and
 produces a smaller number of association rules.
@@ -51,7 +51,7 @@ frequencies of items follow a long-tailed Zipfean distribution.
 Second, the high frequency of stop words and language constructs is a problem
 that frequent itemset mining is not equipped to handle.
 Even if a maximum frequency threshold is set, incurring the risk that we
-will filter out important itemsets, many of non-English constructs will be
+will filter out important itemsets, many  non-English constructs will be
 mined because the proportion of posts in English is much higher than
 other languages.  Finally, there is considerable redundancy in frequent
 itemsets caused by trivial differences in the language used.
@@ -61,7 +61,7 @@ social media text without degrading its efficiency.
 Unlike trending
 topics\footnote{http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}
 \cite{mathioudakis2010twittermonitor}, the results of frequent itemset
-mining includes itemsets that have high frequency because of sustained interest,
+mining include itemsets that have high frequency because of sustained interest,
 as well as a spike of interest.
 The mined itemsets provide the vocabulary associated with events and can be
 used as a preliminary step for search and summarization.
@@ -75,7 +75,7 @@ For summarization, frequent itemsets can provide a good foundation for summary
 creation.
 While the frequent itemsets themselves are not summaries, since they lack
 qualitative properties such as coherence and cohesion, the results are
-unstandable at the user level.
+understandable at the user level.
 As we shall see in later examples, the top ranked itemsets cover a variety
 of open topics, and within one topic different opinions are reported as
 separate contrastive itemsets.
@@ -115,7 +115,7 @@ suggest future directions.
 \psline[linewidth=0.04cm](0.827168,-3.59)(16.367168,-3.61)
 \psline[linewidth=0.04cm,linestyle=dashed,dash=0.16cm 0.16cm](0.30716797,2.61)(16.767167,2.59)
 \usefont{T1}{ptm}{m}{n}
-\rput(8.60748,-4.005){Items with low frequency in the data are excluded by Frequent Itemset Mining, and hence not part of the tree}
+\rput(8.60748,-4.005){Items with low frequency in the data are excluded by frequent itemset mining, and hence not part of the tree}
 \psline[linewidth=0.04cm,linestyle=dashed,dash=0.16cm 0.16cm](0.14716797,-2.03)(17.007168,-2.03)
 \usefont{T1}{ptm}{m}{n}
 \rput(3.4739747,4.075){The top of the tree is not as small as it seems.}
@@ -142,7 +142,7 @@ suggest future directions.
 \usefont{T1}{ptm}{m}{n}
 \rput(1.8698633,-0.105){but it is easily violated.}
 \usefont{T1}{ptm}{m}{n}
-\rput(13.823125,2.335){In section \ref{sec:strong} we propose the strong closed}
+\rput(13.823125,2.335){In section \ref{sec:strong} we propose the strongly closed}
 \usefont{T1}{ptm}{m}{n}
 \rput(14.255615,1.895){itemsets, which are clusters of itemsets}
 \usefont{T1}{ptm}{m}{n}
@@ -276,7 +276,7 @@ is to provide a compressed representation of itemsets by sacrificing support
 information. The mining results of our method include the postings list of
 occurrences of each itemset.
 
-Another approach to picking the elect itemsets is choosing ones that 
+Another approach to picking out itemsets is choosing ones that 
 can be used to compress the data. The KRIMP algorithm~\cite{vreeken2011krimp} is 
 a good example of methods that follow this approach. Our goal is different because
 we aim to filter out itemsets pertaining to personal updates, which make up a large
@@ -301,7 +301,7 @@ While the use of clustering is similarly motivated by the trivial difference bet
 %most informative itemsets mined from text.
 
 Our work complements the work done by Yang et al.~\cite{yang2012framework} for using frequent itemsets as a temporal summary. They have proposed a framework for storing mining results of temporally consecutive batches of data using a pyramidal time window. Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
-The choice of itemsets from each batch is based on their utility in compressing the data, and they use non-negative matrix factorization to extract topics related to a query. We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
+The choice of itemsets from each batch is based on their utility in compressing the data, and thus they use non-negative matrix factorization to extract topics related to a query. We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
 
 The use of frequent itemsets for improving search performance has been considered before. 
 For example, in Li et al.~\cite{li2010mining} itemsets are mined from
@@ -312,6 +312,9 @@ a training set of related documents, as well as ones from unrelated documents.
 In Lau et al.~\cite{laumicroblog}, related methods for term weighting were
 used in pseudo-relevance feedback for Twitter search,
 and achieved substantial improvements over a baseline.
+Our work can provide such methods by a short ranked list of itemsets.
+%, potentially improving their results.
+
 
 \section{Frequent itemset mining}
 \label{sec:fim}
@@ -356,8 +359,8 @@ generates candidates of length K (K-itemsets) by merging frequent itemsets of
 length (K-1) ((K-1)-itemsets) that differ in only 1 item, usually the last
 item given a certain total ordering of items.
 By using only the frequent  (K-1)-itemsets for generating candidate K-itemsets,
-many possible K-itemsets are implicitly pruned, based on that all subsets of a
-frequent itemset has to be frequent (the Apriori property).
+many possible K-itemsets are implicitly pruned, based on the Apriori property:
+all subsets of a frequent itemset has to be frequent.
 This approach still can generate a large number of candidates, especially
 in early iterations of the algorithm.
 Consider, for example, the generation of candidate 2-itemsets from a database.
@@ -463,7 +466,7 @@ Documents (two per row)\\\\
 Step&Current Solution&Possible Extension Items&Comments\\ \hline
 1& \{barack\} (4)* & \textbf{mitt} (2), obama (3), romney (2) & Items are ordered lexicographically\\ \hline
 2& \{barack,mitt\} (2)* & \textbf{obama} (1), romney (1) & Extension items reenumerated \& counted\\ \hline
-3 & \{barack,mitt,obama\} (1) & romney (1)                       & Rule 2: `romney' appears in all $D_{itemset}$\\\hline
+3 & \{barack,mitt,obama\} (1) & romney (1)                       & Rule 2: `romney' appears in all $T_{itemset}$\\\hline
 4 & \{barack,mitt,obama,romney\}(1)* & & Rule 2: `obama'  is the \emph{suffex head} \\\hline
 5 & \{barack\} (4) & mitt (2), \textbf{obama} (3), romney (2) & Nothing more to add, back to `barack' \\\hline
 6 & \{barack, obama\} (3)* & \sout{mitt} (1), \textbf{romney} (2) & Rule 1: skipping `mitt', adding `romney' \\\hline
@@ -487,7 +490,7 @@ The algorithm takes as input an epoch of data and a support threshold as a
 ratio $\alpha$.
 It outputs the closed itemsets with support above the threshold.
 Along with each itemset in the solution, it also outputs the transactions
-in which it occurs~---~which is represented as $\langle items,
+in which it occurs~--~which is represented as $\langle items,
 T_{itemset} \rangle$.
 The symbol $\succ$ denotes that the lefthand side  succeeds the righthand
 side in the total ordering.
@@ -533,7 +536,7 @@ X $\gets$ Inverted index of E\;
 	\lIf{$\exists v \in suffix: w_{sh} \succ v$ }{
 		\Return
 	}
-	C.add($\langle s \cup suffix, T_s\rangle$)\;
+	C.add($\langle s \cup {suffix}, T_s\rangle$)\;
 	\ForEach{$v \succ w_{sh}$ and $v \notin $ suffix}{
 		\If{frequency[$v$] $\geq \alpha \frac{|E|}{E.span}$}{
 			$T \gets T_s \cap v$	\tcp*{Results of query $s$ AND $v$}
@@ -574,10 +577,10 @@ Figure \ref{fig:runtimeEpochs} shows the runtime of LCM on epochs of
 increasing length, and we will show in section \ref{sec:bounding} that our
 extensions do not degrade performance.
 The times reported in figure \ref{fig:runtimeEpochs} are averages across all
-epochs of the specified length in the months of October, November and December,
+epochs of the specified length in the last 3 months of 2012, % October, November and December,
 using a time step that is half the epoch length.
 The variance is very low and the confidence bands are not shown because they
-appear as dots on top of the bars. 
+appear as dots.% on top of the bars. 
 
 The support threshold used throughout this paper %, unless otherwise specified,
 is $\alpha=0.0002$.
@@ -704,8 +707,9 @@ The adjusted $\eta_N$ is:
 
 
 Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length
-of N-grams from 1 to 5 on the number of tokens, the number of closed itemsets
-of length more than 1, and the runtime of mining one hour of data.
+of N-grams from 1 to 5 on the number of tokens, the number of closed itemsets,
+%of length more than 1, 
+and the runtime of mining one hour of data.
 The values shown are averages across all one-hour epochs in the month of
 November 2012.
 The value of $\eta$ used is 0.0001.
@@ -734,6 +738,7 @@ writing the posting list of each itemset.
 
 \section{Filtering itemsets}
 \label{sec:strong}
+
 
 
 In the previous section, we discussed our handling of function words,
@@ -782,11 +787,62 @@ and it is used in the definition of $\delta$-free sets \cite{boulicaut2003free}.
 Mining itemsets based on the confidence of rules they induce has long been
 recognized as a method for finding
 ``interesting patterns'' \cite{cohen2001finding},
-but since this property is not anti-monotone a variation has to be used
-(for example, \emph{all confidence}). % \cite{kim2004ccmine}
+but since this property is not anti-monotone 
+it cannot be directly used.
+%a variation has to be used
+%(for example, \emph{all confidence}). % \cite{kim2004ccmine}
 The confidence of an assocation rule that the presence of an itemset,
 $s_{j}$, implies the presence of another itemset, $s_i$, is  defined as:
 \begin{equation}\label{eq:conf}conf(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
+
+\begin{figure}
+\centering
+%\scalebox{0.7} 
+\resizebox{7cm}{3.5cm}
+{
+\begin{pspicture}(0,-2.649212)(9.077745,2.95)
+\psframe[linewidth=0.04,dimen=outer](8.843161,2.95)(0.2431605,-2.61)
+\usefont{T1}{ptm}{m}{n}
+\rput(4.103317,1.675){sham, and, travesty}
+\usefont{T1}{ptm}{m}{n}
+\rput(1.7484828,2.575){@realdonaldtrump}
+\pscircle[linewidth=0.04,dimen=outer](4.1031604,0.01){2.28}
+\rput{55.644855}(2.9522903,-5.6005197){\psellipse[linewidth=0.04,dimen=outer](6.782275,-0.0031560312)(1.9103949,2.0626228)}
+\rput{34.21703}(0.13301769,-1.7201583){\psellipse[linewidth=0.04,dimen=outer](2.8607624,-0.6440031)(2.908739,0.81)}
+\pscircle[linewidth=0.04,dimen=outer](4.5031605,-0.33){1.58}
+\usefont{T1}{ptm}{m}{n}
+\rput(4.527965,-0.865){not,}
+\pscircle[linewidth=0.04,linestyle=dashed,dash=0.16cm 0.16cm,dimen=outer](2.6031604,0.81){0.48}
+\usefont{T1}{ptm}{m}{n}
+\rput(1.0566566,1.455){fraud}
+\pscircle[linewidth=0.04,linestyle=dashed,dash=0.16cm 0.16cm,dimen=outer](1.0631605,1.45){0.46}
+\usefont{T1}{ptm}{m}{n}
+\rput(2.623102,0.815){hair}
+\pscircle[linewidth=0.04,dimen=outer](7.3231606,-1.35){1.02}
+\usefont{T1}{ptm}{m}{n}
+\rput(7.337262,-1.025){the, world, }
+\usefont{T1}{ptm}{m}{n}
+\rput(7.264635,-1.325){is, laughing}
+\rput{34.21703}(0.8391447,-4.3701773){\psellipse[linewidth=0.04,dimen=outer](7.5185595,-0.8219682)(1.3607179,0.95923364)}
+\rput{34.21703}(0.3818179,-4.274056){\psellipse[linewidth=0.04,dimen=outer](7.133755,-1.5167968)(1.2777647,0.86427283)}
+\usefont{T1}{ptm}{m}{n}
+\rput(7.207018,-1.645){at}
+\usefont{T1}{ptm}{m}{n}
+\rput(8.076705,-0.165){us}
+\usefont{T1}{ptm}{m}{n}
+\rput(6.371842,-2.105){you}
+\usefont{T1}{ptm}{m}{n}
+\rput(1.4102015,-1.625){elections}
+\usefont{T1}{ptm}{m}{n}
+\rput(6.9122915,1.255){rt}
+\usefont{T1}{ptm}{m}{n}
+\rput(4.4461293,-1.265){democracy}
+\end{pspicture} 
+}
+
+\caption{Closed, distinct and strongly closed sets}
+\label{fig:sham}
+\end{figure}
 
 
 \subsection{Distinct Itemsets}
@@ -865,6 +921,41 @@ and we only check the confidence of the rule that the clustering candidate
 implies the itemset. 
 
 
+\begin{algorithm}
+\SetAlgoLined
+\LinesNumbered
+\KwIn{$\kappa$: Minimum distinctiveness threshold} 
+\KwData{$\mathcal{C}$: Closed itemsets produced by LCM}
+\KwResult{$\mathcal{R}$: Strong closed itemset clusters}
+\For{$i \gets 2$ to $|\mathcal{C}|$}{
+	$C \gets \{s_c: s_c \in \mathcal{C} \, and \, c < i \, and \, |s_c \cap s_i| > 0\}$\;
+	$P \gets \{s_p: s_p \in \mathcal{C} \, and \, p < i \, and \, s_p \cap s_i = s_p\}$\;
+	$s_p \gets \textbf{argmax}_{s_p \in P}\frac{|T_{s_i}|}{|T_{s_p}|}$ \tcp*{Direct parent}
+	\uIf{$\frac{|T_{s_i}|}{|T_{s_p}|} < \kappa$}{continue\tcp*{Not a distinct itemset}}
+	$s_m \gets s_i$  \tcp*{Cluster centroid, initially self}
+	$maxConf \gets 0$ \tcp*{Best candidate's score}
+	\ForEach{$s_c \in C$}{
+		$\Delta \gets (1 - (1-\kappa)) |T_{s_c}|$ \tcp*{Maximum difference}
+		$\delta \gets$ difference($T_{s_c},T_{s_c \cup s_i},\Delta$) \tcp*{Stops early}
+		
+		\If{$\delta \le \Delta$}{ 
+			$conf \gets \frac{|T_{s_c}| - \delta}{ |T_{s_c}|}$\;
+			\If{$conf > maxConf$}{
+				$s_m \gets s_k$ \tcp*{Best merge candidate}
+				$maxConf \gets conf$ \;
+			}
+		}
+	}
+	$\mathcal{R}[s_i] \gets \mathcal{R}[s_m]$ \tcp*{Cluster $s_i$ with $s_m$}
+	$\mathcal{R}[s_m].itemset \gets \mathcal{R}[s_m].itemset \cup s_i \cup s_m$\;
+	$\mathcal{R}[s_m].postingsList \gets \mathcal{R}[s_m].postingsList \cup s_i.postingsList \cup s_m.postingsList$\;
+}
+\Return{$\mathcal{R}$}\;
+\caption{Forming strongly closed itemset clusters}
+\label{algo:alliance}
+\end{algorithm}
+
+
 
 \subsection{Performance Analysis}
 \label{sec:bounding}
@@ -892,90 +983,6 @@ The average number of itemsets (\emph{strongly closed} and unclustered
 \emph{distinct}) mined from one-hour epochs at this value of
 $\kappa$ is only 224.48, which is about 10\% of the number of closed itemsets.
 
-
-\begin{figure}
-\centering
-%\scalebox{0.7} 
-\resizebox{7cm}{3.5cm}
-{
-\begin{pspicture}(0,-2.649212)(9.077745,2.95)
-\psframe[linewidth=0.04,dimen=outer](8.843161,2.95)(0.2431605,-2.61)
-\usefont{T1}{ptm}{m}{n}
-\rput(4.103317,1.675){sham, and, travesty}
-\usefont{T1}{ptm}{m}{n}
-\rput(1.7484828,2.575){@realdonaldtrump}
-\pscircle[linewidth=0.04,dimen=outer](4.1031604,0.01){2.28}
-\rput{55.644855}(2.9522903,-5.6005197){\psellipse[linewidth=0.04,dimen=outer](6.782275,-0.0031560312)(1.9103949,2.0626228)}
-\rput{34.21703}(0.13301769,-1.7201583){\psellipse[linewidth=0.04,dimen=outer](2.8607624,-0.6440031)(2.908739,0.81)}
-\pscircle[linewidth=0.04,dimen=outer](4.5031605,-0.33){1.58}
-\usefont{T1}{ptm}{m}{n}
-\rput(4.527965,-0.865){not,}
-\pscircle[linewidth=0.04,linestyle=dashed,dash=0.16cm 0.16cm,dimen=outer](2.6031604,0.81){0.48}
-\usefont{T1}{ptm}{m}{n}
-\rput(1.0566566,1.455){fraud}
-\pscircle[linewidth=0.04,linestyle=dashed,dash=0.16cm 0.16cm,dimen=outer](1.0631605,1.45){0.46}
-\usefont{T1}{ptm}{m}{n}
-\rput(2.623102,0.815){hair}
-\pscircle[linewidth=0.04,dimen=outer](7.3231606,-1.35){1.02}
-\usefont{T1}{ptm}{m}{n}
-\rput(7.337262,-1.025){the, world, }
-\usefont{T1}{ptm}{m}{n}
-\rput(7.264635,-1.325){is, laughing}
-\rput{34.21703}(0.8391447,-4.3701773){\psellipse[linewidth=0.04,dimen=outer](7.5185595,-0.8219682)(1.3607179,0.95923364)}
-\rput{34.21703}(0.3818179,-4.274056){\psellipse[linewidth=0.04,dimen=outer](7.133755,-1.5167968)(1.2777647,0.86427283)}
-\usefont{T1}{ptm}{m}{n}
-\rput(7.207018,-1.645){at}
-\usefont{T1}{ptm}{m}{n}
-\rput(8.076705,-0.165){us}
-\usefont{T1}{ptm}{m}{n}
-\rput(6.371842,-2.105){you}
-\usefont{T1}{ptm}{m}{n}
-\rput(1.4102015,-1.625){elections}
-\usefont{T1}{ptm}{m}{n}
-\rput(6.9122915,1.255){rt}
-\usefont{T1}{ptm}{m}{n}
-\rput(4.4461293,-1.265){democracy}
-\end{pspicture} 
-}
-
-\caption{Closed, distinct and strongly closed sets}
-\label{fig:sham}
-\end{figure}
-
-
-\begin{algorithm}
-\SetAlgoLined
-\LinesNumbered
-\KwIn{$\kappa$: Minimum distinctiveness threshold} 
-\KwData{$\mathcal{C}$: Closed itemsets produced by LCM}
-\KwResult{$\mathcal{R}$: Strong closed itemset clusters}
-\For{$i \gets 2$ to $|\mathcal{C}|$}{
-	$C \gets \{s_c: s_c \in \mathcal{C} \, and \, c < i \, and \, |s_c \cap s_i| > 0\}$\;
-	$P \gets \{s_p: s_p \in \mathcal{C} \, and \, p < i \, and \, s_p \cap s_i = s_i\}$\;
-	$s_p \gets \textbf{argmax}_{s_p \in P}\frac{|T_{s_i}|}{|T_{s_p}|}$ \tcp*{Direct parent}
-	\uIf{$\frac{|T_{s_i}|}{|T_{s_p}|} < \kappa$}{continue\tcp*{Not a distinct itemset}}
-	$s_m \gets s_i$  \tcp*{Cluster centroid, initially self}
-	$maxConf \gets 0$ \tcp*{Best candidate's score}
-	\ForEach{$s_c \in C$}{
-		$\Delta \gets (1 - (1-\kappa)) |T_{s_c}|$ \tcp*{Maximum difference}
-		$\delta \gets$ difference($T_{s_c},T_{s_c \cup s_i},\Delta$) \tcp*{Stops early}
-		
-		\If{$\delta \le \Delta$}{ 
-			$conf \gets \frac{|T_{s_c}| - \delta}{ |T_{s_c}|}$\;
-			\If{$conf > maxConf$}{
-				$s_m \gets s_k$ \tcp*{Best merge candidate}
-				$maxConf \gets conf$ \;
-			}
-		}
-	}
-	$\mathcal{R}[s_i] \gets \mathcal{R}[s_m]$ \tcp*{Cluster $s_i$ with $s_m$}
-	$\mathcal{R}[s_m].itemset \gets \mathcal{R}[s_m].itemset \cup s_i \cup s_m$\;
-	$\mathcal{R}[s_m].postingsList \gets \mathcal{R}[s_m].postingsList \cup s_i.postingsList \cup s_m.postingsList$\;
-}
-\Return{$\mathcal{R}$}\;
-\caption{Forming strongly closed itemset clusters}
-\label{algo:alliance}
-\end{algorithm}
 
 
 \begin{figure}
@@ -1005,7 +1012,7 @@ seeing slight differences.
 The output of LCM is the input to the filtering and clustering step,
 so it is affected by the number of closed itemsets produced.
 This explains why it takes slightly longer time for clustering results from
-the 15-minute epoch and then takes a constant time for epochs of longer span. 
+the 15-minute epoch and then takes a constant time for epochs of a longer span. 
 
 The experiments were run using a single threaded Java implementation of
 algorithm \ref{algo:alliance}.
@@ -1242,7 +1249,7 @@ mining because of error in an upstream component.
 As a form of comparison, in table \ref{table:mtv} we show the top 3 itemsets picked by the MTV algorithm~\cite{mampaey2011tell} for the same epochs and support.
 %for one-hour epochs. 
 % 
-We show hours in which the top 3 included interesting itemsets. For brevity, we truncate itemsets that are complete tweets and append the tweet id for reference.
+We show hours in which the top 3 itemsets included interesting itemsets. For brevity, we truncate itemsets that are complete tweets and append the tweet id for reference.
 % 
 %It is noteworthy that tweets that spark a conversation contribute multiple redundant itemsets, and several of them are ranked high.
 % (Nov. 6 22:00). This stresses the importance of clustering.
