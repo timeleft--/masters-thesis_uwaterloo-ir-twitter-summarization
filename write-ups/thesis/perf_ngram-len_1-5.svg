@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+    xmlns:latexdraw="http://latexdraw.sourceforge.net/namespaces/latexdraw"
+    version="1.1" baseProfile="full">
+    <defs/>
+    <g>
+        <g latexdraw:type="text" id="id79" font-family="Times New Roman"
+            fill="black" font-size="30" latexdraw:x="132.0">
+            <text x="132.0" y="393.0"><![CDATA[(a) Mean number of distinct items]]></text>
+        </g>
+        <g latexdraw:type="text" id="id82" font-family="Times New Roman"
+            fill="black" font-size="30" latexdraw:x="796.0">
+            <text x="796.0" y="393.0"><![CDATA[(b) Mean number of itemsets]]></text>
+        </g>
+        <g latexdraw:type="text" id="id85" font-family="Times New Roman"
+            fill="black" font-size="30" latexdraw:x="1454.0">
+            <text x="1454.0" y="394.0"><![CDATA[(c) Mean runtime in milliseconds]]></text>
+        </g>
+        <g latexdraw:type="picture" id="id88">
+            <image
+                xlink:href="/Users/yia/Code/thesis/write-ups/cikm/perf_ngramlen1-5_distinct-items_supp10+_1hr.png"
+                x="50.0" y="50.0" height="298" width="593"/>
+        </g>
+        <g latexdraw:type="picture" id="id90">
+            <image
+                xlink:href="/Users/yia/Code/thesis/write-ups/cikm/perf_ngramlen1-5_itemsets_supp10+_1hr.png"
+                x="698.0" y="48.0" height="298" width="593"/>
+        </g>
+        <g latexdraw:type="picture" id="id92">
+            <image
+                xlink:href="/Users/yia/Code/thesis/write-ups/cikm/perf_ngramlen1-5_runtime-millis_supp10+_1hr.png"
+                x="1348.0" y="50.0" height="298" width="593"/>
+        </g>
+    </g>
+    <metadata>
+        <latexdraw:metadata>
+            <latexdraw:displayBorders>false</latexdraw:displayBorders>
+            <latexdraw:autoAdjust>true</latexdraw:autoAdjust>
+            <latexdraw:ppc>50</latexdraw:ppc>
+            <latexdraw:zoom>0.5</latexdraw:zoom>
+            <latexdraw:unit>cm</latexdraw:unit>
+            <latexdraw:classicGrid>false</latexdraw:classicGrid>
+            <latexdraw:gridGap>25</latexdraw:gridGap>
+            <latexdraw:code>0</latexdraw:code>
+            <latexdraw:displayGrid>true</latexdraw:displayGrid>
+            <latexdraw:magneticGrid>false</latexdraw:magneticGrid>
+            <latexdraw:autoUpdate>true</latexdraw:autoUpdate>
+            <latexdraw:version>2.0.8</latexdraw:version>
+            <latexdraw:size>
+                <latexdraw:width>1440</latexdraw:width>
+                <latexdraw:height>801</latexdraw:height>
+            </latexdraw:size>
+            <latexdraw:position>
+                <latexdraw:x>0</latexdraw:x>
+                <latexdraw:y>22</latexdraw:y>
+            </latexdraw:position>
+            <latexdraw:dividerPosition>0.8256944444444444</latexdraw:dividerPosition>
+            <latexdraw:displayCodePanel>true</latexdraw:displayCodePanel>
+            <latexdraw:displayXScale>true</latexdraw:displayXScale>
+            <latexdraw:displayYScale>true</latexdraw:displayYScale>
+            <latexdraw:delimitorOpacity>130</latexdraw:delimitorOpacity>
+        </latexdraw:metadata>
+    </metadata>
+</svg>
