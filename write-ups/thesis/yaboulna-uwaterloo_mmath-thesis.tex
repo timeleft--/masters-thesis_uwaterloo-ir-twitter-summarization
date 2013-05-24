@@ -152,7 +152,7 @@
 % The following statement controls the line spacing.  The default
 % spacing corresponds to good typographic conventions and only slight
 % changes (e.g., perhaps "1.2"), if any, should be made.
-\renewcommand{\baselinestretch}{1} % this is the default line space setting
+\renewcommand{\baselinestretch}{1.2} % this is the default line space setting
 
 % By default, each chapter will start on a recto (right-hand side)
 % page.  We also force each section of the front pages to start on 
@@ -213,18 +213,28 @@
 %\terms{Theory}
 
 %\keywords{ACM proceedings, \LaTeX, text tagging}
-
-\section{Introduction}
-
-The nature of text in social media poses a challenge when applying
-traditional text mining algorithms.
-Text in social media is usually short, lacks context and structure,
-and is created at a high rate. %very
-To realize the benefits of social media in giving a voice to ordinary people,
-this work focuses on the content of posts.
-However, the collective stream from all users is overwhelmed with personal
-updates, and timely finding posts about topics of interest requires an
+\section{Social Media Text}
+Text posted on social media outlets, such as Twitter, is a good and timely source of information
+about real world events~\cite{ritter2012open}. 
+It also includes posts about topics attracting the collective attention of user communities, 
+such as Internet memes or large scale discussions~\cite{naaman2011hip}.
+Nevertheless, the collective stream from all users is overwhelmed with personal
+updates and non-informative chatter~\cite{java2007we,hurlock2011searching}. 
+Furthermore, the attention span given to the majority of topics is quite short~\cite{kwak2010twitter}.
+Timely finding posts about topics of interest requires an
 efficient mining algorithm.
+
+To realize the benefits of social media in giving a voice to ordinary people,
+the algorithm should mine the content of posts 
+without explicitly assigning weights based on merits of users. % to posts made by ``influencers''.
+However, the nature of text in social media poses a challenge when applying
+traditional text mining algorithms. 
+Text in social media is usually short, undermining the effectiveness of within document frequency counting.
+It lacks context, since posts are standalone and most platforms don't allow explicit linkage.
+It also lacks structure and other useful formatting cues. 
+One type of mining algorithms that can be applied to such data is frequent itemset mining.
+
+\section{Frequent Itemset Mining}
 The frequent itemset mining family of algorithms is fast and efficient,
 however it is not readily suited for application on text.
 First, the number of itemsets mined is large and grows with the number of
