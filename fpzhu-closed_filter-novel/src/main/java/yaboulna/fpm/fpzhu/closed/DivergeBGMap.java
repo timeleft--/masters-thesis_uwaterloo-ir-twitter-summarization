@@ -277,7 +277,7 @@ public class DivergeBGMap {
   //private static boolean FREQ_KLD = true; //default
   private static boolean REAL_WEIGHT_SUPP_KLD = false;
   private static boolean PROB_KLD = false;
-  private static boolean SUPP_KLD = false;
+  private static boolean SUPP_KLD = true; //default.. = !PROB_KLD
 
   private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
 
@@ -368,7 +368,7 @@ public class DivergeBGMap {
       }
       
       PROB_KLD = args[3].contains("ProbKLD");
-      SUPP_KLD = args[3].contains("SuppKLD");
+      SUPP_KLD = !PROB_KLD; // && args[3].contains("SuppKLD");
       REAL_WEIGHT_SUPP_KLD = args[3].contains("RealWSuppKLD");    
     }
 
@@ -622,7 +622,7 @@ public class DivergeBGMap {
         final double bgFgLogP=
         SUPP_KLD?
           Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()))
-        :
+        : //This is not possible now.. instead, it is the temporal entropy
           0;
         
         final MutableInt fgSumFreq = new MutableInt();
@@ -1983,12 +1983,24 @@ public class DivergeBGMap {
             }
 
             Collection<Set<String>> allianceMembers = allianceTransitiveInverse.get(e.getKey());
+            double temporalEntropy = 0;
+            SummaryStatistics temporalProbStats = new SummaryStatistics();
+            
             double mutualInfo = 0;
             double freqSubset = fgIdsMap.get(e.getKey()).size();
             for (Set<String> member : allianceMembers) {
               double freqSuperset = fgIdsMap.get(member).size();
               double conditionalProb;
-
+              
+              Integer bgFreq = bgCountMap.get(member);
+              if(bgFreq == null){
+                bgFreq = 1; //avoid 0
+              }
+              
+              double temporalProb = freqSuperset / (freqSuperset + bgFreq); 
+              temporalProbStats.addValue(temporalProb);
+              temporalEntropy += temporalProb * DoubleMath.log2(temporalProb);
+              
 // if(confidentItemsets.containsKey(member)){
 // conditionalProb = confidentItemsets.get(member);
 // } else {
@@ -2039,6 +2051,14 @@ public class DivergeBGMap {
                 .format(
                     "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
 
+                    temporalEntropy, //2
+                    temporalProbStats.getMean(), //3
+                    temporalProbStats.getVariance(), //4
+                    temporalProbStats.getMin(), //5
+                    temporalProbStats.getMax(), //6
+                    temporalProbStats.getN(), //7
+                    temporalProbStats.getSumOfLogs(), //8
+                    // all columns below + 7
                     kldStats.getVariance(), // 2
                     (kldGain2 + subsetSelfInfo2) / allianceMembers.size(), // 3
                     (kldStats.getSum() - mutualInfo) / allianceMembers.size(), // 4
