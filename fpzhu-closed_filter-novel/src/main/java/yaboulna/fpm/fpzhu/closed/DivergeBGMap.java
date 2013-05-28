@@ -1984,12 +1984,17 @@ public class DivergeBGMap {
 
             Collection<Set<String>> allianceMembers = allianceTransitiveInverse.get(e.getKey());
             double temporalEntropy = 0;
-            SummaryStatistics temporalProbStats = new SummaryStatistics();
+            double temporalConditionalEntr = 0;
             
+            SummaryStatistics temporalProbStats = new SummaryStatistics();
+            Set<Long> intersectSet = Sets.newHashSet();
+            
+            double fgNumTweets2 = fgNumTweets * fgNumTweets;
             double mutualInfo = 0;
             double freqSubset = fgIdsMap.get(e.getKey()).size();
             for (Set<String> member : allianceMembers) {
-              double freqSuperset = fgIdsMap.get(member).size();
+              Set<Long> mDocIds = Sets.newCopyOnWriteArraySet(fgIdsMap.get(member));
+              double freqSuperset = mDocIds.size();
               double conditionalProb;
               
               Integer bgFreq = bgCountMap.get(member);
@@ -2001,6 +2006,8 @@ public class DivergeBGMap {
               temporalProbStats.addValue(temporalProb);
               temporalEntropy += temporalProb * DoubleMath.log2(temporalProb);
               
+              temporalConditionalEntr -= freqSuperset * DoubleMath.log2((freqSuperset * (fgNumTweets + bgNumTweets)) / fgNumTweets2);
+              
 // if(confidentItemsets.containsKey(member)){
 // conditionalProb = confidentItemsets.get(member);
 // } else {
@@ -2008,6 +2015,15 @@ public class DivergeBGMap {
               conditionalProb = freqSuperset / freqSubset;
 
               mutualInfo += conditionalProb * DoubleMath.log2(conditionalProb / (freqSuperset / fgNumTweets));
+              
+              
+              for (Set<String> member2 : allianceMembers) {
+                if(member == member2){
+                  continue;
+                }
+                
+                intersectSet.addAll(Sets.intersection(Sets.newCopyOnWriteArraySet(fgIdsMap.get(member2)), mDocIds));
+              }
             }
             mutualInfo *= freqSubset / fgNumTweets;
 
@@ -2049,17 +2065,19 @@ public class DivergeBGMap {
             selectionFormat.out().append(printMultiset(mergedItemset, fgCountMap));
             selectionFormat
                 .format(
-                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f" +
+                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%d\t%.15f\t%.15f" +
                     "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
 
-                    temporalEntropy, //2
+                    -temporalEntropy / allianceMembers.size(), //2
                     temporalProbStats.getMean(), //3
                     temporalProbStats.getVariance(), //4
                     temporalProbStats.getMin(), //5
                     temporalProbStats.getMax(), //6
                     temporalProbStats.getN(), //7
-                    temporalProbStats.getSumOfLogs(), //8
-                    // all columns below + 7
+                    intersectSet.size(), //8
+                    intersectSet.size() * 1.0 / unionDocId.size(), //9
+                    temporalConditionalEntr / allianceMembers.size(), //10
+                    // all columns below + 9
                     kldStats.getVariance(), // 2
                     (kldGain2 + subsetSelfInfo2) / allianceMembers.size(), // 3
                     (kldStats.getSum() - mutualInfo) / allianceMembers.size(), // 4
