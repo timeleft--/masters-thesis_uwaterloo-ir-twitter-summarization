@@ -2049,6 +2049,7 @@ public class DivergeBGMap {
             selectionFormat.out().append(printMultiset(mergedItemset, fgCountMap));
             selectionFormat
                 .format(
+                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f" +
                     "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
 
                     temporalEntropy, //2
