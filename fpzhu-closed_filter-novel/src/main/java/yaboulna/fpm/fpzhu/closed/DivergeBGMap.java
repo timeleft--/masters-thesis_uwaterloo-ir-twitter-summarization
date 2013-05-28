@@ -273,8 +273,8 @@ public class DivergeBGMap {
 
   private static final boolean ALLIANCES_MERGE_WITH_HEAD = false;
   private static final boolean PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE = false;
-  private static final boolean REAL_LOG_KLD = true;
-  private static final boolean REAL_PROB_KLD = true;
+  private static boolean REAL_LOG_KLD = false;
+  private static boolean REAL_PROB_KLD = false;
 
   private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
 
@@ -363,6 +363,8 @@ public class DivergeBGMap {
         filterLargeNumSiblings = true;
         maxSiblingsThreshold = Integer.parseInt(args[3].substring(maxSibIx + 6, maxSibIx + 8));
       }
+      REAL_LOG_KLD = args[3].contains("LogKLD");
+      REAL_PROB_KLD = args[3].contains("ProbKLD");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -389,6 +391,8 @@ public class DivergeBGMap {
     LOG.info("clusterWithOneSelf: " + clusterWithOneSelf);
     LOG.info("alwaysFindParent: " + alwaysFindParent);
     LOG.info("filterLargeNumSiblings: " + filterLargeNumSiblings);
+    LOG.info("REAL_LOG_KLD: " + REAL_LOG_KLD);
+    LOG.info("REAL_PROB_KLD: " + REAL_PROB_KLD);
 
     String thresholds = "";
 // thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
@@ -2170,12 +2174,12 @@ public class DivergeBGMap {
         LOG.info("absMaxDiffEnforced: {}", stronglyClosedItemsetsFilter.absMaxDiffEnforced);
         LOG.info("KLD+Itemsets: {}", positiveKLDivergence.size());
         LOG.info("HighConfidenceIS: {}", confidentItemsets.size());
-        LOG.info("confParen_1KMean", confParent_1K.getMean());
-        LOG.info("confParen1_3KMean", confParent1_3K.getMean());
-        LOG.info("confParen3_KMean", confParent3_K.getMean());
-        LOG.info("confParen_1KN", confParent_1K.getN());
-        LOG.info("confParen1_3KN", confParent1_3K.getN());
-        LOG.info("confParen3_KN", confParent3_K.getN());
+        LOG.info("confParen_1KMean: {}", confParent_1K.getMean());
+        LOG.info("confParen1_3KMean: {}", confParent1_3K.getMean());
+        LOG.info("confParen3_KMean: {}", confParent3_K.getMean());
+        LOG.info("confParen_1KN: {}", confParent_1K.getN());
+        LOG.info("confParen1_3KN: {}", confParent1_3K.getN());
+        LOG.info("confParen3_KN: {}", confParent3_K.getN());
         LOG.info("FilteredIS: {}", filteredIS);
         LOG.info("bufferSizeNeeded4CandidateMax: {}", bufferSizeNeeded4Candidate.getMax());
         LOG.info("bufferSizeNeeded4CandidateMean: {}", bufferSizeNeeded4Candidate.getMean());
