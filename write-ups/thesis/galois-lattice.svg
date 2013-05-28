@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+    xmlns:latexdraw="http://latexdraw.sourceforge.net/namespaces/latexdraw"
+    version="1.1" baseProfile="full">
+    <defs/>
+    <g>
+        <g latexdraw:type="picture" id="id230">
+            <image
+                xlink:href="/Users/yia/Code/thesis/write-ups/thesis/galois-lattice_pasquier-1999.png"
+                x="0.0" y="-1.0" height="695" width="842"/>
+        </g>
+        <g latexdraw:type="rectangle" id="id232">
+            <rect x="387.0" y="532.0" width="60.0" height="44.0"
+                latexdraw:borderPos="outer" stroke-width="2.0"
+                stroke="black" fill="none"/>
+        </g>
+        <g latexdraw:type="rectangle" id="id233">
+            <rect x="516.0" y="394.0" width="60.0" height="44.0"
+                latexdraw:borderPos="outer" stroke-width="2.0"
+                stroke="black" fill="none"/>
+        </g>
+        <g latexdraw:type="rectangle" id="id234">
+            <rect x="597.0" y="251.0" width="60.0" height="44.0"
+                latexdraw:borderPos="outer" stroke-width="2.0"
+                stroke="black" fill="none"/>
+        </g>
+        <g latexdraw:type="rectangle" id="id235">
+            <rect x="262.0" y="121.0" width="73.0" height="44.0"
+                latexdraw:borderPos="outer" stroke-width="2.0"
+                stroke="black" fill="none"/>
+        </g>
+        <g latexdraw:type="rectangle" id="id236">
+            <rect x="106.0" y="393.0" width="60.0" height="44.0"
+                latexdraw:borderPos="outer" stroke-width="2.0"
+                stroke="black" fill="none"/>
+        </g>
+        <g latexdraw:type="rectangle" id="id237">
+            <rect x="641.75" y="589.75" width="206.5" height="99.5"
+                latexdraw:borderPos="outer" stroke-width="1.5"
+                stroke="white" fill="white"/>
+        </g>
+        <g latexdraw:type="picture" id="id238">
+            <image
+                xlink:href="/Users/yia/Code/thesis/write-ups/thesis/galois-lattice_frequent-closed.png"
+                x="10.0" y="672.0" height="44" width="363"/>
+        </g>
+        <g latexdraw:type="picture" id="id240">
+            <image
+                xlink:href="/Users/yia/Code/thesis/write-ups/thesis/galois-lattice_frequent-itemset.png"
+                x="4.0" y="626.0" height="52" width="327"/>
+        </g>
+        <g latexdraw:type="picture" id="id242">
+            <image
+                xlink:href="/Users/yia/Code/thesis/write-ups/thesis/galois-lattice_infrequent-itemset.png"
+                x="3.0" y="587.0" height="48" width="227"/>
+        </g>
+        <g latexdraw:type="rectangle" id="id244">
+            <rect x="13.0" y="675.0" width="51.0" height="42.0"
+                latexdraw:borderPos="outer" stroke-width="2.0"
+                stroke="black" fill="none"/>
+        </g>
+    </g>
+    <metadata>
+        <latexdraw:metadata>
+            <latexdraw:displayBorders>false</latexdraw:displayBorders>
+            <latexdraw:autoAdjust>true</latexdraw:autoAdjust>
+            <latexdraw:ppc>50</latexdraw:ppc>
+            <latexdraw:zoom>1.0</latexdraw:zoom>
+            <latexdraw:unit>cm</latexdraw:unit>
+            <latexdraw:classicGrid>false</latexdraw:classicGrid>
+            <latexdraw:gridGap>10</latexdraw:gridGap>
+            <latexdraw:code>0</latexdraw:code>
+            <latexdraw:displayGrid>true</latexdraw:displayGrid>
+            <latexdraw:magneticGrid>false</latexdraw:magneticGrid>
+            <latexdraw:autoUpdate>true</latexdraw:autoUpdate>
+            <latexdraw:version>2.0.8</latexdraw:version>
+            <latexdraw:size>
+                <latexdraw:width>1440</latexdraw:width>
+                <latexdraw:height>803</latexdraw:height>
+            </latexdraw:size>
+            <latexdraw:position>
+                <latexdraw:x>4</latexdraw:x>
+                <latexdraw:y>22</latexdraw:y>
+            </latexdraw:position>
+            <latexdraw:dividerPosition>0.8256944444444444</latexdraw:dividerPosition>
+            <latexdraw:displayCodePanel>true</latexdraw:displayCodePanel>
+            <latexdraw:displayXScale>true</latexdraw:displayXScale>
+            <latexdraw:displayYScale>true</latexdraw:displayYScale>
+            <latexdraw:delimitorOpacity>130</latexdraw:delimitorOpacity>
+        </latexdraw:metadata>
+    </metadata>
+</svg>

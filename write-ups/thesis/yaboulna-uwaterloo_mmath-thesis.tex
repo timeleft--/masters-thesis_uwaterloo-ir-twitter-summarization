@@ -104,8 +104,8 @@
     pdfmenubar=true,        % show Acrobat’s menu?
     pdffitwindow=false,     % window fit to page when opened
     pdfstartview={FitH},    % fits the width of the page to the window
-    pdftitle={uWaterloo\ LaTeX\ Thesis\ Template},    % title: CHANGE THIS TEXT!
-%    pdfauthor={Author},    % author: CHANGE THIS TEXT! and uncomment this line
+    pdftitle={Efficient Temporal Synopsis of Social Media Streams},    % title: CHANGE THIS TEXT!
+    pdfauthor={Younes Abouelnagah},    % author: CHANGE THIS TEXT! and uncomment this line
 %    pdfsubject={Subject},  % subject: CHANGE THIS TEXT! and uncomment this line
 %    pdfkeywords={keyword1} {key2} {key3}, % list of keywords, and uncomment this line if desired
     pdfnewwindow=true,      % links in new window
@@ -415,56 +415,6 @@ We now introduce the notation used in this paper:
 \chapter{Background and Related Work}
 \label{sec:related}
 
-The problem of having many itemsets, with redundancy and noise, can be addressed by
-picking out  representative itemsets that satisfy a certain condition
-that reduces redundancy in the mining results (itemsets and their support information).
-
-Most similar to the \emph{distinct} itemsets we propose in this paper
-are the $\delta$-covered~\cite{xin2005mining} and the
-$\delta$-free~\cite{boulicaut2003free} sets.
-The $\delta$-covered condition is exactly the opposite of the \emph{distinct}
-condition, and it ``relaxes the closure condition to further reduce pattern
-set size'' \cite{liu2012finding}.
-The $\delta$-free condition is similar to the \emph{distinct} condition,
-but it is used to eliminate different itemsets, since its motivation
-is to provide a compressed representation of itemsets by sacrificing support
-information. The mining results of our method include the postings list of
-occurrences of each itemset.
-
-Another approach to picking out itemsets is choosing ones that 
-can be used to compress the data. The KRIMP algorithm~\cite{vreeken2011krimp} is 
-a good example of methods that follow this approach. Our goal is different because
-we aim to filter out itemsets pertaining to personal updates, which make up a large
-portion of social media data. 
-A similar goal is sought by the Maximally informaTiVe itemsets (MTV) algorithm~\cite{mampaey2011tell}. 
-MTV uses a maximum entropy model to judge if an itemset is redundant, finally choosing the
-top K itemsets according to the KL-Diverge between the itemset's  frequency and  the model's estimate. 
-In this work we focus on efficiency, allowing the summary to include larger numbers
-of itemsets than the values of K for which MTV is efficient.
-This is crucial for scalability to the volumes of data typical in social media streams.
-
-Likewise, Yan et al.~\cite{yan2005summarizing} choose K \emph{master} itemsets as representatives of the data. A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemset}. 
-While the use of clustering is similarly motivated by the trivial difference between itemsets, the K \emph{master} itemsets  have to cover the whole data, unlike the \emph{strongly closed itemsets} which actually avoid clustering together different topics or different opinions within a topic.
-%Yan:
-% A method is proposed for choosing K by minimizing the restoration error of support information, 
-%To improve performance, the calculation of the distance between itemsets is approximated to avoid accessing the data. We can achieve high performance without approximation because we apply clustering to subsets of the data that are very likely to be close to each other.
-
- %Rhetoric:
-%The motivation of most research on finding representative itemsets involves
-%compressing itemsets mined from a general dataset.
-%This motivation leads to decisions different from those required to mine the
-%most informative itemsets mined from text.
-
-Our work complements the work done by Yang et al.~\cite{yang2012framework} for using frequent itemsets as a temporal summary. They have proposed a framework for storing mining results of temporally consecutive batches of data using a pyramidal time window. Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
-The choice of itemsets from each batch is based on their utility in compressing the data, and thus they use non-negative matrix factorization to extract topics related to a query. We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
-
-In Lau et al.~\cite{laumicroblog}, related methods for term weighting were
-used in pseudo-relevance feedback for Twitter search,
-and achieved substantial improvements over a baseline.
-Our work can provide such methods by a short ranked list of itemsets.
-%, potentially improving their results.
-
-
 \section{Frequent Itemset Mining}
 Frequent itemset mining comprises a large body of work that goes back to the
 early 1990s~\cite{agrawal1993mining}. 
@@ -549,7 +499,7 @@ Building conditional pattern bases and sub-FP-trees becomes very time and space 
 %Many alternate representations as well as enhancements to the original FP-Growth
 %algorithm were proposed~\cite{cats.....}, however they still operate in the same way.
 
-\begin{figure}[h]
+\begin{figure}%[h]
 \centering
 \scalebox{0.3}{
 \includegraphics{fp-growth_han-2004.png}
@@ -565,21 +515,165 @@ It can be argued that algorithms that traverse a representation of the DB are op
 However, in our categorization we focus on the logic behind how itemsets are generated or pruned rather than the data structure used to generate them.
 After all, any algorithm must calculate the support of itemsets, and this needs either maintaining a representation of the DB or scanning the transactions. 
 Algorithms that operate in the solution space prune itemsets that do not possess certain properties. 
-The limited number of itemsets that possess the desired property are sufficient to generate the rest of the solution (other frequent itemsets and their support).
-The reduction in the number of itemsets mined improves the performance of such algorithms, even if they rely on candidate generation to enumerate possible itemsets before checking for the desired property.
+The limited number of itemsets that possess the desired property are sufficient to deduce the rest of the solution (other frequent itemsets and their support).
+The reduction in the number of itemsets mined improves the performance of such algorithms, 
+even if they rely on candidate generation to enumerate possible itemsets before checking for the desired property.
+The elect itemsets can be used directly, since the properties usually filter out 
+%to creates a concise representation of the solution 
+%by removing redundancy.
+redundant itemsets only.
 
 The closure property~\cite{pasquier1999discovering,pasquier1999efficient,zaki2002charm} prunes an itemset
 if it has the same support as its supersets. 
-We base our work on an algorithm that mines closed itemsets, namely
-%\cite{zaki1997new,}
-%Another algorithm, not as widely used but robust against data sparsity, is
-Linear-time Closed itemset Mining (LCM)~\cite{uno2004lcm}.
-We will explain the closure property and describe LCM in detail in section \ref{sec:lcm}.
-Here we give another example of an algorithm that selects itemsets with certain properties, 
-which are tailored for text mining. %selecting itemsets that are useful for
+It is easy to see that all itemsets and their support can be derived from the set of \emph{closed} itemsets. 
+A formal proof is given by Pasquier et al.~\cite{pasquier1999discovering}.
+The smallest itemset of an equivalence class of itemsets having the same support
+is called a \emph{generator}~\cite{kryszkiewicz2001concise} or a \emph{free set}~\cite{boulicaut2000approximation}. 
+It is also possible to keep only the generator of each equivalence class, 
+but in this case some infrequent itemsets has to be kept 
+in order to be able to calculate the support of all frequent itemsets~\cite{kryszkiewicz2001concise}. 
+A different selection of itemsets can be made according to the Non-Derivable property~\cite{calders2002mining,calders2007non}, 
+which is linked to the former properties. 
+
+Finding closed itemsets can be done by arranging possible itemsets into a Galois lattice, 
+then traversing the lattice using the Galois connection between itemsets and transactions
+in which they appear. 
+Figure~\ref{fig:lattice} shows an example of a Galois lattice. 
+The Galios connection is a pair of operators, one to map an itemset to transactions in which it appears, 
+and another to map a set of transactions to the largest itemset that appears in all of them.
+Applying the two operators in cascade grows an itemset directly to its closed superset.
+More details can be found in Pasquier et al.~\cite{pasquier1999efficient} and Zaki et al.~\cite{zaki2002charm}.
+
+\begin{figure}
+\centering
+\begin{tabular}{|c|p{1.7cm}|}
+\hline
+TID&Items\\\hline
+1&A B C\\
+2&B C E\\ 
+3&A B C E\\
+4&B E\\
+5&A B C E\\
+\hline
+\multicolumn{2}{c}{The transaction database}\\
+\multicolumn{2}{c}{}\\
+\end{tabular}
+\scalebox{0.5}{
+\includegraphics{galois-lattice.png}
+}
+\caption{Example of a Galois lattice adapted from Pasquier et al.~\cite{pasquier1999efficient}}
+\label{fig:lattice}
+\end{figure}
+
+Some algorithms take advantage of the Closed Property to 
+reduce the search space more dramatically,
+such as CLOSET~\cite{pei2000closet}
+and LCM~\cite{uno2004lcm}.
+Our work is based on LCM (which stands for Linear-time Closed itemset Mining)~\cite{uno2004lcm}.
+As a starting point for our work, we use the implementation of LCM submitted
+to the workshop for Frequent Itemset Mining Implementations (FIMI) in
+2004~\cite{DBLP:conf/fimi/2004}, which was the workshop's award winner. 
+This algorithm is robust against data sparsity, 
+and has low memory requirements 
+since it does not store intermediate results.
+We will explain the closure property and describe LCM in detail in the section \ref{sec:lcm}. 
+We proceed by discussing other areas of related work.
+
+%-------------------------------------------------------
+
+\section{Election of representative or interesting itemsets}
+
+The problem of having many itemsets, with redundancy and noise, can be addressed by
+picking out  representative itemsets that satisfy a certain condition.
+%based on the conciseness or interestingness or the selection.
+The representative itemsets are not necessarily sufficient to
+deduce the rest of the solution (itemsets and their support information).
+Related approach to picking out representative itemsets are: 
+choosing a set that will minimize the reconstruction error of the full solution, 
+and limiting the number of itemsets to a user specified number.
+
+%Most similar to the \emph{distinct} itemsets we propose in this thesis
+The $\delta$-free~\cite{boulicaut2003free} and 
+the $\delta$-covered~\cite{xin2005mining} sets are
+examples of conditions motivated by providing a compressed representation 
+of itemsets through sacrificing support information.
+The $\delta$-free condition selects an itemsets if its support
+is different from the support of all its subsets at least by $\delta$.
+This selection of itemsets can be used to approximate the support 
+of other frequent itemsets with a guarantee on the error,
+but only if some infrequent itemsets are included in the selection.
+The $\delta$-free condition implies setting an upper bound on the
+strength of association rules that can be derived from selected itemsets.
+It is suitable for compressing mining results from dense datasets,
+but it is exactly the opposite of \emph{distinct} itemsets we propose in this thesis.
 
 
-\section{Basic Algorithm}
+The $\delta$-covered condition is also the opposite of the \emph{distinct}
+condition, as it ``relaxes the closure condition to further reduce pattern
+set size'' \cite{liu2012finding}. The \emph{distinct}  condition strengthens the closure condition.
+The $\delta$-covered condition sets an upper bound on the confidence of the rule that 
+an itemset implies a superset; 
+if an itemset implies its superset with confidence greater than $\delta$, 
+then it is considered to be covered by the superset and can be pruned.
+On the other hand, the \emph{distinct} condition
+%selects only itemsets that are implied by a subset with high confidence.
+sets a lower bound on the confidence of a derived association rule.
+Nevertheless, the $\delta$-clusters are similar to the \emph{strongly closed
+itemset} clusters proposed in this thesis. 
+The efficient version of the clustering algorithm proposed by Xin et al.~\cite{xin2005mining}, RPLocal, 
+limits the search space for clustering candidates using a similar reasoning to 
+the reasoning used in our algorithm~--~exploiting the sequence in which frequent itemsets are found.
+The difference between $\delta$-clusters and \emph{strongly closed itemset} clusters
+is that $\delta$-clusters are soft clusters, while \emph{strongly closed itemset} clusters
+are hard clusters. 
+Also, the distance measure used in $\delta$-clusters is one minus the Jaccard similarity,
+while the \emph{strongly closed itemset} clusters are based on association rule confidence.
+
+Yan et al.~\cite{yan2005summarizing} proposed a method to choose K \emph{master} itemsets as representatives of the itemsets. 
+However, rather than leaving K as a user specified parameter
+a method is proposed for choosing K by minimizing the restoration error of support information.%,
+%thus it can be considered as a lossy compression approach
+A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemset}. 
+While the use of clustering is similarly motivated by the trivial difference between itemsets, the K \emph{master} itemsets  have to cover all itemsets.  
+On the other hand,  \emph{strongly closed itemsets}  actually avoid clustering together itemsets representing different topics or different opinions within a topic.
+Furthermore, Yan et al. improve performance by approximating the calculation of the distance between itemsets, to avoid accessing the data. We can achieve high performance without approximation because we apply clustering to subsets of the data that are very likely to be close to each other.
+
+Another approach to picking out itemsets is choosing ones that 
+can be used to compress the data. The KRIMP algorithm~\cite{vreeken2011krimp} is 
+a good example of methods that follow this approach. Our goal is different because
+we aim to filter out itemsets pertaining to personal updates, which make up a large
+portion of social media data. 
+A similar goal is sought by the Maximally informaTiVe itemsets (MTV) algorithm~\cite{mampaey2011tell}. 
+MTV uses a maximum entropy model to judge if an itemset is redundant, finally choosing the
+top K itemsets according to the KL-Diverge between the itemset's  frequency and  the model's estimate. 
+In this work we focus on efficiency, allowing the summary to include larger numbers
+of itemsets than the values of K for which MTV is efficient.
+This is crucial for scalability to the volumes of data typical in social media streams.
+
+
+
+ %Rhetoric:
+%The motivation of most research on finding representative itemsets involves
+%compressing itemsets mined from a general dataset.
+%This motivation leads to decisions different from those required to mine the
+%most informative itemsets mined from text.
+
+Our work complements the work done by Yang et al.~\cite{yang2012framework} for using frequent itemsets as a temporal summary. They have proposed a framework for storing mining results of temporally consecutive batches of data using a pyramidal time window. Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
+The choice of itemsets from each batch is based on their utility in compressing the data, and thus they use non-negative matrix factorization to extract topics related to a query. We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
+
+In Lau et al.~\cite{laumicroblog}, related methods for term weighting were
+used in pseudo-relevance feedback for Twitter search,
+and achieved substantial improvements over a baseline.
+Our work can provide such methods by a short ranked list of itemsets.
+%, potentially improving their results.
+
+% ===================================
+
+\chapter{Mining social media}
+\label{sec:socmine}
+
+
+\section{The Linear-time Closed itemset Mining Algorithm}
 \label{sec:lcm}
 To overcome the bottleneck of \emph{candidate generation}, many proposed
 algorithms take hints from the transaction space rather than operating blindly
@@ -756,17 +850,11 @@ X $\gets$ Inverted index of E\;
 \label{algo:lcmix}
 \end{algorithm}
 
-\chapter{Mining social media}
-\label{sec:socmine}
-
+%-----------------------------
 Besides, the memory requirements of the FP-Growth algorithm suffers from the sparsity
 of data, since the data structure is succinct only if it can find common
 prefixes within the constraints of its invariant. 
 Even using
-
-As a starting point for our work, we use the implementation of LCM submitted
-to the workshop for Frequent Itemset Mining Implementations (FIMI) in
-2004~\cite{DBLP:conf/fimi/2004}, which was the workshop's award winner. 
 
 Throughout this paper we use data collected from the Twitter public
 stream\footnote{https://dev.twitter.com/docs/streaming-apis/streams/public}
