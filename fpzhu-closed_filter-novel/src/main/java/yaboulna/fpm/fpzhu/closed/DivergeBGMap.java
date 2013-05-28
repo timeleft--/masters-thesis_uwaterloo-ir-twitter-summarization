@@ -273,8 +273,11 @@ public class DivergeBGMap {
 
   private static final boolean ALLIANCES_MERGE_WITH_HEAD = false;
   private static final boolean PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE = false;
-  private static boolean REAL_LOG_KLD = false;
-  private static boolean REAL_PROB_KLD = false;
+  
+  //private static boolean FREQ_KLD = true; //default
+  private static boolean REAL_WEIGHT_SUPP_KLD = false;
+  private static boolean PROB_KLD = false;
+  private static boolean SUPP_KLD = false;
 
   private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
 
@@ -363,8 +366,10 @@ public class DivergeBGMap {
         filterLargeNumSiblings = true;
         maxSiblingsThreshold = Integer.parseInt(args[3].substring(maxSibIx + 6, maxSibIx + 8));
       }
-      REAL_LOG_KLD = args[3].contains("LogKLD");
-      REAL_PROB_KLD = args[3].contains("ProbKLD");
+      
+      PROB_KLD = args[3].contains("ProbKLD");
+      SUPP_KLD = args[3].contains("SuppKLD");
+      REAL_WEIGHT_SUPP_KLD = args[3].contains("RealWSuppKLD");    
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -391,8 +396,10 @@ public class DivergeBGMap {
     LOG.info("clusterWithOneSelf: " + clusterWithOneSelf);
     LOG.info("alwaysFindParent: " + alwaysFindParent);
     LOG.info("filterLargeNumSiblings: " + filterLargeNumSiblings);
-    LOG.info("REAL_LOG_KLD: " + REAL_LOG_KLD);
-    LOG.info("REAL_PROB_KLD: " + REAL_PROB_KLD);
+    
+    LOG.info("PROB_KLD: " + PROB_KLD);
+    LOG.info("SUPP_KLD: " + SUPP_KLD);
+    LOG.info("REAL_WEIGHT_SUPP_KLD: " + REAL_WEIGHT_SUPP_KLD);
 
     String thresholds = "";
 // thresholds += " ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD=" + ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD;
@@ -561,7 +568,7 @@ public class DivergeBGMap {
                 bgIDFMap.clear();
               }
               Files.readLines(bgFiles.get(b), Charsets.UTF_8, new ItemsetTabCountProcessor(bgCountMap));
-              if(REAL_PROB_KLD){
+              if(PROB_KLD){
                 for(Integer cnt: bgCountMap.values()){
                   bgSumFreq.add(cnt);
                 }
@@ -612,10 +619,14 @@ public class DivergeBGMap {
             );
         final double bgNumTweets = bgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
         final double fgNumTweets = fgCountMap.remove(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
-        final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
+        final double bgFgLogP=
+        SUPP_KLD?
+          Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()))
+        :
+          0;
         
         final MutableInt fgSumFreq = new MutableInt();
-        if(REAL_PROB_KLD){
+        if(PROB_KLD){
           for(Integer count: fgCountMap.values()){
             fgSumFreq.add(count);
           }
@@ -647,7 +658,7 @@ public class DivergeBGMap {
 
               Integer bgCount = bgCountMap.get(itemset);
               double klDiver = Double.MIN_VALUE;
-              if (REAL_PROB_KLD) {
+              if (PROB_KLD) {
                 if(bgCount == null){
                   //Q(i) = 0 implies P(i) = 0 (Aboslute continuity)
                   //thus 0 ln 0 = 0 because lim[x->0] x ln(x) = 0
@@ -667,7 +678,7 @@ public class DivergeBGMap {
                 }
                 if (bgCount != null) {
                   klDiver = fgFreq;
-                  if (REAL_LOG_KLD) {
+                  if (REAL_WEIGHT_SUPP_KLD) {
                     klDiver /= fgNumTweets;
                   }
                   klDiver *= (Math.log(fgFreq / bgCount) + bgFgLogP);
