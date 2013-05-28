@@ -273,7 +273,8 @@ public class DivergeBGMap {
 
   private static final boolean ALLIANCES_MERGE_WITH_HEAD = false;
   private static final boolean PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE = false;
-  private static final boolean REAL_CANADIAN_KLD = true;
+  private static final boolean REAL_LOG_KLD = true;
+  private static final boolean REAL_PROB_KLD = true;
 
   private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
 
@@ -400,7 +401,7 @@ public class DivergeBGMap {
     if (filterLargeNumSiblings) {
       thresholds += " MaxSiblings=" + maxSiblingsThreshold;
     }
-    
+
     LOG.info("Thresholds: " + thresholds);
 
     int bgLenSecs = 4 * 7 * 24 * 3600;
@@ -477,6 +478,7 @@ public class DivergeBGMap {
     Collections.sort(bgFiles, NameFileComparator.NAME_COMPARATOR);
     long loadedBgStartUx = -1;
     final Map<Set<String>, Integer> bgCountMap = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS);
+    final MutableInt bgSumFreq = new MutableInt();
     final Map<String, Double> bgIDFMap = Maps.newHashMapWithExpectedSize(BG_MAX_NUM_ITEMSETS / 10);
 
     Splitter underscoreSplit = Splitter.on('_');
@@ -550,10 +552,16 @@ public class DivergeBGMap {
               LOG.info("Loading background freqs from {}", bgFiles.get(b));
               loadedBgStartUx = bgFileWinStart;
               bgCountMap.clear();
+              bgSumFreq.setValue(0);
               if (idfFromBG) {
                 bgIDFMap.clear();
               }
               Files.readLines(bgFiles.get(b), Charsets.UTF_8, new ItemsetTabCountProcessor(bgCountMap));
+              if(REAL_PROB_KLD){
+                for(Integer cnt: bgCountMap.values()){
+                  bgSumFreq.add(cnt);
+                }
+              }
               LOG.info("Loaded background freqs - num itemsets: {} ", bgCountMap.size());
             }
             break;
@@ -601,6 +609,13 @@ public class DivergeBGMap {
         final double bgNumTweets = bgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
         final double fgNumTweets = fgCountMap.remove(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
         final double bgFgLogP = Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()));
+        
+        final MutableInt fgSumFreq = new MutableInt();
+        if(REAL_PROB_KLD){
+          for(Integer count: fgCountMap.values()){
+            fgSumFreq.add(count);
+          }
+        }
 
         final MutableInt unMaximalIS = new MutableInt(0);
         final SummaryStatistics bufferSizeNeeded4Candidate = new SummaryStatistics();
@@ -624,23 +639,35 @@ public class DivergeBGMap {
 
             for (Set<String> itemset : fgCountMap.keySet()) {
 
-              double fgFreq = fgCountMap.get(itemset) + 1.0;
+              double fgFreq = fgCountMap.get(itemset);
 
               Integer bgCount = bgCountMap.get(itemset);
               double klDiver = Double.MIN_VALUE;
-              if (bgCount == null) {
-                if (!fallBackToItemsKLD) {
-                  bgCount = 1;
+              if (REAL_PROB_KLD) {
+                if(bgCount == null){
+                  //Q(i) = 0 implies P(i) = 0 (Aboslute continuity)
+                  //thus 0 ln 0 = 0 because lim[x->0] x ln(x) = 0
+                  klDiver = 0;
                 } else {
-                  klDiver = calcComponentsKLDiver(itemset, fgFreq, bgCountMap, fgCountMap, bgFgLogP, kldCache);
+                  klDiver = (fgFreq / fgSumFreq.doubleValue());
+                  klDiver *= Math.log(klDiver / (bgCount / bgSumFreq.doubleValue() ) );
                 }
-              }
-              if (bgCount != null) {
-                klDiver = fgFreq;
-                if (REAL_CANADIAN_KLD) {
-                  klDiver /= fgNumTweets;
+              } else {
+                fgFreq +=  1.0;
+                if (bgCount == null) {
+                  if (!fallBackToItemsKLD) {
+                    bgCount = 1;
+                  } else {
+                    klDiver = calcComponentsKLDiver(itemset, fgFreq, bgCountMap, fgCountMap, bgFgLogP, kldCache);
+                  }
                 }
-                klDiver *= (Math.log(fgFreq / bgCount) + bgFgLogP);
+                if (bgCount != null) {
+                  klDiver = fgFreq;
+                  if (REAL_LOG_KLD) {
+                    klDiver /= fgNumTweets;
+                  }
+                  klDiver *= (Math.log(fgFreq / bgCount) + bgFgLogP);
+                }
               }
               kldCache.put(itemset, klDiver);
 
@@ -1867,9 +1894,11 @@ public class DivergeBGMap {
 
               double fgProb = unionDocId.size() * 1.0 / fgNumTweets;
               if (fgProb > historyAvg2StdDev) {
-                trendingFmt.format(printMultiset(mergedItemset, fgCountMap) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); // ,unionDocId);
+                trendingFmt.format(printMultiset(mergedItemset, fgCountMap) + "\t%.15f\t%.15f\n", fgProb,
+                    historyAvg2StdDev); // ,unionDocId);
               } else {
-                notTrendingFmt.format(printMultiset(mergedItemset, fgCountMap) + "\t%.15f\t%.15f\n", fgProb, historyAvg2StdDev); // unionDocId);
+                notTrendingFmt.format(printMultiset(mergedItemset, fgCountMap) + "\t%.15f\t%.15f\n", fgProb,
+                    historyAvg2StdDev); // unionDocId);
               }
 
               hs.addValue(fgProb);
@@ -2287,25 +2316,25 @@ public class DivergeBGMap {
     }
     return retVal / sumTf;
   }
-  
-  static class FrequencyDescComparator implements Comparator<String>{
+
+  static class FrequencyDescComparator implements Comparator<String> {
     final Map<Set<String>, Integer> fgCountMap;
-    FrequencyDescComparator(Map<Set<String>, Integer> fgCountMap){
+    FrequencyDescComparator(Map<Set<String>, Integer> fgCountMap) {
       this.fgCountMap = fgCountMap;
     }
-    
+
     @Override
     public int compare(String o1, String o2) {
       Set<String> o1Set = Collections.singleton(o1);
       Set<String> o2Set = Collections.singleton(o2);
       Integer o1Freq = fgCountMap.get(o1);
       Integer o2Freq = fgCountMap.get(o2);
-      if(o1Freq == null){
+      if (o1Freq == null) {
         o1Freq = Integer.MIN_VALUE;
-      } 
-      if (o2Freq == null){
-        o2Freq = Integer.MIN_VALUE;  
-      } 
+      }
+      if (o2Freq == null) {
+        o2Freq = Integer.MIN_VALUE;
+      }
       return -o1Freq.compareTo(o2Freq);
     }
   }
@@ -2314,7 +2343,7 @@ public class DivergeBGMap {
     List<String> elts = Arrays.asList(itemset.toArray(new String[itemset.size()]));
     StringBuilder retVal = new StringBuilder();
     Collections.sort(elts, new FrequencyDescComparator(fgCountMap));
-//    Arrays.sort(elts);
+// Arrays.sort(elts);
     for (String e : elts) {
       retVal.append("," + e + "(1)");
     }
@@ -2325,7 +2354,6 @@ public class DivergeBGMap {
     List<String> elts = Arrays.asList(mset.elementSet().toArray(new String[mset.entrySet().size()]));
     StringBuilder retVal = new StringBuilder();
     Collections.sort(elts, new FrequencyDescComparator(fgCountMap));
-    
 
     for (String e : elts) {
       retVal.append("," + e + "(" + mset.count(e) + ")");
