@@ -2025,7 +2025,7 @@ public class DivergeBGMap {
 // LOG.info("An itemset is member in an alliance without being confident.. can this be?)
               conditionalProb = freqSuperset / freqSubset;
               
-              condProbKLD += conditionalProb * DoubleMath.log2(bgCond);
+              condProbKLD += conditionalProb * DoubleMath.log2(conditionalProb/bgCond);
 
               mutualInfo += conditionalProb * DoubleMath.log2(conditionalProb / (freqSuperset / fgNumTweets));
 
