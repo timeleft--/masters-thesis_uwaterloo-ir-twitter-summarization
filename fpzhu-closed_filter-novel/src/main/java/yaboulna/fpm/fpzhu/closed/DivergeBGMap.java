@@ -273,11 +273,11 @@ public class DivergeBGMap {
 
   private static final boolean ALLIANCES_MERGE_WITH_HEAD = false;
   private static final boolean PARENT_RECIPROCAL_CONFIDENCE_AZINDEFENCE = false;
-  
-  //private static boolean FREQ_KLD = true; //default
+
+  // private static boolean FREQ_KLD = true; //default
   private static boolean REAL_WEIGHT_SUPP_KLD = false;
   private static boolean PROB_KLD = false;
-  private static boolean SUPP_KLD = true; //default.. = !PROB_KLD
+  private static boolean SUPP_KLD = true; // default.. = !PROB_KLD
 
   private static final boolean PERFORMANCE_CALC_MODE_LESS_LOGGING = true;
 
@@ -366,10 +366,10 @@ public class DivergeBGMap {
         filterLargeNumSiblings = true;
         maxSiblingsThreshold = Integer.parseInt(args[3].substring(maxSibIx + 6, maxSibIx + 8));
       }
-      
+
       PROB_KLD = args[3].contains("ProbKLD");
       SUPP_KLD = !PROB_KLD; // && args[3].contains("SuppKLD");
-      REAL_WEIGHT_SUPP_KLD = args[3].contains("RealWSuppKLD");    
+      REAL_WEIGHT_SUPP_KLD = args[3].contains("RealWSuppKLD");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -396,7 +396,7 @@ public class DivergeBGMap {
     LOG.info("clusterWithOneSelf: " + clusterWithOneSelf);
     LOG.info("alwaysFindParent: " + alwaysFindParent);
     LOG.info("filterLargeNumSiblings: " + filterLargeNumSiblings);
-    
+
     LOG.info("PROB_KLD: " + PROB_KLD);
     LOG.info("SUPP_KLD: " + SUPP_KLD);
     LOG.info("REAL_WEIGHT_SUPP_KLD: " + REAL_WEIGHT_SUPP_KLD);
@@ -568,8 +568,8 @@ public class DivergeBGMap {
                 bgIDFMap.clear();
               }
               Files.readLines(bgFiles.get(b), Charsets.UTF_8, new ItemsetTabCountProcessor(bgCountMap));
-              if(PROB_KLD){
-                for(Integer cnt: bgCountMap.values()){
+              if (PROB_KLD) {
+                for (Integer cnt : bgCountMap.values()) {
                   bgSumFreq.add(cnt);
                 }
               }
@@ -619,15 +619,15 @@ public class DivergeBGMap {
             );
         final double bgNumTweets = bgCountMap.get(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
         final double fgNumTweets = fgCountMap.remove(ItemsetTabCountProcessor.NUM_TWEETS_KEY);
-        final double bgFgLogP=
-        SUPP_KLD?
-          Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()))
-        : //This is not possible now.. instead, it is the temporal entropy
-          0;
-        
+        final double bgFgLogP =
+            SUPP_KLD ?
+                Math.log((bgNumTweets + fgCountMap.size()) / (fgNumTweets + fgCountMap.size()))
+                : // This is not possible now.. instead, it is the temporal entropy
+                0;
+
         final MutableInt fgSumFreq = new MutableInt();
-        if(PROB_KLD){
-          for(Integer count: fgCountMap.values()){
+        if (PROB_KLD) {
+          for (Integer count : fgCountMap.values()) {
             fgSumFreq.add(count);
           }
         }
@@ -659,16 +659,16 @@ public class DivergeBGMap {
               Integer bgCount = bgCountMap.get(itemset);
               double klDiver = Double.MIN_VALUE;
               if (PROB_KLD) {
-                if(bgCount == null){
-                  //Q(i) = 0 implies P(i) = 0 (Aboslute continuity)
-                  //thus 0 ln 0 = 0 because lim[x->0] x ln(x) = 0
+                if (bgCount == null) {
+                  // Q(i) = 0 implies P(i) = 0 (Aboslute continuity)
+                  // thus 0 ln 0 = 0 because lim[x->0] x ln(x) = 0
                   klDiver = 0;
                 } else {
                   klDiver = (fgFreq / fgSumFreq.doubleValue());
-                  klDiver *= Math.log(klDiver / (bgCount / bgSumFreq.doubleValue() ) );
+                  klDiver *= Math.log(klDiver / (bgCount / bgSumFreq.doubleValue()));
                 }
               } else {
-                fgFreq +=  1.0;
+                fgFreq += 1.0;
                 if (bgCount == null) {
                   if (!fallBackToItemsKLD) {
                     bgCount = 1;
@@ -1985,10 +1985,17 @@ public class DivergeBGMap {
             Collection<Set<String>> allianceMembers = allianceTransitiveInverse.get(e.getKey());
             double temporalEntropy = 0;
             double temporalConditionalEntr = 0;
-            
+
             SummaryStatistics temporalProbStats = new SummaryStatistics();
             Set<Long> intersectSet = Sets.newHashSet();
-            
+
+            double probClusterInAllTime = 0;
+            double probEpochAndCluster = unionDocId.size() * 1.0 / (fgNumTweets + bgNumTweets);
+            double probEpochGivenCluster = 0;
+
+            Integer bgSubset = bgCountMap.get(e.getKey());
+            double condProbKLD = 0;
+
             double fgNumTweets2 = fgNumTweets * fgNumTweets;
             double mutualInfo = 0;
             double freqSubset = fgIdsMap.get(e.getKey()).size();
@@ -1996,32 +2003,37 @@ public class DivergeBGMap {
               Set<Long> mDocIds = Sets.newCopyOnWriteArraySet(fgIdsMap.get(member));
               double freqSuperset = mDocIds.size();
               double conditionalProb;
-              
+
               Integer bgFreq = bgCountMap.get(member);
-              if(bgFreq == null){
-                bgFreq = 1; //avoid 0
+              if (bgFreq == null) {
+                bgFreq = 1; // avoid 0
               }
+
+              double bgCond = bgFreq / (bgSubset != null ? bgSubset.doubleValue() : bgFreq.doubleValue());
               
-              double temporalProb = freqSuperset / (freqSuperset + bgFreq); 
+
+              double temporalProb = freqSuperset / (freqSuperset + bgFreq);
               temporalProbStats.addValue(temporalProb);
               temporalEntropy += temporalProb * DoubleMath.log2(temporalProb);
-              
-              temporalConditionalEntr -= freqSuperset * DoubleMath.log2((freqSuperset * (fgNumTweets + bgNumTweets)) / fgNumTweets2);
-              
+
+              temporalConditionalEntr -= freqSuperset
+                  * DoubleMath.log2((freqSuperset * (fgNumTweets + bgNumTweets)) / fgNumTweets2);
+
 // if(confidentItemsets.containsKey(member)){
 // conditionalProb = confidentItemsets.get(member);
 // } else {
 // LOG.info("An itemset is member in an alliance without being confident.. can this be?)
               conditionalProb = freqSuperset / freqSubset;
+              
+              condProbKLD += conditionalProb * DoubleMath.log2(bgCond);
 
               mutualInfo += conditionalProb * DoubleMath.log2(conditionalProb / (freqSuperset / fgNumTweets));
-              
-              
+
               for (Set<String> member2 : allianceMembers) {
-                if(member == member2){
+                if (member == member2) {
                   continue;
                 }
-                
+
                 intersectSet.addAll(Sets.intersection(Sets.newCopyOnWriteArraySet(fgIdsMap.get(member2)), mDocIds));
               }
             }
@@ -2065,19 +2077,28 @@ public class DivergeBGMap {
             selectionFormat.out().append(printMultiset(mergedItemset, fgCountMap));
             selectionFormat
                 .format(
-                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%d\t%.15f\t%.15f" +
-                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
+                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%d\t%.15f\t%.15f"
+                        + "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f" +
+                        "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
 
-                    -temporalEntropy / allianceMembers.size(), //2
-                    temporalProbStats.getMean(), //3
-                    temporalProbStats.getVariance(), //4
-                    temporalProbStats.getMin(), //5
-                    temporalProbStats.getMax(), //6
-                    temporalProbStats.getN(), //7
-                    intersectSet.size(), //8
-                    intersectSet.size() * 1.0 / unionDocId.size(), //9
-                    temporalConditionalEntr / allianceMembers.size(), //10
-                    // all columns below + 9
+                    -temporalEntropy / allianceMembers.size(), // 2
+                    temporalProbStats.getMean(), // 3
+                    temporalProbStats.getVariance(), // 4
+                    temporalProbStats.getMin(), // 5
+                    temporalProbStats.getMax(), // 6
+                    temporalProbStats.getN(), // 7
+                    intersectSet.size(), // 8
+                    intersectSet.size() * 1.0 / unionDocId.size(), // 9
+                    temporalConditionalEntr / allianceMembers.size(), // 10
+                    
+                    condProbKLD, //11
+                    condProbKLD / allianceMembers.size(), //12
+                    kldSubset + (condProbKLD ), //13
+                    kldSubset + (condProbKLD / allianceMembers.size()), //14
+                    subsetSelfInfo + condProbKLD, //15
+                    subsetSelfInfo + (condProbKLD / allianceMembers.size()), //16
+                    
+                    // all columns below + 15
                     kldStats.getVariance(), // 2
                     (kldGain2 + subsetSelfInfo2) / allianceMembers.size(), // 3
                     (kldStats.getSum() - mutualInfo) / allianceMembers.size(), // 4
