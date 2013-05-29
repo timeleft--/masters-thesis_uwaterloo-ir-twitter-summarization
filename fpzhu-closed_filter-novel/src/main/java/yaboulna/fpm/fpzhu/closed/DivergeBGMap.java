@@ -679,7 +679,7 @@ public class DivergeBGMap {
                 if (bgCount != null) {
                   klDiver = fgFreq;
                   if (REAL_WEIGHT_SUPP_KLD) {
-                    klDiver /= fgNumTweets;
+                    klDiver /= (fgNumTweets + fgCountMap.size());
                   }
                   klDiver *= (Math.log(fgFreq / bgCount) + bgFgLogP);
                 }
@@ -1993,6 +1993,7 @@ public class DivergeBGMap {
             double probEpochAndCluster = unionDocId.size() * 1.0 / (fgNumTweets + bgNumTweets);
             double probEpochGivenCluster = 0;
 
+            double gStatistic = 0;
             Integer bgSubset = bgCountMap.get(e.getKey());
             double condProbKLD = 0;
 
@@ -2026,6 +2027,8 @@ public class DivergeBGMap {
               conditionalProb = freqSuperset / freqSubset;
               
               condProbKLD += conditionalProb * DoubleMath.log2(conditionalProb/bgCond);
+              
+              gStatistic += freqSuperset * Math.log(freqSuperset / bgFreq);
 
               mutualInfo += conditionalProb * DoubleMath.log2(conditionalProb / (freqSuperset / fgNumTweets));
 
@@ -2077,16 +2080,16 @@ public class DivergeBGMap {
             selectionFormat.out().append(printMultiset(mergedItemset, fgCountMap));
             selectionFormat
                 .format(
-                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%d\t%.15f\t%.15f"
+                    "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f"
                         + "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f" +
                         "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
 
                     -temporalEntropy / allianceMembers.size(), // 2
                     temporalProbStats.getMean(), // 3
                     temporalProbStats.getVariance(), // 4
-                    temporalProbStats.getMin(), // 5
-                    temporalProbStats.getMax(), // 6
-                    temporalProbStats.getN(), // 7
+                    gStatistic, // 5
+                    gStatistic / allianceMembers.size(), // 6
+                    Math.pow(gStatistic, (1.0/allianceMembers.size())), // 7
                     intersectSet.size(), // 8
                     intersectSet.size() * 1.0 / unionDocId.size(), // 9
                     temporalConditionalEntr / allianceMembers.size(), // 10

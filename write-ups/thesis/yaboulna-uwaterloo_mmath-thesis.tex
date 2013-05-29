@@ -636,19 +636,55 @@ a method is proposed for choosing K by minimizing the restoration error of suppo
 A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemset}. 
 While the use of clustering is similarly motivated by the trivial difference between itemsets, the K \emph{master} itemsets  have to cover all itemsets.  
 On the other hand,  \emph{strongly closed itemsets}  actually avoid clustering together itemsets representing different topics or different opinions within a topic.
-Furthermore, Yan et al. improve performance by approximating the calculation of the distance between itemsets, to avoid accessing the data. We can achieve high performance without approximation because we apply clustering to subsets of the data that are very likely to be close to each other.
+Furthermore, Yan et al. improve performance by approximating the calculation of the distance between itemsets, to avoid accessing the data. 
+We can achieve high performance without approximation because our mining results include the postings list of each itemset. 
+%we apply clustering to subsets of the data that are very likely to be close to each other.
+
+Selecting the top-k itemsets according to an interestingness criterion was first proposed by Xin et al.~\cite{xin2006extracting}. 
+The major difference between their approach and all of the previous works is that it emphasizes both 
+interestingness and redundancy on the selected top-k itemsets, 
+and the itemset interestingness is defined in the context of the application; 
+summarizing the whole collection of itemsets is not the goal.
+Our work fits in the proposed framework: 
+we reduce redundancy through filtering and clustering, 
+and we propose a ranking that orders itemsets according to some definition of interestingness.
+If only the top-k itemsets are desired, itemsets ranked at positions higher than k can be omitted.
+An explicit number of itemsets needs not be set, however.
+This makes our computational model more efficient, 
+since we do not need to solve a constrained optimization problem.
+
+The interestingness of itemsets (patterns) has been an area of active research for a long time. 
+According to Silberschatz and Tuzhilin~\cite{silberschatz1996makes} interestingness of an itemset
+can be \emph{objective} or \emph{subjective}.
+Commonly used objective measures include:
+\begin{enumerate}
+\item \textbf{Support}: The fraction of transactions that contain the itemset
+\item \textbf{Confidence}: The maximum confidence of a rule derived from the itemset. 
+A rule is derived from the itemset by treating one item, $w$, as the consequent of the rule 
+while the rest of items, $s \setminus w$, are the antecedent. 
+The confidence of the rule is then defined as: 
+\begin{equation}conf(s \setminus w \rightarrow s) = \frac{|T_s|}{|T_{s \setminus w}|} \end{equation}
+\item \textbf{Lift}: Probability (support) of the itemset over the product of the probabilities of all items in the itemset. This is a measure of dependence.
+, coherence, and tf-idf for text patterns and attribute values for database tuples. 
+Subjec- tive measure is usually a relative score compared with some prior knowledge or background model.
+\end{enumerate}
+General as well as application specific interestingness measures were proposedMost of them are
+
+ A similar goal is sought by the Maximally informaTiVe itemsets (MTV) algorithm~\cite{mampaey2011tell}. 
+MTV uses a maximum entropy model to judge if an itemset is redundant, finally choosing the
+top K itemsets according to the KL-Diverge between the itemset's  frequency and  the model's estimate. 
+In this work we focus on efficiency, allowing the summary to include larger numbers
+of itemsets than the values of K for which MTV is efficient.
+This is crucial for scalability to the volumes of data typical in social media streams.
+
+
+
 
 Another approach to picking out itemsets is choosing ones that 
 can be used to compress the data. The KRIMP algorithm~\cite{vreeken2011krimp} is 
 a good example of methods that follow this approach. Our goal is different because
 we aim to filter out itemsets pertaining to personal updates, which make up a large
 portion of social media data. 
-A similar goal is sought by the Maximally informaTiVe itemsets (MTV) algorithm~\cite{mampaey2011tell}. 
-MTV uses a maximum entropy model to judge if an itemset is redundant, finally choosing the
-top K itemsets according to the KL-Diverge between the itemset's  frequency and  the model's estimate. 
-In this work we focus on efficiency, allowing the summary to include larger numbers
-of itemsets than the values of K for which MTV is efficient.
-This is crucial for scalability to the volumes of data typical in social media streams.
 
 
 
