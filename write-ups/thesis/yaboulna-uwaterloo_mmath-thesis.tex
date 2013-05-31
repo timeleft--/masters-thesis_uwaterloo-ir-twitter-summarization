@@ -767,11 +767,30 @@ Our work can provide such methods by a short ranked list of itemsets.
 Our work complements the work done by Yang et al.~\cite{yang2012framework} for 
 using frequent itemsets as a temporal summary. 
 They have proposed a framework for storing mining results of 
-temporally consecutive batches of data using a pyramidal time window. 
+temporally consecutive intervals (batches of data) using a pyramidal time window. 
 Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
-However, the choice of itemsets from each batch is based on their utility in compressing the data, 
-and thus they use non-negative matrix factorization to extract topics related to a query. 
-We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
+However, the itemsets stored for each interval is not slected for providing the best summary.
+Itemsets are selected according to their utility in a
+lossy compression algorithm.
+The algorithm is based on representing transactions as itemsets that cover them, 
+possibly introducing items that are not originally in the transaction or omitting items from the transaction.
+%and it might introduce false positives and negatives. 
+%The algorithm could meet the desired  constraints on memory consumption (set at 20MB) and on processing data as a stream, but there was no justification why such tight constraints should be set. On the other hand, 
+%The quality of the summary seems to be affected by the choice of utility function, but the only assessment made about this was showing that 
+The actual transactions can be reconstructed with an accuracy that is expected to be high 
+if the transaction contains ``both recent and frequent keywords''. 
+The temporal summary is created from the reconstructed transactions in a separate step.
+First, the pyramidal time window is queried using a query (for example, ``world cup'') 
+and a specific time intervals (before certain matches, for example).
+Then, non-negative matrix factorization is used to extract topics from the returned transactions.
+The pyramidal time window structure can be used to store itemsets
+selected by our methods, 
+thus directly providing a temporal summary
+without the need for the matrix factorization step.
+%the data is preprocessed by stemming and stop words removal, 
+%which should require a language identification component upstream but it is not discussed.
+Our methods exploit the nature of social media to choose topically relevant itemsets without the need for a query. 
+Social media has been shown to be a good source of real-time information, as we will discuss in the next section.
 
 \section{Social Media as a Source of Information}
 
