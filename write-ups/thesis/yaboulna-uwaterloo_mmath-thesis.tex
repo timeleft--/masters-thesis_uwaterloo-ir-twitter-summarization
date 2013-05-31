@@ -656,29 +656,67 @@ since we do not need to solve a constrained optimization problem.
 The interestingness of itemsets (patterns) has been an area of active research for a long time. 
 According to Silberschatz and Tuzhilin~\cite{silberschatz1996makes} interestingness of an itemset
 can be \emph{objective} or \emph{subjective}.
-Commonly used objective measures include:
+Commonly used \emph{objective} measures include (a more extensive coverage is provided by
+Geng et al.~\cite{geng2006interestingness}
+and Tan et al.~\cite{tan2002selecting}):
 \begin{enumerate}
-\item \textbf{Support}: The fraction of transactions that contain the itemset
-\item \textbf{Confidence}: The maximum confidence of a rule derived from the itemset. 
+\item \emph{Support}: The number (or fraction) of transactions that contain the itemset
+\item \emph{Confidence}: The confidence of a rule derived from the itemset. 
 A rule is derived from the itemset by treating one item, $w$, as the consequent of the rule 
 while the rest of items, $s \setminus w$, are the antecedent. 
 The confidence of the rule is then defined as: 
 \begin{equation}conf(s \setminus w \rightarrow s) = \frac{|T_s|}{|T_{s \setminus w}|} \end{equation}
-\item \textbf{Lift}: Probability (support) of the itemset over the product of the probabilities of all items in the itemset. This is a measure of dependence.
-, coherence, and tf-idf for text patterns and attribute values for database tuples. 
-Subjec- tive measure is usually a relative score compared with some prior knowledge or background model.
+Since different rules with varying confidence can be derived from an itemset, either the minimum (\emph{all-confidence}) or the maximum (\emph{any-confidence}) is used~\cite{omiecinski2003alternative}.
+\item \emph{Lift}~\cite{brin1997beyond}: Probability (support) of the itemset over the product of the probabilities of all items in the itemset. This is a measure of dependence and can be linked to Pointwise Mutual Information~\cite{bouma2009normalized}. Such a measure is suitable for Knowledge Discovery or Exploratory Search tasks, where the goal is to extract correlated item sets or significant phrases.
+\item \emph{Bond (or Coherence)}~\cite{omiecinski2003alternative}: The support of an itemset over the number of transactions containing any of its items.
 \end{enumerate}
-General as well as application specific interestingness measures were proposedMost of them are
+An important property of a measure, upon which all Apriori based mining algorithm are built, is the downward closure property; 
+the value of a downward closed measure cannot increase as the size of the itemset increases.
+ All the above measures are downward closed~\cite{bayardo1999mining} with the exception of \emph{lift} which is upward closed 
+(cannot decrease with the increase of the size of the itemset), 
+and \emph{any-confidence} which is neither upward nor downward closed.
+Algorithms that mine itemsets based on the above measures were proposed~\cite{lee2003comine,kim2004ccmine},
+but if an application specific measure is to be used then it has to be evaluated in a post mining stage 
+or within the Redundancy-Aware Top-K framework~\cite{xin2006extracting}.
+In their experiments, Xin et al.~\cite{xin2006extracting} used two application specific interestingness measures:
+they used one that is based on tf-idf for extracting interesting itemsets from a text corpus, 
+and another that is tailored for predicting block fetches in storage systems~\cite{li2004c}.
+We rank itemsets according to their novelty using a measure based on Information Gain. 
+Preliminary experimentation with various other measures ruled them out as ineffective 
+%in the domain of social media. 
+for our purposes.
 
- A similar goal is sought by the Maximally informaTiVe itemsets (MTV) algorithm~\cite{mampaey2011tell}. 
-MTV uses a maximum entropy model to judge if an itemset is redundant, finally choosing the
-top K itemsets according to the KL-Diverge between the itemset's  frequency and  the model's estimate. 
-In this work we focus on efficiency, allowing the summary to include larger numbers
-of itemsets than the values of K for which MTV is efficient.
+%General as well as application specific interestingness measures were proposedMost of them are
+
+\emph{Subjective} measures of interestingness select itemsets that are actionable or unexpected~\cite{silberschatz1995subjective}.
+Selecting unexpected itemsets entails building a probabilistic model to use it for 
+estimating itemsets probabilities. 
+Jaroszewicz and Simovici~\cite{jaroszewicz2004interestingness} use a Baysian Network as a model,
+which is suitable for cases where items are value levels of a limited number of attributes.
+A commonly used model is the maximum entropy model~\cite{wang2006summarizing,tatti2008maximum,mampaey2011tell}.
+The Maximally informaTiVe itemsets (MTV) algorithm, proposed by Mampaey et al.~\cite{mampaey2011tell},
+uses a greedy algorithm to select K itemsets whose probabilities diverge the most 
+from the estimate given by a maximum entropy model.
+The maximum entropy model is initialized as a uniform distribution.
+After selecting each of the K itemsets it is updated 
+to fit the selected itemsets actual frequencies
+using the Iterative Scaling procedure~\cite{darroch1972generalized}.
+If K is set to infinity, the algorithm will generate the best model
+according to the Bayesian Information Criterion (BIC). 
+Since BIC incorporates a penalty term for the number of parameters
+(itemsets included in the model), this selection will  
+minimize redundancy while maximizing surprise (divergence from model).
+The model could be initialized using itemset frequencies known
+from prior knowledge. 
+It is also possible to use the Minimum Description Length (MDL)
+as a criterion for selecting itemsets.
+We compare our selection of itemsets to ones obtained from MTV using 
+the implementation provided by the authors\footnote{http://www.adrem.ua.ac.be/implementations}.
+However, the value of K has to be kept low (at most 50) for the algorithm to finish without an error, 
+even though it is running without a limit on its resource usage on a machine with 256 GB of RAM.
+In our work we focus on efficiency, allowing the summary to include larger numbers
+of itemsets than the values of K for which MTV is efficient (at most 10). 
 This is crucial for scalability to the volumes of data typical in social media streams.
-
-
-
 
 Another approach to picking out itemsets is choosing ones that 
 can be used to compress the data. The KRIMP algorithm~\cite{vreeken2011krimp} is 
@@ -686,22 +724,279 @@ a good example of methods that follow this approach. Our goal is different becau
 we aim to filter out itemsets pertaining to personal updates, which make up a large
 portion of social media data. 
 
+\section{Frequent Itemsets in Search and Summarization}
 
+Different ways to use Frequent Itemset Mining in search %the field of Information Retrieval 
+has been proposed. 
+Possas et al.~\cite{possas2002set}  proposed using closed itemsets
+in place of terms, using them in exactly the same way as terms are used.
+In the tokenization process, they use CHARM to mine closed itemsets from 
+frequent tokens in the document.
+They then add the document to the postings lists of each closed itemset
+present in the document. 
+Queries are tokenized similarly and ranking is done using TF-IDF.
+This simple approach achieves increased precision on various test collections, 
+possibly because frequent itemsets take into account collocation information.
+The approach is so simplistic, however. 
+The overlap in closed itemsets was not taken into account while tokenizing documents and queries into itemsets.
+Also, the mining algorithm was not modified to accommodate the high number of terms 
+and the higher length of documents as opposed to the length of transactions typical to market basket data.
+Finally, the number of itemsets is higher than the number of terms so the index size will increase.
 
- %Rhetoric:
-%The motivation of most research on finding representative itemsets involves
-%compressing itemsets mined from a general dataset.
-%This motivation leads to decisions different from those required to mine the
-%most informative itemsets mined from text.
-
-Our work complements the work done by Yang et al.~\cite{yang2012framework} for using frequent itemsets as a temporal summary. They have proposed a framework for storing mining results of temporally consecutive batches of data using a pyramidal time window. Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
-The choice of itemsets from each batch is based on their utility in compressing the data, and thus they use non-negative matrix factorization to extract topics related to a query. We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
-
-In Lau et al.~\cite{laumicroblog}, related methods for term weighting were
-used in pseudo-relevance feedback for Twitter search,
+Wu et al.~\cite{wu2004automatic,wu2006deploying}
+propose the use of sequential closed patterns instead of terms, 
+in what they call \emph{pattern based approach} to information retrieval.
+They consider patterns as surrogates to phrases that have
+better statistical properties than phrases, 
+thus achieving a break through in the performance 
+of \emph{phrase based approaches}.
+``Although phrases contain less ambiguous and narrower meanings than individual words, the likely
+reasons for the discouraging performance~\cite{lewis1992evaluation} from the use of phrases are: (1) phrases have inferior statistical properties to words, (2) they have low frequency of occurrence, and (3) there are a large number of redundant and noisy phrases among them.''~\cite{wu2006deploying}
+They address the problems of overlap in closed patterns,
+and they developed an algorithm specifically tailored for mining closed sequential patterns from text.
+Documents are broken into paragraphs which are the unit of mining and retrieval.
+This alleviates the problem of having documents that are much longer than traditional market basket transactions.
+Albathan et al.~\cite{albathan2012using} extend the work of Wu et al. by 
+proposing a method for further reducing the number of closed patterns.
+Lau et al.~\cite{laumicroblog} used related methods for term weighting 
+in pseudo-relevance feedback for Twitter search,
 and achieved substantial improvements over a baseline.
-Our work can provide such methods by a short ranked list of itemsets.
-%, potentially improving their results.
+Our work can provide such methods by a short ranked list of itemsets. 
+
+
+Our work complements the work done by Yang et al.~\cite{yang2012framework} for 
+using frequent itemsets as a temporal summary. 
+They have proposed a framework for storing mining results of 
+temporally consecutive batches of data using a pyramidal time window. 
+Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
+However, the choice of itemsets from each batch is based on their utility in compressing the data, 
+and thus they use non-negative matrix factorization to extract topics related to a query. 
+We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
+
+\section{Social Media as a Source of Information}
+
+The problem of finding information in social media posts 
+%is an active area of research bec
+is motivated by the uniqueness and variety of information that can be found
+in these media. 
+Some stories are reported mainly on social media 
+because 
+of censorship on journalism, 
+such as the 2009Ð10 Iranian election protests 
+(nicknamed the ``Iran's Twitter Revolution''
+\footnote{http://www.theatlantic.com/technology/archive/2010/06/evaluating-irans-twitter-revolution/58337/}).
+Other stories are reported mainly on social media
+because of the 
+content creator happens to be at the right place
+at the right time. 
+This could be by chance like in the case of
+the emergency landing of a US Airways plane 
+on the Hudson river in New York
+\footnote{http://www.telegraph.co.uk/technology/twitter/4269765/New-York-plane-crash-Twitter-breaks-the-news-again.html}.
+This could also be an intentional act
+of citizen journalism. 
+Citizen journalists are ``the people formerly known as the audience,'' who ``were on the receiving end of a media system that ran one way, in a broadcasting pattern, with high entry fees and a few firms competing to speak very loudly while the rest of the population listened in isolation from one another~--~ and who today are not in a situation like that at all. ... The people formerly known as the audience are simply the public made realer, less fictional, more able, less predictable.''
+\footnote{http://archive.pressthink.org/2006/06/27/ppl\_frmr.html\#more}.
+
+In a study of the use of Twitter as a news medium during the 2011 Tunisia and Egypt revolutions, 
+Lotan et al.~\cite{lotan2011revolutions}  categorized 963 accounts that made influential posts according to the \emph{type of actor}. 
+A post is considered influential if it is among the top 10\% of posts in terms of the number of near duplicates made out of it; 
+posts that had at least 16 near duplicates in the Tunisia data, or at least 19 near duplicates in the Egypt data.
+The types of actors included Mainstream Media organizations and Mainstream New Media organizations, 
+which are news and media organizations with and without offline presence, respectively.
+It also included Journalists, who are individuals employed by media organizations or who 	regularly work as freelancers for them.
+
+In both datasets, media organizations make up about 11\% only of these accounts (approximately 7\% for ones with offline presence and 4\% for ones that exist solely online). 
+Journalists make up another 15\%, so the total of mainstream media affiliated accounts is approximately 26\%.
+On the other hand, more than half of the accounts from which influential tweets originated belong to individuals not affiliated to the government or mainstream media (55\% for Tunisia and 56\% for Egypt). 
+Out of those individual, almost half are ordinary people who don't self identify and cannot be identified by assessors as bloggers or activists. 
+
+The rate at which an account makes posts is approximately 16 per hour for mainstream media affiliated accounts, and approximately 10 for individuals accounts (thus a mainstream media account makes 60\% more posts). 
+Also the probability that a post will be echoed is 0.88 for mainstream media accounts, 0.55 for journalists, 0.4 for bloggers and activists, and 0.31 for individuals 
+(this is the probability that any follower will echo the post, the average number of followers of all types of actors is much higher than that of ordinary people).
+However, collectively the fraction of highly echoed threads originating from ordinary people is on a par with 
+the fraction of threads originating from a journalist. 
+Threads originating from ordinary people, bloggers and activists together make up more than half of highly echoed threads, followed by threads originating from journalists (around 20\%), then threads originating mainstream media (around 10\%, divided equally between media with and without offline presence). 
+
+All this emphasizes the influence citizen journalists and ordinary people now have on 
+the information creation and dissemination process.
+User created content is rich with unique content tackling a variety of topics from different points of view.
+However, it is dominated by non-informative chatter and personal updates. 
+In a study comparing the use Twitter's search feature and Web search, 
+Teevan et al.~\cite{teevan2011twittersearch} found that
+Twitter is mostly used for getting timely information:
+updates about events, 
+news about topics of interest (such as technology news),
+and realtime local updates (such as traffic jams).
+It was noted that Twitter search could be the main
+way of accessing Twitter, since posts from the followed network 
+could to be outside of the user's topical interests. 
+This is supported by findings from an earlier study by
+Naaman et al.~\cite{naaman2010really} in which
+3379 tweets from 350 accounts belonging to individuals
+were studied. 
+The tweets were hand coded into different categories, 
+then the activity of users in terms of
+what type of tweets they make was analyzed.
+It was found that 40\% of the studied tweets 
+are personal updates (about ``Me now''),
+and that users can be clustered into
+a big cluster of ``Meformers'' 
+(80\% of the users, half of their posts are personal updates)
+and a small cluster of informers 
+(20\% of the users, half of their posts are for sharing information).
+The study also found that most people engage
+in some form of Meformer activity; 
+on average, users had 41\% of their messages
+in the ``Me now'' category.
+Therefore filtering out posts by Meformers, 
+or giving higher weights to posts made by informers 
+will not be enough for finding informative posts
+made by ordinary people.
+
+To tap into social media as a source of information, 
+social media users collaboratively select good content.
+On Twitter, users can \emph{retweet} an interesting post, 
+which means forwarding it to their followers.
+The dynamics of retweeting was studied by Boyd et al~\cite{boyd2010tweet}.
+One of the findings was that posts being retweeted 
+are frequently modified to accommodate additional 
+text, or at least the notation meant to indicate 
+that the message is a retweet. 
+This is because Twitter limits tweets to 140 characters.
+The selection of what to keep from the post is actually 
+a form of collaborative filtering itself, 
+because the most interesting parts has 
+to be retained. 
+The parts that are selected by many people
+is likely to be a good summary of what is interesting.
+The words in this part would make up a frequent itemset.
+Other methods for finding emerging topics in social media
+also make use of the unusual frequencies of such collocation. 
+
+%\section{Exploratory Search and Topic Summarization for Social Media}
+\section{Topic Detection and Tracking for Social Media}
+
+The problem of Topic Detection and Tracking (TDT) was introduced by Allan et al. in 1998~\cite{allan1998topic}.
+%and the community defined five tasks that a TDT system should be able to perform: 
+%\emph{Topic Tracking, Link Detection, Topic Detection, First Story Detection and Story Segmentation}.
+%Out of those tasks Topic Detection is the most releted to our work, but the rest are also related. 
+Topic Detection is the discovery of previously unknown topics, 
+where a topic was first defined as an ``event'' then 
+its definition was broadened to include the triggering event 
+as well as 	other events and activities directly related to it.
+%Topic Tracking is
+Our work can be categorized as a method for topic detection from social media,
+or more specifically ``event'' detection since we make no effort to group events into topics.
+%Even though TDT was introduced long ago, it has been an area of active research ever since.
+Ever since it was introduced, TDT has been an area of active research.
+Besides the fact that there is always room for improvement, 
+TDT was originally targeting the domain of newswire data, 
+and the solutions developed for this domain are not directly applicable to 
+data from other domains. 
+
+In the domain of social media, Petrovi\'{c} et al.~\cite{petrovic2010streaming}
+used an adaptation for Locality Sensitive Hashing (LSH)~\cite{indyk1998approximate} to
+perform first story detection at scale. 
+The computation framework is the same as the one
+used in traditional systems~\cite{yang1998study,allan2000detections};
+For each tweet find the nearest neighbour in the vector space of terms. 
+If the distance is less than a threshold then add the document to the topic represented by the cluster containing the nearest neighbour.
+Otherwise, create a new cluster representing a new topic. 
+The current document is the first story of the topic.
+The adaptation to LSH that they propose reduces 
+the number of times a document is considered far
+from all its neighbours while it actually is not.
+They do that by comparing the document to 
+%a fixed number of documents that are posted
+%within the 
+the last 1000 tweets, and update the minimum distance if necessary.
+Using LSH, with the adaptation, didn't affect the quality of results much 
+as compared to the UMass FSD system~\cite{allan2000detections}
+on a traditional TDT task (TDT-5).
+On the other hand, the run time was decreased from 28 hours to 2 hours.
+The UMass system could not finish processing a dataset 
+of a 160 million tweets
+collected over a period of 6 months from Twitter,
+while their proposed system can process each
+tweet in bounded space and time.
+One problem remains, however.
+The precision of determining if a tweet cluster
+is actually pertaining to an event or just normal chatter
+or spam is low. 
+Actually their system can detect spam clusters
+with high precision ($average\,precision=0.963$), but not events ($average\,precision=0.34$).
+The problem of identifying event clusters was further studied by Beker et al.~\cite{becker2011beyond},
+where they used a Support Vector Machine (SVM) classifier and achieved a higher precision.
+However, their test set was limited to 5 hours of Twitter data and the precision decreases as 
+the number of clusters increases because the classifier is trained on the positive case.
+%of about 0.65 correctly classified event clusters out of 20 clusters.
+
+Another method of event detection follows the framework of bursty keywords detection proposed by Kleinberg~\cite{kleinberg2003bursty}. %, for topic detection in e-mail streams. 
+In this framework, a set of keywords are tracked and could possibly be all tokens in the dataset.
+A state machine is used to indicate the stat of each keyword, 
+where consequitive states correspond to higher levels of \emph{burst} intensity. 
+Each transition between states is associated with a cost, 
+and a keyword moves between the states to minimize the overall cost of its transitions.
+A simplified version of this framework is use by Parikh and Karlapalem~\cite{parikh2013events},
+where there are two states and a token is moved to the state of being bursty
+if the increase in its frequency exceeds a threshold. 
+The bursty tokens are then clustered into events.
+%is higher than the increase between all other intervals.
+%the difference in the frequency of each token is tracked in of fixed span and keywords are considered bursty
+Another method that tracks the frequency of all tokens is EDCoW~\cite{weng2011event}, 
+where the wavelet transformation is used to convert counts of occurrences from the time domain to the frequency domain
+then auto-correlation is used to detect burstiness.
+However, the use wavelet transformation is not justified
+specially for the enormous number of tokens in case of social media.
+Other methods based on burst detection track a small set of keywords. 
+Lehmann et al.~\cite{lehmann2012dynamical} track hashtags and study 
+their usage pattern.
+Chakrabarti and Punera~\cite{chakrabarti2011event} track 
+tokens appearing in tweets tagged by an American Football team name,
+and use them to create a summary of the game.
+
+Our work can be seen in the light of Meme-tracking~\cite{leskovec2009meme},
+where a particularly interesting quotation (meme) is tracked across news and blog posts.
+The quotation being tracked is not quoted verbatim in all posts, 
+but rather parts of it are selected and it could be slightly paraphrased.
+This is similar to modifications made during retweeting an interesting tweet.
+Leskovec et al.~\cite{leskovec2009meme} tracked quotations made by
+American politicians during the 2008 U.S. presidential elections.
+Phrases made up of 4 words or more are tracked if they got repeated 10 times or more,
+where at most 25\% of the repetitions could be on the same domain name.
+A directed acyclic graph is constructed where phrases are vertices 
+and edges are weighted according to the edit distance between phrases, 
+as well as the number of occurrences of the longer phrase.
+The graph is then divided into clusters where each cluster contains
+one \emph{root} that has no outgoing edges. 
+Each vertex is assigned to the cluster 
+with which it has the highest number of edges.
+Clusters are then ranked according to the number of news and blog posts 
+containing any phrase from the cluster.
+Leskovec et al. then use the clusters and their associated news and blog posts
+to perform an analysis of the temporal variation of the volume of posts about
+each meme.
+They propose a model that fits the data well, 
+and study the difference between blog posts and news.
+In our work, we are also using the volume of posts 
+containing phrases and their variations (itemsets).
+We also do clustering but in a different way, 
+and we work in a totally different scale of time.
+O'Connor et al.~\cite{o2010tweetmotif} also start from phrases and 
+select \emph{significant} ones then cluster them. 
+Frequent Itemsets are a better starting point than phrases,
+since there are much more phrases than frequent itemsets.
+
+
+Event detection in Twitter can also be done using 
+Natural Language Processing
+to identify \emph{event} parts of speech~\cite{ritter2012open},
+or to identify action phrases~\cite{popescu2011extracting}.
+Of course, it is also possible to apply topic modelling 
+by Latent Dirichlet Allocation (LDA)~\cite{hong2010empirical}
+or an online varient~\cite{hoffman2010online,yao2009efficient}.
+Our method tackles the problem in a totally different way.
 
 % ===================================
 
@@ -1326,6 +1621,9 @@ averages at 5.2 seconds for filtering a one-hour epoch.
 
 \chapter{Temporal Ranking}
 \label{sec:rank}
+
+A General Measure of Rule InterestingnessSzymon Jaroszewicz and Dan A. SimoviciUniversity of Massachusetts at Boston
+
 The previous filtering steps reduce the number of itemsets to under 1\% of their
 original number.
 In this section, we present a method for ranking itemset clusters according to
