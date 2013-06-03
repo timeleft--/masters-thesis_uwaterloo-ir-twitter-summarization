@@ -273,11 +273,14 @@ Even if a maximum frequency threshold is set, incurring the risk that we
 will filter out important itemsets, many  non-English constructs will be
 mined because the proportion of posts in English is much higher than
 other languages. 
-Notice that we do not remove function words for reasons that will be
-detailed later.
+Notice that we do not remove function words 
+%for reasons that will be detailed later.
+to allow mining itemsets made up solely of function words, 
+and to make the mining results easier to understand at the user level.
 
 \item
-Finally, there is considerable redundancy in frequent
+%Finally, t
+There is considerable redundancy in frequent
 itemsets caused by trivial differences in the language used.
 \end{enumerate}
 
@@ -298,11 +301,11 @@ as well as a spike of interest.
 The mined itemsets provide the vocabulary associated with events and can be
 used as a preliminary step for search and summarization.
 For example, the collection of mining results from different epochs of time
-can be used for temporal query and document
-expansion~\cite{choi2012temporal, efron2012improving}.
+can be used for temporal 
+query expansion and document expansion~\cite{choi2012temporal, efron2012improving}.
 The results from each epoch can be treated as a document, facilitating the
 creation of a ``temporal profile''~\cite{jones2007temporal} of the query
-or a document being expanded.
+or document being expanded.
 For summarization, frequent itemsets can provide a good foundation for summary
 creation.
 While the frequent itemsets themselves are not summaries, since they lack
@@ -330,17 +333,19 @@ itemsets within the same paragraph has been proposed~\cite{albathan2012using}.
 In this thesis, we propose efficient methods for filtering out non-informative frequent itemsets,
 reducing redundancy in the mining results, and ranking the selection according to novelty.
 Our methods exploit the dynamics of social media and make use of the collaborative filtering
-that users naturally undergo by sharing and participating in conversations on social media.
+that users naturally undergo on social media, 
+by sharing interesting posts and participating in conversations.
 Our main contributions are as follows:
 \begin{itemize}
-\item Proposed the use of variable length N-grams as items to avoid mining uninformative language constructs as itemsets. 
-\item Proposed conditions for selecting informative itemsets and reducing redundancy in the mining results.
-\item Proposed a formula for ranking itemsets according to novelty.
+\item We propose the use of variable length N-grams as items to avoid mining uninformative language constructs as itemsets. 
+\item We propose conditions for selecting informative itemsets and reducing redundancy in the mining results.
+\item We propose a formula for ranking itemsets according to novelty.
 \end{itemize}
-The effectiveness of our methods is shown quantitatively, as the drop of the number of itemsets at each processing step. 
+The effectiveness of our methods is shown quantitatively, 
+in terms of the drop in the number of itemsets at each processing step. 
 The quality of the final outcome is verified by showing mining results from various time periods.
 
-\section{Thesis outline}
+\section{Thesis outline (SKIP READING.. NOT READY YET}
 
 The next three chapters provide necessary background.
 We start by discussing related work in chapter \ref{sec:related},
@@ -387,16 +392,6 @@ The epoch's \emph{span} is the length of this period in hours,
 and the \emph{volume velocity} at this epoch is the number of transactions in the epoch
 divided by its \emph{span}.
 
-As mentioned earlier, a \emph{frequent itemset} is a set of items that occur together a number of
-times higher than a given threshold, called the \emph{support} threshold.
-We adapt the support threshold to the dynamicity of the \emph{volume velocity} at
-different times of the day.
-We define the \emph{minimum support threshold} as the threshold at the hour
-of the least \emph{volume velocity} during the day.
-The \emph{minimum support} is supplied as an absolute number, $a$, and then
-converted to a ratio, $\alpha = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
-The actual support threshold used for mining any given epoch is thus
-$\alpha$ multiplied by the \emph{epoch}'s \emph{volume velocity}. 
 We now introduce the notation used in this paper:
 \begin{itemize}
 \item $W = \{w_1,w_2,\ldots, w_n\}$: The set of all items occurring within the epoch of data being mined. Items can be terms or term N-grams in this paper. % This is the \emph{vocabulary} in Information Retrieval.
@@ -418,8 +413,9 @@ We now introduce the notation used in this paper:
 \section{Frequent Itemset Mining}
 Frequent itemset mining comprises a large body of work that goes back to the
 early 1990s~\cite{agrawal1993mining}. 
-A variety of algorithms have been proposed, and they work in totally different ways. 
-We categorize them into algorithms that operate in the item space, 
+%A variety of algorithms have been proposed, and they work in totally different ways. 
+We categorize frequent itemset mining algorithms into 
+algorithms that operate in the item space, 
 algorithms that operate in the transaction space, 
 and algorithms that operate in the solution space. 
 While a comprehensive survey is beyond the scope of this thesis, 
@@ -428,9 +424,17 @@ we discuss at least one representative from each category of algorithms.
 \subsection{The Apriori Algorithm}
 %Frequent itemset mining was proposed 
 % was 
-The Apriori algorithm is the first efficient algorithm for frequent itemset mining~\cite{agrawal1994fast}, 
-proposed by Agrawal et al. as part of the solution to the problem of association rules mining. 
+%The Apriori algorithm is the first efficient algorithm for frequent itemset mining~\cite{agrawal1994fast}, 
+%proposed by Agrawal et al. as part of the solution to the problem of association rules mining. 
 %It's goal was finding itemsets that can be broken into a precedent and an antecedent
+Agrawal et al.~\cite{agrawal1994fast} proposed the Apriori algorithm 
+as part of the first efficient solution to the problem if association rules mining~\cite{agrawal1993mining}.
+In the domain of market basked data, 
+an association rule is an implication that an item is likely to be purchased
+in the same transaction with a certain set of items.
+Association rules are mined by finding itemsets that co-occur together frequently, 
+then producing a rule with each individual item as a precedent to the purchase of the rest of the itemset.
+The Apriori algorithm finds frequent itemsets by finding itemsets of increasing lengthes iteratively.
 It starts by counting frequencies of individual items (itemsets of length 1). 
 Then it iteratively increases the length of itemsets.
 At each iteration, it generates candidate itemsets of length K (K-itemsets) 
@@ -438,8 +442,9 @@ by merging frequent itemsets of length (K-1) ((K-1)-itemsets)
 that differ in only 1 item, 
 usually the last item given a certain total ordering of items.
 By using only the frequent  (K-1)-itemsets for generating candidate K-itemsets,
-many possible K-itemsets are implicitly pruned, based on the Apriori property:
-all subsets of a frequent itemset has to be frequent. 
+many possible K-itemsets are implicitly pruned, 
+based on the anti-monotonicity between itemsets' support and length:
+all subsets of a frequent itemset have to be frequent. 
 However, each candidate has to be explicitly checked to verify that it does not
 have any infrequent subsets.
 
@@ -459,12 +464,12 @@ In text mining, a rather low support threshold has to be used, because the
 frequency of terms follow a long-tailed Zipfean distribution.
 
 The Apriori based family of algorithms operates in the item space 
-in the sense that an itemset can be expanded by an item regardless
+in the sense that an itemset can be expanded by any item regardless
 of whether there is any support for the combination. 
 %Its efficiency comes from using the current solution to prune out
 Operating in the transaction space avoids this blind enumeration
 of unsupported candidates, and the subsequent DB scan required 
-to count the support of candidates. 
+to count the support of those candidates. 
 This involves the creation of a succinct representation of the DB
 that is well suited for itemset mining.
 
@@ -480,13 +485,16 @@ non-increasing from the root down to the leaves.
 This increases the chance of finding common prefixes.
 %Nodes that are
 An FP-tree also contains links between nodes representing the same item.
-Those links are used to create the \emph{conditional} FP-Tree for an item,
+Those links are used to create the \emph{conditional} FP-tree for an item,
 %which is the FP-tree where this item is the root.
 which is the FP-tree made only from branches containing this item, 
 excluding any items with lower frequency.
 The algorithm proceeds by iterating over items in increasing order 
-of frequency. For each item, (1) it is output as an itemset,
-and (2) its \emph{conditional} FP-Tree is created and recursively mined. 
+of frequency. 
+%For each item, (1) it is output as an itemset,
+%and (2) its \emph{conditional} FP-Tree is created and recursively mined. 
+Each item is first output as an itemset,
+and then its \emph{conditional} FP-Tree is created and recursively mined. 
 At each recursive call, the current item is appended to a growing prefix,
 which is prepended to all itemsets mined from the conditional FP-tree.
 Figure \ref{fig:fpgrowth}, borrowed from Han et. al~\cite{han2004mining}, shows a few steps in the FP-Growth algorithm.
@@ -518,12 +526,16 @@ Algorithms that operate in the solution space prune itemsets that do not possess
 The limited number of itemsets that possess the desired property are sufficient to deduce the rest of the solution (other frequent itemsets and their support).
 The reduction in the number of itemsets mined improves the performance of such algorithms, 
 even if they rely on candidate generation to enumerate possible itemsets before checking for the desired property.
-The elect itemsets can be used directly, since the properties usually filter out 
-%to creates a concise representation of the solution 
-%by removing redundancy.
-redundant itemsets only.
+It is not always necessary to produce the full solution 
+since the properties usually filter out only redundant itemsets, 
+and in many cases the elect itemsets can be used directly.
 
-The closure property~\cite{pasquier1999discovering,pasquier1999efficient,zaki2002charm} prunes an itemset
+%The elect itemsets can be used directly, since the properties usually filter out 
+%%to creates a concise representation of the solution 
+%%by removing redundancy.
+%redundant itemsets only.
+
+The \emph{closure property}~\cite{pasquier1999discovering,pasquier1999efficient,zaki2002charm} prunes an itemset
 if it has the same support as its supersets. 
 It is easy to see that all itemsets and their support can be derived from the set of \emph{closed} itemsets. 
 A formal proof is given by Pasquier et al.~\cite{pasquier1999discovering}.
@@ -533,13 +545,13 @@ It is also possible to keep only the generator of each equivalence class,
 but in this case some infrequent itemsets has to be kept 
 in order to be able to calculate the support of all frequent itemsets~\cite{kryszkiewicz2001concise}. 
 A different selection of itemsets can be made according to the Non-Derivable property~\cite{calders2002mining,calders2007non}, 
-which is linked to the former properties. 
+which is linked to the closed property. %former properties. 
 
 Finding closed itemsets can be done by arranging possible itemsets into a Galois lattice, 
 then traversing the lattice using the Galois connection between itemsets and transactions
 in which they appear. 
 Figure~\ref{fig:lattice} shows an example of a Galois lattice. 
-The Galios connection is a pair of operators, one to map an itemset to transactions in which it appears, 
+The Galois connection is a pair of operators, one to map an itemset to transactions in which it appears, 
 and another to map a set of transactions to the largest itemset that appears in all of them.
 Applying the two operators in cascade grows an itemset directly to its closed superset.
 More details can be found in Pasquier et al.~\cite{pasquier1999efficient} and Zaki et al.~\cite{zaki2002charm}.
@@ -565,7 +577,7 @@ TID&Items\\\hline
 \label{fig:lattice}
 \end{figure}
 
-Some algorithms take advantage of the Closed Property to 
+Some algorithms take advantage of the closure property to 
 reduce the search space more dramatically,
 such as CLOSET~\cite{pei2000closet}
 and LCM~\cite{uno2004lcm}.
@@ -576,26 +588,33 @@ to the workshop for Frequent Itemset Mining Implementations (FIMI) in
 This algorithm is robust against data sparsity, 
 and has low memory requirements 
 since it does not store intermediate results.
-We will explain the closure property and describe LCM in detail in the section \ref{sec:lcm}. 
+We will explain the closure property and describe LCM in detail in  section \ref{sec:lcm}. 
 We proceed by discussing other areas of related work.
 
 %-------------------------------------------------------
 
-\section{Election of representative or interesting itemsets}
+\section{Election of Representative or Interesting Itemsets}
 
 The problem of having many itemsets, with redundancy and noise, can be addressed by
 picking out  representative itemsets that satisfy a certain condition.
 %based on the conciseness or interestingness or the selection.
 The representative itemsets are not necessarily sufficient to
 deduce the rest of the solution (itemsets and their support information).
-Related approach to picking out representative itemsets are: 
+In this thesis we propose two conditions for selecting interesting itemsets;
+\emph{distinct} itemsets and  \emph{strongly closed} itemsets.
+Related approaches to picking out representative itemsets are %: 
 choosing a set that will minimize the reconstruction error of the full solution, 
 and limiting the number of itemsets to a user specified number.
 
+
 %Most similar to the \emph{distinct} itemsets we propose in this thesis
-The $\delta$-free~\cite{boulicaut2003free} and 
-the $\delta$-covered~\cite{xin2005mining} sets are
-examples of conditions motivated by providing a compressed representation 
+%Choosing $\delta$-free~\cite{boulicaut2003free} or 
+% $\delta$-covered~\cite{xin2005mining} itemsets are
+
+The $\delta$-free~\cite{boulicaut2003free},  
+$\delta$-covered~\cite{xin2005mining}, and 
+\emph{master} itemsets~\cite{yan2005summarizing} 
+are examples of conditions motivated by providing a compressed representation
 of itemsets through sacrificing support information.
 The $\delta$-free condition selects an itemsets if its support
 is different from the support of all its subsets at least by $\delta$.
@@ -610,7 +629,7 @@ but it is exactly the opposite of \emph{distinct} itemsets we propose in this th
 
 The $\delta$-covered condition is also the opposite of the \emph{distinct}
 condition, as it ``relaxes the closure condition to further reduce pattern
-set size'' \cite{liu2012finding}. The \emph{distinct}  condition strengthens the closure condition.
+set size'' \cite{liu2012finding}. On the other hand, the \emph{distinct}  condition strengthens the closure condition.
 The $\delta$-covered condition sets an upper bound on the confidence of the rule that 
 an itemset implies a superset; 
 if an itemset implies its superset with confidence greater than $\delta$, 
@@ -626,12 +645,12 @@ the reasoning used in our algorithm~--~exploiting the sequence in which frequent
 The difference between $\delta$-clusters and \emph{strongly closed itemset} clusters
 is that $\delta$-clusters are soft clusters, while \emph{strongly closed itemset} clusters
 are hard clusters. 
-Also, the distance measure used in $\delta$-clusters is one minus the Jaccard similarity,
+Also, the distance measure used in $\delta$-clusters is the Jaccard distance,
 while the \emph{strongly closed itemset} clusters are based on association rule confidence.
 
 Yan et al.~\cite{yan2005summarizing} proposed a method to choose K \emph{master} itemsets as representatives of the itemsets. 
 However, rather than leaving K as a user specified parameter
-a method is proposed for choosing K by minimizing the restoration error of support information.%,
+a method is proposed for choosing K by minimizing the restoration error of support information. %,
 %thus it can be considered as a lossy compression approach
 A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemset}. 
 While the use of clustering is similarly motivated by the trivial difference between itemsets, the K \emph{master} itemsets  have to cover all itemsets.  
@@ -640,19 +659,7 @@ Furthermore, Yan et al. improve performance by approximating the calculation of 
 We can achieve high performance without approximation because our mining results include the postings list of each itemset. 
 %we apply clustering to subsets of the data that are very likely to be close to each other.
 
-Selecting the top-k itemsets according to an interestingness criterion was first proposed by Xin et al.~\cite{xin2006extracting}. 
-The major difference between their approach and all of the previous works is that it emphasizes both 
-interestingness and redundancy on the selected top-k itemsets, 
-and the itemset interestingness is defined in the context of the application; 
-summarizing the whole collection of itemsets is not the goal.
-Our work fits in the proposed framework: 
-we reduce redundancy through filtering and clustering, 
-and we propose a ranking that orders itemsets according to some definition of interestingness.
-If only the top-k itemsets are desired, itemsets ranked at positions higher than k can be omitted.
-An explicit number of itemsets needs not be set, however.
-This makes our computational model more efficient, 
-since we do not need to solve a constrained optimization problem.
-
+Another approach to choosing itemsets is according to their interestingness.
 The interestingness of itemsets (patterns) has been an area of active research for a long time. 
 According to Silberschatz and Tuzhilin~\cite{silberschatz1996makes} interestingness of an itemset
 can be \emph{objective} or \emph{subjective}.
@@ -668,8 +675,9 @@ The confidence of the rule is then defined as:
 \begin{equation}conf(s \setminus w \rightarrow s) = \frac{|T_s|}{|T_{s \setminus w}|} \end{equation}
 Since different rules with varying confidence can be derived from an itemset, either the minimum (\emph{all-confidence}) or the maximum (\emph{any-confidence}) is used~\cite{omiecinski2003alternative}.
 \item \emph{Lift}~\cite{brin1997beyond}: Probability (support) of the itemset over the product of the probabilities of all items in the itemset. This is a measure of dependence and can be linked to Pointwise Mutual Information~\cite{bouma2009normalized}. Such a measure is suitable for Knowledge Discovery or Exploratory Search tasks, where the goal is to extract correlated item sets or significant phrases.
-\item \emph{Bond (or Coherence)}~\cite{omiecinski2003alternative}: The support of an itemset over the number of transactions containing any of its items.
+\item \emph{Bond (or Coherence)}~\cite{omiecinski2003alternative}: The support of an itemset over the number of transactions containing \emph{any} of its items.
 \end{enumerate}
+
 An important property of a measure, upon which all Apriori based mining algorithm are built, is the downward closure property; 
 the value of a downward closed measure cannot increase as the size of the itemset increases.
  All the above measures are downward closed~\cite{bayardo1999mining} with the exception of \emph{lift} which is upward closed 
@@ -678,11 +686,27 @@ and \emph{any-confidence} which is neither upward nor downward closed.
 Algorithms that mine itemsets based on the above measures were proposed~\cite{lee2003comine,kim2004ccmine},
 but if an application specific measure is to be used then it has to be evaluated in a post mining stage 
 or within the Redundancy-Aware Top-K framework~\cite{xin2006extracting}.
+
+
+The Redundancy-Aware Top-K framework~\cite{xin2006extracting} selects the top K itemsets according to an 
+interestingness criterion. % was first %proposed by Xin et al.~\cite{xin2006extracting}. 
+The major difference between their approach and all of the previous works is that 
+it emphasizes both interestingness and redundancy on the selected top K itemsets, 
+and the itemset interestingness is defined in the context of the application; 
+summarizing the whole collection of itemsets is not the goal.
+Our work fits in the proposed framework: 
+we reduce redundancy through filtering and clustering, 
+and we propose a ranking that orders itemsets according to some definition of interestingness.
+If only the top K itemsets are desired, itemsets ranked at positions higher than K can be omitted.
+An explicit number of itemsets needs not be set, however.
+This makes our computational model more efficient, 
+since we do not need to solve a constrained optimization problem.
 In their experiments, Xin et al.~\cite{xin2006extracting} used two application specific interestingness measures:
-they used one that is based on tf-idf for extracting interesting itemsets from a text corpus, 
+they used one that is based on TF-IDF for extracting interesting itemsets from a text corpus, 
 and another that is tailored for predicting block fetches in storage systems~\cite{li2004c}.
 We rank itemsets according to their novelty using a measure based on Information Gain. 
-Preliminary experimentation with various other measures ruled them out as ineffective 
+Preliminary experimentation with various other measures of interestingness 
+ruled them out as ineffective 
 %in the domain of social media. 
 for our purposes.
 
@@ -706,7 +730,7 @@ according to the Bayesian Information Criterion (BIC).
 Since BIC incorporates a penalty term for the number of parameters
 (itemsets included in the model), this selection will  
 minimize redundancy while maximizing surprise (divergence from model).
-The model could be initialized using itemset frequencies known
+The model can be initialized using itemset frequencies known
 from prior knowledge. 
 It is also possible to use the Minimum Description Length (MDL)
 as a criterion for selecting itemsets.
@@ -730,17 +754,17 @@ Different ways to use Frequent Itemset Mining in search %the field of Informatio
 has been proposed. 
 Possas et al.~\cite{possas2002set}  proposed using closed itemsets
 in place of terms, using them in exactly the same way as terms are used.
-In the tokenization process, they use CHARM to mine closed itemsets from 
+In the tokenization process, they use CHARM~\cite{zaki2002charm} to mine closed itemsets from 
 frequent tokens in the document.
 They then add the document to the postings lists of each closed itemset
 present in the document. 
-Queries are tokenized similarly and ranking is done using TF-IDF.
+Queries are tokenized similarly and results are ranked using TF-IDF.
 This simple approach achieves increased precision on various test collections, 
 possibly because frequent itemsets take into account collocation information.
 The approach is so simplistic, however. 
 The overlap in closed itemsets was not taken into account while tokenizing documents and queries into itemsets.
-Also, the mining algorithm was not modified to accommodate the high number of terms 
-and the higher length of documents as opposed to the length of transactions typical to market basket data.
+Also, the mining algorithm was not modified to accommodate the high number of terms %, 
+and the greater length of documents compared to the length of transactions typical to market basket data.
 Finally, the number of itemsets is higher than the number of terms so the index size will increase.
 
 Wu et al.~\cite{wu2004automatic,wu2006deploying}
@@ -752,7 +776,7 @@ thus achieving a break through in the performance
 of \emph{phrase based approaches}.
 ``Although phrases contain less ambiguous and narrower meanings than individual words, the likely
 reasons for the discouraging performance~\cite{lewis1992evaluation} from the use of phrases are: (1) phrases have inferior statistical properties to words, (2) they have low frequency of occurrence, and (3) there are a large number of redundant and noisy phrases among them.''~\cite{wu2006deploying}
-They address the problems of overlap in closed patterns,
+They address the problem of overlap in closed patterns,
 and they developed an algorithm specifically tailored for mining closed sequential patterns from text.
 Documents are broken into paragraphs which are the unit of mining and retrieval.
 This alleviates the problem of having documents that are much longer than traditional market basket transactions.
@@ -769,7 +793,7 @@ using frequent itemsets as a temporal summary.
 They have proposed a framework for storing mining results of 
 temporally consecutive intervals (batches of data) using a pyramidal time window. 
 Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
-However, the itemsets stored for each interval is not slected for providing the best summary.
+However, the itemsets stored for each interval is not selected for providing the best summary.
 Itemsets are selected according to their utility in a
 lossy compression algorithm.
 The algorithm is based on representing transactions as itemsets that cover them, 
@@ -780,8 +804,8 @@ possibly introducing items that are not originally in the transaction or omittin
 The actual transactions can be reconstructed with an accuracy that is expected to be high 
 if the transaction contains ``both recent and frequent keywords''. 
 The temporal summary is created from the reconstructed transactions in a separate step.
-First, the pyramidal time window is queried using a query (for example, ``world cup'') 
-and a specific time intervals (before certain matches, for example).
+First, the pyramidal time window is queried using keywords and a specific time intervals 
+(for example, ``world cup'' on the day before a certain matche).
 Then, non-negative matrix factorization is used to extract topics from the returned transactions.
 The pyramidal time window structure can be used to store itemsets
 selected by our methods, 
@@ -801,8 +825,8 @@ in these media.
 Some stories are reported mainly on social media 
 because 
 of censorship on journalism, 
-such as the 2009Ð10 Iranian election protests 
-(nicknamed the ``Iran's Twitter Revolution''
+such as the 2009~-~10 Iranian election protests 
+(nicknamed ``Iran's Twitter Revolution''
 \footnote{http://www.theatlantic.com/technology/archive/2010/06/evaluating-irans-twitter-revolution/58337/}).
 Other stories are reported mainly on social media
 because of the 
@@ -814,7 +838,8 @@ on the Hudson river in New York
 \footnote{http://www.telegraph.co.uk/technology/twitter/4269765/New-York-plane-crash-Twitter-breaks-the-news-again.html}.
 This could also be an intentional act
 of citizen journalism. 
-Citizen journalists are ``the people formerly known as the audience,'' who ``were on the receiving end of a media system that ran one way, in a broadcasting pattern, with high entry fees and a few firms competing to speak very loudly while the rest of the population listened in isolation from one another~--~ and who today are not in a situation like that at all. ... The people formerly known as the audience are simply the public made realer, less fictional, more able, less predictable.''
+Citizen journalists are ``the people formerly known as the audience,'' who ``were on the receiving end of a media system that ran one way, in a broadcasting pattern, with high entry fees and a few firms competing to speak very loudly while the rest of the population listened in isolation from one another~--~ and who today are not in a situation like that at all. "
+%... The people formerly known as the audience are simply the public made realer, less fictional, more able, less predictable.''
 \footnote{http://archive.pressthink.org/2006/06/27/ppl\_frmr.html\#more}.
 
 In a study of the use of Twitter as a news medium during the 2011 Tunisia and Egypt revolutions, 
@@ -841,7 +866,7 @@ All this emphasizes the influence citizen journalists and ordinary people now ha
 the information creation and dissemination process.
 User created content is rich with unique content tackling a variety of topics from different points of view.
 However, it is dominated by non-informative chatter and personal updates. 
-In a study comparing the use Twitter's search feature and Web search, 
+In a study comparing the use of Twitter's search feature to Web search, 
 Teevan et al.~\cite{teevan2011twittersearch} found that
 Twitter is mostly used for getting timely information:
 updates about events, 
@@ -869,7 +894,7 @@ in some form of Meformer activity;
 on average, users had 41\% of their messages
 in the ``Me now'' category.
 Therefore filtering out posts by Meformers, 
-or giving higher weights to posts made by informers 
+or giving higher weights to posts by Informers 
 will not be enough for finding informative posts
 made by ordinary people.
 
@@ -891,7 +916,8 @@ The parts that are selected by many people
 is likely to be a good summary of what is interesting.
 The words in this part would make up a frequent itemset.
 Other methods for finding emerging topics in social media
-also make use of the unusual frequencies of such collocation. 
+are discussed in the next section.
+%also make use of the unusual frequencies of such collocation. 
 
 %\section{Exploratory Search and Topic Summarization for Social Media}
 \section{Topic Detection and Tracking for Social Media}
@@ -918,7 +944,7 @@ In the domain of social media, Petrovi\'{c} et al.~\cite{petrovic2010streaming}
 used an adaptation for Locality Sensitive Hashing (LSH)~\cite{indyk1998approximate} to
 perform first story detection at scale. 
 The computation framework is the same as the one
-used in traditional systems~\cite{yang1998study,allan2000detections};
+used in traditional systems~\cite{yang1998study,allan2000detections}.
 For each tweet find the nearest neighbour in the vector space of terms. 
 If the distance is less than a threshold then add the document to the topic represented by the cluster containing the nearest neighbour.
 Otherwise, create a new cluster representing a new topic. 
@@ -952,14 +978,16 @@ the number of clusters increases because the classifier is trained on the positi
 %of about 0.65 correctly classified event clusters out of 20 clusters.
 
 Another method of event detection follows the framework of bursty keywords detection proposed by Kleinberg~\cite{kleinberg2003bursty}. %, for topic detection in e-mail streams. 
-In this framework, a set of keywords are tracked and could possibly be all tokens in the dataset.
+In this framework, a set of keywords are tracked~--~possibly all tokens in the dataset.
 A state machine is used to indicate the stat of each keyword, 
 where consequitive states correspond to higher levels of \emph{burst} intensity. 
 Each transition between states is associated with a cost, 
 and a keyword moves between the states to minimize the overall cost of its transitions.
 A simplified version of this framework is use by Parikh and Karlapalem~\cite{parikh2013events},
-where there are two states and a token is moved to the state of being bursty
-if the increase in its frequency exceeds a threshold. 
+where there are two states for each token. 
+A token is moved to the state of being bursty
+if the increase in its frequency exceeds a threshold,
+and it stays in this state for a fixed time interval. 
 The bursty tokens are then clustered into events.
 %is higher than the increase between all other intervals.
 %the difference in the frequency of each token is tracked in of fixed span and keywords are considered bursty
@@ -1002,11 +1030,12 @@ In our work, we are also using the volume of posts
 containing phrases and their variations (itemsets).
 We also do clustering but in a different way, 
 and we work in a totally different scale of time.
-O'Connor et al.~\cite{o2010tweetmotif} also start from phrases and 
-select \emph{significant} ones then cluster them. 
+O'Connor et al.~\cite{o2010tweetmotif} also start from phrases
+to summarize tweets about a user specified query.
+They select \emph{significant} phrases which
+are statistically unlikely, then cluster them. 
 Frequent Itemsets are a better starting point than phrases,
 since there are much more phrases than frequent itemsets.
-
 
 Event detection in Twitter can also be done using 
 Natural Language Processing
@@ -1022,6 +1051,17 @@ Our method tackles the problem in a totally different way.
 \chapter{Mining social media}
 \label{sec:socmine}
 
+
+As mentioned earlier, a \emph{frequent itemset} is a set of items that occur together a number of
+times higher than a given threshold, called the \emph{support} threshold.
+We adapt the support threshold to the dynamicity of the \emph{volume velocity} at
+different times of the day.
+We define the \emph{minimum support threshold} as the threshold at the hour
+of the least \emph{volume velocity} during the day.
+The \emph{minimum support} is supplied as an absolute number, $a$, and then
+converted to a ratio, $\alpha = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
+The actual support threshold used for mining any given epoch is thus
+$\alpha$ multiplied by the \emph{epoch}'s \emph{volume velocity}. 
 
 \section{The Linear-time Closed itemset Mining Algorithm}
 \label{sec:lcm}
