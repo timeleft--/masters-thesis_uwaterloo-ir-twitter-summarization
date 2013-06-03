@@ -520,6 +520,7 @@ Building conditional pattern bases and sub-FP-trees becomes very time and space 
 \end{figure}
 
 \subsection{Solution Space Algorithms}
+\label{sec:sol_space_algs}
 The last category of frequent itemset mining algorithms comprises algorithms that operate in the solution space. 
 It can be argued that algorithms that traverse a representation of the DB are operating in the solution space rather than the transaction space~--~given that they avoid generating candidates with low support. 
 However, in our categorization we focus on the logic behind how itemsets are generated or pruned rather than the data structure used to generate them.
@@ -1050,33 +1051,38 @@ or an online varient~\cite{hoffman2010online,yao2009efficient}.
 Our method tackles the problem in a totally different way.
 
 % ===================================
-
-\chapter{Mining social media}
+% ===================================
+% C H A P T E R     3	
+% ===================================
+% ===================================
+\chapter{Mining Social Media Text}
 \label{sec:socmine}
 
 
-As mentioned earlier, a \emph{frequent itemset} is a set of items that occur together a number of
-times higher than a given threshold, called the \emph{support} threshold.
-We adapt the support threshold to the dynamicity of the \emph{volume velocity} at
-different times of the day.
-We define the \emph{minimum support threshold} as the threshold at the hour
-of the least \emph{volume velocity} during the day.
-The \emph{minimum support} is supplied as an absolute number, $a$, and then
-converted to a ratio, $\alpha = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
-The actual support threshold used for mining any given epoch is thus
-$\alpha$ multiplied by the \emph{epoch}'s \emph{volume velocity}. 
-
-\section{The Linear-time Closed itemset Mining Algorithm}
+\section{The Linear-Time Closed Itemset Mining \\Algorithm}
 \label{sec:lcm}
-To overcome the bottleneck of \emph{candidate generation}, many proposed
-algorithms take hints from the transaction space rather than operating blindly
-in the item space.
-Some of these algorithms operate by traversing a data structure representing
-the transactions~\cite{han2000mining}; others generate itemsets having
-specific properties that help in pruning out more candidates.
-In this paper, we expand on LCM \cite{uno2004lcm}, an algorithm based on a
-property of a class of itemsets called
+In section~\ref{sec:sol_space_algs} we have discussed frequent itemset mining algorithms that
+overcome the bottleneck of \emph{candidate generation} by 
+limiting the solution to itemsets with a certain property, 
+reducing the size of the solution and 
+possibly providing a way to quickly navigate the solution space. 
+In this paper, we expand on the Linear-time Closed itemset Mining (LCM) algorithm \cite{uno2004lcm}, 
+%an algorithm based on a
+%property of a class of itemsets called
+which mines only 
 \emph{closed itemsets}~\cite{pasquier1999discovering}.
+The  LCM algorithm is distinctively fast because it also 
+takes hints from the transaction space 
+during candidate generation.
+%Generating candidates according to information from the transaction space
+This also makes it resilient against data sparsity,
+since it will not consider a candidate that never appears in the data.
+The ability to efficiently mine sparse data makes LCM particularly
+suitable for mining social media text.
+In this section we explain in detail how LCM works.
+
+Since LCM makes use of the properties of closed itemsets, 
+we begin our presentation with these properties.
 A closed itemset contains any item that is present in all the transactions
 containing this itemset.
 A formal definition of closed itemsets is given in equation \ref{eq:Closed}: 
@@ -1100,6 +1106,8 @@ the longer closed itemset.
 This property is called \emph{prefix preserving closure extension
 (PPC-Extension)} and it was proposed and formally proved by
 Uno et al.~\cite{uno2004lcm}.
+
+
 \emph{PPC-Extension} is achieved by following three rules, which we state
 after a few definitions to facilitate their statement.
 First, an item is \emph{larger/smaller} than another item if it comes
@@ -1107,33 +1115,55 @@ later/earlier in the total ordering.
 This terminology comes from the fact that LCM is most efficient if the items
 are ordered in ascending order of their frequency.
 Second, the \emph{suffix} of an itemset is one or more items whose removal
-does not result in an itemset with greater support.
-Notice that they will necessarily be at the end of the itemset,
+%does not result
+results in an itemset with greater support.
+Notice that they are necessarily at the end of the itemset,
 regardless of the total ordering.
 Finally, we call the first item added to the suffix of the itemset its
 \emph{suffix head}.
 With this terminology, the rules for \emph{PPC-Extentsion} are:
 \begin{enumerate}
-\item An itemset can be extended only by items \emph{larger} than its \emph{suffix head}. Extending by \emph{smaller} items will lead to closed itemsets already generated.
-\item After forming an itemset $s$, we add to its \emph{suffix} all items whose frequency within $T_s$ is equal to $|T_s|$.
-\item If any item in the \emph{suffix} is \emph{smaller} than the suffix head, prune this solution branch. All closed itemsets within this branch have already been generated.
+\item An itemset must be extended by all the items that occur in $T_{itemset}$, 
+except items which are \emph{smaller} than its \emph{suffix head};
+extending by \emph{smaller} items will lead to closed itemsets already generated in an earlier step. 
+%An itemset can be extended only by items \emph{larger} than its \emph{suffix head}; 
+%extending by \emph{smaller} items will lead to closed itemsets already generated. 
+%Each itemset must be extended by all the qualified items that occur in $T_{itemset}$.
+Extension items are added to the itemset in the order given by the total ordering,
+%and the maximal itemset 
+recursively applying PPC-Extension to the extended itemset before adding the next extension item.
+\item After forming an itemset $s$, we add to its \emph{suffix} all items that appear in all transaction containing $s$ ~--~ 
+that is, items whose frequency within  $T_s$ is equal to $|T_s|$.
+%\item If any item in the \emph{suffix} is \emph{smaller} than the suffix head, prune this solution branch. All closed itemsets within this branch have already been generated. Otherwise emit solution.
+\item If all items in the \emph{suffix} are \emph{larger} than the \emph{suffix head} then add the itemset to the solution. Otherwise, prune this solution branch; all closed itemsets within this branch have already been generated, when processing the smallest suffix member.
 \end{enumerate}
  
 Table \ref{table:PPCExample} is an example of how \emph{PPC-Extentsion} is
 used to generate closed itemsets starting from the
-\emph{1}-itemset `barack'.
+\emph{1}-itemset \{`barack'\}.
 The upper table enumerates $T_{\{barack\}}$.
 The lower table shows steps of itemsets generation.
-The current solution along with its frequency is in column 2,
-solutions marked by an (*) are the closed itemsets emitted.
-All possible extension items and their frequencies are in column 3 with the
-one being considered bolded.
-Column 4 is a comment explaining the step.
-At each step, a pass is done on $T_{itemset}$ to enumerate and count possible
-extension items.
-To enforce a support threshold infrequent extension items are removed,
+The current itemset along with its frequency is in column 2.
+Itemsets marked by an (*) are the closed itemsets that are part of the solution.
+The suffix of the itemset is shown in \emph{italic} when it is important to make it distinctive.
+All possible extension items and their frequencies are in column 3. 
+Extension items that are \emph{smaller} than the \emph{suffix head} 
+%are excluded by striked through.
+are shown with a line striked through them.
+For each itemset, the extension items are kept 
+so that it is known which extension item 
+is next in turn to be added.
+An item is bolded when it is added because its turn has come. %The item being added
+%Column 4 is a comment explaining the step.
+After adding each item, a pass is done on $T_{itemset}$ to 
+enumerate and count possible extension items.
+To enforce a support threshold infrequent extension items would be removed
+after counting, %at this time,
 but in this example there is no such threshold.
-Notice that the number of steps is linear in the number of closed itemsets,
+Finally, column 4 is a comment explaining each step.
+
+%Notice
+Table \ref{table:PPCExample} shows that the number of steps is linear in the number of closed itemsets,
 and the only additional storage required, besides storage for the documents,
 is that required for possible extension items.
 Of course, this is a simplified example, but it shows in essence how LCM
@@ -1146,7 +1176,8 @@ Performance on a real data set is shown in section \ref{sec:socmine}.
 We proceed by describing how to implement this algorithm using an inverted
 index.
 
-\begin{table*}
+\begin{landscape}
+\begin{table}
 \centering
 \begin{tabular}{|c|p{5cm}||c|p{5cm}|} \hline
 Doc. Id & Document & Doc. Id & Document\\\hline
@@ -1156,26 +1187,31 @@ c& brack obama \& romney & d & brack obama  \\\hline
 \begin{tabular}{c}
 Documents (two per row)\\\\
 \end{tabular}
-\begin{tabular}{|c|p{4.5cm}|p{5cm}|p{6cm}|} \hline
-Step&Current Solution&Possible Extension Items&Comments\\ \hline
-1& \{barack\} (4)* & \textbf{mitt} (2), obama (3), romney (2) & Items are ordered lexicographically\\ \hline
-2& \{barack,mitt\} (2)* & \textbf{obama} (1), romney (1) & Extension items reenumerated \& counted\\ \hline
-3 & \{barack,mitt,obama\} (1) & romney (1)                       & Rule 2: `romney' appears in all $T_{itemset}$\\\hline
-4 & \{barack,mitt,obama,romney\}(1)* & & Rule 2: `obama'  is the \emph{suffex head} \\\hline
-5 & \{barack\} (4) & mitt (2), \textbf{obama} (3), romney (2) & Nothing more to add, back to `barack' \\\hline
-6 & \{barack, obama\} (3)* & \sout{mitt} (1), \textbf{romney} (2) & Rule 1: skipping `mitt', adding `romney' \\\hline
-7 & \{barack, obama, romney\} (2)* & \sout{mitt} (1) & Rule 1: Nothing more to add. \\\hline
-8 & \{barack\} (4) & mitt (2), obama (3), \textbf{romney} (2) & Back to `barack', adding `romney' \\\hline
-9 & \{barack, romney\} (2) &  \sout{mitt} (1), obama (2) & Rule 2: add obama to suffix after `romney' \\\hline
-10 & \{barack, romney, obama\} (2) &  \sout{mitt} (1)  & Rule 3: suffix is not ordered, prune solution\\\hline
-
+\begin{tabular}{|c|p{6.5cm}|p{6.2cm}|p{7.5cm}|} \hline
+Step&Current Itemset&Possible Extension Items&Comments\\ \hline
+1& \{\emph{barack}\} (4) & mitt (2), obama (3), romney (2) & Items in $T_{\{`barack'\}}$ are counted. No items should be added to the suffix.  \\ \hline %with `barack'
+%appears in all transactions.%
+%This is not shown as a step in the rest of the example.
+2& \{barack\} (4)* & mitt (2), obama (3), romney (2) & Rule 3: suffix is ordered, add itemset to solution. This is not shown as a separate step in the rest of the example.\\ \hline
+3& \{barack\} (4) & \textbf{mitt} (2), obama (3), romney (2) & Items are ordered lexicographically. Adding `mitt' to itemset.\\ \hline
+4& \{barack, \emph{mitt}\} (2)* & \textbf{obama} (1), romney (1) & Extension items reenumerated \& counted.\\ \hline
+5 & \{barack, mitt, \emph{obama}\} (1) & romney (1)                       & Rule 2: `romney' appears in all $T_{itemset}.$\\\hline
+6 & \{barack, mitt, \emph{obama, romney}\}(1)* & & Rule 2: `obama'  is the \emph{suffex head}. \\\hline
+7 & \{barack\} (4) & mitt (2), \textbf{obama} (3), romney (2) & Nothing more to add, back to \{`barack'\}. \\\hline
+8 & \{barack, \emph{obama}\} (3)* & \sout{mitt} (1), \textbf{romney} (2) & Rule 1: skipping `mitt', adding `romney' \\\hline
+9 & \{barack, obama, \emph{romney}\} (2)* & \sout{mitt} (1) & Rule 1: Nothing more to add. \\\hline
+10 & \{barack\} (4) & mitt (2), obama (3), \textbf{romney} (2) & Back to \{`barack'\}, adding `romney'. \\\hline
+11 & \{barack, \emph{romney}\} (2) &  \sout{mitt} (1), obama (2) & Rule 2: add obama to suffix after `romney'. \\\hline
+12 & \{barack, \emph{romney, obama}\} (2) &  \sout{mitt} (1)  & Rule 3: suffix is not ordered, prune. \\\hline
+13 & \{barack\} (4) & mitt (2), obama (3), romney (2) & Back to \{`barack'\}, all possible extension items were added. Done. \\\hline
 \end{tabular}
 \begin{tabular}{c}
 Closed itemsets containing `barack'
 \end{tabular}
 \caption{Generation of closed itemsets by Prefix Preserving Closure Extension}
 \label{table:PPCExample}
-\end{table*}
+\end{table}
+\end{landscape}
 
 \section{Implementation Details}
 We show in algorithm~\ref{algo:lcmix} how to implement LCM and PPO-Extension
@@ -1244,6 +1280,22 @@ X $\gets$ Inverted index of E\;
 \end{algorithm}
 
 %-----------------------------
+
+
+
+As mentioned earlier, a \emph{frequent itemset} is a set of items that occur together a number of
+times higher than a given threshold, called the \emph{support} threshold.
+We adapt the support threshold to the dynamicity of the \emph{volume velocity} at
+different times of the day.
+We define the \emph{minimum support threshold} as the threshold at the hour
+of the least \emph{volume velocity} during the day.
+The \emph{minimum support} is supplied as an absolute number, $a$, and then
+converted to a ratio, $\alpha = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
+The actual support threshold used for mining any given epoch is thus
+$\alpha$ multiplied by the \emph{epoch}'s \emph{volume velocity}. 
+
+
+
 Besides, the memory requirements of the FP-Growth algorithm suffers from the sparsity
 of data, since the data structure is succinct only if it can find common
 prefixes within the constraints of its invariant. 
