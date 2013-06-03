@@ -367,17 +367,6 @@ Figure \ref{fig:outline} shows conceptually how our contributions in chapters  \
 problem. We overlay the contributions on such a figure to make it clear how each one addresses a particular challenge of applying frequent itemset mining to text data from social media. In chapter \ref{sec:concfut}, we conclude our presentation and
 suggest future directions.
 
-\begin{landscape}
-\begin{figure}
-\centering
-\scalebox{0.7}{
-\includegraphics{pyramid-road-map.png}
-}
-\caption{Most important contributions overlaid on a frequency ordered prefix tree}
-\label{fig:outline}
-\end{figure}
-\end{landscape}
-
 
 \section{Terminology and Notation}
 Classically, frequent itemset mining is applied to a \emph{database} of
@@ -400,6 +389,19 @@ We now introduce the notation used in this paper:
 \item $s \subset W$: An itemset; any possible combination of items. 
 \item $T_s = \{t: t \in E \, and \, s \subseteq t\}$: All transactions containing itemset s. We refer to it as the itemset's postings list, as is common in the Information Retrieval (IR) literature.
 \end{itemize}
+
+
+
+\begin{landscape}
+\begin{figure}
+\centering
+\scalebox{0.7}{
+\includegraphics{pyramid-road-map.png}
+}
+\caption{Most important contributions overlaid on a frequency ordered prefix tree}
+\label{fig:outline}
+\end{figure}
+\end{landscape}
 
 
 %=====================================
@@ -433,8 +435,8 @@ In the domain of market basked data,
 an association rule is an implication that an item is likely to be purchased
 in the same transaction with a certain set of items.
 Association rules are mined by finding itemsets that co-occur together frequently, 
-then producing a rule with each individual item as a precedent to the purchase of the rest of the itemset.
-The Apriori algorithm finds frequent itemsets by finding itemsets of increasing lengthes iteratively.
+then producing a rule with each individual item as a consequent to the purchase of the rest of the itemset.
+The Apriori algorithm finds frequent itemsets of increasing lengthes iteratively.
 It starts by counting frequencies of individual items (itemsets of length 1). 
 Then it iteratively increases the length of itemsets.
 At each iteration, it generates candidate itemsets of length K (K-itemsets) 
@@ -1030,11 +1032,12 @@ In our work, we are also using the volume of posts
 containing phrases and their variations (itemsets).
 We also do clustering but in a different way, 
 and we work in a totally different scale of time.
+
 O'Connor et al.~\cite{o2010tweetmotif} also start from phrases
 to summarize tweets about a user specified query.
 They select \emph{significant} phrases which
 are statistically unlikely, then cluster them. 
-Frequent Itemsets are a better starting point than phrases,
+Frequent itemsets are a better starting point than phrases,
 since there are much more phrases than frequent itemsets.
 
 Event detection in Twitter can also be done using 
