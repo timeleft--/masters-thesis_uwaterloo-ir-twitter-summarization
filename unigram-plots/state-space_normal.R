@@ -7,10 +7,11 @@ require(reshape)
 #require(ggplot2)
 #require(MARSS)
 require(dlmodeler)
+#require(plyr)
 
 MILLIS_PUT_1000 <- 1
 
-setwd("/u2/yaboulnaga/data/twitter-tracked/spritzer_timesorted_csv/pig/") #tweet-counts.csv")
+setwd("/home/yaboulnaga/data/twitter-tracked/spritzer_timesorted_csv/pig") #tweet-counts.csv")#numtweets_oct01-nov01_5min
 
 kTS <- "TIMESTAMP"
 kUnigram <- "NUMTWEETS"
@@ -22,7 +23,7 @@ kFitMethod <- "MLE"
 # FKF is the best, FKAS is also good
 # but dlm is so heavy weight that day of week seasonal causes the diffuse to fail because of negative
 # variance (cycle) or hangs up the computer (dummy seasonal)
-kBackEnd <- "FKF" # KFAS, FKF or dlm
+kBackEnd <- "KFAS" # KFAS, FKF or dlm
 kRawResult <- TRUE
 kModelName <- "random-walk+days" #-drift+weeks+days"
 kComp <- "level" #"+trend"
@@ -65,24 +66,29 @@ sumN <- function (inFrame, colname, n) {
     len <-xlen
   }
 	
-	retVal <- data.frame(TIMESTAMP=as.POSIXct(inFrame$TIMESTAMP[seq(n,len,by=n)]/MILLIS_PUT_1000,origin="1970-01-01",
-          tz="GMT"))
+	retVal <- data.frame(TIMESTAMP=as.POSIXct( inFrame$TIMESTAMP[seq(n,len,by=n)]/MILLIS_PUT_1000,
+          origin="1970-01-01",
+          tz="HST")) #"GMT"
 	retVal[colname] <- colSums(matrix(inFrame[[colname]], nrow=n),na.rm=TRUE)
+  retVal["DayMon"] <- format(retVal$TIMESTAMP, format='%d %b', tz="HST")
 	return(retVal)
 }
 #debug(sumN)
 # setBreakpoint("plot_csvs.R#19")
 
 hrs.files <- list.files(pattern=".*csv$")
-uniCntT <- NULL
-for(i in 1:length(hrs.files)){ 
-  uniCntT <- rbind.fill(uniCntT, 
-     read.table(hrs.files[i], header=TRUE, sep='\t', quote="\"")
-        [c(kTS, kUnigram)])
-}
+uniCntT <-  read.table(hrs.files[1], header=TRUE, sep='\t', quote="\"")
+
+    #NULL
+#for(i in 1:length(hrs.files)){ 
+#  uniCntT <- rbind.fill(uniCntT, 
+#     read.table(hrs.files[i], header=TRUE, sep='\t', quote="\"")
+#        [c(kTS, kUnigram)])
+#}
 
 uniCntT <-  uniCntT[complete.cases(uniCntT),]
-uniCntT <- uniCntT[which(uniCntT$TIMESTAMP >= 1348030800),]
+uniCntT <- uniCntT[which(uniCntT$TIMESTAMP >= 1349085900),] #Oct 01, 2012 at 5 AM EST
+uniCntT <- uniCntT[which(uniCntT$TIMESTAMP <  1351764000),] #Nov 01, 2012 at 5 AM EST
 ############### Fill the gaps in the data with zeros to make sure epochs are fixed ###############
 kRecordsPerMinute <- 1/5
 kEpochLenTemp <- 60 / kRecordsPerMinute
@@ -102,7 +108,7 @@ for(i in rev(which(diff(uniCntT[[kTS]]) !=  kEpochLenTemp))){
 
 kTraining <- as.numeric(ceiling(dim(uniCntT)[1] * kTrainingFraction))
 
-kEpochRecs <- 5 * kRecordsPerMinute
+kEpochRecs <- 60 * kRecordsPerMinute
 # determing the epoch length
 #suppLag <- supportLag(uniCntT[1:kTraining,], kUnigram, kSupport)
 ##The 3rd quartile of the suppLag assuming uniform distrib
@@ -337,16 +343,17 @@ par(mar = mar.default + c(7,0,0,0))
 
 plot(t(uniTrainM),type="p",
     cex=0.5,pch=20,
-    ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
-    main=paste(kUnigram, " occurrences, ", kComp, " (red) and Confidence bands (blue)"),
+    #"Occurences of '", kUnigram, "' per ", kEpochMins, " mins"
+    ylab=paste("Tweets per hour"), xlab="", #"Date/Time",
+   # main=paste(kUnigram, " occurrences, ", kComp, " (red) and Confidence bands (blue)"),
     lab=c(1,10,7)) # ,ylim=uniYLims) #,log="y") #,ylim=c(0,400))
-lines(uniComp[[kComp]]$lower[1,],col="blue",lty=2)
+#lines(uniComp[[kComp]]$lower[1,],col="blue",lty=2)
 lines(uniComp[[kComp]]$mean[1,],col="red")
-lines(uniComp[[kComp]]$upper[1,],col="blue",lty=2)
+#lines(uniComp[[kComp]]$upper[1,],col="blue",lty=2)
 
 #TODONE: why dayDelims + 1??? Why shift?
 # Because the day delims are zero based, and the indeces are 1 based
-axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
+axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT$DayMon[dayDelims+1],las=2) #[[kTS]]
 
 dev.off()
 
@@ -355,14 +362,16 @@ pdf(paste("~/Desktop/", kModelName,"_", kUnigram, "_", "irregular+repeating", ".
 # noiseYLim <- ???
 # noiseYLog <- flase (-ve numbers)
     
+par(scipen=3)
 par(mar = mar.default + c(7,0,0,0))
 plot(oneStepAheadPredictionErr,type="l",
-    ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
-    main=paste(kUnigram, "Irregular (black) and daily Cycle (green)"),
+#    ylab=paste("Occurences of '", kUnigram, "' per ", kEpochMins, " mins"), xlab="", #"Date/Time",
+#    main=paste(kUnigram, "Irregular (black) and daily Cycle (green)"),
     #ylim=c(-kSupport,kSupport),
+    ylab=paste("Tweets per hour"), xlab="", #"Date/Time",
     lab=c(1,10,7))
 lines(uniRepeating[[kRepeating]][1:kTraining],type='l',col="green")
-axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT[[kTS]][dayDelims+1],las=2)
+axis(1,at=dayDelims,tck=1,lty=3,labels=uniCntT$DayMon[dayDelims+1],las=2) #[[kTS]]
 
 dev.off()
 
