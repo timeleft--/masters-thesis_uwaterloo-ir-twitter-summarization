@@ -1213,62 +1213,98 @@ Closed itemsets containing `barack'
 \end{table}
 \end{landscape}
 
-\section{Implementation Details}
+\subsection{Implementation Details}
 We show in algorithm~\ref{algo:lcmix} how to implement LCM and PPO-Extension
 using an inverted index.
+The algorithm assumes the presence of a search infrastructure,
+with the ability of performing boolean queries efficiently.
+Besides the high likelihood that such an infrastructure already exists,
+it is also a very good representation of textual data.
+%It provides a more succinct rep
+%We experimented with other representation that are designed to provide 
+Other representations that are designed for databases in general
+might not be well suited for textual data. %,from the nature of .
+For example, the memory requirements of the FP-tree suffers from the sparsity
+of data, since the data structure is succinct only if it can find common
+prefixes within the constraints of its invariant. 
+The possibility of using an inverted index in the implementation 
+of LCM is yet another reason why it is very well suited 
+for textual data.
+%for frequent itemset mining from 
+
 The algorithm takes as input an epoch of data and a support threshold as a
 ratio $\alpha$.
+%The ratio is sp
 It outputs the closed itemsets with support above the threshold.
 Along with each itemset in the solution, it also outputs the transactions
 in which it occurs~--~which is represented as $\langle items,
 T_{itemset} \rangle$.
 The symbol $\succ$ denotes that the lefthand side  succeeds the righthand
 side in the total ordering.
+In the implementation shown, it is not necessary that the inverted index's tokens  list (X.tokens)
+follow the total ordering; all itemsets of length 1 will be considered anyway. 
+Each 1-itemset is then expanded according to the PPO-Extension rules.
+Lines 11-18 are the enumeration and occurrence counting of possible extension items, 
+except line 15 which forms the closed itemset according to PPO-Extension rule 2.
+Lines 19-20 prunes a solution branch according to the rule 3, 
+and line 21 adds the itemset to the solution according to the rule's complement.
+Lines 22-27 extends the itemset according to rule 1, 
+where line 23 (along with line 5) enforces the support threshold.
 
-The algorithm also lends itself to distributed implementations.
+
+The algorithm lends itself to distributed implementations.
 For example, a map/reduce implementation is straightforward since the only
-operations are counting (line 14) and projection (line 22).
+operations are counting (line 15) and projection (line 24).
 However, the fast execution time and the low memory requirements of the
 algorithm makes it possible that a distributed implementation will
 cause unnecessary overhead for all but the largest data sets.
-In the implementation shown, it is not necessary that the index's tokens list
-follow the total ordering; all itemsets of length 1 will be considered anyway. 
+We experimented with Hadoop\footnote{http://hadoop.apache.org}
+%, an open source map/reduce framework, 
+and the overhead was in the order of minutes.
+Besides, many problems start to arise 
+when the programming model is complicated,
+and Hadoop was particularly problematic.
+%Intermediate results has to be read and written from disk multiple times,
+%and might even be copied over the network. 
+%Using data management components from the Hadoop ecosystem
+%didn't help in achieving a speed up. 
+
 
 \begin{algorithm}
 \SetAlgoLined
 \LinesNumbered
 \SetKwProg{Fn}{Function}{ is}{end}
-\KwIn{$\alpha$: Dynamic support ratio}
+\KwIn{$\alpha$: Support ratio} %Dynamic
 
 \KwData{E: Epoch of data}
-\KwResult{C: Closed itemsets having support $\alpha$ within E}
-C $\gets \{\langle \emptyset, E\rangle\}$ \tcp*{$\emptyset$ is a closed itemset}
+\KwResult{C: Closed itemsets occurring  in at least $\alpha * |E|$ records}
+C $\gets \{\langle \emptyset, E\rangle\}$ \tcp*{$\emptyset$ is a closed itemset. This is skipped in practice}
 X $\gets$ Inverted index of E\;
 \ForEach{$w \in X.tokens$}{
 	$T_{\{w\}} \gets$ X.postingsList[$w$]\;
-	\lIf{$|T_{\{w\}}| \geq \alpha \frac{|E|}{E.span}$}{
-		LCM($\{w\}, w, T_{\{w\}}$)
+	\uIf(\tcp*[f]{Support threshold for 1-itemsets}){$|T_{\{w\}}| \geq \alpha * |E|$}{ %\frac{|E|}{E.span}
+		LCM($\{w\}, w, T_{\{w\}}$) \;
 	}
 }
 \Return{C}\;
 
-\Fn{LCM(s: Current itemset,   $w_{sh}$: Suffix head, \\ $T_s$: Transactions (tweets) containing s)}{
+\Fn{LCM(s: Current itemset,   $w_{sh}$: Suffix head, \\ \hspace*{1.2in}$T_s$: Transactions (tweets) containing s)}{
 	frequency[$1 \ldots w_n$] $\gets$ 0\;
 	suffix $\gets \{ w_{sh}\}$\;
 	\ForEach{$t \in T_s$}{
 		\ForEach{$w \in t$}{ 
 			frequency[$w$]++\;
 			\lIf{frequency[$w$] $ = |T_s|$}{
-				suffix.add($w$)	
-			}
+				suffix.add($w$)%	\tcp*{ PPO-Extension Rule 2}
+			}  
 		}
 	}
-	\lIf{$\exists v \in suffix: w_{sh} \succ v$ }{
-		\Return
-	}
+	\uIf{$\exists v \in suffix: w_{sh} \succ v$ }{
+		\Return \tcp*{Prune according to PPO-Extension Rule 3}
+	} 
 	C.add($\langle s \cup {suffix}, T_s\rangle$)\;
 	\ForEach{$v \succ w_{sh}$ and $v \notin $ suffix}{
-		\If{frequency[$v$] $\geq \alpha \frac{|E|}{E.span}$}{
+		\If{frequency[$v$] $\geq \alpha * |E|$}{%\frac{|E|}{E.span}
 			$T \gets T_s \cap v$	\tcp*{Results of query $s$ AND $v$}
 			LCM($s \cup suffix \cup \{v\}, v, T$) 
 		}
@@ -1281,7 +1317,7 @@ X $\gets$ Inverted index of E\;
 
 %-----------------------------
 
-
+\section{Dataset and Data Preprocessing}
 
 As mentioned earlier, a \emph{frequent itemset} is a set of items that occur together a number of
 times higher than a given threshold, called the \emph{support} threshold.
@@ -1296,10 +1332,6 @@ $\alpha$ multiplied by the \emph{epoch}'s \emph{volume velocity}.
 
 
 
-Besides, the memory requirements of the FP-Growth algorithm suffers from the sparsity
-of data, since the data structure is succinct only if it can find common
-prefixes within the constraints of its invariant. 
-Even using
 
 Throughout this paper we use data collected from the Twitter public
 stream\footnote{https://dev.twitter.com/docs/streaming-apis/streams/public}
@@ -1368,7 +1400,7 @@ eliminate the effect of function words by N-gram filtering.
 \label{fig:runtimeEpochs}
 \end{figure}
 
-\section{Mining Term N-grams}
+\subsection{Mining Term N-grams}
 \label{sec:ngrams}
 
 
