@@ -1274,7 +1274,7 @@ and Hadoop was particularly problematic.
 \SetAlgoLined
 \LinesNumbered
 \SetKwProg{Fn}{Function}{ is}{end}
-\KwIn{$\alpha$: Support ratio} %Dynamic
+\KwIn{$support$: Support threshold} %Dynamic
 
 \KwData{E: Epoch of data}
 \KwResult{C: Closed itemsets occurring  in at least $\alpha * |E|$ records}
@@ -1282,7 +1282,7 @@ C $\gets \{\langle \emptyset, E\rangle\}$ \tcp*{$\emptyset$ is a closed itemset.
 X $\gets$ Inverted index of E\;
 \ForEach{$w \in X.tokens$}{
 	$T_{\{w\}} \gets$ X.postingsList[$w$]\;
-	\uIf(\tcp*[f]{Support threshold for 1-itemsets}){$|T_{\{w\}}| \geq \alpha * |E|$}{ %\frac{|E|}{E.span}
+	\uIf(\tcp*[f]{Support threshold for 1-itemsets}){$|T_{\{w\}}| \geq support$}{ %\alpha * |E|$}{ %\frac{|E|}{E.span}
 		LCM($\{w\}, w, T_{\{w\}}$) \;
 	}
 }
@@ -1304,7 +1304,7 @@ X $\gets$ Inverted index of E\;
 	} 
 	C.add($\langle s \cup {suffix}, T_s\rangle$)\;
 	\ForEach{$v \succ w_{sh}$ and $v \notin $ suffix}{
-		\If{frequency[$v$] $\geq \alpha * |E|$}{%\frac{|E|}{E.span}
+		\If{frequency[$v$] $\geq support$}{%\alpha * |E|$}{%\frac{|E|}{E.span}
 			$T \gets T_s \cap v$	\tcp*{Results of query $s$ AND $v$}
 			LCM($s \cup suffix \cup \{v\}, v, T$) 
 		}
@@ -1482,7 +1482,7 @@ The simple moving average is clearly not a
 a good estimate of the hourly volume velocity.
 A better estimate of the number of tweets in an upcoming hour 
 can be predicted from the model 
-using a Kalman filter.
+using a Kalman filter~\cite{tusell2011kalman}.
 
 
 %Some hours have a level significantly ($\alpha = 0.05$)
@@ -1494,7 +1494,7 @@ The peaks on the $3^{rd}$, $16^{th}$ and $22^{nd}$
 %~-~the days of 
 %These peaks might be caused by 
 coincide with
-the presidential debates\footnote{http://www.uspresidentialelectionnews.com/2012-debate-schedule/2012-presidential-debate-schedule/}, and
+the presidential debates\footnote{http://www.uspresidentialelectionnews.com/2012-debate-schedule/}, and
 the peak on the $28^{th}$ coincide with 
 the emergency declaration for
 the North Easter states of the USA
@@ -1523,12 +1523,22 @@ Nevertheless, it is necessary to
 %We 
 adapt the support threshold to the dynamicity of the volume velocity at
 different times of the day.
-We define the \emph{minimum support threshold} as the threshold at the hour
+If a ratio support threshold is used then this would not be needed,
+however determining a support ratio is difficult 
+and it is more desirable to be able to specify the threshold
+as an absolute number. 
+%To do this when the volume velocity is 
+We therefore define the \emph{minimum support threshold} as the threshold at the hour
 of the least volume velocity during the day.
-The \emph{minimum support} is supplied as an absolute number, $a$, and then
-converted to a ratio, $\alpha = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
-The actual support threshold used for mining any given epoch is thus
-$\alpha$ multiplied by the \emph{epoch}'s volume velocity. 
+The \emph{minimum support} is supplied as an absolute number %, $a$, 
+and then converted to a ratio, $\alpha$, % = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
+through dividing by the average of the number of tweets in the hour of minimum volume velocity in different days. 
+The actual support threshold used for mining any given epoch, E, is thus
+$\alpha$ multiplied by the \emph{epoch}'s size: % volume velocity:
+\begin{align}
+support &= \alpha \times \frac{|E|}{E.span}  \hspace*{1in}  where\,\alpha: support\,ratio\\
+&= \frac{minimum\_support\_threshold}{\textbf{avg}(\min_{day}{(vol.\, vel.)})} \times \frac{|E|}{E.span} 
+\end{align}
 
 
 
