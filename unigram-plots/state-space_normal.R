@@ -334,8 +334,8 @@ pdf(paste("~/Desktop/",kModelName,"_",  kUnigram, "_", kComp, ".pdf", sep=""))
 
 dayDelims = seq(from=0,to=dim(uniCntT)[1],by=as.numeric(ceiling(24*(60/kEpochMins))));
 
-mar.default <- par("mar")
-par(mar = mar.default + c(7,0,0,0))
+#mar.default <- par("mar")
+#par(mar = mar.default + c(7,0,0,0))
 
 #uniYLims <- quantile(uniCntT[1:kTraining,kUnigram], c(.25,.75))
 #uniYLog <- ifelse(as.numeric(diff(quantile(uniCntT[1:kTraining,kUnigram], c(0.05,.95)))) > 100, TRUE, FALSE)   
@@ -349,6 +349,9 @@ plot(t(uniTrainM),type="p",
     lab=c(1,10,7)) # ,ylim=uniYLims) #,log="y") #,ylim=c(0,400))
 #lines(uniComp[[kComp]]$lower[1,],col="blue",lty=2)
 lines(uniComp[[kComp]]$mean[1,],col="red")
+lines(rep(mean(uniTrainM) + (1.96 * sd(t(uniTrainM) / sqrt(kTraining))),kTraining),type='l',col="blue",lty=2)
+lines(rep(mean(uniTrainM),kTraining),type='l',col="blue")
+lines(rep(mean(uniTrainM) - (1.96 * sd(t(uniTrainM) / sqrt(kTraining))),kTraining),type='l',col="blue",lty=2)
 #lines(uniComp[[kComp]]$upper[1,],col="blue",lty=2)
 
 #TODONE: why dayDelims + 1??? Why shift?
