@@ -1311,28 +1311,15 @@ X $\gets$ Inverted index of E\;
 	}
 }
 
-\caption{LCM frequent itemsets mining}
+\caption{The LCM frequent itemset mining algorithm}
 \label{algo:lcmix}
 \end{algorithm}
 
 %-----------------------------
 
-\section{Dataset and Data Preprocessing}
-
-As mentioned earlier, a \emph{frequent itemset} is a set of items that occur together a number of
-times higher than a given threshold, called the \emph{support} threshold.
-We adapt the support threshold to the dynamicity of the \emph{volume velocity} at
-different times of the day.
-We define the \emph{minimum support threshold} as the threshold at the hour
-of the least \emph{volume velocity} during the day.
-The \emph{minimum support} is supplied as an absolute number, $a$, and then
-converted to a ratio, $\alpha = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
-The actual support threshold used for mining any given epoch is thus
-$\alpha$ multiplied by the \emph{epoch}'s \emph{volume velocity}. 
-
-
-
-
+%\section{Dataset and Data Preprocessing}
+\section{Using LCM for Mining Social Media Text}
+\subsection{Dataset}
 Throughout this paper we use data collected from the Twitter public
 stream\footnote{https://dev.twitter.com/docs/streaming-apis/streams/public}
 since October 1st, 2012. 
@@ -1342,18 +1329,260 @@ We collect only the tweet text to avoid reliance on any features specific to a
 certain social medium,
 and to make the algorithms applicable to other media where text is short such
 as Facebook or Google+ status updates.
-The only preprocessing we performed was to remove duplicate original tweets
-(not retweets) using a Bloom filter.
+%The only preprocessing we performed was to
+We remove duplicate original tweets
+(not retweets) using a Bloom filter~\cite{metwally2005duplicate}.
 This filtering removes spam tweets sent by botnets, averaging at 2.86\% of the stream. 
 %3352.61069856614 / 116920.214769629
+There were two disruptions during data gathering. 
+One in late October because of Hurricane Sandy
+which made the Twitter service unaccessible.
+The other was in late December because of 
+technical problems 
+%running out of disk space
+on the server gathering the data.
+%It took a couple of days for the author to notice
+%because he was back home on vacation. 
+
+
+
+% select count(*), avg(count), stddev(count) from numtweets_date;
+% count |         avg          |     stddev      
+%-------+----------------------+-----------------
+ %  112 | 2705931.830357142857 | 583705.63189013
+%(1 row)
+%march=# select count(*), avg(count), stddev(count) from numtweets_date where count > 100000;
+% count |         avg          |     stddev      
+%-------+----------------------+-----------------
+%   109 | 2779091.816513761468 | 385334.92621946
+%(1 row)
+
+
+%march=# select count(*), avg(count), stddev(count) from numtweets_hourly;
+ %count |         avg         |     stddev     
+%-------+---------------------+----------------
+% 2546 | 119035.492930086410 | 24774.95441253
+%(1 row)
+%march=# select count(*), avg(count), stddev(count) from numtweets_hourly where count > 100000;
+% count |         avg         |     stddev     
+%-------+---------------------+----------------
+%  1948 | 130575.470739219713 | 13980.26111766
+%(1 row)
+%march=# select count(*), avg(count), stddev(count) from numtweets_hourly where count > 50000;
+% count |         avg         |     stddev     
+%-------+---------------------+----------------
+%  2541 | 119210.870129870130 | 24465.65658672
+%(1 row)
+%march=# select count(*), avg(count), stddev(count) from numtweets_hourly where count > 25000;
+% count |         avg         |     stddev     
+%-------+---------------------+----------------
+%  2544 | 119123.931996855346 | 24582.24599789
+%(1 row)
+
+
+%From perfmon
+%Hourly Volume     | 37049 | 113569.051931226 | 23522.1711336507 | 184661 |   1
+%Daily Volume     |   876 |      2532001.33561644 | 425519.560561978 | 3116548 |    1
+
+
+The average number of tweets per hour  (\emph{volume velocity}) in the data is 119,035.49 tweets 
+(n = 2,546 hours, standard error = 491), 
+and the average number of tweets per day is 2,705,931.83 tweets 
+(n = 112 days, standard error = 55,155). 
+These are simple moving averages calculated by summing the number of tweets in 
+non-overlapping epochs and dividing by the number of epochs.
+%However, the number of tweets 
+A more accurate estimate of the average number
+of tweets at different hours of the day 
+can be acquired using a timeseries model
+of the activity on the social network.
+% number of tweets %volume velocity 
+% at each hour can be calculated using a state space model
+
+\subsection{Timeseries model of the dataset}
+Arrivals entering a system are commonly modelled as
+a Poisson stochastic process.
+A Poisson process can be 
+characterized by a random variable $N(t)$ %series of 
+representing the aggregate number of arrivals 
+that has happened up to time $t$.
+This random variable has a Poisson probability mass function
+with a rate $\lambda$
+(as well as two other necessary properties: independent and stationary increment).
+When the rate is high enough (more than 1000), 
+the Normal distribution can be used as an approximation
+to the Poisson distribution. 
+Since social media has arrival rates larger than 1000
+posts per minute 
+(the time unit is arbitrary but must be long enough to have more then 1000 arrivals),
+it is therefore possible to assume a normal distribution
+and use a state space model 
+to describe the activity on the social network.
+
+Values in time series data is known to be correlated,
+and specialized models are developed to deal with such explicit correlation.
+The explicit correlation is usually uninteresting, 
+since it is known and expected.
+For example, the data can be known to have a trend such as a chronic increase in the volume velocity. % of Twitter.
+Also, a cyclic increases and decreases in the volume velocity according to the time of day can be expected~-~this is called the seasonal effect in time series analysis.
+State space methods provide an explicit structural framework for the decomposition of time series~\cite{commandeur2007introduction}.
+%in order to diagnose all the dynamics in the time series data simultaneously 
+Unlike the more popular Box~-~Jenkins ARIMA models, 
+trend and seasonal effects are not treated as nuisance parameters, 
+and it is not necessary to remove the trend and seasonal effects 
+from the series before the analysis can begin.
+Instead, a state space model has an equation 
+to capture each type of effect that is suspected
+to contribute to the values of the observed variable.
+Different models can be used to describe the same
+observed variable, and the best model is
+selected using the Akaike information criterion 
+which penalizes extra parameters.
+
+After experimentation with different models,
+we found that the model that best describes the 
+volume velocity of Twitter is the following: %Gaussian Random Walk
+\begin{enumerate}
+\item A deterministic seasonal cycle that is 1 day long, which captures the effect of the hour of day on the number of posts. 
+\item A stochastic level component, which represents the volume velocity specific to each hour. The stochasticity is represented as a variance attached to the level component.
+\end{enumerate}
+There was no need to add a trend component,
+maybe because the sampling used by the Twitter API %the data coming from the
+public stream endpoint emits a stable volume of Tweets, 
+and maybe because there was actually no significant growth in the 
+use of Twitter during the months of data collection.
+In our model we use the timestamps of tweet creation,
+and we did not keep the timestamps of when the API returned
+each tweet as part of the sample. %~-~which could be later th .
+
+Figures \ref{fig:volvel1} and \ref{fig:volvel2} show 
+different components of the model 
+when it is fitted to the hourly number of tweets
+in the month of October 2012. 
+Figure \ref{fig:volvel1}
+shows the daily cycle component (green)
+and the noise component (black), 
+which must be present in all state space models.
+The cycle is perfectly aligned with the days
+in the Hawaii Standard Time (HST) time zone,
+in which midnight corresponds to 5 AM EST
+and 2 AM PST in October.
+%This indicates that 
+Figure \ref{fig:volvel2} shows the mean of the level component (red)
+along with a scatter plot of the hourly volume velocity.
+%The scale of the two figures are different
+%which would 
+%This model can be used to predict the 
+%The mean level is almost always
+%different from simple moving average. 
+The blue continuous line is simple moving average
+%moving across the mean level towards its bottom,
+and its confidence bands are the blue dashed lines.
+The simple moving average is clearly not a
+a good estimate of the hourly volume velocity.
+A better estimate of the number of tweets in an upcoming hour 
+can be predicted from the model 
+using a Kalman filter.
+
+
+%Some hours have a level significantly ($\alpha = 0.05$)
+%higher than the simple moving average,
+The peaks in the level component
+%and they 
+coincide with real world events.
+The peaks on the $3^{rd}$, $16^{th}$ and $22^{nd}$  
+%~-~the days of 
+%These peaks might be caused by 
+coincide with
+the presidential debates\footnote{http://www.uspresidentialelectionnews.com/2012-debate-schedule/2012-presidential-debate-schedule/}, and
+the peak on the $28^{th}$ coincide with 
+the emergency declaration for
+the North Easter states of the USA
+in anticipation of 
+Hurricane Sandy\footnote{http://www.fema.gov/hurricane-sandy-timeline\#oct28}.
+%However, it is 	
+The use of such a model to indicate the presence
+of interesting information can be investigated further,
+however it will probably require modelling the number 
+of occurrences of certain keywords.
+%Thus will not be scalable to  
+Furthermore, timeseries models handle autocorrelation well, 
+but handling correlation between different random variables
+increases the number of parameters quadratically in the number of variables.
+The correlation between random variables is 
+captured by a variance-covariance matrix,
+and if two variables are not known to be independent
+a parameter must be added in the cell of the intersection 
+of their row and column. 
+Therefore, we will not use timeseries models
+any further.
+
+Nevertheless, it is necessary to 
+%As mentioned earlier, a \emph{frequent itemset} is a set of items that occur together a number of
+%times higher than a given threshold, called the \emph{support} threshold.
+%We 
+adapt the support threshold to the dynamicity of the volume velocity at
+different times of the day.
+We define the \emph{minimum support threshold} as the threshold at the hour
+of the least volume velocity during the day.
+The \emph{minimum support} is supplied as an absolute number, $a$, and then
+converted to a ratio, $\alpha = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
+The actual support threshold used for mining any given epoch is thus
+$\alpha$ multiplied by the \emph{epoch}'s volume velocity. 
+
+
+
+\begin{figure}
+\includegraphics[clip=true,trim=0in 1.5in 0in 1in]
+{data-plots_oct/random-walk+days_NUMTWEETS_irregular+repeating.pdf}
+\caption{Seasonal and noise components of the volume velocity}
+\label{fig:volvel1}
+\end{figure}
+
+\begin{figure}
+\includegraphics%[clip=true,trim=0in 1.5in 0in 1in]
+{data-plots_oct/random-walk+days_NUMTWEETS_level+sma.pdf}
+\caption{Stochastic level of the volume velocity}
+\label{fig:volvel2}
+\end{figure}
+
+\subsection{Stream processing}
+This shows the
+We now proceed by discussing how 
+we apply the algorithms to streaming data.
 
 We apply the algorithms to epochs of data, so they are not strictly stream
 processing algorithms.
-However, we regard the process as mining a sliding window that is moved
-forward by time steps of short span.
+Stream processing algorithms are supposed to process transactions one at a time
+as they arrive, looking at each transaction only once
+~--~in other words, they should make one pass on the data then discard it.
+This complicates the model of computation a lot
+~\cite{ganti2002mining,bifet2007learning,gilbert2001surfing,zhu2003efficient}, 
+and there is no justification to process social media data as a stream.
+The stream processing model of computation is justified when
+the data is not supposed to be stored (such as data from sensor networks),
+or when the processing time has to be as short as possible 
+such that looking at historic data is an overhead 
+(such as in the case of processing stock ticker data, 
+where making a decision a few milliseconds 
+before/after competitors can translate into profits/losses).
+%millions of dollars). 
+In the case of social media text, 
+the data has to be stored anyway 
+and the perception of the human users
+makes processing times in the order of seconds %or even minutes
+acceptable in a \emph{real time} system.
+
+One of the prominent stream processing models is the sliding window model,
+where a window of  data  \emph{slides} forwards through the stream;
+the oldest data point is removed from the window as the newest data point is added.
+The data in the window is processed each time the window slides.
+We can regard the way we process the social media stream as 
+mining a sliding window that is moved forward by time steps of short span.
 The time step must be longer than the time needed to mine an epoch of data,
 and the performance of our algorithms makes it possible to use a time step
-of a few seconds for epochs up to a day long.
+as short as a few seconds for epochs up to a day long.
+
 Figure \ref{fig:runtimeEpochs} shows the runtime of LCM on epochs of
 increasing length, and we will show in section \ref{sec:bounding} that our
 extensions do not degrade performance.
@@ -1362,6 +1591,18 @@ epochs of the specified length in the last 3 months of 2012, % October, November
 using a time step that is half the epoch length.
 The variance is very low and the confidence bands are not shown because they
 appear as dots.% on top of the bars. 
+
+
+\begin{figure}
+\centering
+\scalebox{0.4}{
+\includegraphics{runtim_epoch-spans_line-over-bars.png}
+}
+\caption{Mean runtime of LCM at different epoch spans}
+\label{fig:runtimeEpochs}
+\end{figure}
+
+
 
 The support threshold used throughout this paper %, unless otherwise specified,
 is $\alpha=0.0002$.
@@ -1391,14 +1632,6 @@ Regardless of the length of the epoch,
 many mined itemsets are combinations of function words.
 In the next section, we outline how we reduce the number of itemsets and
 eliminate the effect of function words by N-gram filtering.
-
-\begin{figure}
-\centering
-
-\includegraphics{runtim_epoch-spans_line-over-bars.png}
-\caption{Mean runtime at different epoch spans}
-\label{fig:runtimeEpochs}
-\end{figure}
 
 \subsection{Mining Term N-grams}
 \label{sec:ngrams}
