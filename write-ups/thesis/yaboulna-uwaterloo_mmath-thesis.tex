@@ -1533,13 +1533,24 @@ of the least volume velocity during the day.
 The \emph{minimum support} is supplied as an absolute number %, $a$, 
 and then converted to a ratio, $\alpha$, % = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
 through dividing by the average of the number of tweets in the hour of minimum volume velocity in different days. 
-The actual support threshold used for mining any given epoch, E, is thus
-$\alpha$ multiplied by the \emph{epoch}'s size: % volume velocity:
+The actual \emph{support} threshold used for mining any given epoch, $E$, is thus
+$\alpha$ multiplied by the number of tweets in the epoch: %'s volume velocity:
 \begin{align}
-support &= \alpha \times \frac{|E|}{E.span}  \hspace*{1in}  where\,\alpha: support\,ratio\\
-&= \frac{minimum\_support\_threshold}{\textbf{avg}(\min_{day}{(vol.\, vel.)})} \times \frac{|E|}{E.span} 
+support &= \alpha \times |E|  \hspace*{1in}  where\,\alpha: support\,ratio\\ %\frac{|E|}{E.span}
+&= \frac{minimum\_support\_threshold}{\textbf{avg}(\min_{day}{(vol.\, vel.)})} \times |E| %\frac{|E|}{E.span} 
 \end{align}
 
+Calculating the support as described makes it intuitive to select a support threshold,
+but it would lead to a high support threshold in epochs including a burst of tweets. % caused by any event.
+%(peaks in the leve
+%if a long epoch span is used the support might
+%e support ratio is multiplied by the volume velocity of the epoch, 
+The high support might lead to mining only itemsets
+about the topic that is causing the burst.
+ %,
+%other topics will not be mined. 
+Stream processing methods %of computation
+can be used to alleviate this problem.
 
 
 \begin{figure}
