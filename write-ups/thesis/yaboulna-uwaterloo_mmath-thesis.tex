@@ -1549,8 +1549,12 @@ The high support might lead to mining only itemsets
 about the topic that is causing the burst.
  %,
 %other topics will not be mined. 
-Stream processing methods %of computation
-can be used to alleviate this problem.
+%Stream processing methods %of computation
+%can be used to alleviate this problem.
+%To alleviate this problem
+%mine epochs of 
+%data
+Mining a sliding window can alleviate this problem.
 
 
 \begin{figure}
@@ -1567,18 +1571,33 @@ can be used to alleviate this problem.
 \label{fig:volvel2}
 \end{figure}
 
-\subsection{Stream processing}
-This shows the
-We now proceed by discussing how 
-we apply the algorithms to streaming data.
+\subsection{Sliding window model}
 
-We apply the algorithms to epochs of data, so they are not strictly stream
-processing algorithms.
+One of the prominent stream processing models is the sliding window model,
+where a window of  data  \emph{slides} forwards through the stream. 
+The window keeps a fixed amount of history data (fixed in terms of age not size); 
+data with a timestamp older that a certain time is removed from the window 
+as new data is added. %just created 
+The data in the window is processed every time the window slides.
+Thus, the sliding window model sets a cut-off age after which
+a datapoint has no effect at all on the results of the stream processing algorithm. % of the processing 
+This is the simplest way to overcome the problem
+that an anomaly in the date, 
+such as a burst of tweets about a certain topic,
+could affect the mining results more than recent data.
+More elaborate methods include dynamically changing the 
+sliding window size~\cite{bifet2007learning}, 
+smoothing the data~\cite{gilbert2001surfing},
+%storing approximate statistics (sketch)
+and weighting data according to its age~\cite{giannella2003mining}.
+
+We apply the algorithms to epochs of data, 
+similar to the \emph{block evolution} stream mining approach~\cite{ganti2002mining,zhu2003efficient}.
+However, our algorithms are not strictly stream processing algorithms.
 Stream processing algorithms are supposed to process transactions one at a time
 as they arrive, looking at each transaction only once
 ~--~in other words, they should make one pass on the data then discard it.
-This complicates the model of computation a lot
-~\cite{ganti2002mining,bifet2007learning,gilbert2001surfing,zhu2003efficient}, 
+This complicates the model of computation % a lot
 and there is no justification to process social media data as a stream.
 The stream processing model of computation is justified when
 the data is not supposed to be stored (such as data from sensor networks),
@@ -1594,16 +1613,13 @@ and the perception of the human users
 makes processing times in the order of seconds %or even minutes
 acceptable in a \emph{real time} system.
 
-One of the prominent stream processing models is the sliding window model,
-where a window of  data  \emph{slides} forwards through the stream;
-the oldest data point is removed from the window as the newest data point is added.
-The data in the window is processed each time the window slides.
-We can regard the way we process the social media stream as 
+
+%We can regard the way we process the social media stream as 
+In essence, processing epochs of data is still 
 mining a sliding window that is moved forward by time steps of short span.
 The time step must be longer than the time needed to mine an epoch of data,
 and the performance of our algorithms makes it possible to use a time step
 as short as a few seconds for epochs up to a day long.
-
 Figure \ref{fig:runtimeEpochs} shows the runtime of LCM on epochs of
 increasing length, and we will show in section \ref{sec:bounding} that our
 extensions do not degrade performance.
@@ -1611,12 +1627,15 @@ The times reported in figure \ref{fig:runtimeEpochs} are averages across all
 epochs of the specified length in the last 3 months of 2012, % October, November and December,
 using a time step that is half the epoch length.
 The variance is very low and the confidence bands are not shown because they
-appear as dots.% on top of the bars. 
-
+appear as dots.  % on top of the bars. 
+The \emph{minimum support threshold} used throughout this thesis %, unless otherwise specified,
+is 10 occurrences in the hour of day in which the volume velocity is the minimum. % $\alpha=0.0002$.
+Figure \ref{fig:avgSupp} shows the average of the actual support threshold to which this minimum support
+threshold translates, at different epoch spans.
 
 \begin{figure}
 \centering
-\scalebox{0.4}{
+\scalebox{0.45}{
 \includegraphics{runtim_epoch-spans_line-over-bars.png}
 }
 \caption{Mean runtime of LCM at different epoch spans}
@@ -1624,21 +1643,18 @@ appear as dots.% on top of the bars.
 \end{figure}
 
 
+\begin{figure}
+\centering
+\scalebox{1}{
+\includegraphics{epochlen_support.png}
+}
+\caption{Mean support corresponding to minimum support 10, at different epoch spans}
+\label{fig:avgSupp}
+\end{figure}
 
-The support threshold used throughout this paper %, unless otherwise specified,
-is $\alpha=0.0002$.
-This is determined as follows: We picked a topical term that is known to
-steadily appear with a rather high frequency, and is talked about in all
-languages; i.e., `obama'.
-The maximum likelihood estimate of the probability of the term `obama' within
-the whole collection of tweets is 0.0001.
-The average number of tweets per hour is 116920.21, so the term `obama' is
-expected to appear 12 times per hour on average.
-Thus, we use a minimum support threshold of 12, which translates into
-$\alpha = 0.0002$.
-
+%TODONOT elaborate on that.. show figures.
 In the rest of this paper we mine epochs of 1 hour span.
-The reason behind this choice is our observation that the number of closed
+The reason behind this choice is an observation that the number of closed
 itemsets mined from epochs of span 1 hour or more,
 at the same support threshold, remains the same.
 This indicates that itemsets mined from shorter epochs of social media text
@@ -1646,8 +1662,11 @@ are not included in the results of mining longer epochs.
 Therefore, the epoch span should be minimized.
 However, when the epoch span is shorter than an hour the frequency required
 to surpass the support threshold becomes very low,
-and number of mined itemsets increases, with many noise itemsets appearing in
-the results.
+and number of mined itemsets increases, 
+with many noise itemsets appearing in the results.
+%Figure \ref{fig:epochLenNumItemsets} shows the number of 
+%closed itemsets at different epoch lengthes.. maximal ones too.. but using N-Gram 5.
+
 
 Regardless of the length of the epoch,
 many mined itemsets are combinations of function words.
