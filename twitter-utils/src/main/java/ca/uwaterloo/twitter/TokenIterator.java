@@ -155,7 +155,7 @@ public class TokenIterator extends AbstractIterator<String> {
           } else if (ch == '\'') {
             // don't break if this is an apostrophe used to shorten "not"
             // cIx already at next char
-            if (!((cIx < chs.length && chs[cIx] == 't')
+            if (!((cIx < chs.length && chs[cIx] == 't') //FIXME: why isn't this generalized to s, d, re and ll
             && (cIx + 1 >= chs.length || isDelimiter(chs[cIx + 1])))) {
               break;
             }

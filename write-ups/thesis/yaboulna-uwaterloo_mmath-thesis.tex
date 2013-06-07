@@ -1714,6 +1714,11 @@ A background language model built from a long epoch of data
 from the same stream is used for probability estimation.
 The language model is simply a hash map of the counts of 
 N-grams that appeared within the last month, for N up to 7.
+% In reality the N-grams probabilities come from the same 
+% epoch, but this is probably a mistake on my side.. 
+% or maybe it was one thing done right by mistake..
+% or maybe I tried having a background model and found it
+% not satisfactory (no i didn't).
 
 The tokenization of a tweet starts by tokenizing it into unigrams, 
 as described in the next section. % \ref{sec:tokenization}.
@@ -1850,6 +1855,7 @@ This handles cases where the hashtag is used in place of a word, such as ``presi
 %\item 
  %All tokens are stored both in their original form, and after applying Lucene's implementation of the Porter stemmer. 
  %We use the original form to select the subset of documents to score, and the stemmed form while scoring. This avoids the disadvantage that stemming retrieves irrelevant documents, while taking advantage of it to count words about the same concept towards the same term frequency. While words sharing the same stem can mean totally different concepts in the context of different documents, it is very likely that they have the same meaning within one document, and this meaning is probably the one desired if the document is retrieved using the unstemmed query term. 
+ \item The apostrophe used in possessive apostrophe s and contractions (can't, I'd, ..etc) is removed from the unigram, but does not act as a delimiter.
 \end{itemize}
 
 
@@ -2044,7 +2050,9 @@ implies the itemset.
 \section{Temporal Ranking}
 \label{sec:rank}
 
-A General Measure of Rule InterestingnessSzymon Jaroszewicz and Dan A. SimoviciUniversity of Massachusetts at Boston
+A General Measure of Rule Interestingness
+Szymon Jaroszewicz and Dan A. Simovici
+University of Massachusetts at Boston
 
 The previous filtering steps reduce the number of itemsets to under 1\% of their
 original number.
