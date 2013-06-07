@@ -1066,7 +1066,7 @@ overcome the bottleneck of \emph{candidate generation} by
 limiting the solution to itemsets with a certain property, 
 reducing the size of the solution and 
 possibly providing a way to quickly navigate the solution space. 
-In this paper, we expand on the Linear-time Closed itemset Mining (LCM) algorithm \cite{uno2004lcm}, 
+In this thesis, we expand on the Linear-time Closed itemset Mining (LCM) algorithm \cite{uno2004lcm}, 
 %an algorithm based on a
 %property of a class of itemsets called
 which mines only 
@@ -1082,8 +1082,8 @@ suitable for mining social media text.
 In this section we explain in detail how LCM works.
 
 Since LCM makes use of the properties of closed itemsets, 
-we begin our presentation with these properties.
-A closed itemset contains any item that is present in all the transactions
+we begin our presentation by discussing these properties.
+Informally, a closed itemset contains any item that is present in all the transactions
 containing this itemset.
 A formal definition of closed itemsets is given in equation \ref{eq:Closed}: 
 
@@ -1114,16 +1114,20 @@ First, an item is \emph{larger/smaller} than another item if it comes
 later/earlier in the total ordering.
 This terminology comes from the fact that LCM is most efficient if the items
 are ordered in ascending order of their frequency.
-Second, the \emph{suffix} of an itemset is one or more items whose removal
-%does not result
-results in an itemset with greater support.
-Notice that they are necessarily at the end of the itemset,
+Second, the \emph{suffix} of an itemset is one or more items 
+%whose removal results in
+%does not result in
+which have to be removed to get
+an itemset with greater support.
+Notice that they are necessarily 
+%at the end of the itemset,
+the last items added to the itemsets,
 regardless of the total ordering.
 Finally, we call the first item added to the suffix of the itemset its
 \emph{suffix head}.
 With this terminology, the rules for \emph{PPC-Extentsion} are:
 \begin{enumerate}
-\item An itemset must be extended by all the items that occur in $T_{itemset}$, 
+\item An itemset must be extended by all items that occur in $T_{itemset}$, 
 except items which are \emph{smaller} than its \emph{suffix head};
 extending by \emph{smaller} items will lead to closed itemsets already generated in an earlier step. 
 %An itemset can be extended only by items \emph{larger} than its \emph{suffix head}; 
@@ -1673,31 +1677,9 @@ many mined itemsets are combinations of function words.
 In the next section, we outline how we reduce the number of itemsets and
 eliminate the effect of function words by N-gram filtering.
 
-\subsection{Mining Term N-grams}
+\section{Filtering Language Constructs}
+%\subsection{Tokenizing into Variable Length N-grams}
 \label{sec:ngrams}
-
-
-
-\begin{figure}
-\centering
-\includegraphics{perf_ngramlen1-5_distinct-items_supp10+_1hr.eps}
-\caption{Mean number of distinct items}
-\label{fig:ngramsLenA}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics{perf_ngramlen1-5_itemsets_supp10+_1hr.eps}
-\caption{Mean number of itemsets}
-\label{fig:ngramsLenB}
-\end{figure}
-\begin{figure}
-\includegraphics{perf_ngramlen1-5_runtime-millis_supp10+_1hr.eps}
-\caption{Mean runtime in milliseconds}
-\label{fig:ngramsLenC}
-\end{figure} 
-
-
 
 A large number of itemsets are language constructs that bear no information,
 such as ``such as''. 
@@ -1705,50 +1687,47 @@ By treating sequential language constructs, and any other multiword expression,
 as one item we eliminate a large number of such itemsets.
 We can also eliminate itemsets that are made up of all the different fragments
 of the language construct along with other items;
-for example, \{we, did, it, \#teamobama\} can produce 10 other combinations of
+for example, the itemset \{we, did, it, \#teamobama\} can produce 10 other combinations of
 length 2 or more.
 There are many measures of association that can be used to detect multiword
-expressions, but each measure is good only under certain conditions~\cite{ramisch2012broad,tan2002selecting}.
+expressions, but each measure is good only under certain conditions~\cite{ramisch2012broad}.
 After preliminary experiments with various measures, we determined that
 the best performance
 could be obtained by tokenizing the documents into term N-grams with varying N. 
 
+
 We use term N-gram tokens such that N-grams of high probability are replaced by
 (N+1)-grams, resulting in a distribution with no high peaks.  
 An N-gram is considered to % of length N
-have a high probability if its maximum likelihood estimate from a background
-model is higher than a threshold $\eta_N$. 
+have a high probability if its maximum likelihood estimate
+, from a background model,
+is higher than a threshold $\eta_N$. 
 A background language model built from a long epoch of data 
 from the same stream is used for probability estimation.
-The tokenization of a tweet starts by tokenizing it into unigrams, then each
-unigram of high probability is replaced by two term bigrams~--~by
+The language model is simply a hash map of the counts of 
+N-grams that appeared within the last month, for N up to 7.
+
+The tokenization of a tweet starts by tokenizing it into unigrams, 
+as described in the next section. % \ref{sec:tokenization}.
+Then, each
+unigram of high probability is replaced by two term bigrams, by
 attaching to it the unigrams before and after it.
 We keep replacing N-grams of high probability by two (N+1)-grams 
 %repeat this for each N $\ge$ 1,for all N-grams
 %with probabilities above the threshold 
 until there are no more such N-grams. %; thus, the distribution is relatively flat.
 
-%Notice that the (N+1)-grams replacing an N-gram overlap with each other, with the unigrams that got 
-%attached to the N-gram and possibly with other N-grams. 
-%However, the  
-%We do not prevent overlap, because there is no guarantee that the N-Gram
-%created makes any sense.After mining term N-grams we flatten the itemsets to sets of unigrams again.
-%This removes overlap between parts of itemsets making it easier to reason
-%about how they relate to each other. 
-%This is also necessary since an itemset will have different N-gram set
-%representations,
-%and its postings list is the union of those of the different representations.
-
 The threshold of high probability is different for each value of N. 
-The threshold for unigrams is determined in a similar fashion to how
-we determined the support threshold. We use $\eta_1 = P(``obama") = 0.0001$.
+The threshold for unigrams is determined as follows: 
+We picked a topical term that is known to  steadily  appear with a rather high frequency, 
+and is talked about in all languages; `obama'. 
+The maximum likely hood estimate of the probability of the term `obama' within the whole collection of Tweets is 0.0001. 
+%in a similar fashion to how we determined the support threshold. 
+We use $\eta_1 = P(``obama") = 0.0001$.
 At each N, the probability threshold is adjusted to account for the increase
 in the number of tokens and the overall increase in the grand sum of counts (caused by overlap).
 The adjusted $\eta_N$ is:
 \begin{equation}\eta_N = \eta_1 \times \frac{\sum_{\{w:\, w \,\in\, W\, and\, w.length \,\le\, N\}}{freq(w)}}{\sum_{\{v:\, v\, \in\, W \,and \,v.length\,=\,1\}}{freq(v)}}\end{equation}
-
-
-
 
 
 Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length
@@ -1759,8 +1738,8 @@ The values shown are averages across all one-hour epochs in the month of
 November 2012.
 The value of $\eta$ used is 0.0001.
 Figure \ref{fig:ngramsLen}(a) shows that the number of distinct items
-increases substantially as N goes from 1 to 2, then continues increasing
-slightly until it starts decreasing at N=5.
+increases substantially as maximum N goes from 1 to 2, then continues increasing
+slightly until it starts decreasing at $N \le 5$.
 The decrease happens because all 4-grams with probability above the threshold
 are parts of tweets from services that use the same text and append a URL,
 such as tweets reporting scores from
@@ -1777,20 +1756,121 @@ The runtimes in this figure are slightly less than those in
 figure \ref{fig:runtimeEpochs} because they do not include the time taken for
 writing the posting list of each itemset.
 
+The number of itemsets in the plots include 
+itemsets of length 1 (frequent N-grams). 
+At $N \le 5$, the number of closed itemsets of length 2 or more
+that are mined from an hour epoch averages at 2439.17.
+The number of maximal itemsets of length 2 or more
+averages at 1831.92.
+All of these numbers are counts of distinct unigram sets.
+After mining itemsets of term N-grams we flatten the itemsets to sets of unigrams again.
+This is necessary since an itemset will have different N-gram set representations,
+and its postings list is the union of those of the different representations.
+This also removes overlap between N-grams of the same itemset,
+making it easier to reason about how itemsets relate to each other.
+We will use the relation between an itemset and its subsets to
+select interesting itemsets in the next chapter.
+%filter out uninformative itemset 
+
+
+%Notice that the (N+1)-grams replacing an N-gram overlap with each other, with the unigrams that got 
+%attached to the N-gram and possibly with other N-grams. 
+%However, the  
+%We do not prevent overlap, because there is no guarantee that the N-Gram
+%created makes any sense.After mining term N-grams we flatten the itemsets to sets of unigrams again.
+%This removes overlap between parts of itemsets making it easier to reason
+%about how they relate to each other. 
+%This is also necessary since an itemset will have different N-gram set
+%representations,
+%and its postings list is the union of those of the different representations.
+
+
+\begin{figure}
+\centering
+\scalebox{0.78}{
+\includegraphics{perf_ngramlen1-5_distinct-items_supp10+_1hr.eps}
+}
+\\
+\begin{tabular}{c}
+\\(a) Mean number of distinct items at different values of maximum N \\ \\
+\end{tabular}
+\\
+%\caption{Mean number of distinct items}
+%\label{fig:ngramsLenA}
+%\end{figure}
+%\begin{figure}
+%\centering
+\scalebox{0.78}{
+\includegraphics{perf_ngramlen1-5_itemsets_supp10+_1hr.eps}
+}
+\\
+\begin{tabular}{c}
+\\(b) Mean number of itemsets at different values of maximum N \\ \\
+\end{tabular}
+\\
+%\caption{Mean number of itemsets}
+%\label{fig:ngramsLenB}
+%\end{figure}
+%\begin{figure}
+%\centering
+\scalebox{0.78}{
+\includegraphics{perf_ngramlen1-5_runtime-millis_supp10+_1hr.eps}
+}
+\\
+\begin{tabular}{c}
+\\(c) Mean runtime in milliseconds at different values of maximum N
+\end{tabular}
+%\caption{Mean runtime in milliseconds}
+%\label{fig:ngramsLenC}
+\caption{Effect of changing the maximum N-gram length on mining hour long epoches}
+\label{fig:ngramsLen}
+\end{figure} 
+
+\section{Tokenization}
+The data is tokenized into unigrams using white space and punctuation marks as separators. 
+The characters `@', `\#' and `\_' are allowed within a unigram, 
+while the rest of the punctuation marks are treated as delimiters. % \langle \!\$\%\&()\*\+,.\/:;<=>?[]\^\{|\}\~"`- \rangle .
+Only Latin characters  (Unicode code points less than `u024F') and numbers are allowed within a unigram,
+and any other characters that are not delimiters are skipped.
+The tokenizer also does the following:
+\begin{itemize}
+\item All URLs are replaced by the token ``URL''. 
+\item Runs of the same character is reduced to only 3 repetitions (for example, ``coooool'' is replaced by  ``coool''). 
+\item Hashtags are stored twice, with and without the the `\#' character. 
+The tag without the `\#' character is left at tag's positions, while the other is appended at the end of the tweet.
+This handles cases where the hashtag is used in place of a word, such as ``president \#obama...''.
+%\item 
+ %All tokens are stored both in their original form, and after applying Lucene's implementation of the Porter stemmer. 
+ %We use the original form to select the subset of documents to score, and the stemmed form while scoring. This avoids the disadvantage that stemming retrieves irrelevant documents, while taking advantage of it to count words about the same concept towards the same term frequency. While words sharing the same stem can mean totally different concepts in the context of different documents, it is very likely that they have the same meaning within one document, and this meaning is probably the one desired if the document is retrieved using the unstemmed query term. 
+\end{itemize}
 
 
 
+% =========================================
+% C H A P T E R     4
+% =========================================
 
-\chapter{Filtering itemsets}
+\chapter{Selecting Interesting Itemsets}
 \label{sec:strong}
 
 
 
-In the previous section, we discussed our handling of function words,
+In section~\ref{sec:ngrams}, we discussed our handling of function words,
 using a technique that exploits LCM's tolerance to sparsity.
 After applying this technique, the average number of itemsets mined from an
 hour of twitter data drops from 61,505 to 6,146.
 However, there is still redundancy in the itemsets.
+
+
+\begin{figure}
+\centering
+\scalebox{0.5}{
+\includegraphics{sham.png}
+}
+\caption{Closed, distinct and strongly closed sets}
+\label{fig:sham}
+\end{figure}
+
 
 The closed property of an itemset is easily violated by modifying one
 transaction that contains the itemset and removing one of its items.
@@ -1824,28 +1904,20 @@ The additions of retweeters also form many different supersets of the of the
 original tweet, and some additions represent opinions that are supported
 enough to be mined as itemsets. 
 
-We propose two conditions that are not as easily violated as the closed
-condition for selecting itemsets.
+To reduce redundancy, we propose two conditions that are not as easily violated 
+as the closed condition and use them for selecting itemsets.
 The two conditions build on the concept of \emph{association rule confidence}.
 Confidence is the basic property used for association rules mining,
-and it is used in the definition of $\delta$-free sets \cite{boulicaut2003free}.
+and it is used in the definition of $\delta$-free sets~\cite{boulicaut2003free}.
 Mining itemsets based on the confidence of rules they induce has long been
 recognized as a method for finding
-``interesting patterns'' \cite{cohen2001finding},
-but since this property is not anti-monotone 
-it cannot be directly used.
+``interesting patterns''~\cite{cohen2001finding},
+but since this property is not anti-monotone it cannot be directly used.
 %a variation has to be used
 %(for example, \emph{all confidence}). % \cite{kim2004ccmine}
 The confidence of an assocation rule that the presence of an itemset,
 $s_{j}$, implies the presence of another itemset, $s_i$, is  defined as:
 \begin{equation}\label{eq:conf}conf(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
-
-\begin{figure}
-\centering
-\includegraphics{sham.png}
-\caption{Closed, distinct and strongly closed sets}
-\label{fig:sham}
-\end{figure}
 
 
 \section{Distinct Itemsets}
@@ -1960,7 +2032,65 @@ implies the itemset.
 
 
 
-\section{Performance Analysis}
+
+\section{Temporal Ranking}
+\label{sec:rank}
+
+A General Measure of Rule InterestingnessSzymon Jaroszewicz and Dan A. SimoviciUniversity of Massachusetts at Boston
+
+The previous filtering steps reduce the number of itemsets to under 1\% of their
+original number.
+In this section, we present a method for ranking itemset clusters according to
+their novelty when compared to other time periods.
+These itemsets can then be presented to users in rank order, providing a
+synopis of events in the epoch, or used as input to additional search or
+summarization steps.
+
+A good indicator of novelty is the pointwise Kullback-Leibler Divergence (KLD)
+between an itemset's probability in the current epoch and in a longer past
+epoch~---~the background model.
+The KLD of the probability of an itemset $s_i$ in the background
+model $Q$ from the current epoch's model $P$ can be considered as
+the information gain, IG: 
+\begin{align}IG(P(s_i),Q(s_i))  = - (H(P(s_i)) - H(P(s_i),Q(s_i))) \notag\\ = \sum{P(s_i) \log{P(s_i)}} - \sum{P(s_i) \log{Q(s_i)}} \notag\\ = KLD(P(s_i)||Q(s_i))\end{align}
+
+To calculate the collective IG of a strongly closed itemset cluster,
+we have to take into account that the itemsets of the cluster are not independent. 
+For simplicity we will consider only the pairwise dependence between 
+every itemset and the smallest common subset.
+%when calculating the IG of the whole cluster.
+The joint probability of an itemset, $s_i$, and its superset,
+$s_j$, is equal to the probability of the superset.
+Thus, the IG of the appearance of an itemset and its superset
+together is essentially the IG of the superset.
+Also, their pointwise mutual information (PMI) is the self information (SI) of
+the subset. Therefore, the IG of a superset is different from the
+IG of its subset by the information gained because
+of the additional items. 
+
+Hence, the IG of a strongly closed itemset cluster,
+$S=\{s_{i1},..,s_{im}\}$, 
+can be approximated as the IG of its smallest subset, $s_{min}$,
+plus the differences between the IGs of member itemsets and the smallest subset.
+We use the squares of the differences, because it can be between two negative number, and we only care about the magnitude of the difference.
+To give the self information of the smallest subset the same influence,
+we also square it.
+Thus, the information gain of a strong closed itemset is given by:
+\begin{multline}IG^2(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im})) =\notag\\ I^2(s_{min}) + \notag\\ 
+\sum_{j = i1..im}{(IG(P(s_j)||Q(s_j)) - IG(P(s_{min})||Q(s_{min})))^{2}} \end{multline}
+
+The formula above can be used directly for ranking clusters,
+but it will favour larger ones.
+We normalize by the size of the cluster giving our final ranking formula for
+strongly closed itemsets:
+\begin{equation}\label{eq:avgIG}\overline{IG}(S) = \frac{IG^2(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im}))}{m}\end{equation}
+
+
+\chapter{Evaluation}
+\label{sec:empirical}
+
+
+\section{Efficiency}
 \label{sec:bounding}
 We analyze the performance of the filtering conditions proposed by applying
 them to the mining results of all one-hour long epochs in the Twitter data.
@@ -2037,62 +2167,8 @@ averages at 5.2 seconds for filtering a one-hour epoch.
 \label{fig:lcmvsfpzhu}
 \end{figure}
 
+\section{Effectiveness}
 
-\chapter{Temporal Ranking}
-\label{sec:rank}
-
-A General Measure of Rule InterestingnessSzymon Jaroszewicz and Dan A. SimoviciUniversity of Massachusetts at Boston
-
-The previous filtering steps reduce the number of itemsets to under 1\% of their
-original number.
-In this section, we present a method for ranking itemset clusters according to
-their novelty when compared to other time periods.
-These itemsets can then be presented to users in rank order, providing a
-synopis of events in the epoch, or used as input to additional search or
-summarization steps.
-
-A good indicator of novelty is the pointwise Kullback-Leibler Divergence (KLD)
-between an itemset's probability in the current epoch and in a longer past
-epoch~---~the background model.
-The KLD of the probability of an itemset $s_i$ in the background
-model $Q$ from the current epoch's model $P$ can be considered as
-the information gain, IG: 
-\begin{align}IG(P(s_i),Q(s_i))  = - (H(P(s_i)) - H(P(s_i),Q(s_i))) \notag\\ = \sum{P(s_i) \log{P(s_i)}} - \sum{P(s_i) \log{Q(s_i)}} \notag\\ = KLD(P(s_i)||Q(s_i))\end{align}
-
-To calculate the collective IG of a strongly closed itemset cluster,
-we have to take into account that the itemsets of the cluster are not independent. 
-For simplicity we will consider only the pairwise dependence between 
-every itemset and the smallest common subset.
-%when calculating the IG of the whole cluster.
-The joint probability of an itemset, $s_i$, and its superset,
-$s_j$, is equal to the probability of the superset.
-Thus, the IG of the appearance of an itemset and its superset
-together is essentially the IG of the superset.
-Also, their pointwise mutual information (PMI) is the self information (SI) of
-the subset. Therefore, the IG of a superset is different from the
-IG of its subset by the information gained because
-of the additional items. 
-
-Hence, the IG of a strongly closed itemset cluster,
-$S=\{s_{i1},..,s_{im}\}$, 
-can be approximated as the IG of its smallest subset, $s_{min}$,
-plus the differences between the IGs of member itemsets and the smallest subset.
-We use the squares of the differences, because it can be between two negative number, and we only care about the magnitude of the difference.
-To give the self information of the smallest subset the same influence,
-we also square it.
-Thus, the information gain of a strong closed itemset is given by:
-\begin{multline}IG^2(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im})) =\notag\\ I^2(s_{min}) + \notag\\ 
-\sum_{j = i1..im}{(IG(P(s_j)||Q(s_j)) - IG(P(s_{min})||Q(s_{min})))^{2}} \end{multline}
-
-The formula above can be used directly for ranking clusters,
-but it will favour larger ones.
-We normalize by the size of the cluster giving our final ranking formula for
-strongly closed itemsets:
-\begin{equation}\label{eq:avgIG}\overline{IG}(S) = \frac{IG^2(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im}))}{m}\end{equation}
-
-
-\section{Empirical Evaluation}
-\label{sec:empirical}
 We now show examples of the performance the proposed methods in creating
 a synopses of the 2012 election day, November $6^{th}$, and another less
 eventful day, November $9^{th}$.
