@@ -1136,8 +1136,9 @@ extending by \emph{smaller} items will lead to closed itemsets already generated
 Extension items are added to the itemset in the order given by the total ordering,
 %and the maximal itemset 
 recursively applying PPC-Extension to the extended itemset before adding the next extension item.
-\item After forming an itemset $s$, we add to its \emph{suffix} all items that appear in all transaction containing $s$ ~--~ 
-that is, items whose frequency within  $T_s$ is equal to $|T_s|$.
+\item After adding an extension item, $w_e$, to an itemset, $s$, we add all other items that appear in all transaction containing $s \cup \{w_e\}$ ~--~ 
+that is, items whose frequency within  $T_{s\, \cup \, \{w_e\}}$ is equal to $|T_{s \, \cup \, \{w_e\}}|$.
+The newly added items become the \emph{suffix}.
 %\item If any item in the \emph{suffix} is \emph{smaller} than the suffix head, prune this solution branch. All closed itemsets within this branch have already been generated. Otherwise emit solution.
 \item If all items in the \emph{suffix} are \emph{larger} than the \emph{suffix head} then add the itemset to the solution. Otherwise, prune this solution branch; all closed itemsets within this branch have already been generated, when processing the smallest suffix member.
 \end{enumerate}
@@ -1149,16 +1150,19 @@ The upper table enumerates $T_{\{barack\}}$.
 The lower table shows steps of itemsets generation.
 The current itemset along with its frequency is in column 2.
 Itemsets marked by an (*) are the closed itemsets that are part of the solution.
-The suffix of the itemset is shown in \emph{italic} when it is important to make it distinctive.
+The suffix of the itemset is shown in \emph{italic}. % when it is important to make it distinctive.
 All possible extension items and their frequencies are in column 3. 
 Extension items that are \emph{smaller} than the \emph{suffix head} 
+%of the latest closed itemset
 %are excluded by striked through.
-are shown with a line striked through them.
+are shown with a line striked through them. 
+%an itemset that is not closed is only a transient. %not part of the solution.
 For each itemset, the extension items are kept 
 so that it is known which extension item 
 is next in turn to be added.
-An item is bolded when it is added because its turn has come. %The item being added
+An item is bolded when it is being added because its turn has come. %The item being added
 %Column 4 is a comment explaining the step.
+%An item is bolded when its turn to be added has come. 
 After adding each item, a pass is done on $T_{itemset}$ to 
 enumerate and count possible extension items.
 To enforce a support threshold infrequent extension items would be removed
@@ -1193,21 +1197,21 @@ Documents (two per row)\\\\
 \end{tabular}
 \begin{tabular}{|c|p{6.5cm}|p{6.2cm}|p{7.6cm}|} \hline
 Step&Current Itemset&Possible Extension Items&Comments\\ \hline
-1& \{\emph{barack}\} (4) & mitt (2), obama (3), romney (2) & Items in $T_{\{`barack'\}}$ are counted. No items should be added to the suffix.  \\ \hline %with `barack'
+1& \{barack\} (4) & mitt (2), obama (3), romney (2) & Items in $T_{\{`barack'\}}$ are counted. No items should be added to the itemset.  \\ \hline %with `barack'
 %appears in all transactions.%
 %This is not shown as a step in the rest of the example.
-2& \{barack\} (4)* & mitt (2), obama (3), romney (2) & Rule 3: suffix is ordered, add itemset to solution. This is not shown as a separate step in the rest of the example.\\ \hline
-3& \{barack\} (4) & \textbf{mitt} (2), obama (3), romney (2) & Items are ordered lexicographically. Adding `mitt' to itemset.\\ \hline
+2& \{\emph{barack}\} (4)* & mitt (2), obama (3), romney (2) & Rule 3: suffix is ordered, add itemset to solution. This is not shown as a separate step in the rest of the example.\\ \hline
+3& \{\emph{barack}\} (4) & \textbf{mitt} (2), obama (3), romney (2) & Items are ordered lexicographically. Adding `mitt' to itemset.\\ \hline
 4& \{barack, \emph{mitt}\} (2)* & \textbf{obama} (1), romney (1) & Extension items reenumerated \& counted.\\ \hline
-5 & \{barack, mitt, \emph{obama}\} (1) & romney (1)                       & Rule 2: `romney' appears in all $T_{itemset}.$\\\hline
-6 & \{barack, mitt, \emph{obama, romney}\}(1)* & & Rule 2: `obama'  is the \emph{suffex head}. \\\hline
-7 & \{barack\} (4) & mitt (2), \textbf{obama} (3), romney (2) & Nothing more to add, back to \{`barack'\}. \\\hline
+5 & \{barack, \emph{mitt}, obama\} (1) & romney (1)                       & Rule 2: `romney' appears in all $T_{itemset}.$\\\hline
+6 & \{barack, mitt, \emph{obama, romney}\}(1)* & & Rule 3: `obama'  is the \emph{suffex head}. \\\hline
+7 & \{\emph{barack}\} (4) & mitt (2), \textbf{obama} (3), romney (2) & Nothing more to add, back to \{`barack'\}. \\\hline
 8 & \{barack, \emph{obama}\} (3)* & \sout{mitt} (1), \textbf{romney} (2) & Rule 1: skipping `mitt', adding `romney' \\\hline
 9 & \{barack, obama, \emph{romney}\} (2)* & \sout{mitt} (1) & Rule 1: Nothing more to add. \\\hline
-10 & \{barack\} (4) & mitt (2), obama (3), \textbf{romney} (2) & Back to \{`barack'\}, adding `romney'. \\\hline
-11 & \{barack, \emph{romney}\} (2) &  \sout{mitt} (1), obama (2) & Rule 2: add obama to suffix after `romney'. \\\hline
+10 & \{\emph{barack}\} (4) & mitt (2), obama (3), \textbf{romney} (2) & Back to \{`barack'\}, adding `romney'. \\\hline
+11 & \{\emph{barack}, romney\} (2) &  mitt (1), obama (2) & Rule 2: add `obama' after `romney'. \\\hline
 12 & \{barack, \emph{romney, obama}\} (2) &  \sout{mitt} (1)  & Rule 3: suffix is not ordered, prune. \\\hline
-13 & \{barack\} (4) & mitt (2), obama (3), romney (2) & Back to \{`barack'\}, all possible extension items were added. Done. \\\hline
+13 & \{\emph{barack}\} (4) & mitt (2), obama (3), romney (2) & Back to \{`barack'\}, all possible extension items were added. Done. \\\hline
 \end{tabular}
 \begin{tabular}{c}
 Closed itemsets containing `barack'
