@@ -1236,12 +1236,12 @@ For example, the memory requirements of the FP-tree suffers from the sparsity
 of data, since the data structure is succinct only if it can find common
 prefixes within the constraints of its invariant. 
 The possibility of using an inverted index in the implementation 
-of LCM is yet another reason why it is very well suited 
+of LCM is yet another reason why it is well suited 
 for textual data.
 %for frequent itemset mining from 
 
-The algorithm takes as input an epoch of data and a support threshold as a
-ratio $\alpha$.
+The algorithm takes as input an epoch of data and a support threshold.
+%as a ratio $\alpha$.
 %The ratio is sp
 It outputs the closed itemsets with support above the threshold.
 Along with each itemset in the solution, it also outputs the transactions
@@ -1285,7 +1285,7 @@ and Hadoop was particularly problematic.
 \KwIn{$support$: Support threshold} %Dynamic
 
 \KwData{E: Epoch of data}
-\KwResult{C: Closed itemsets occurring  in at least $\alpha * |E|$ records}
+\KwResult{C: Closed itemsets occurring  in at least $support$ records}
 C $\gets \{\langle \emptyset, E\rangle\}$ \tcp*{$\emptyset$ is a closed itemset. This is skipped in practice}
 X $\gets$ Inverted index of E\;
 \ForEach{$w \in X.tokens$}{
@@ -1313,7 +1313,7 @@ X $\gets$ Inverted index of E\;
 	C.add($\langle s \cup {suffix}, T_s\rangle$)\;
 	\ForEach{$v \succ w_{sh}$ and $v \notin $ suffix}{
 		\If{frequency[$v$] $\geq support$}{%\alpha * |E|$}{%\frac{|E|}{E.span}
-			$T \gets T_s \cap v$	\tcp*{Results of query $s$ AND $v$}
+			$T \gets T_s \cap T_{\{v\}}$	\tcp*{Results of query $s$ AND $v$}
 			LCM($s \cup suffix \cup \{v\}, v, T$) 
 		}
 	}
@@ -1427,9 +1427,9 @@ it is therefore possible to assume a normal distribution
 and use a state space model 
 to describe the activity on the social network.
 
-Values in time series data is known to be correlated,
+Values of a variable in time series data is known to be correlated,
 and specialized models are developed to deal with such explicit correlation.
-The explicit correlation is usually uninteresting, 
+The explicit autocorrelation (correlation between values of the same variable) is usually uninteresting, 
 since it is known and expected.
 For example, the data can be known to have a trend such as a chronic increase in the volume velocity. % of Twitter.
 Also, a cyclic increases and decreases in the volume velocity according to the time of day can be expected~-~this is called the seasonal effect in time series analysis.
@@ -1473,17 +1473,19 @@ and the noise component (black),
 which must be present in all state space models.
 The cycle is perfectly aligned with the days
 in the Hawaii Standard Time (HST) time zone,
-in which midnight corresponds to 5 AM EST
-and 2 AM PST in October.
+%in which midnight corresponds to 5 AM EST
+%and 2 AM PST in October.
+and thus we always use this timezone (GMT-10) 
+to get the date from a timestamp.
 %This indicates that 
-Figure \ref{fig:volvel2} shows the mean of the level component (red)
+Figure \ref{fig:volvel2} shows the level component (red) %mean of the 
 along with a scatter plot of the hourly volume velocity.
 %The scale of the two figures are different
 %which would 
 %This model can be used to predict the 
 %The mean level is almost always
 %different from simple moving average. 
-The blue continuous line is simple moving average
+The blue continuous line is the simple moving average
 %moving across the mean level towards its bottom,
 and its confidence bands are the blue dashed lines.
 The simple moving average is clearly not a
@@ -1512,18 +1514,20 @@ Hurricane Sandy\footnote{http://www.fema.gov/hurricane-sandy-timeline\#oct28}.
 The use of such a model to indicate the presence
 of interesting information can be investigated further,
 however it will probably require modelling the number 
-of occurrences of certain keywords.
+of occurrences of many keywords.
 %Thus will not be scalable to  
-Furthermore, timeseries models handle autocorrelation well, 
-but handling correlation between different random variables
-increases the number of parameters quadratically in the number of variables.
+This is not scalable because 
+%, timeseries models handle autocorrelation well, but 
+handling correlation between different random variables
+increases the number of parameters of the model quadratically in the number of variables.
 The correlation between random variables is 
 captured by a variance-covariance matrix,
 and if two variables are not known to be independent
 a parameter must be added in the cell of the intersection 
 of their row and column. 
-Therefore, we will not use timeseries models
-any further.
+%Therefore, 
+We will not use timeseries models
+any further than this exposition.
 
 Nevertheless, it is necessary to 
 %As mentioned earlier, a \emph{frequent itemset} is a set of items that occur together a number of
@@ -1619,7 +1623,7 @@ In the case of social media text,
 the data has to be stored anyway 
 and the perception of the human users
 makes processing times in the order of seconds %or even minutes
-acceptable in a \emph{real time} system.
+acceptable for a \emph{real time} system.
 
 
 %We can regard the way we process the social media stream as 
@@ -1638,12 +1642,12 @@ The variance is very low and the confidence bands are not shown because they
 appear as dots.  % on top of the bars. 
 The \emph{minimum support threshold} used throughout this thesis %, unless otherwise specified,
 is 10 occurrences in the hour of day in which the volume velocity is the minimum. % $\alpha=0.0002$.
-Figure \ref{fig:avgSupp} shows the average of the actual support threshold to which this minimum support
-threshold translates, at different epoch spans.
+Figure \ref{fig:avgSupp} shows the averages of the actual support threshold to which this minimum support
+threshold translates at different epoch spans.
 
 \begin{figure}
 \centering
-\scalebox{0.45}{
+\scalebox{0.4}{
 \includegraphics{runtim_epoch-spans_line-over-bars.png}
 }
 \caption{Mean runtime of LCM at different epoch spans}
@@ -1653,7 +1657,7 @@ threshold translates, at different epoch spans.
 
 \begin{figure}
 \centering
-\scalebox{1}{
+\scalebox{0.9}{
 \includegraphics{epochlen_support.png}
 }
 \caption{Mean support corresponding to minimum support 10, at different epoch spans}
@@ -1665,7 +1669,7 @@ In the rest of this paper we mine epochs of 1 hour span.
 The reason behind this choice is an observation that the number of closed
 itemsets mined from epochs of span 1 hour or more,
 at the same support threshold, remains the same.
-This indicates that itemsets mined from shorter epochs of social media text
+This indicates that itemsets mined from shorter epochs % of social media text
 are not included in the results of mining longer epochs. 
 Therefore, the epoch span should be minimized.
 However, when the epoch span is shorter than an hour the frequency required
@@ -1703,8 +1707,8 @@ could be obtained by tokenizing the documents into term N-grams with varying N.
 We use term N-gram tokens such that N-grams of high probability are replaced by
 (N+1)-grams, resulting in a distribution with no high peaks.  
 An N-gram is considered to % of length N
-have a high probability if its maximum likelihood estimate
-, from a background model,
+have a high probability if its maximum likelihood estimate, 
+from a background model,
 is higher than a threshold $\eta_N$. 
 A background language model built from a long epoch of data 
 from the same stream is used for probability estimation.
@@ -1763,9 +1767,9 @@ writing the posting list of each itemset.
 The number of itemsets in the plots include 
 itemsets of length 1 (frequent N-grams). 
 At $N \le 5$, the number of closed itemsets of length 2 or more
-that are mined from an hour epoch averages at 2439.17.
+that are mined from an hour epoch averages at 2,439.17.
 The number of maximal itemsets of length 2 or more
-averages at 1831.92.
+averages at 1,831.92.
 All of these numbers are counts of distinct unigram sets.
 After mining itemsets of term N-grams we flatten the itemsets to sets of unigrams again.
 This is necessary since an itemset will have different N-gram set representations,
