@@ -668,10 +668,10 @@ public class DivergeBGMap {
 
             if (GRAPH_FILE) {
               Element rootElt = new Element("gexf", gexNs);
-              rootElt.setNamespace(vizNs);
+              rootElt.addNamespaceDeclaration(vizNs);
               Namespace xsiNs = Namespace.getNamespace("xsi","http://www.w3.org/2001/XMLSchema-instance");
               rootElt.setNamespace(xsiNs);
-              rootElt.setAttribute("schemaLocation", "http://www.gexf.net/1.2draft/gexf.xsd", xsiNs);
+              rootElt.setAttribute("schemaLocation", "http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd", xsiNs);
               rootElt.setAttribute("version","1.2");
               gexDoc = new Document(rootElt);
               gexGraph = new Element("graph", gexNs);
