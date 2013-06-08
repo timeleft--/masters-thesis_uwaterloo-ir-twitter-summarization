@@ -526,9 +526,12 @@ public class DivergeBGMap {
     Closer perfMonCloser = Closer.create();
 
     try {
-      PerfMonKeyValueStore perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
+      PerfMonKeyValueStore perfMonKV = null;
+      if(perfMon){
+        perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
           Arrays.toString(args)));
-      perfMonKV.batchSizeToWrite = 33; // FIXME: whenever you add a new perf key
+        perfMonKV.batchSizeToWrite = 33; // FIXME: whenever you add a new perf key
+      }
       for (File fgF : fgFiles) {
         final File novelFile = new File(fgF.getParentFile(), fgF.getName()
             .replaceFirst("fp_", "novel_" + options + "_"));
