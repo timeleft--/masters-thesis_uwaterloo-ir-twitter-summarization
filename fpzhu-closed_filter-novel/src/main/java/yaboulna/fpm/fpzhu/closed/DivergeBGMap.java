@@ -1,5 +1,6 @@
 package yaboulna.fpm.fpzhu.closed;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -22,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -656,6 +658,8 @@ public class DivergeBGMap {
           Element gexEdges;
           int edgeId = 0;
           Map<Set<String>, Element> itemsetNodeMap;
+          Random colorRand = new Random();
+          Color tint = Color.white;
 
           private boolean done;
           private int numLen1Itemsets = 0;
@@ -1510,11 +1514,22 @@ public class DivergeBGMap {
                       Element itemsetNode = itemsetNodeMap.get(itemset);
                       itemsetNode.setAttribute("pid",
                           graphPid);
-                      // TODO: Color the graph
-//                      Element theOnlyOneNode =  itemsetNodeMap.get(theOnlyOneIllMerge);
-//                      Element clusterColorNode = null;
-//                      if(theOnlyOneNode.)
-                      
+                      //  Color the graph
+                      Element theOnlyOneNode =  itemsetNodeMap.get(theOnlyOneIllMerge);
+                      Element clusterColorNode = theOnlyOneNode.getChild("color", vizNs);
+                      if(clusterColorNode == null){
+                        clusterColorNode = new Element("color", vizNs);
+                        
+                        clusterColorNode.setAttribute("r",""+
+                            (colorRand.nextInt(256) + tint.getRed() / 2));
+                        clusterColorNode.setAttribute("g",""+
+                            (colorRand.nextInt(256) + tint.getGreen() / 2));
+                        clusterColorNode.setAttribute("b",""+
+                            (colorRand.nextInt(256) + tint.getBlue() / 2));
+                        
+                        theOnlyOneNode.addContent(clusterColorNode);
+                      }
+                      itemsetNode.addContent(clusterColorNode.clone());
                     }
                     if (LOG.isTraceEnabled())
                       LOG.trace(
