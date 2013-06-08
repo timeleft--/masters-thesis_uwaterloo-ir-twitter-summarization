@@ -1,6 +1,7 @@
 package yaboulna.fpm.fpzhu.closed;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -35,6 +36,11 @@ import org.apache.commons.math3.util.Pair;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,8 +48,6 @@ import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
@@ -640,6 +644,16 @@ public class DivergeBGMap {
         final SummaryStatistics confParent3_K = new SummaryStatistics();
         class StronglyClosedItemsetsFilter implements Runnable {
 
+          private static final boolean GRAPH_FILE = true;
+
+          Document gexDoc;
+          Namespace gexNs = Namespace.getNamespace("http://www.gexf.net/1.2draft");
+          Namespace vizNs = Namespace.getNamespace("viz", "http://www.gexf.net/1.2draft/viz");
+          Element gexGraph;
+          Element gexEdges;
+          int edgeId = 0;
+          Map<Set<String>, Element> itemsetNodeMap;
+
           private boolean done;
           private int numLen1Itemsets = 0;
           private int absMaxDiffEnforced = 0;
@@ -650,6 +664,33 @@ public class DivergeBGMap {
 
             if (!clusteringLocally) {
               nearestNeighbor = Maps.newHashMap();
+            }
+
+            if (GRAPH_FILE) {
+              gexDoc = new Document(new Element("gexf", gexNs));
+              gexGraph = new Element("graph", gexNs);
+              gexGraph.setAttribute("mode", "static");
+              gexGraph.setAttribute("defaultedgetype", "directed");
+              gexDoc.getRootElement().addContent(gexGraph);
+
+              Element gexNodes = new Element("nodes", gexNs);
+              gexGraph.addContent(gexNodes);
+
+              itemsetNodeMap = Maps.newHashMapWithExpectedSize(fgCountMap.keySet().size());
+              int id = 0;
+              for (Set<String> itemset : fgCountMap.keySet()) {
+                Element node = new Element("node", gexNs);
+                node.setAttribute("id", "n" + id++);
+                node.setAttribute("label", itemset.toString()); // TODONOT: do we need to escape this? Is it safe to escape
+// it? will gefi unescape?
+                // apparently not needed since only " ' & < > have meaning and they are already filtered by tokenizer
+                gexNodes.addContent(node);
+                itemsetNodeMap.put(itemset, node);
+              }
+
+              gexEdges = new Element("edges", gexNs);
+              gexGraph.addContent(gexEdges);
+
             }
 
             for (Set<String> itemset : fgCountMap.keySet()) {
@@ -850,6 +891,22 @@ public class DivergeBGMap {
 
                       double conf = fgCountMap.get(itemset).doubleValue()
                           / fgCountMap.get(pis).doubleValue();
+
+                      if (GRAPH_FILE) {
+                        Element edge = new Element("edge", gexNs);
+                        gexEdges.addContent(edge);
+
+                        edge.setAttribute("id", "e" + edgeId++);
+                        edge.setAttribute("source", itemsetNodeMap.get(pis).getAttributeValue("id"));
+                        edge.setAttribute("target", itemsetNodeMap.get(itemset).getAttributeValue("id"));
+                        edge.setAttribute("weight", String.format("%.4f", conf));
+
+                        Element edgeViz = new Element("shape", vizNs);
+                        edgeViz.setAttribute("value", "dashed");
+                        edge.addContent(edgeViz);
+
+                      }
+
                       if (parentItemset == null) {
                         parentItemset = pis;
                         bufferSizeNeeded4Parent.addValue(lookBackRecords);
@@ -1245,6 +1302,21 @@ public class DivergeBGMap {
                           (candDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
                       // (candDocIds.size() + iDocIds.size() - differentDocs.doubleValue()) / candDocIds.size();
 // (largerDocIds.size() - differentDocs.doubleValue()) / largerDocIds.size();
+
+                      if (GRAPH_FILE) {
+                        Element edge = new Element("edge", gexNs);
+                        gexEdges.addContent(edge);
+
+                        edge.setAttribute("id", "e" + edgeId++);
+                        edge.setAttribute("source", itemsetNodeMap.get(cand).getAttributeValue("id"));
+                        edge.setAttribute("target", itemsetNodeMap.get(itemset).getAttributeValue("id"));
+                        edge.setAttribute("weight", String.format("%.4f", confidence));
+
+                        Element edgeViz = new Element("shape", vizNs);
+                        edgeViz.setAttribute("value", "dotted");
+                        edge.addContent(edgeViz);
+                      }
+
                       if (confidence < (1 - confThreshold)) {
                         continue;
                       }
@@ -1401,6 +1473,13 @@ public class DivergeBGMap {
                   }
 
                   if (theOnlyOneIllMerge != null) {
+
+                    if (GRAPH_FILE) {
+                      itemsetNodeMap.get(itemset).setAttribute("pid",
+                          itemsetNodeMap.get(theOnlyOneIllMerge).getAttributeValue("id"));
+                      // TODO? Color the graph
+                    }
+
                     if (LOG.isTraceEnabled())
                       LOG.trace(
                           itemset.toString()
@@ -1863,6 +1942,18 @@ public class DivergeBGMap {
         int filteredIS = 0;
         Closer novelClose = Closer.create();
         try {
+          if (stronglyClosedItemsetsFilter.GRAPH_FILE) {
+            final File graphFile = new File(fgF.getParentFile(), fgF.getName().replaceFirst("fp_",
+                "graph_" + options + "_") + ".gexf");
+
+            // new XMLOutputter().output(doc, System.out);
+            XMLOutputter xmlOutput = new XMLOutputter();
+
+            // display nice nice
+            xmlOutput.setFormat(Format.getPrettyFormat());
+            xmlOutput.output(stronglyClosedItemsetsFilter.gexDoc, novelClose.register(new FileWriter(graphFile)));
+          }
+
           Formatter novelFormat = novelClose.register(new Formatter(novelFile, Charsets.UTF_8.name()));
 
           for (java.util.Map.Entry<Set<String>, Double> positiveKLDEntry : positiveKLDivergence.entrySet()) {
@@ -2011,7 +2102,6 @@ public class DivergeBGMap {
               }
 
               double bgCond = bgFreq / (bgSubset != null ? bgSubset.doubleValue() : bgFreq.doubleValue());
-              
 
               double temporalProb = freqSuperset / (freqSuperset + bgFreq);
               temporalProbStats.addValue(temporalProb);
@@ -2025,9 +2115,9 @@ public class DivergeBGMap {
 // } else {
 // LOG.info("An itemset is member in an alliance without being confident.. can this be?)
               conditionalProb = freqSuperset / freqSubset;
-              
-              condProbKLD += conditionalProb * DoubleMath.log2(conditionalProb/bgCond);
-              
+
+              condProbKLD += conditionalProb * DoubleMath.log2(conditionalProb / bgCond);
+
               gStatistic += freqSuperset * Math.log(freqSuperset / bgFreq);
 
               mutualInfo += conditionalProb * DoubleMath.log2(conditionalProb / (freqSuperset / fgNumTweets));
@@ -2081,7 +2171,8 @@ public class DivergeBGMap {
             selectionFormat
                 .format(
                     "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f"
-                        + "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f" +
+                        + "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f"
+                        +
                         "\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t%d\t%.15f\t%.15f\t",
 
                     -temporalEntropy / allianceMembers.size(), // 2
@@ -2089,18 +2180,18 @@ public class DivergeBGMap {
                     temporalProbStats.getVariance(), // 4
                     gStatistic, // 5
                     gStatistic / allianceMembers.size(), // 6
-                    Math.pow(gStatistic, (1.0/allianceMembers.size())), // 7
+                    Math.pow(gStatistic, (1.0 / allianceMembers.size())), // 7
                     intersectSet.size(), // 8
                     intersectSet.size() * 1.0 / unionDocId.size(), // 9
                     temporalConditionalEntr / allianceMembers.size(), // 10
-                    
-                    condProbKLD, //11
-                    condProbKLD / allianceMembers.size(), //12
-                    kldSubset + (condProbKLD ), //13
-                    kldSubset + (condProbKLD / allianceMembers.size()), //14
-                    subsetSelfInfo + condProbKLD, //15
-                    subsetSelfInfo + (condProbKLD / allianceMembers.size()), //16
-                    
+
+                    condProbKLD, // 11
+                    condProbKLD / allianceMembers.size(), // 12
+                    kldSubset + (condProbKLD), // 13
+                    kldSubset + (condProbKLD / allianceMembers.size()), // 14
+                    subsetSelfInfo + condProbKLD, // 15
+                    subsetSelfInfo + (condProbKLD / allianceMembers.size()), // 16
+
                     // all columns below + 15
                     kldStats.getVariance(), // 2
                     (kldGain2 + subsetSelfInfo2) / allianceMembers.size(), // 3

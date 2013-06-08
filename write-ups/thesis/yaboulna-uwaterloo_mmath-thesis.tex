@@ -1892,8 +1892,8 @@ While an update operation is not supported in the model of frequent itemsets
 mining, a similar effect happens when people are writing about a certain fine
 grained topic.
 For example, figure \ref{fig:sham} illustrates  itemsets related to Donald
-Trump's famous tweets in reaction to Obama's victory in
-2012\footnote{http://www.huffingtonpost.com/2012/11/07/donald-trump-election-revolution\_n\_2085864.html}.  
+Trump's famous tweets in reaction to Obama's victory in the
+2012 US elections\footnote{http://www.huffingtonpost.com/2012/11/07/donald-trump-election-revolution\_n\_2085864.html}.  
 Each area in the figure represents the transactions containing the itemset
 formed by concatenating the items in all intersecting ellipses.  
 
@@ -1926,7 +1926,8 @@ and it is used in the definition of $\delta$-free sets~\cite{boulicaut2003free}.
 Mining itemsets based on the confidence of rules they induce has long been
 recognized as a method for finding
 ``interesting patterns''~\cite{cohen2001finding},
-but since this property is not anti-monotone it cannot be directly used.
+but since this property is not anti-monotone it cannot be directly used
+to mine itemsets. It has to be used in a post-processing phase.
 %a variation has to be used
 %(for example, \emph{all confidence}). % \cite{kim2004ccmine}
 The confidence of an assocation rule that the presence of an itemset,
