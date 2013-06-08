@@ -529,9 +529,9 @@ public class DivergeBGMap {
 
     try {
       PerfMonKeyValueStore perfMonKV = null;
-      if(perfMon){
+      if (perfMon) {
         perfMonKV = perfMonCloser.register(new PerfMonKeyValueStore(DivergeBGMap.class.getName(),
-          Arrays.toString(args)));
+            Arrays.toString(args)));
         perfMonKV.batchSizeToWrite = 33; // FIXME: whenever you add a new perf key
       }
       for (File fgF : fgFiles) {
@@ -676,10 +676,11 @@ public class DivergeBGMap {
             if (GRAPH_FILE) {
               Element rootElt = new Element("gexf", gexNs);
               rootElt.addNamespaceDeclaration(vizNs);
-              Namespace xsiNs = Namespace.getNamespace("xsi","http://www.w3.org/2001/XMLSchema-instance");
+              Namespace xsiNs = Namespace.getNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
               rootElt.addNamespaceDeclaration(xsiNs);
-              rootElt.setAttribute("schemaLocation", "http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd", xsiNs);
-              rootElt.setAttribute("version","1.2");
+              rootElt.setAttribute("schemaLocation",
+                  "http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd", xsiNs);
+              rootElt.setAttribute("version", "1.2");
               gexDoc = new Document(rootElt);
               gexGraph = new Element("graph", gexNs);
               gexGraph.setAttribute("mode", "static");
@@ -687,14 +688,14 @@ public class DivergeBGMap {
               gexDoc.getRootElement().addContent(gexGraph);
 
               Element gexAttDecl = new Element("attributes", gexNs);
-              gexAttDecl.setAttribute("class","node");
+              gexAttDecl.setAttribute("class", "node");
               gexGraph.addContent(gexAttDecl);
-              Element suppAttDecl =  new Element("attribute", gexNs);
+              Element suppAttDecl = new Element("attribute", gexNs);
               gexAttDecl.addContent(suppAttDecl);
-              suppAttDecl.setAttribute("id","0");
-              suppAttDecl.setAttribute("title","support");
-              suppAttDecl.setAttribute("type","string");
-              
+              suppAttDecl.setAttribute("id", "0");
+              suppAttDecl.setAttribute("title", "support");
+              suppAttDecl.setAttribute("type", "string");
+
               Element gexNodes = new Element("nodes", gexNs);
               gexGraph.addContent(gexNodes);
 
@@ -708,14 +709,14 @@ public class DivergeBGMap {
                 // apparently not needed since only " ' & < > have meaning and they are already filtered by tokenizer
                 gexNodes.addContent(node);
                 itemsetNodeMap.put(itemset, node);
-                
-                Element attvalues =  new Element("attvalues", gexNs);
+
+                Element attvalues = new Element("attvalues", gexNs);
                 node.addContent(attvalues);
                 Element supportVal = new Element("attvalue", gexNs);
                 attvalues.addContent(supportVal);
-                supportVal.setAttribute("for","0");
-                supportVal.setAttribute("value",""+fgCountMap.get(itemset));
-                
+                supportVal.setAttribute("for", "0");
+                supportVal.setAttribute("value", "" + fgCountMap.get(itemset));
+
               }
 
               gexEdges = new Element("edges", gexNs);
@@ -1353,7 +1354,7 @@ public class DivergeBGMap {
                       }
                       // Try and join and existing alliance
                       Set<String> bestAllianceHead = cand;
-//                      String bestAlliancegGraphPid = itemsetNodeMap.get(cand).getAttributeValue("id");
+// String bestAlliancegGraphPid = itemsetNodeMap.get(cand).getAttributeValue("id");
 // int currentBestDifference = differentDocs;
                       double currentBestScore = confidence;
 
@@ -1480,7 +1481,7 @@ public class DivergeBGMap {
                                 // other candidates have harder time beating the existing alliance
 
                                 bestAllianceHead = exitingAllianceHead;
-                                  
+
                               }
                             }
                           }
@@ -1514,19 +1515,32 @@ public class DivergeBGMap {
                       Element itemsetNode = itemsetNodeMap.get(itemset);
                       itemsetNode.setAttribute("pid",
                           graphPid);
-                      //  Color the graph
-                      Element theOnlyOneNode =  itemsetNodeMap.get(theOnlyOneIllMerge);
+                      // Color the graph
+                      Element theOnlyOneNode = itemsetNodeMap.get(theOnlyOneIllMerge);
                       Element clusterColorNode = theOnlyOneNode.getChild("color", vizNs);
-                      if(clusterColorNode == null){
+                      if (clusterColorNode == null) {
                         clusterColorNode = new Element("color", vizNs);
-                        
-                        clusterColorNode.setAttribute("r",""+
-                            ((colorRand.nextInt(256) + tint.getRed()) / 2));
-                        clusterColorNode.setAttribute("g",""+
-                            ((colorRand.nextInt(256) + tint.getGreen()) / 2));
-                        clusterColorNode.setAttribute("b",""+
-                            ((colorRand.nextInt(256) + tint.getBlue()) / 2));
-                        
+
+//                        do {
+                          int red = ((colorRand.nextInt(256) + tint.getRed()) / 2);
+                          clusterColorNode.setAttribute("r", "" +
+                              red);
+                          int green = ((colorRand.nextInt(256) + tint.getGreen()) / 2);
+                          clusterColorNode.setAttribute("g", "" +
+                              green);
+                          int blue = ((colorRand.nextInt(256) + tint.getBlue()) / 2);
+                          clusterColorNode.setAttribute("b", "" +
+                              blue);
+
+//                          boolean greyish = false;
+//                          greyish = Math.abs(blue - green) < 50
+//                              && Math.abs(red - green) < 50
+//                              && Math.abs(blue - red) < 50;
+//
+//                          if (!greyish) {
+//                            break;
+//                          }
+//                        } while (true);
                         theOnlyOneNode.addContent(clusterColorNode);
                       }
                       itemsetNode.addContent(clusterColorNode.clone());
