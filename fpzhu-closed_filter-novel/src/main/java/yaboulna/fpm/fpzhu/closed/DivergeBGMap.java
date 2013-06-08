@@ -1521,11 +1521,11 @@ public class DivergeBGMap {
                         clusterColorNode = new Element("color", vizNs);
                         
                         clusterColorNode.setAttribute("r",""+
-                            (colorRand.nextInt(256) + tint.getRed() / 2));
+                            ((colorRand.nextInt(256) + tint.getRed()) / 2));
                         clusterColorNode.setAttribute("g",""+
-                            (colorRand.nextInt(256) + tint.getGreen() / 2));
+                            ((colorRand.nextInt(256) + tint.getGreen()) / 2));
                         clusterColorNode.setAttribute("b",""+
-                            (colorRand.nextInt(256) + tint.getBlue() / 2));
+                            ((colorRand.nextInt(256) + tint.getBlue()) / 2));
                         
                         theOnlyOneNode.addContent(clusterColorNode);
                       }
