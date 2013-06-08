@@ -679,6 +679,15 @@ public class DivergeBGMap {
               gexGraph.setAttribute("defaultedgetype", "directed");
               gexDoc.getRootElement().addContent(gexGraph);
 
+              Element gexAttDecl = new Element("attributes", gexNs);
+              gexAttDecl.setAttribute("class","node");
+              gexGraph.addContent(gexAttDecl);
+              Element suppAttDecl =  new Element("attribute", gexNs);
+              gexAttDecl.addContent(suppAttDecl);
+              suppAttDecl.setAttribute("id","0");
+              suppAttDecl.setAttribute("title","support");
+              suppAttDecl.setAttribute("type","string");
+              
               Element gexNodes = new Element("nodes", gexNs);
               gexGraph.addContent(gexNodes);
 
@@ -692,6 +701,14 @@ public class DivergeBGMap {
                 // apparently not needed since only " ' & < > have meaning and they are already filtered by tokenizer
                 gexNodes.addContent(node);
                 itemsetNodeMap.put(itemset, node);
+                
+                Element attvalues =  new Element("attvalues", gexNs);
+                node.addContent(attvalues);
+                Element supportVal = new Element("attvalue", gexNs);
+                attvalues.addContent(supportVal);
+                supportVal.setAttribute("for","0");
+                supportVal.setAttribute("value",""+fgCountMap.get(itemset));
+                
               }
 
               gexEdges = new Element("edges", gexNs);
@@ -1071,6 +1088,7 @@ public class DivergeBGMap {
                 }
                 if (clusteringLocally) {
                   Set<String> theOnlyOneIllMerge = null;
+                  String graphPid = null;
 // int theOnlyOnesDifference = Integer.MAX_VALUE;
                   double theOnlyOneConf = Double.MIN_VALUE;
                   if (growAlliancesAcrossEpochs && allianceTransitive.containsKey(itemset)) {
@@ -1328,6 +1346,7 @@ public class DivergeBGMap {
                       }
                       // Try and join and existing alliance
                       Set<String> bestAllianceHead = cand;
+//                      String bestAlliancegGraphPid = itemsetNodeMap.get(cand).getAttributeValue("id");
 // int currentBestDifference = differentDocs;
                       double currentBestScore = confidence;
 
@@ -1454,6 +1473,7 @@ public class DivergeBGMap {
                                 // other candidates have harder time beating the existing alliance
 
                                 bestAllianceHead = exitingAllianceHead;
+                                  
                               }
                             }
                           }
@@ -1467,6 +1487,9 @@ public class DivergeBGMap {
 // || (currentBestDifference < theOnlyOnesDifference)) {
 
                         theOnlyOneIllMerge = bestAllianceHead;
+                        if (GRAPH_FILE) {
+                          graphPid = itemsetNodeMap.get(cand).getAttributeValue("id");
+                        }
 // theOnlyOnesDifference = currentBestDifference;
                         theOnlyOneConf = currentBestScore;
                       }
@@ -1481,11 +1504,15 @@ public class DivergeBGMap {
                   if (theOnlyOneIllMerge != null) {
 
                     if (GRAPH_FILE) {
-                      itemsetNodeMap.get(itemset).setAttribute("pid",
-                          itemsetNodeMap.get(theOnlyOneIllMerge).getAttributeValue("id"));
-                      // TODO? Color the graph
+                      Element itemsetNode = itemsetNodeMap.get(itemset);
+                      itemsetNode.setAttribute("pid",
+                          graphPid);
+                      // TODO: Color the graph
+//                      Element theOnlyOneNode =  itemsetNodeMap.get(theOnlyOneIllMerge);
+//                      Element clusterColorNode = null;
+//                      if(theOnlyOneNode.)
+                      
                     }
-
                     if (LOG.isTraceEnabled())
                       LOG.trace(
                           itemset.toString()
