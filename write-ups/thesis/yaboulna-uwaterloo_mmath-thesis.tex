@@ -1905,27 +1905,6 @@ select interesting itemsets in the next chapter.
 
 
 
-\section{Tokenization}
-The data is tokenized into unigrams using white space and punctuation marks as separators. 
-The characters `@', `\#' and `\_' are allowed within a unigram, 
-while the rest of the punctuation marks are treated as delimiters. % \langle \!\$\%\&()\*\+,.\/:;<=>?[]\^\{|\}\~"`- \rangle .
-Only Latin characters  (Unicode code points less than `u024F') and numbers are allowed within a unigram.
-Any other characters that are not delimiters are skipped.
-If a unigram is a number then the dot and the comma characters
-are allowed within it.
-The tokenizer also does the following:
-\begin{itemize}
-\item All URLs are replaced by the unigram ``URL''. 
-\item Runs of the same character is reduced to only 3 repetitions (for example, ``coooool'' is replaced by  ``coool''). 
-\item Hashtags are stored twice, with and without the the `\#' character. 
-The tag without the `\#' character is left at tag's positions, while the other is appended at the end of the tweet.
-This handles cases where the hashtag is used in place of a word, such as ``president \#obama...''.
-%\item 
- %All tokens are stored both in their original form, and after applying Lucene's implementation of the Porter stemmer. 
- %We use the original form to select the subset of documents to score, and the stemmed form while scoring. This avoids the disadvantage that stemming retrieves irrelevant documents, while taking advantage of it to count words about the same concept towards the same term frequency. While words sharing the same stem can mean totally different concepts in the context of different documents, it is very likely that they have the same meaning within one document, and this meaning is probably the one desired if the document is retrieved using the unstemmed query term. 
- \item The apostrophe used in contractions (can't, I'd, ..etc) and possessive apostrophe-s is removed from the unigram, but does not act as a delimiter.
-\end{itemize}
-
 
 
 % =========================================
@@ -2498,6 +2477,36 @@ can be used for query expansion, thus acting as precomputed results of
 pseudo-revelance feedback.
 We also wish to explore ways to make use of the temporal signal during mining,
 such as when calculating similarity during clustering.
+
+ 
+ % The \appendix statement indicates the beginning of the appendices.
+\appendix
+
+% Add a title page before the appendices and a line in the Table of Contents
+\chapter*{APPENDICES}
+\addcontentsline{toc}{chapter}{APPENDICES}
+%======================================================================
+\chapter[Unigram Tokenization]{Unigram Tokenization}
+\label{AppendixA}
+The data is tokenized into unigrams using white space and punctuation marks as separators. 
+The characters `@', `\#' and `\_' are allowed within a unigram, 
+while the rest of the punctuation marks are treated as delimiters. % \langle \!\$\%\&()\*\+,.\/:;<=>?[]\^\{|\}\~"`- \rangle .
+Only Latin characters  (Unicode code points less than `u024F') and numbers are allowed within a unigram.
+Any other characters that are not delimiters are skipped.
+If a unigram is a number then the dot and the comma characters
+are allowed within it.
+The tokenizer also does the following:
+\begin{itemize}
+\item All URLs are replaced by the unigram ``URL''. 
+\item Runs of the same character is reduced to only 3 repetitions (for example, ``coooool'' is replaced by  ``coool''). 
+\item Hashtags are stored twice, with and without the the `\#' character. 
+The tag without the `\#' character is left at tag's positions, while the other is appended at the end of the tweet.
+This handles cases where the hashtag is used in place of a word, such as ``president \#obama...''.
+%\item 
+ %All tokens are stored both in their original form, and after applying Lucene's implementation of the Porter stemmer. 
+ %We use the original form to select the subset of documents to score, and the stemmed form while scoring. This avoids the disadvantage that stemming retrieves irrelevant documents, while taking advantage of it to count words about the same concept towards the same term frequency. While words sharing the same stem can mean totally different concepts in the context of different documents, it is very likely that they have the same meaning within one document, and this meaning is probably the one desired if the document is retrieved using the unstemmed query term. 
+ \item The apostrophe used in contractions (can't, I'd, ..etc) and possessive apostrophe-s is removed from the unigram, but does not act as a delimiter.
+\end{itemize}
 
  
 %----------------------------------------------------------------------
