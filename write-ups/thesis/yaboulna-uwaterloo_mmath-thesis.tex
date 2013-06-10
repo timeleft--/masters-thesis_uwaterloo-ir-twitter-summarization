@@ -1721,7 +1721,7 @@ N-grams that appeared within the last month, for N up to 7.
 % not satisfactory (no i didn't).
 
 The tokenization of a tweet starts by tokenizing it into unigrams, 
-as described in the next section. % \ref{sec:tokenization}.
+as described in appendinx \ref{AppendixA} % the next section. % \ref{sec:tokenization}.
 Then, each
 unigram of high probability is replaced by two term bigrams, by
 attaching to it the unigrams before and after it.
@@ -2497,7 +2497,7 @@ If a unigram is a number then the dot and the comma characters
 are allowed within it.
 The tokenizer also does the following:
 \begin{itemize}
-\item All URLs are replaced by the unigram ``URL''. 
+\item All URLs (from `http[s]:' to the next whitespace)  are replaced by the unigram ``URL''. 
 \item Runs of the same character is reduced to only 3 repetitions (for example, ``coooool'' is replaced by  ``coool''). 
 \item Hashtags are stored twice, with and without the the `\#' character. 
 The tag without the `\#' character is left at tag's positions, while the other is appended at the end of the tweet.

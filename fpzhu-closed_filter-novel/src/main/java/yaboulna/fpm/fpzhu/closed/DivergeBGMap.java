@@ -259,7 +259,7 @@ public class DivergeBGMap {
   private static final double CONFIDENCE_DEFAULT_THRESHOLD = 0.1; // lower bound
 
 // private static final double ITEMSET_SIMILARITY_JACCARD_GOOD_THRESHOLD = 0.8; // Jaccard similarity
-  private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.33;// 66; // Cosine similarity
+  private static final double ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD = 0.5;// 66; // Cosine similarity
   private static final double ITEMSET_SIMILARITY_PROMISING_THRESHOLD = 0;// 0.33; // Jaccard similarity
   private static final int ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH = 3;
   private static final double ITEMSET_SIMILARITY_BAD_THRESHOLD = 0.1; // Cosine or Jaccard similariy
