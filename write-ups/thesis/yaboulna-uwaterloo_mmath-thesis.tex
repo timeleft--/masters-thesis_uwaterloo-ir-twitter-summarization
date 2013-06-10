@@ -1742,9 +1742,26 @@ in the number of tokens and the overall increase in the grand sum of counts (cau
 The adjusted $\eta_N$ is:
 \begin{equation}\eta_N = \eta_1 \times \frac{\sum_{\{w:\, w \,\in\, W\, and\, w.length \,\le\, N\}}{freq(w)}}{\sum_{\{v:\, v\, \in\, W \,and \,v.length\,=\,1\}}{freq(v)}}\end{equation}
 
-
-Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length
-of N-grams from 1 to 5 on the number of tokens, the number of closed itemsets,
+The effect of increasing the maximum length of N-grams %from 1 to 5 
+is shown in figures \ref{fig:ngramsDist} and  \ref{fig:ngramsLen}.
+Figure \ref{fig:ngramsDist} shows the flattening of the distribution
+by plotting the average decile values at three different times of day. 
+N-grams appearing less than 10 times in an hour
+(the minimum support threshold we use) are excluded,
+because they don't contribute to the distribution of items
+that the algorithm has to mine.
+The peakedness of the head of the Zipfean distribution 
+is reflected in the peakedness of the $100^{th}$ percentile.
+%As the maximum N increases
+Increasing the maximum N-gram length 
+reduces the peakedness  as well as 
+the variance in the peakedness between different
+hours of day.
+%~-~ the difference between the maximum 1-gram frequencies 
+%at different hours of day is in the order of thousands.
+Figure \ref{fig:ngramsLen} shows how the maximum N-gram length
+affects the mining algorithm; it shows
+the number of tokens in the input, the number of closed itemsets,
 %of length more than 1, 
 and the runtime of mining one hour of data.
 The values shown are averages across all one-hour epochs in the month of
@@ -1774,7 +1791,11 @@ itemsets of length 1 (frequent N-grams).
 At $N \le 5$, the number of closed itemsets of length 2 or more
 that are mined from an hour epoch averages at 2,439.17.
 The number of maximal itemsets of length 2 or more
-averages at 1,831.92.
+averages at 1,831.92, 
+which shows that there aren't many internal nodes
+in the itemset prefix tree 
+%when items are ($N \le 5$)-grams
+(recall that closed itemsets include maximal itemsets).
 All of these numbers are counts of distinct unigram sets.
 After mining itemsets of term N-grams we flatten the itemsets to sets of unigrams again.
 This is necessary since an itemset will have different N-gram set representations,
@@ -1796,6 +1817,49 @@ select interesting itemsets in the next chapter.
 %This is also necessary since an itemset will have different N-gram set
 %representations,
 %and its postings list is the union of those of the different representations.
+
+
+\begin{figure}
+\centering
+\scalebox{0.6}{
+\includegraphics{examples/deciles_ngrams1-6_3hod-max_00-01_wvalues.png}
+}
+\\
+\begin{tabular}{c}
+\\(a) Hour of Day: 00-01 HST (5-6 AM EST) \\ \\
+\end{tabular}
+\\
+%\caption{Mean number of distinct items}
+%\label{fig:ngramsLenA}
+%\end{figure}
+%\begin{figure}
+%\centering
+\scalebox{0.6}{
+\includegraphics{examples/deciles_ngrams1-6_3hod-max_08-09_wvalues.png}
+}
+\\
+\begin{tabular}{c}
+\\(b) Hour of Day: 08-09 HST (1-2 PM EST) \\ \\
+\end{tabular}
+\\
+%\caption{Mean number of itemsets}
+%\label{fig:ngramsLenB}
+%\end{figure}
+%\begin{figure}
+%\centering
+\scalebox{0.6}{
+\includegraphics{examples/deciles_ngrams1-6_3hod-max_16-17_wvalues.png}
+}
+\\
+\begin{tabular}{c}
+\\(c) Hour of Day: 16-17 HST (9-10 PM EST)
+\end{tabular}
+%\caption{Mean runtime in milliseconds}
+%\label{fig:ngramsLenC}
+\caption{Average of token frequency deciles at different times of day and maximum N} %-gram length
+\label{fig:ngramsDist}
+\end{figure} 
+
 
 
 \begin{figure}
@@ -1839,15 +1903,19 @@ select interesting itemsets in the next chapter.
 \label{fig:ngramsLen}
 \end{figure} 
 
+
+
 \section{Tokenization}
 The data is tokenized into unigrams using white space and punctuation marks as separators. 
 The characters `@', `\#' and `\_' are allowed within a unigram, 
 while the rest of the punctuation marks are treated as delimiters. % \langle \!\$\%\&()\*\+,.\/:;<=>?[]\^\{|\}\~"`- \rangle .
-Only Latin characters  (Unicode code points less than `u024F') and numbers are allowed within a unigram,
-and any other characters that are not delimiters are skipped.
+Only Latin characters  (Unicode code points less than `u024F') and numbers are allowed within a unigram.
+Any other characters that are not delimiters are skipped.
+If a unigram is a number then the dot and the comma characters
+are allowed within it.
 The tokenizer also does the following:
 \begin{itemize}
-\item All URLs are replaced by the token ``URL''. 
+\item All URLs are replaced by the unigram ``URL''. 
 \item Runs of the same character is reduced to only 3 repetitions (for example, ``coooool'' is replaced by  ``coool''). 
 \item Hashtags are stored twice, with and without the the `\#' character. 
 The tag without the `\#' character is left at tag's positions, while the other is appended at the end of the tweet.
@@ -1855,7 +1923,7 @@ This handles cases where the hashtag is used in place of a word, such as ``presi
 %\item 
  %All tokens are stored both in their original form, and after applying Lucene's implementation of the Porter stemmer. 
  %We use the original form to select the subset of documents to score, and the stemmed form while scoring. This avoids the disadvantage that stemming retrieves irrelevant documents, while taking advantage of it to count words about the same concept towards the same term frequency. While words sharing the same stem can mean totally different concepts in the context of different documents, it is very likely that they have the same meaning within one document, and this meaning is probably the one desired if the document is retrieved using the unstemmed query term. 
- \item The apostrophe used in possessive apostrophe s and contractions (can't, I'd, ..etc) is removed from the unigram, but does not act as a delimiter.
+ \item The apostrophe used in contractions (can't, I'd, ..etc) and possessive apostrophe-s is removed from the unigram, but does not act as a delimiter.
 \end{itemize}
 
 
