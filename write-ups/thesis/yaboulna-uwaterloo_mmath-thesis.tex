@@ -2050,6 +2050,9 @@ by clustering similar itemsets together.
 \section{Strongly Closed Itemsets}
 To remove the redundancy in \emph{distinct} itemsets we merge similar ones
 into \emph{strongly closed} itemset clusters.
+This will also filter out any itemsets %remaining language constructs, because they
+that do not belong to any particular topic
+since they will not be part of a cluster.
 The similarity of a \emph{distinct} itemset,
 $s_d$, and another distinct itemset, $s_c$,
 is measured as the overlap of the \emph{transactions} containing both of them
@@ -2133,9 +2136,89 @@ implies the itemset.
 \label{algo:alliance}
 \end{algorithm}
 
+To give an understanding of how the algorithm works,
+%and to illustrate how bounding the buffer size improves 
+%the clustering,
+%number of itemsets 
+%in the buffer
+in figure \ref{fig:hierSham} we show the clustering hierarchy of itemsets pertaining to
+the ``sham and travesty'' tweet.
+The figure shows a tree structure of how itemsets 
+were added to the cluster.
+An itemset's parent in the tree is the itemset
+that resulted in the rule with the maximum confidence;
+%that was the best candidate.
+we call it the best merge candidate.
+An itemset is added to a cluster
+through its best merge candidate, 
+and if the best merge candidate 
+does not belong to a cluster
+a new one is created with 
+the best merge candidate as the centroid.
+The best merge candidate always has a smaller id, 
+since ids are given sequentially to itemsets 
+and we cluster each itemset with ones that were
+generated before it .
+The support of the best merge candidate is not necessarily higher than
+the support of the itemset being clustered.
+For example, the hierarchy ($n1018 \rightarrow n1019 \rightarrow n1075$)
+has support (120, 124, 126), and
+the pre-last itemsets (n925, support: 134) is 
+under (n908, support: 132).
+The confidence of the association rule
+depends on the intersection of itemset,
+and the rule is not necessarily that
+a more frequent itemset implies
+a less frequent one.
+If the support is higher it is not substantially higher,
+because all itemset being clustered are \emph{distinct} itemsets. 
+Finally, this single \emph{strongly closed itemset} cluster 
+replaces 26  \emph{distinct} itemsets. 
+Furthermore, each itemset that has only one 
+\emph{distinct} superset must have had 
+another closed superset that is not distinct.
+%If an itemset has more than one superset
+%the overlap between them 
 
 
 
+
+\begin{landscape}
+\begin{figure}
+\begin{tabular}{p{0.8cm}p{17.5cm}p{2cm}}
+Id & Itemset &  Support\\ \hline
+\end{tabular}
+\scalebox{0.7}{
+\includegraphics{clustering/hierarchy_sham.png}
+}
+\caption{The hierarchy of itemsets in the cluster of itemsets from the ``sham and travesty'' tweet}
+\label{fig:hierSham}
+\end{figure}
+\end{landscape}
+
+
+
+\subsection{Bounding Time and Space Requirements}
+The average number of positions  between an itemset  %backwards
+and an itemset with which it could potentially be clustered 
+is 1973.11.
+%(member of the set C formed at line 2 of algorithm \ref{algo:alliance}) 
+However, the standard deviation is 1443.64, 
+indicating that the clustering candidates are 
+found either %at positions that ar
+less than 500 positions behind
+the itemset, or more several thousands positions away.
+Because of the way LCM finds itemsets
+only 
+%merging with it
+% select args, count(*), avg(value), stddev(value)  from perf_mon where args like '%4wk%1hr%ULBuff%' and key='bufferSizeNeeded4CandidateMean' group by args;
+%[/home/yaboulna/fim_out/lcm_closed_cikm/4wk+1wk_ngram5-relsupp1_oct-nov-dec/, /home/yaboulna/fim_out/lcm_closed_cikm/1hr+30min_ngram5-relsupp10_11032233-11151120_graph/, ULBuff_Canddist_LowCos_conf0.25,  ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD=0.5 ITEMSET_SIMILARITY_PROMISING_THRESHOLD=0.0 ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH=3 ITEMSET_SIMILARITY_BAD_THRESHOLD=0.1 CONFIDENCE_HIGH_THRESHOLD=0.25] |   555 | 1973.11206069111 | 240.226242426062
+
+%select args, count(*), avg(value*value), stddev(value*value)  from perf_mon where args like '%4wk%1hr%ULBuff%' and key='bufferSizeNeeded4CandidateStddev' group by args;
+                                                                                                                                                                                                      %args                                                                                                                                                                                                       | count |       avg        |      stddev      
+%-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------+------------------+------------------
+ %[/home/yaboulna/fim_out/lcm_closed_cikm/4wk+1wk_ngram5-relsupp1_oct-nov-dec/, /home/yaboulna/fim_out/lcm_closed_cikm/1hr+30min_ngram5-relsupp10_11032233-11151120_graph/, ULBuff_Canddist_LowCos_conf0.25,  ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD=0.5 ITEMSET_SIMILARITY_PROMISING_THRESHOLD=0.0 ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH=3 ITEMSET_SIMILARITY_BAD_THRESHOLD=0.1 CONFIDENCE_HIGH_THRESHOLD=0.25] |   555 | 2084100.38184268 | 413072.078653635
+%sqrt(2084100.38184268 ) =1443.64136192
 \section{Temporal Ranking}
 \label{sec:rank}
 
