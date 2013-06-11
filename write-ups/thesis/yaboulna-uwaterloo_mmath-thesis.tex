@@ -2112,7 +2112,7 @@ implies the itemset.
 	$C \gets \{s_c: s_c \in \mathcal{C} \, and \, c < i \, and \, |s_c \cap s_i| > 0\}$\;
 	$P \gets \{s_p: s_p \in \mathcal{C} \, and \, p < i \, and \, s_p \cap s_i = s_p\}$\;
 	$s_p \gets \textbf{argmax}_{s_p \in P}\frac{|T_{s_i}|}{|T_{s_p}|}$ \tcp*{Direct parent}
-	\uIf{$\frac{|T_{s_i}|}{|T_{s_p}|} < \kappa$}{continue\tcp*{Not a distinct itemset}}
+	\uIf{$s_p$ = null \textbf{OR} $\frac{|T_{s_i}|}{|T_{s_p}|} < \kappa$}{continue\tcp*{Not a distinct itemset}}
 	$s_m \gets s_i$  \tcp*{Cluster centroid, initially self}
 	$maxConf \gets 0$ \tcp*{Best candidate's score}
 	\ForEach{$s_c \in C$}{
@@ -2180,8 +2180,158 @@ another closed superset that is not distinct.
 %If an itemset has more than one superset
 %the overlap between them 
 
+To make sure that no important information is filtered out, 
+we calculate the difference between 
+the set of closed itemsets of length 2 or more
+and strongly closed itemsets. 
+In the mining results of hour long epochs from the 
+first two weeks of November 2012, 
+the size of the difference is 1516.59 on average.
+Itemsets in the difference are closed itemsets that are not \emph{distinct},
+because a \emph{distinct} itemset is always included in a \emph{strongly closed itemset} 
+even if it is the only one it contains.
+The difference is made up mainly of 2-itemsets, 
+and all itemsets in it are either frequent N-grams after flattening (do not have subsets)
+or they do not satisfy the \emph{distinct} confidence requirements.
+%belong to a particular fine grained topic (do not imply any superset with high confidence).
+%and they are mainly language constructs.
+If itemsets are restricted to those containing a topical keyword 
+before taking the size of the difference decreases dramatically.
+The difference becomes 3.1 itemsets on average
+if the itemsets from the first two weeks of November 2012
+were restricted to ones containing `obama' or `romney' before taking the difference.
+%were restricted to the following keywords before taking the difference:
+%\texttt{obama, romney} %, israel, hamas, syria, bieber, gomez}. 
+%The difference is mainly because of itemsets which are frequent N-grams,
+%like \{president, barack, obama\} and \{mitt, romney\} for example. 
+%Those itemsets are not \emph{distinct}, 
+%because they are always talked about.
+%Other 
+The hour of the 2012 US elections victory announcement happens
+to be the hour with the most number of itemsets in the difference, 
+%where 90 itemsets including one of the keywords above 
+because of the large number of posts about `obama' and `romney'.
+%were not included in the final selection.
+%and most of the other hours have no itemsets in the difference (
+%However, all of the 90 itemsets were included in supersets.
+%Below is 
+%However, all of the 90 itemsets had an alternate 
+%Table \ref{table:interestingCover} shows some examples of the most interesting itemsets
+%in the difference from that hour, 
+%along with supersets in which they were included.
+%\begin{table}[h]
+%\centering
+%\begin{tabular}{|c|c|}
+%\hline
+%Filtered Itemset & Covering Alternative
+%\\\hline
+%\end{tabular}
+%\label{table:interestingCover}
+%\caption{Filtered out interesting itemsets and their covering alternatives in the selection}
+%\end{table} 
+However, inspecting the itemsets in the difference
+shows that most of them are not interesting.
+Furthermore, interesting ones are covered in the selection,
+either by a superset or by an alternative that had enough confidence.
+Below is a listing of the itemsets in the difference, 
+along with the covering itemset from the selection 
+for interesting itemsets (shown below it).
 
+\footnotesize
 
+\begin{minipage}[t]{0.33\textwidth}
+1 [romney, that] \\
+      2 [still, obama, is] \\
+      $\hookrightarrow$  [still, obama] \\
+      3 [romney, what] \\
+      4 [romney, with] \\
+      5 [will, romney] \\
+      6 [romney, if, wins] \\
+      7 [romney, for, mitt] \\
+      8 [romney, lost] \\
+     9 [romney, like] \\
+     10 [romney, campaign] \\
+     11 [romney, is, mitt] \\
+     12 [romney, still] \\
+     13 [romney, supporters] \\
+     14 [romney, a] \\
+     15 [romney, i] \\
+     16 [s, romney] \\
+     17 [romney, of] \\
+     18 [romney, on] \\
+19 [romney, or]
+
+     20 [romney, in] \\
+     21 [romney, is] \\
+    22 [romney, had] \\    
+     23 [romney, at] 
+
+        \end{minipage}
+\begin{minipage}[t]{0.33\textwidth}
+
+     
+     24 [romney, 244] \\
+       $\hookrightarrow$  [obama, 244] \\
+     25 [romney, has] \\
+     26 [romney, got] \\
+     27 [romney, can] \\
+     28 [romney, but] \\
+     29 [romney, was] \\
+     30 [romney, the] \\
+     31 [voted, for, obama, who] \\
+     32 [2012, obama] \\
+     33 [romney, aint] \\
+     34 [obama, is, barack] \\
+     35 [gana, obama] \\
+     36 [obama, gano] \\
+   37  [michelle, obama] \\
+  39 [years, more, obama, 4] \\
+   $\hookrightarrow$  [\#4moreyears, obama] \\
+     40 [romney, for, vote] \\ 
+     41 [de, obama] \\
+     42 [obama, an] \\
+     43 [on, obama] \\
+     44 [obama, it] \\
+     45 [so, obama] \\
+     46 [obama, d] 
+         
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+
+     
+     47 [did, obama, it] \\
+     48 [for, obama, it] \\ 
+     49 [que, obama] \\
+     50 [URL, obama] \\
+     51 [can, obama] \\
+     52 [obama, all] \\
+     53 [so, obama, won] \\
+     $\hookrightarrow$ [wonnn, obama] \\
+     54 [yes, obama] \\
+     55 [obama, is, the] \\
+     56 [supporters, obama] \\
+     57 [obama, when] \\
+     58 [with, obama] \\
+     59 [obama, team] \\
+     60 [obama, has, won] \\
+     $\hookrightarrow$ [obama, we, won]\\
+     61 [this, got, obama] \\
+     62 [yeah, obama] \\
+     63 [romney, about] \\
+     64 [obama, happy, won] \\
+    $\hookrightarrow$ [glad, obama, won] \\
+     65 [yesss, obama] \\
+     66 [president, obama, barack] 
+\end{minipage}
+\normalsize
+%wc -l diff_bieber-fox-romney-israel-hamas-syria-cnn-gomez-obama-trump_novel_ULBuff_Canddist_conf0.25_-sel_ULBuff_Canddist_conf0.25_3600_1352* | less -NS
+%556  1811 total
+
+%wc -l diff_NO-KEYWORDS_novel_ULBuff_Canddist_conf0.25_-sel_ULBuff_Canddist_conf0.25_3600_1352* | less -NS
+%556  843224 total
+
+%wc -l diff_romney-obama_novel_ULBuff_Canddist_conf0.25_-sel_ULBuff_Canddist_conf0.25_3600_1352* | less -NS
+% 556  1728 total
 
 \begin{landscape}
 \begin{figure}
@@ -2191,7 +2341,8 @@ Id & Itemset &  Support\\ \hline
 \scalebox{0.7}{
 \includegraphics{clustering/hierarchy_sham.png}
 }
-\caption{The hierarchy of itemsets in the cluster of itemsets from the ``sham and travesty'' tweet}
+\caption{The hierarchy of itemsets in the cluster pertaining to the ``sham and travesty'' tweet}
+%\caption{Itemsets from the ``sham and travesty'' tweet and how they are clustered together}
 \label{fig:hierSham}
 \end{figure}
 \end{landscape}
@@ -2202,6 +2353,7 @@ Id & Itemset &  Support\\ \hline
 
 %wc -l diff_NO-KEYWORDS_fp_-sel_CondPKLD_conf0.25_Buff1000_3600_1352* | less -NS
 %357  1971552 total
+
 
 
 
@@ -2226,6 +2378,17 @@ only
 %-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------+------------------+------------------
  %[/home/yaboulna/fim_out/lcm_closed_cikm/4wk+1wk_ngram5-relsupp1_oct-nov-dec/, /home/yaboulna/fim_out/lcm_closed_cikm/1hr+30min_ngram5-relsupp10_11032233-11151120_graph/, ULBuff_Canddist_LowCos_conf0.25,  ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD=0.5 ITEMSET_SIMILARITY_PROMISING_THRESHOLD=0.0 ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH=3 ITEMSET_SIMILARITY_BAD_THRESHOLD=0.1 CONFIDENCE_HIGH_THRESHOLD=0.25] |   555 | 2084100.38184268 | 413072.078653635
 %sqrt(2084100.38184268 ) =1443.64136192
+
+
+
+% warning! --> diff_romney-obama_sel_ULBuff_Canddist_conf0.25_3600_-sel_NoPerfMon_Graph_conf0.25_Buff1000_3600_1352260800_supp37
+%wc -l diff_romney-obama_sel_ULBuff_Canddist_conf0.25_3600_-sel_NoPerfMon_Graph_conf0.25_Buff1000_3600_1352* | less -NS
+%556   701 total
+
+%wc -l diff_NO-KEYWORDS_sel_ULBuff_Canddist_conf0.25_3600_-sel_NoPerfMon_Graph_conf0.25_Buff1000_3600_* | less -Ns
+%556  162232 total
+
+
 \section{Temporal Ranking}
 \label{sec:rank}
 
