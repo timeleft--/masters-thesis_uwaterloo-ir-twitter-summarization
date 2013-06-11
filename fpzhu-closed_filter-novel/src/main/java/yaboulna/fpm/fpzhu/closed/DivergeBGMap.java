@@ -268,7 +268,7 @@ public class DivergeBGMap {
 
   private static final double KLDIVERGENCE_MIN = 0; // this is multiplied by frequency not prob
 
-  private static final int MAX_LOOKBACK_FOR_CANDIDATES = 1000;
+  private static final int MAX_LOOKBACK_FOR_CANDIDATES = 2000;
 
   private static final boolean RESEARCH_MODE = true;
 
