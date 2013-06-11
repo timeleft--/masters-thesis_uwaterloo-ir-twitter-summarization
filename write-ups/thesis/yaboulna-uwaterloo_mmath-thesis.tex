@@ -2003,8 +2003,49 @@ is defined as follows:
 
 In figure \ref{fig:sham}, \emph{distinct} itemsets are illustrated in solid
 lines, and closed itemsets that do not satisfy the distinctiveness condition in dashed lines.
+Figure \ref{fig:winningHr} shows more itemsets from the hour when 
+the US presidential election results were becoming clear.
+The itemsets shown are \emph{distinct} at $\kappa = 0.25$.
+%Each itemset has its support next to it, 
+The figure is produced by running the graph drawing algorithm proposed by Yifan Hu~\cite{hu2005efficient},
+using the implementation provided 
+in the graph visualization platform Gephi~\footnote{https://gephi.org/}.
+We give the algorithm a graph with a node for each itemset and 
+an edge between similar itemsets.
+Similarity between itemsets
+is determined based on 
+association rule confidence,
+%The using the formula introduced in the next section. % of the rule that the smaller set 
+as explained in the next section.
+The similarity is used as the edge weight,
+thus it determines the distance between itemsets.
+
+%Even though the support threshold There are
+The figure shows a lot of interesting itemsets.
+Itemsets pertaining to Donald Trump's tweets appear on the right side of the page,
+where the itemsets from the ``sham and travesty'' tweet are in the middle.
+%Barack Obama (BO) also made an 
+%Other clusters of itemsets are easy to guess what they are about.
+Close to the bottom left of the page there are itemsets showing the number
+of electoral votes each candidate got so far ([191, 238] and [191, 249]). 
+%~\footnote{https://plus.google.com/+NBCNews/posts/gNw1sYLWtE8}
 It is clear from the figure that considerable redundancy remains in
-\emph{distinct} itemsets.
+\emph{distinct} itemsets. 
+%However, most interesting itemsets
+In the next section we propose overcoming this redundancy 
+by clustering similar itemsets together.
+
+
+\begin{landscape}
+\begin{figure}
+\scalebox{0.75}{
+\includegraphics[trim=1in 0 0 0, clip=true]{clustering/elections-day_10pm-est_2.pdf}
+}
+\caption{Scatter plot of \emph{distinct} itemsets from the hour starting at 10 PM EST on 6 Nov. 2012 }
+%(US Presidential Elections day)
+\label{fig:winningHr}
+\end{figure}
+\end{landscape}
 
 \section{Strongly Closed Itemsets}
 To remove the redundancy in \emph{distinct} itemsets we merge similar ones

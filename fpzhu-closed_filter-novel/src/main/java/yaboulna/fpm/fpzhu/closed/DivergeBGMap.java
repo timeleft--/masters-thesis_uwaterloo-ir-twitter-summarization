@@ -1542,8 +1542,12 @@ public class DivergeBGMap {
 //                          }
 //                        } while (true);
                         theOnlyOneNode.addContent(clusterColorNode);
+                        //TODO: add the color as a gex attribute like support
                       }
+//                      Element clusterColorNode2 = theOnlyOneNode.getChild("color", vizNs);
                       itemsetNode.addContent(clusterColorNode.clone());
+//                      Element itemsetColorNode = itemsetNode.getChild("color", vizNs);
+//                      System.out.println(clusterColorNode2 + "\n\n" + itemsetColorNode);
                     }
                     if (LOG.isTraceEnabled())
                       LOG.trace(
