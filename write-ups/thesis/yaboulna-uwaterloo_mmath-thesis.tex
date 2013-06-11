@@ -2188,7 +2188,7 @@ In the mining results of hour long epochs from the
 first two weeks of November 2012, 
 the size of the difference is 1516.59 on average.
 Itemsets in the difference are closed itemsets that are not \emph{distinct},
-because a \emph{distinct} itemset is always included in a \emph{strongly closed itemset} 
+since a \emph{distinct} itemset is always included in a \emph{strongly closed itemset} 
 even if it is the only one it contains.
 The difference is made up mainly of 2-itemsets, 
 and all itemsets in it are either frequent N-grams after flattening (do not have subsets)
@@ -2196,7 +2196,7 @@ or they do not satisfy the \emph{distinct} confidence requirements.
 %belong to a particular fine grained topic (do not imply any superset with high confidence).
 %and they are mainly language constructs.
 If itemsets are restricted to those containing a topical keyword 
-before taking the size of the difference decreases dramatically.
+before taking the difference, its size decreases dramatically.
 The difference becomes 3.1 itemsets on average
 if the itemsets from the first two weeks of November 2012
 were restricted to ones containing `obama' or `romney' before taking the difference.
@@ -2232,11 +2232,16 @@ because of the large number of posts about `obama' and `romney'.
 However, inspecting the itemsets in the difference
 shows that most of them are not interesting.
 Furthermore, interesting ones are covered in the selection,
-either by a superset or by an alternative that had enough confidence.
-Below is a listing of the itemsets in the difference, 
-along with the covering itemset from the selection 
-for interesting itemsets (shown below it).
-
+either by a subset or superset or by an alternative that had enough confidence.
+Below is a listing of the itemsets in the difference of that hour. 
+%Below each interesting itemset,  
+%the covering itemset from the selection 
+%is also shown
+%for interesting itemsets.
+Along with each interesting itemset, 
+the covering itemset that is included 
+in the selection is also shown.
+%(below it with an arrow).
 \footnotesize
 
 \begin{minipage}[t]{0.33\textwidth}
