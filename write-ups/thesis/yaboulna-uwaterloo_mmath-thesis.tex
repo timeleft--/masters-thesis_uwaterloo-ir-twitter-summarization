@@ -1184,7 +1184,10 @@ Performance on a real data set is shown in section \ref{sec:socmine}.
 We proceed by describing how to implement this algorithm using an inverted
 index.
 
+
 \begin{landscape}
+%{\tiny
+
 \begin{table}
 \centering
 \begin{tabular}{|c|p{5cm}||c|p{5cm}|} \hline
@@ -1195,30 +1198,35 @@ c& brack obama \& romney & d & brack obama  \\\hline
 \begin{tabular}{c}
 Documents (two per row)\\\\
 \end{tabular}
-\begin{tabular}{|c|p{6.5cm}|p{6.2cm}|p{7.6cm}|} \hline
+%\scalebox{0.7}{
+\begin{tabular}{|c|p{6.5cm}|p{6cm}|p{7cm}|} %[scale=0.3]{| c | l | l | l |}
+\hline
 Step&Current Itemset&Possible Extension Items&Comments\\ \hline
-1& \{barack\} (4) & mitt (2), obama (3), romney (2) & Items in $T_{\{`barack'\}}$ are counted. No items should be added to the itemset.  \\ \hline %with `barack'
+
+1& \{barack\} (4) & mitt (2), obama (3), romney (2) & {\small Items in $T_{\{`barack'\}}$ are counted. No items should be added to the itemset.}\\\hline %with `barack'
 %appears in all transactions.%
 %This is not shown as a step in the rest of the example.
-2& \{\emph{barack}\} (4)* & mitt (2), obama (3), romney (2) & Rule 3: suffix is ordered, add itemset to solution. This is not shown as a separate step in the rest of the example.\\ \hline
-3& \{\emph{barack}\} (4) & \textbf{mitt} (2), obama (3), romney (2) & Items are ordered lexicographically. Adding `mitt' to itemset.\\ \hline
-4& \{barack, \emph{mitt}\} (2)* & \textbf{obama} (1), romney (1) & Extension items reenumerated \& counted.\\ \hline
-5 & \{barack, \emph{mitt}, obama\} (1) & romney (1)                       & Rule 2: `romney' appears in all $T_{itemset}.$\\\hline
-6 & \{barack, mitt, \emph{obama, romney}\}(1)* & & Rule 3: `obama'  is the \emph{suffex head}. \\\hline
-7 & \{\emph{barack}\} (4) & mitt (2), \textbf{obama} (3), romney (2) & Nothing more to add, back to \{`barack'\}. \\\hline
-8 & \{barack, \emph{obama}\} (3)* & \sout{mitt} (1), \textbf{romney} (2) & Rule 1: skipping `mitt', adding `romney' \\\hline
-9 & \{barack, obama, \emph{romney}\} (2)* & \sout{mitt} (1) & Rule 1: Nothing more to add. \\\hline
-10 & \{\emph{barack}\} (4) & mitt (2), obama (3), \textbf{romney} (2) & Back to \{`barack'\}, adding `romney'. \\\hline
-11 & \{\emph{barack}, romney\} (2) &  mitt (1), obama (2) & Rule 2: add `obama' after `romney'. \\\hline
-12 & \{barack, \emph{romney, obama}\} (2) &  \sout{mitt} (1)  & Rule 3: suffix is not ordered, prune. \\\hline
-13 & \{\emph{barack}\} (4) & mitt (2), obama (3), romney (2) & Back to \{`barack'\}, all possible extension items were added. Done. \\\hline
+2& \{\emph{barack}\} (4)* & mitt (2), obama (3), romney (2) &  {\small Rule 3: suffix is ordered, add itemset to solution. This is not shown as a separate step in the rest of the example. } \\ \hline
+3& \{\emph{barack}\} (4) & \textbf{mitt} (2), obama (3), romney (2) &  {\small Items are ordered lexicographically. Adding `mitt' to itemset. } \\ \hline
+4& \{barack, \emph{mitt}\} (2)* & \textbf{obama} (1), romney (1) &  {\small Extension items reenumerated \& counted.}\\\hline
+5 & \{barack, \emph{mitt}, obama\} (1) & romney (1)                       &  {\small Rule 2: `romney' appears in all $T_{itemset}$. } \\\hline
+6 & \{barack, mitt, \emph{obama, romney}\}(1)* & & {\small Rule 3: `obama'  is the \emph{suffex head}. } \\\hline
+7 & \{\emph{barack}\} (4) & mitt (2), \textbf{obama} (3), romney (2) &  {\small Nothing more to add, back to \{`barack'\}.}\\\hline
+8 & \{barack, \emph{obama}\} (3)* & \sout{mitt} (1), \textbf{romney} (2) &  {\small Rule 1: skipping `mitt', adding `romney'  } \\\hline
+9 & \{barack, obama, \emph{romney}\} (2)* & \sout{mitt} (1) &  {\small Rule 1: Nothing more to add.  } \\\hline
+10 & \{\emph{barack}\} (4) & mitt (2), obama (3), \textbf{romney} (2) &  {\small Back to \{`barack'\}, adding `romney'. } \\\hline
+11 & \{\emph{barack}, romney\} (2) &  mitt (1), obama (2) &  {\small Rule 2: add `obama' after `romney'. } \\\hline
+12 & \{barack, \emph{romney, obama}\} (2) &  \sout{mitt} (1)  &  {\small Rule 3: suffix is not ordered, prune.} \\\hline
+13 & \{\emph{barack}\} (4) & mitt (2), obama (3), romney (2) &  {\small Back to \{`barack'\}, all possible extension items were added. Done. } \\\hline
 \end{tabular}
 \begin{tabular}{c}
 Closed itemsets containing `barack'
 \end{tabular}
+%}
 \caption{Generation of closed itemsets by Prefix Preserving Closure Extension}
 \label{table:PPCExample}
 \end{table}
+%}
 \end{landscape}
 
 \subsection{Implementation Details}
@@ -1911,10 +1919,8 @@ select interesting itemsets in the next chapter.
 % C H A P T E R     4
 % =========================================
 
-\chapter{Selecting Interesting Itemsets}
+\chapter{Filtering Itemsets} %Selecting Interesting
 \label{sec:strong}
-
-
 
 In section~\ref{sec:ngrams}, we discussed our handling of function words,
 using a technique that exploits LCM's tolerance to sparsity.
@@ -1999,8 +2005,193 @@ with confidence greater than $\kappa$.
 Formally, the set of \emph{distinct} itemsets, $\mathcal{D}$,
 is defined as follows:
 \begin{equation}\mathcal{D} = \{s: s \in \mathcal{C} \, and \, \exists \; s_{p} \subset s \; where \; \frac{|T_{s}|}{|T_{s_{p}}|} \ge \kappa 
-\}\end{equation}
+\}
+\end{equation}
 
+
+
+To make sure that no important information is filtered out, 
+we calculate the difference between 
+the set of closed itemsets of length 2 or more
+and strongly closed itemsets. 
+In the mining results of hour long epochs from the 
+first two weeks of November 2012, 
+the size of the difference is 1516.59 on average. 2,439.17
+Itemsets in the difference are closed itemsets that are not \emph{distinct},
+since a \emph{distinct} itemset is always included in a \emph{strongly closed itemset} 
+even if it is the only one it contains.
+The difference is made up mainly of 2-itemsets, 
+and all itemsets in it are either frequent N-grams after flattening (do not have subsets)
+or they do not satisfy the \emph{distinct} confidence requirements.
+%belong to a particular fine grained topic (do not imply any superset with high confidence).
+%and they are mainly language constructs.
+If itemsets are restricted to those containing a topical keyword 
+before taking the difference, its size decreases dramatically.
+The difference becomes 7.2 itemsets on average
+if the itemsets from the first two weeks of November 2012
+were restricted to ones containing `obama' or `romney' before taking the difference.
+In this case, an epoch is included in the average only if the keywords occur in it.
+%were restricted to the following keywords before taking the difference:
+%\texttt{obama, romney} %, israel, hamas, syria, bieber, gomez}. 
+%The difference is mainly because of itemsets which are frequent N-grams,
+%like \{president, barack, obama\} and \{mitt, romney\} for example. 
+%Those itemsets are not \emph{distinct}, 
+%because they are always talked about.
+%Other 
+The hour of the 2012 US elections victory announcement happens
+to be the hour with the most number of itemsets in the difference, 
+%where 90 itemsets including one of the keywords above 
+because of the large number of posts about `obama' and `romney'.
+%were not included in the final selection.
+%and most of the other hours have no itemsets in the difference (
+%However, all of the 90 itemsets were included in supersets.
+%Below is 
+%However, all of the 90 itemsets had an alternate 
+%Table \ref{table:interestingCover} shows some examples of the most interesting itemsets
+%in the difference from that hour, 
+%along with supersets in which they were included.
+%\begin{table}[h]
+%\centering
+%\begin{tabular}{|c|c|}
+%\hline
+%Filtered Itemset & Covering Alternative
+%\\\hline
+%\end{tabular}
+%\label{table:interestingCover}
+%\caption{Filtered out interesting itemsets and their covering alternatives in the selection}
+%\end{table} 
+However, inspecting the itemsets in the difference
+shows that most of them are not interesting.
+Furthermore, interesting ones are covered in the selection,
+either by a subset or superset or by an alternative that had enough confidence.
+Figure \ref{fig:closedNDistinct} is a listing of the itemsets in the difference of that hour. 
+%Below each interesting itemset,  
+%the covering itemset from the selection 
+%is also shown
+%for interesting itemsets.
+Along with each interesting itemset, 
+the covering itemset that is included 
+in the selection is also shown.
+%(below it with an arrow).
+\begin{figure}
+\footnotesize
+\begin{minipage}[t]{0.33\textwidth}
+1 [romney, that] \\
+      2 [still, obama, is] \\
+      $\hookrightarrow$  [still, obama] \\
+      3 [romney, what] \\
+      4 [romney, with] \\
+      5 [will, romney] \\
+      6 [romney, if, wins] \\
+      7 [romney, for, mitt] \\
+      8 [romney, lost] \\
+     9 [romney, like] \\
+     10 [romney, campaign] \\
+     11 [romney, is, mitt] \\
+     12 [romney, still] \\
+     13 [romney, supporters] \\
+     14 [romney, a] \\
+     15 [romney, i] \\
+     16 [s, romney] \\
+     17 [romney, of] \\
+     18 [romney, on] \\
+19 [romney, or]
+
+     20 [romney, in] \\
+     21 [romney, is] \\
+    22 [romney, had] \\    
+     23 [romney, at] 
+
+        \end{minipage}
+\begin{minipage}[t]{0.33\textwidth}
+
+     
+     24 [romney, 244] \\
+       $\hookrightarrow$  [obama, 244] \\
+     25 [romney, has] \\
+     26 [romney, got] \\
+     27 [romney, can] \\
+     28 [romney, but] \\
+     29 [romney, was] \\
+     30 [romney, the] \\
+     31 [voted, for, obama, who] \\
+     32 [2012, obama] \\
+     33 [romney, aint] \\
+     34 [obama, is, barack] \\
+     35 [gana, obama] \\
+     36 [obama, gano] \\
+   37  [michelle, obama] \\
+  39 [years, more, obama, 4] \\
+   $\hookrightarrow$  [\#4moreyears, obama] \\
+     40 [romney, for, vote] \\ 
+     41 [de, obama] \\
+     42 [obama, an] \\
+     43 [on, obama] \\
+     44 [obama, it] \\
+     45 [so, obama] \\
+     46 [obama, d] 
+         
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+
+     
+     47 [did, obama, it] \\
+     48 [for, obama, it] \\ 
+     49 [que, obama] \\
+     50 [URL, obama] \\
+     51 [can, obama] \\
+     52 [obama, all] \\
+     53 [so, obama, won] \\
+     $\hookrightarrow$ [wonnn, obama] \\
+     54 [yes, obama] \\
+     55 [obama, is, the] \\
+     56 [supporters, obama] \\
+     57 [obama, when] \\
+     58 [with, obama] \\
+     59 [obama, team] \\
+     60 [obama, has, won] \\
+     $\hookrightarrow$ [obama, we, won]\\
+     61 [this, got, obama] \\
+     62 [yeah, obama] \\
+     63 [romney, about] \\
+     64 [obama, happy, won] \\
+    $\hookrightarrow$ [glad, obama, won] \\
+     65 [yesss, obama] \\
+     66 [president, obama, barack] 
+\end{minipage}
+\caption{Itemsets containing `barack' or `romeny' that are closed but not distinct}
+\label{fig:closedNDistinct}
+\end{figure}
+
+
+%wc -l diff_bieber-fox-romney-israel-hamas-syria-cnn-gomez-obama-trump_novel_ULBuff_Canddist_conf0.25_-sel_ULBuff_Canddist_conf0.25_3600_1352* | less -NS
+%556  1811 total
+
+%wc -l diff_NO-KEYWORDS_novel_ULBuff_Canddist_conf0.25_-sel_ULBuff_Canddist_conf0.25_3600_1352* | less -NS
+%556  843224 total
+
+%wc -l diff_romney-obama_novel_ULBuff_Canddist_conf0.25_-sel_ULBuff_Canddist_conf0.25_3600_1352* | less -NS
+% 556  1728 total
+%157  1720 total after removing files of size 0
+
+%wc -l sel_ULBuff_Canddist_conf0.25_3600_1352*_romney-obama | less -NS
+%240  1668
+
+
+%scandal:
+% less -NS sel_ULBuff_Canddist_conf0.25_3600_1352176200_supp16_romney-obama 
+% less -Ns diff_romney-obama_novel_ULBuff_Canddist_conf0.25_-sel_ULBuff_Canddist_conf0.25_3600_1352176200_supp16
+
+
+%\subsection{Go through the trash}
+%wc -l diff_romney-obama_fp_-sel_CondPKLD_conf0.25_Buff1000_3600_1352* | less -NS
+%357  2776 total
+
+%wc -l diff_NO-KEYWORDS_fp_-sel_CondPKLD_conf0.25_Buff1000_3600_1352* | less -NS
+%357  1971552 total
+
+
+\normalsize
 In figure \ref{fig:sham}, \emph{distinct} itemsets are illustrated in solid
 lines, and closed itemsets that do not satisfy the distinctiveness condition in dashed lines.
 Figure \ref{fig:winningHr} shows more itemsets from the hour when 
@@ -2039,7 +2230,7 @@ by clustering similar itemsets together.
 \begin{landscape}
 \begin{figure}
 \scalebox{0.75}{
-\includegraphics[trim=1in 0 0 0, clip=true]{clustering/elections-day_10pm-est_2.pdf}
+\frame{\includegraphics[trim=1in 0 3in 0, clip=true]{clustering/elections-day_10pm-est_2.pdf}}
 }
 \caption{Scatter plot of \emph{distinct} itemsets from the hour starting at 10 PM EST on 6 Nov. 2012 }
 %(US Presidential Elections day)
@@ -2180,164 +2371,6 @@ another closed superset that is not distinct.
 %If an itemset has more than one superset
 %the overlap between them 
 
-To make sure that no important information is filtered out, 
-we calculate the difference between 
-the set of closed itemsets of length 2 or more
-and strongly closed itemsets. 
-In the mining results of hour long epochs from the 
-first two weeks of November 2012, 
-the size of the difference is 1516.59 on average.
-Itemsets in the difference are closed itemsets that are not \emph{distinct},
-since a \emph{distinct} itemset is always included in a \emph{strongly closed itemset} 
-even if it is the only one it contains.
-The difference is made up mainly of 2-itemsets, 
-and all itemsets in it are either frequent N-grams after flattening (do not have subsets)
-or they do not satisfy the \emph{distinct} confidence requirements.
-%belong to a particular fine grained topic (do not imply any superset with high confidence).
-%and they are mainly language constructs.
-If itemsets are restricted to those containing a topical keyword 
-before taking the difference, its size decreases dramatically.
-The difference becomes 3.1 itemsets on average
-if the itemsets from the first two weeks of November 2012
-were restricted to ones containing `obama' or `romney' before taking the difference.
-%were restricted to the following keywords before taking the difference:
-%\texttt{obama, romney} %, israel, hamas, syria, bieber, gomez}. 
-%The difference is mainly because of itemsets which are frequent N-grams,
-%like \{president, barack, obama\} and \{mitt, romney\} for example. 
-%Those itemsets are not \emph{distinct}, 
-%because they are always talked about.
-%Other 
-The hour of the 2012 US elections victory announcement happens
-to be the hour with the most number of itemsets in the difference, 
-%where 90 itemsets including one of the keywords above 
-because of the large number of posts about `obama' and `romney'.
-%were not included in the final selection.
-%and most of the other hours have no itemsets in the difference (
-%However, all of the 90 itemsets were included in supersets.
-%Below is 
-%However, all of the 90 itemsets had an alternate 
-%Table \ref{table:interestingCover} shows some examples of the most interesting itemsets
-%in the difference from that hour, 
-%along with supersets in which they were included.
-%\begin{table}[h]
-%\centering
-%\begin{tabular}{|c|c|}
-%\hline
-%Filtered Itemset & Covering Alternative
-%\\\hline
-%\end{tabular}
-%\label{table:interestingCover}
-%\caption{Filtered out interesting itemsets and their covering alternatives in the selection}
-%\end{table} 
-However, inspecting the itemsets in the difference
-shows that most of them are not interesting.
-Furthermore, interesting ones are covered in the selection,
-either by a subset or superset or by an alternative that had enough confidence.
-Below is a listing of the itemsets in the difference of that hour. 
-%Below each interesting itemset,  
-%the covering itemset from the selection 
-%is also shown
-%for interesting itemsets.
-Along with each interesting itemset, 
-the covering itemset that is included 
-in the selection is also shown.
-%(below it with an arrow).
-\footnotesize
-
-\begin{minipage}[t]{0.33\textwidth}
-1 [romney, that] \\
-      2 [still, obama, is] \\
-      $\hookrightarrow$  [still, obama] \\
-      3 [romney, what] \\
-      4 [romney, with] \\
-      5 [will, romney] \\
-      6 [romney, if, wins] \\
-      7 [romney, for, mitt] \\
-      8 [romney, lost] \\
-     9 [romney, like] \\
-     10 [romney, campaign] \\
-     11 [romney, is, mitt] \\
-     12 [romney, still] \\
-     13 [romney, supporters] \\
-     14 [romney, a] \\
-     15 [romney, i] \\
-     16 [s, romney] \\
-     17 [romney, of] \\
-     18 [romney, on] \\
-19 [romney, or]
-
-     20 [romney, in] \\
-     21 [romney, is] \\
-    22 [romney, had] \\    
-     23 [romney, at] 
-
-        \end{minipage}
-\begin{minipage}[t]{0.33\textwidth}
-
-     
-     24 [romney, 244] \\
-       $\hookrightarrow$  [obama, 244] \\
-     25 [romney, has] \\
-     26 [romney, got] \\
-     27 [romney, can] \\
-     28 [romney, but] \\
-     29 [romney, was] \\
-     30 [romney, the] \\
-     31 [voted, for, obama, who] \\
-     32 [2012, obama] \\
-     33 [romney, aint] \\
-     34 [obama, is, barack] \\
-     35 [gana, obama] \\
-     36 [obama, gano] \\
-   37  [michelle, obama] \\
-  39 [years, more, obama, 4] \\
-   $\hookrightarrow$  [\#4moreyears, obama] \\
-     40 [romney, for, vote] \\ 
-     41 [de, obama] \\
-     42 [obama, an] \\
-     43 [on, obama] \\
-     44 [obama, it] \\
-     45 [so, obama] \\
-     46 [obama, d] 
-         
-\end{minipage}
-\begin{minipage}[t]{0.3\textwidth}
-
-     
-     47 [did, obama, it] \\
-     48 [for, obama, it] \\ 
-     49 [que, obama] \\
-     50 [URL, obama] \\
-     51 [can, obama] \\
-     52 [obama, all] \\
-     53 [so, obama, won] \\
-     $\hookrightarrow$ [wonnn, obama] \\
-     54 [yes, obama] \\
-     55 [obama, is, the] \\
-     56 [supporters, obama] \\
-     57 [obama, when] \\
-     58 [with, obama] \\
-     59 [obama, team] \\
-     60 [obama, has, won] \\
-     $\hookrightarrow$ [obama, we, won]\\
-     61 [this, got, obama] \\
-     62 [yeah, obama] \\
-     63 [romney, about] \\
-     64 [obama, happy, won] \\
-    $\hookrightarrow$ [glad, obama, won] \\
-     65 [yesss, obama] \\
-     66 [president, obama, barack] 
-\end{minipage}
-\normalsize
-%wc -l diff_bieber-fox-romney-israel-hamas-syria-cnn-gomez-obama-trump_novel_ULBuff_Canddist_conf0.25_-sel_ULBuff_Canddist_conf0.25_3600_1352* | less -NS
-%556  1811 total
-
-%wc -l diff_NO-KEYWORDS_novel_ULBuff_Canddist_conf0.25_-sel_ULBuff_Canddist_conf0.25_3600_1352* | less -NS
-%556  843224 total
-
-%wc -l diff_romney-obama_novel_ULBuff_Canddist_conf0.25_-sel_ULBuff_Canddist_conf0.25_3600_1352* | less -NS
-% 556  1728 total
-
 \begin{landscape}
 \begin{figure}
 \begin{tabular}{p{0.8cm}p{17.5cm}p{2cm}}
@@ -2351,15 +2384,6 @@ Id & Itemset &  Support\\ \hline
 \label{fig:hierSham}
 \end{figure}
 \end{landscape}
-
-\subsection{Go through the trash}
-%wc -l diff_romney-obama_fp_-sel_CondPKLD_conf0.25_Buff1000_3600_1352* | less -NS
-%357  2776 total
-
-%wc -l diff_NO-KEYWORDS_fp_-sel_CondPKLD_conf0.25_Buff1000_3600_1352* | less -NS
-%357  1971552 total
-
-
 
 
 \subsection{Bounding Time and Space Requirements}
@@ -2804,7 +2828,7 @@ This handles cases where the hashtag is used in place of a word, such as ``presi
 %\item 
  %All tokens are stored both in their original form, and after applying Lucene's implementation of the Porter stemmer. 
  %We use the original form to select the subset of documents to score, and the stemmed form while scoring. This avoids the disadvantage that stemming retrieves irrelevant documents, while taking advantage of it to count words about the same concept towards the same term frequency. While words sharing the same stem can mean totally different concepts in the context of different documents, it is very likely that they have the same meaning within one document, and this meaning is probably the one desired if the document is retrieved using the unstemmed query term. 
- \item The apostrophe used in contractions (can't, I'd, ..etc) and possessive apostrophe-s is removed from the unigram, but does not act as a delimiter.
+ \item The apostrophe used in contractions (can't, don't, ..etc) is removed from the unigram, but does not act as a delimiter.% I'd, and possessive apostrophe-s
 \end{itemize}
 
  
