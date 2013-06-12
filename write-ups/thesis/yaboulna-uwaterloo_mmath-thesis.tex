@@ -788,7 +788,15 @@ proposing a method for further reducing the number of closed patterns.
 Lau et al.~\cite{laumicroblog} used related methods for term weighting 
 in pseudo-relevance feedback for Twitter search,
 and achieved substantial improvements over a baseline.
-Our work can provide such methods by a short ranked list of itemsets. 
+In an earlier work~\cite{abounlaga2012frequent}, 
+we have also explored the viability 
+of using frequent itemsets for query expansion in microblog search. 
+We have achieved improvements over a strong baseline
+on the TREC 2011 microblog track queries, 
+using frequent itemsets which are mined 
+using an unmodified mining algorithm that 
+returns the top-k itemsets according to their support.
+This work can provide such methods by a short ranked list of itemsets. 
 
 
 Our work complements the work done by Yang et al.~\cite{yang2012framework} for 
@@ -2037,10 +2045,10 @@ are trivially different from each other.
 
 \section{Distinct Itemsets}
 
-We have seen that 
-To reduce redundancy, we propose two conditions that are not as easily violated 
-as the closed condition and use them for selecting itemsets.
-The two conditions build on the concept of \emph{association rule confidence}.
+We have seen that the dynamics of posting on social media result in redundant closed itemsets.
+To reduce redundancy, we propose the \emph{distinct} condition which is not as easily violated 
+as the closed condition and use it for selecting itemsets.
+The \emph{distinct} condition builds on the concept of \emph{association rule confidence}.
 Confidence is the basic property used for association rules mining,
 and it is used in the definition of $\delta$-free sets~\cite{boulicaut2003free}.
 Mining itemsets based on the confidence of rules they induce has long been
@@ -2055,16 +2063,44 @@ $s_{j}$, implies the presence of another itemset, $s_i$, is  defined as:
 \begin{equation}\label{eq:conf}conf(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
 
 
-
 The \emph{distinct} condition is a novel strengthening of the closed condition
-so that it is not violated by trivial differences.
+so that it is not easily satisfied by any superset of a closed itemset.
+%violated by trivial differences.
+A closed itemset of length $k$, call it $s_p$, % with high support %(say 100 occurrences in an hour)
+can have as many frequent supersets of length $k+1$ as its support, %divided by the support threshold,
+where $s_p$ will be the intersection of the supersets.
+From the properties of closed itemsets, 
+each superset that has enough support
+will result in one or more closed itemsets;
+if a superset is a maximal itemset then 
+it will result in only one closed itemset,
+and if it can be extended further it will 
+result in more closed itemsets.
+Now consider that $s_p$ has a particularly high support,
+as is the case for itemsets made up of the 
+most discriminative words of a certain topic.
+In this case, we can filter out
+closed supersets that have
+support high enough to satisfy the support threshold
+but much lower than $s_p$'s support.
+These itemsets have enough support to be mined as frequent itemsets 
+and they are closed because they have a closed subset, 
+but they do not represent 
+a \emph{distinctive} piece of information or opinion 
+within the topic that $s_p$ represents.
+This is similar in essence to mining itemsets
+at multiple minimum supports~\cite{liu1999mining,seno2005finding,wang2000mining,xiong2003mining}, 
+where a different support threshold is used for different categories
+of items according to their relative frequency.
+
 We define a \emph{distinct} itemset as a closed itemset whose frequency
 comprises more than a certain proportion of the frequency of its least
 frequent subset. 
 This condition chooses closed itemsets which substantially violate the closed
 condition of their subsets.
-The proportion is a parameter, $\kappa$, that controls the selectivity of the
-\emph{distinctiveness} condition.
+The proportion is a parameter, $\kappa$, that controls the selectivity 
+of the condition,
+or the \emph{distinctiveness} of itemsets selected by the condition.
 This can be interpreted as selecting itemsets which are implied by a subset
 with confidence greater than $\kappa$.
 Formally, the set of \emph{distinct} itemsets, $\mathcal{D}$,
