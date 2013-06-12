@@ -2092,8 +2092,13 @@ a \emph{distinctive} piece of information or opinion
 within the topic that $s_p$ represents.
 This is similar in essence to mining itemsets
 at multiple minimum supports~\cite{liu1999mining,seno2005finding,wang2000mining,xiong2003mining}, 
-where a different support threshold is used for different categories
-of items according to their relative frequency.
+where a different support threshold is used for 
+%different categories of items according to their relative frequency.
+each itemset according to the frequency of its components, or its length, 
+or some other function that calculates the \emph{suitable} support threshold.
+However, we filter or keep itemsets based on a very simple condition
+that is easy to implement efficiently and intuitive to reason about.
+
 
 We define a \emph{distinct} itemset as a closed itemset whose frequency
 comprises more than a certain proportion of the frequency of its least
@@ -2112,20 +2117,58 @@ is defined as follows:
 \end{equation}
 
 
+In figure \ref{fig:sham}, \emph{distinct} itemsets are illustrated in solid lines, 
+and closed itemsets that do not satisfy the distinctiveness condition are illustrated in dashed lines.
+This is not an accurate illustration that is only meant 
+to give an intuition of how \emph{distinct} itemset are different from closed itemsets that are not \emph{distinct}.
 
-To make sure that no important information is filtered out, 
+Figure \ref{fig:winningHr} is a more realistic example.
+It shows some itemsets (and their support, next to them) from the hour when 
+the US presidential election results were becoming clear.
+The itemsets shown are \emph{distinct} at $\kappa = 0.25$.
+%Each itemset has its support next to it, 
+The figure is produced by the graph drawing algorithm proposed by Yifan Hu~\cite{hu2005efficient},
+using the implementation provided 
+in the graph visualization platform Gephi\footnote{https://gephi.org/}.
+We run the algorithm on a graph with a node for each itemset and 
+an edge between similar itemsets.
+Similarity between itemsets
+is determined based on 
+association rule confidence,
+%The using the formula introduced in the next section. % of the rule that the smaller set 
+as explained in the next section.
+The similarity is used as the edge weight,
+thus it determines the distance between itemsets.
+%Even though the support threshold There are
+The figure shows a lot of interesting itemsets.
+Itemsets pertaining to Donald Trump's tweets appear on the right side of the page,
+where the itemsets from the ``sham and travesty'' tweet are in the middle.
+%Barack Obama (BO) also made an 
+%Other clusters of itemsets are easy to guess what they are about.
+Close to the bottom left of the page there are itemsets showing the number
+of electoral votes each candidate got so far (\{191, 238\} and \{191, 249\}). 
+%~\footnote{https://plus.google.com/+NBCNews/posts/gNw1sYLWtE8}
+It is clear from the figure that considerable redundancy remains in
+\emph{distinct} itemsets. 
+%However, most interesting itemsets
+In the next section we propose overcoming this redundancy 
+by clustering similar itemsets together.
+
+
+To assess the filtering power of the \emph{distinct} condition
+and make sure that no important information is filtered out, 
 we calculate the difference between 
 the set of closed itemsets of length 2 or more
-and strongly closed itemsets. 
+and \emph{distinct} itemsets ($\kappa = 0.25$). 
 In the mining results of hour long epochs from the 
 first two weeks of November 2012, 
-the size of the difference is 1516.59 on average. 2,439.17
-Itemsets in the difference are closed itemsets that are not \emph{distinct},
-since a \emph{distinct} itemset is always included in a \emph{strongly closed itemset} 
-even if it is the only one it contains.
-The difference is made up mainly of 2-itemsets, 
-and all itemsets in it are either frequent N-grams after flattening (do not have subsets)
-or they do not satisfy the \emph{distinct} confidence requirements.
+the number of \emph{distinct} itemsets 
+averages at 922.58 itemsets 
+(37.8\% of closed itemsets of length 2 or more).
+%the size of the difference is 1516.59 on average. closed itemsets of length 2 or more 2,439.17
+The difference is made up mainly of 2-itemsets.
+%and all itemsets in it are either frequent N-grams after flattening (do not have subsets)
+%or they do not satisfy the \emph{distinct} confidence requirements.
 %belong to a particular fine grained topic (do not imply any superset with high confidence).
 %and they are mainly language constructs.
 If itemsets are restricted to those containing a topical keyword 
@@ -2175,6 +2218,20 @@ Figure \ref{fig:closedNDistinct} is a listing of the itemsets in the difference 
 Along with each interesting itemset, 
 the covering itemset that is included 
 in the selection is also shown.
+
+
+\begin{landscape}
+\begin{figure}
+\scalebox{0.75}{
+\frame{\includegraphics[trim=1in 0 3in 0, clip=true]{clustering/elections-day_10pm-est_2.pdf}}
+}
+\caption{Scatter plot of \emph{distinct} itemsets from the hour starting at 10 PM EST on 6 Nov. 2012 }
+%(US Presidential Elections day)
+\label{fig:winningHr}
+\end{figure}
+\end{landscape}
+
+
 %(below it with an arrow).
 \begin{figure}
 \footnotesize
@@ -2295,51 +2352,6 @@ in the selection is also shown.
 
 
 \normalsize
-In figure \ref{fig:sham}, \emph{distinct} itemsets are illustrated in solid
-lines, and closed itemsets that do not satisfy the distinctiveness condition in dashed lines.
-Figure \ref{fig:winningHr} shows more itemsets from the hour when 
-the US presidential election results were becoming clear.
-The itemsets shown are \emph{distinct} at $\kappa = 0.25$.
-%Each itemset has its support next to it, 
-The figure is produced by running the graph drawing algorithm proposed by Yifan Hu~\cite{hu2005efficient},
-using the implementation provided 
-in the graph visualization platform Gephi~\footnote{https://gephi.org/}.
-We give the algorithm a graph with a node for each itemset and 
-an edge between similar itemsets.
-Similarity between itemsets
-is determined based on 
-association rule confidence,
-%The using the formula introduced in the next section. % of the rule that the smaller set 
-as explained in the next section.
-The similarity is used as the edge weight,
-thus it determines the distance between itemsets.
-
-%Even though the support threshold There are
-The figure shows a lot of interesting itemsets.
-Itemsets pertaining to Donald Trump's tweets appear on the right side of the page,
-where the itemsets from the ``sham and travesty'' tweet are in the middle.
-%Barack Obama (BO) also made an 
-%Other clusters of itemsets are easy to guess what they are about.
-Close to the bottom left of the page there are itemsets showing the number
-of electoral votes each candidate got so far ([191, 238] and [191, 249]). 
-%~\footnote{https://plus.google.com/+NBCNews/posts/gNw1sYLWtE8}
-It is clear from the figure that considerable redundancy remains in
-\emph{distinct} itemsets. 
-%However, most interesting itemsets
-In the next section we propose overcoming this redundancy 
-by clustering similar itemsets together.
-
-
-\begin{landscape}
-\begin{figure}
-\scalebox{0.75}{
-\frame{\includegraphics[trim=1in 0 3in 0, clip=true]{clustering/elections-day_10pm-est_2.pdf}}
-}
-\caption{Scatter plot of \emph{distinct} itemsets from the hour starting at 10 PM EST on 6 Nov. 2012 }
-%(US Presidential Elections day)
-\label{fig:winningHr}
-\end{figure}
-\end{landscape}
 
 \section{Strongly Closed Itemsets}
 To remove the redundancy in \emph{distinct} itemsets we merge similar ones

@@ -649,7 +649,7 @@ public class DivergeBGMap {
         final SummaryStatistics confParent3_K = new SummaryStatistics();
         class StronglyClosedItemsetsFilter implements Runnable {
 
-          private static final boolean GRAPH_FILE = true;
+          private static final boolean GRAPH_FILE = false;
 
           Document gexDoc;
           Namespace gexNs = Namespace.getNamespace("http://www.gexf.net/1.2draft");
