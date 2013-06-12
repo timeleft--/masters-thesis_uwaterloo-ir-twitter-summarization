@@ -1919,14 +1919,78 @@ select interesting itemsets in the next chapter.
 % C H A P T E R     4
 % =========================================
 
-\chapter{Filtering Itemsets} %Selecting Interesting
+\chapter{Selecting and Ranking Itemsets} %Selecting Interesting
 \label{sec:strong}
 
 In section~\ref{sec:ngrams}, we discussed our handling of function words,
 using a technique that exploits LCM's tolerance to sparsity.
-After applying this technique, the average number of itemsets mined from an
+After applying this technique, the average number of closed itemsets 
+mined from an
 hour of twitter data drops from 61,505 to 6,146.
-However, there is still redundancy in the itemsets.
+In this chapter we propose two conditions
+that reduces the number of itemsets even further.
+The first condition filters out some itemsets,
+and the second condition merges together
+similar itemsets to reduce redundancy.
+We also propose a ranking function that
+scores itemsets according to their novelty.
+Both conditions and the ranking function 
+exploit the dynamics of social media,
+therefore we start by discussing it.
+%and specifically how people use retweeting
+%to surface important 
+%that do not carry 
+%more itemsets
+%that are 
+%However, many  frequent N-grams are flatte
+%there is still redundancy in the itemsets.
+
+\section{Social Media Dynamics}
+
+As discussed earlier, one use case of social media %users 
+is to
+share content that a user finds important with her network.
+%surface important content through sharing it.
+The user might share an original status message about the 
+topic, or \emph{re-share} content posted by other users.
+In twitter re-sharing is done by retweeting,
+which can be done in several ways.
+One way is by using the ``retweet'' feature of the Twitter client,
+which simply forwards the tweet to the user's network.
+The ``retweet'' feature keeps a reference to the original tweet
+in the forwarded tweet, but it does not allow editing it
+~-~it automatically prepends ``RT: @\emph{orignal\_poster\_username}''.
+%The retweet feature was introduced
+%Only a small fraction of retweets are forwarded using the 
+%``retweet feature
+Since editing is not supported by the ``retweet'' feature, 
+many users chose to retweet manually 
+to be able to add their own thoughts.
+Recently this can be done using the ``reply'' feature,
+which allows a user to write a tweet 
+that references the original tweet
+maintaining the hierarchy of the conversation.
+However, manually retweeting is still a prevalent
+way to re-share a tweet along with the user's comment.
+
+%originally there was no way to link a certain tweet to another,
+%thus a tweet that sparked a conversation on Twitter 
+There are several \emph{styles} of manual retweeting~\cite{boyd2010tweet},
+but they all basically 
+quote the original tweet along 
+with its poster's username and a retweet indicator,
+and prepend the user's comment.
+%had to be quoted in a retweet
+%along with the retweeter's comment.
+Due to the 140 characters length limit of tweets the quotation is usually 
+edited to be as short as possible 
+by selecting only the most discriminative words. 
+This selection is an act of collaborative filtering,
+but it results in many trivially different subsets from the original tweet,
+and all subsets with enough support will be mined as itemsets.
+The additions of retweeters also form many different supersets of the of the
+original tweet, and some additions may represent opinions that are supported
+enough to be mined as itemsets. 
 
 
 \begin{figure}
@@ -1938,39 +2002,40 @@ However, there is still redundancy in the itemsets.
 \label{fig:sham}
 \end{figure}
 
-
-The closed property of an itemset is easily violated by modifying one
-transaction that contains the itemset and removing one of its items.
-While an update operation is not supported in the model of frequent itemsets
-mining, a similar effect happens when people are writing about a certain fine
-grained topic.
-For example, figure \ref{fig:sham} illustrates  itemsets related to Donald
+Figure \ref{fig:sham} illustrates closed itemsets related to Donald
 Trump's famous tweets in reaction to Obama's victory in the
 2012 US elections\footnote{http://www.huffingtonpost.com/2012/11/07/donald-trump-election-revolution\_n\_2085864.html}.  
 Each area in the figure represents the transactions containing the itemset
 formed by concatenating the items in all intersecting ellipses.  
-
-The figure shows the effect of the lack of context and structure in
-conversations happening on Twitter.
-Because there was originally no way to refer to a certain tweet,
-a tweet that sparked a conversation on Twitter had to be quoted in a retweet
-along with the retweeter's comment.
-This tradition still continues even though tweets can now explicitly reference
-one another. 
-Due to the 140 characters length limit of tweets the quotation is usually 
-edited to be as short as possible by selecting only the most discriminative
-words. 
-
 In the figure, the most discriminative words are ``sham, and, travesty''
 which are quoted along with Donald Trump's user name in most of the retweets.
 Other people choose to also include ``not, democracy'' and/or ``elections'',
 and in most of the cases the retweet indicator ``rt'' is added. 
-This selection is an act of collaborative filtering,
-but it results in many trivially different subsets from the original tweet.
-The additions of retweeters also form many different supersets of the of the
-original tweet, and some additions represent opinions that are supported
-enough to be mined as itemsets. 
+A few people also added something about Donald Trump's ``hair'' 
+while retweeting, and some people talked about ``fraud''. 
 
+The figure illustrates how
+the closed property of an itemset is easily violated by modifying one
+transaction that contains the itemset and removing one of its items.
+While an update operation is not supported in the model of frequent itemsets mining, 
+a similar effect happens when people retweet, 
+or even when they are writing original posts about 
+a certain fine grained topic.
+In case of retweeting people actually start from the original tweet and modify it. 
+We can imagine that for each fine grained topic there is also a base post
+that represent the information or ideas within the topic. 
+People make posts about the fine grained topic 
+by selecting parts of the base post
+and adding their own thoughts.
+This results in many closed itemsets 
+about the topic that
+are trivially different from each other.
+
+
+
+\section{Distinct Itemsets}
+
+We have seen that 
 To reduce redundancy, we propose two conditions that are not as easily violated 
 as the closed condition and use them for selecting itemsets.
 The two conditions build on the concept of \emph{association rule confidence}.
@@ -1987,8 +2052,6 @@ The confidence of an assocation rule that the presence of an itemset,
 $s_{j}$, implies the presence of another itemset, $s_i$, is  defined as:
 \begin{equation}\label{eq:conf}conf(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
 
-
-\section{Distinct Itemsets}
 
 
 The \emph{distinct} condition is a novel strengthening of the closed condition
