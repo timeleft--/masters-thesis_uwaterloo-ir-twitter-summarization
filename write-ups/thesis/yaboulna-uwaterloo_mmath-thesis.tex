@@ -2156,68 +2156,44 @@ by clustering similar itemsets together.
 
 
 To assess the filtering power of the \emph{distinct} condition
-and make sure that no important information is filtered out, 
-we calculate the difference between 
-the set of closed itemsets of length 2 or more
-and \emph{distinct} itemsets ($\kappa = 0.25$). 
+%and make sure that no important information is filtered out, 
+%we calculate the difference between 
+we compare the sizes of 
+the set \emph{distinct} itemsets ($\kappa = 0.25$)
+with
+the set of closed itemsets of length 2 or more. 
 In the mining results of hour long epochs from the 
 first two weeks of November 2012, 
 the number of \emph{distinct} itemsets 
-averages at 922.58 itemsets 
-(37.8\% of closed itemsets of length 2 or more).
-%the size of the difference is 1516.59 on average. closed itemsets of length 2 or more 2,439.17
-The difference is made up mainly of 2-itemsets.
-%and all itemsets in it are either frequent N-grams after flattening (do not have subsets)
-%or they do not satisfy the \emph{distinct} confidence requirements.
-%belong to a particular fine grained topic (do not imply any superset with high confidence).
-%and they are mainly language constructs.
-If itemsets are restricted to those containing a topical keyword 
-before taking the difference, its size decreases dramatically.
-The difference becomes 7.2 itemsets on average
-if the itemsets from the first two weeks of November 2012
-were restricted to ones containing `obama' or `romney' before taking the difference.
-In this case, an epoch is included in the average only if the keywords occur in it.
-%were restricted to the following keywords before taking the difference:
-%\texttt{obama, romney} %, israel, hamas, syria, bieber, gomez}. 
-%The difference is mainly because of itemsets which are frequent N-grams,
-%like \{president, barack, obama\} and \{mitt, romney\} for example. 
-%Those itemsets are not \emph{distinct}, 
-%because they are always talked about.
-%Other 
+averages at 911.71 itemsets 
+as compared to 2428.3 closed itemsets
+(37.55\%). 
+To make sure that no important information is filtered out, 
+we look at itemsets that are filtered out.
+To facilitate the investigation, we look at
+itemsets containing known topical terms.
+In the mining results of hour long epochs from the 
+first two weeks of November 2012, 
+the number of closed itemsets
+containing at least one of the unigrams 
+`obama' or `romney' 
+but are not \emph{distinct} 
+averages at 7.2 itemsets.
+(an epoch is included in the average only if the keywords occur in it).
+%These are mainly 2-itemsets.
 The hour of the 2012 US elections victory announcement happens
-to be the hour with the most number of itemsets in the difference, 
-%where 90 itemsets including one of the keywords above 
+to be the hour with the most number of such itemsets, 
 because of the large number of posts about `obama' and `romney'.
-%were not included in the final selection.
-%and most of the other hours have no itemsets in the difference (
-%However, all of the 90 itemsets were included in supersets.
-%Below is 
-%However, all of the 90 itemsets had an alternate 
-%Table \ref{table:interestingCover} shows some examples of the most interesting itemsets
-%in the difference from that hour, 
-%along with supersets in which they were included.
-%\begin{table}[h]
-%\centering
-%\begin{tabular}{|c|c|}
-%\hline
-%Filtered Itemset & Covering Alternative
-%\\\hline
-%\end{tabular}
-%\label{table:interestingCover}
-%\caption{Filtered out interesting itemsets and their covering alternatives in the selection}
-%\end{table} 
-However, inspecting the itemsets in the difference
-shows that most of them are not interesting.
-Furthermore, interesting ones are covered in the selection,
-either by a subset or superset or by an alternative that had enough confidence.
-Figure \ref{fig:closedNDistinct} is a listing of the itemsets in the difference of that hour. 
-%Below each interesting itemset,  
-%the covering itemset from the selection 
-%is also shown
-%for interesting itemsets.
-Along with each interesting itemset, 
-the covering itemset that is included 
-in the selection is also shown.
+Figure \ref{fig:closedNDistinct} shows
+the filtered itemsets from this hour.
+%between closed and and 
+Most of the itemsets in the figure are not interesting.
+Furthermore, interesting ones have surrogates
+in the set of \emph{distinct} itemsets,
+either a subset or a superset or an alternative 
+with similar (sometimes more accurate) information.
+The \emph{distinct} surrogate for each filtered itemset 
+that we find interesting is shown below it.
 
 
 \begin{landscape}
@@ -2233,7 +2209,7 @@ in the selection is also shown.
 
 
 %(below it with an arrow).
-\begin{figure}
+\begin{figure}[h]
 \footnotesize
 \begin{minipage}[t]{0.33\textwidth}
 1 [romney, that] \\
@@ -2350,6 +2326,8 @@ in the selection is also shown.
 %wc -l diff_NO-KEYWORDS_fp_-sel_CondPKLD_conf0.25_Buff1000_3600_1352* | less -NS
 %357  1971552 total
 
+% wc -l novel_ULBuff_Canddist_conf0.25_*| less -NS
+% 556    1350129 total
 
 \normalsize
 
