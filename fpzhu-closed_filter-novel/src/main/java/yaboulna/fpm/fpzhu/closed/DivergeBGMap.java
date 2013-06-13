@@ -50,9 +50,11 @@ import yaboulna.fpm.postgresql.PerfMonKeyValueStore;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -319,6 +321,9 @@ public class DivergeBGMap {
   static boolean alwaysFindParent = false;
   static int maxSiblingsThreshold = 33;
 
+
+  static boolean sortItemsetsDescFreq = true;
+
   /**
    * @param args
    * @throws IOException
@@ -366,6 +371,7 @@ public class DivergeBGMap {
       clusteringLocally = !args[3].contains("ClustGloba");
       satisfyMinDiff = args[3].contains("satisfyMinDiff");
       clusterWithOneSelf = args[3].contains("SelClust");
+      sortItemsetsDescFreq = !args[3].contains("NoSort");
       alwaysFindParent = args[3].contains("FindPapa");
       int maxSibIx = args[3].indexOf("MaxSib");
       if (maxSibIx != -1) {
@@ -673,6 +679,38 @@ public class DivergeBGMap {
               nearestNeighbor = Maps.newHashMap();
             }
 
+            Iterable<Set<String>> itemsetIterable;
+            if(sortItemsetsDescFreq){
+             
+              @SuppressWarnings("unchecked")
+              Set<String>[] dump = fgCountMap.keySet().toArray(new Set[0]);
+              Arrays.sort(dump, new Comparator<Set<String>>() {
+
+                @Override
+                public int compare(Set<String> o1Set, Set<String> o2Set) {
+                  Integer o1Freq = fgCountMap.get(o1Set);
+                  Integer o2Freq = fgCountMap.get(o2Set);
+                  if (o1Freq == null) {
+                    o1Freq = Integer.MIN_VALUE;
+                  }
+                  if (o2Freq == null) {
+                    o2Freq = Integer.MIN_VALUE;
+                  }
+                  int retVal = -o1Freq.compareTo(o2Freq);
+                  if(retVal == 0){
+//                    retVal = o1.compareTo(o2);
+                  }
+                  return retVal;
+                }
+              });
+              
+              itemsetIterable = 
+                  Lists.newCopyOnWriteArrayList(Arrays.asList(dump));
+              
+            } else {
+              itemsetIterable = fgCountMap.keySet(); //.iterator();
+            }
+            
             if (GRAPH_FILE) {
               Element rootElt = new Element("gexf", gexNs);
               rootElt.addNamespaceDeclaration(vizNs);
@@ -701,7 +739,7 @@ public class DivergeBGMap {
 
               itemsetNodeMap = Maps.newHashMapWithExpectedSize(fgCountMap.keySet().size());
               int id = 0;
-              for (Set<String> itemset : fgCountMap.keySet()) {
+              for (Set<String> itemset : itemsetIterable){ //fgCountMap.keySet()) {
                 Element node = new Element("node", gexNs);
                 node.setAttribute("id", "n" + id++);
                 node.setAttribute("label", printHashset(itemset,fgCountMap).toString()); // TODONOT: do we need to escape this? Is it safe to escape
@@ -724,7 +762,7 @@ public class DivergeBGMap {
 
             }
 
-            for (Set<String> itemset : fgCountMap.keySet()) {
+            for (Set<String> itemset : itemsetIterable){ //fgCountMap.keySet()) {
 
               double fgFreq = fgCountMap.get(itemset);
 

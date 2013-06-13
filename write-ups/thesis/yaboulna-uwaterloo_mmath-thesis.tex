@@ -2371,8 +2371,13 @@ of item frequency leads to the following:
 \begin{itemize}
 \item The most discriminative itemset from each topic (according to users' selection) will be mined first, 
 because each of them will  be composed of items having the highest support within its topic.
-If 
-\item Itemsets
+\item If an itemset branches out into supersets related to two topics 
+or two opinions within one topic, this itemset will be mined before itemsets from 
+either of the two topics. It should not belong to either of the clusters. % as we will see later.
+\item Itemsets belonging to each topic will be mined after the most discriminative itemset,
+but they are not necessarily its supersets. 
+However, if two itemsets are about the same topic, or opinion within the topic, then they 
+will have overlap in the transactions in which they appear. 
 \end{itemize}
 and 
 
