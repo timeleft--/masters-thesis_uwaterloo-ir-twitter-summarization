@@ -268,7 +268,7 @@ public class DivergeBGMap {
 
   private static final double KLDIVERGENCE_MIN = 0; // this is multiplied by frequency not prob
 
-  private static final int MAX_LOOKBACK_FOR_CANDIDATES = 2000;
+  private static final int MAX_LOOKBACK_FOR_CANDIDATES = 1000; //2000;
 
   private static final boolean RESEARCH_MODE = true;
 
@@ -313,7 +313,7 @@ public class DivergeBGMap {
   static boolean noCosineSimilarity = true;
   static boolean noJaccard = false;
   static boolean clusteringLocally = true;
-  static boolean clusterWithOneSelf = true;
+  static boolean clusterWithOneSelf = false;
   static boolean satisfyMinDiff = false;
   static boolean filterLargeNumSiblings = false;
   static boolean alwaysFindParent = false;
@@ -365,7 +365,7 @@ public class DivergeBGMap {
       noJaccard = args[3].contains("NoJaccard");
       clusteringLocally = !args[3].contains("ClustGloba");
       satisfyMinDiff = args[3].contains("satisfyMinDiff");
-      clusterWithOneSelf = !args[3].contains("SelClust");
+      clusterWithOneSelf = args[3].contains("SelClust");
       alwaysFindParent = args[3].contains("FindPapa");
       int maxSibIx = args[3].indexOf("MaxSib");
       if (maxSibIx != -1) {
