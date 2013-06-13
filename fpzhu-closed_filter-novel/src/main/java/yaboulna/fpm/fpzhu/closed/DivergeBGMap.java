@@ -2565,15 +2565,19 @@ public class DivergeBGMap {
     public int compare(String o1, String o2) {
       Set<String> o1Set = Collections.singleton(o1);
       Set<String> o2Set = Collections.singleton(o2);
-      Integer o1Freq = fgCountMap.get(o1);
-      Integer o2Freq = fgCountMap.get(o2);
+      Integer o1Freq = fgCountMap.get(o1Set);
+      Integer o2Freq = fgCountMap.get(o2Set);
       if (o1Freq == null) {
         o1Freq = Integer.MIN_VALUE;
       }
       if (o2Freq == null) {
         o2Freq = Integer.MIN_VALUE;
       }
-      return -o1Freq.compareTo(o2Freq);
+      int retVal = -o1Freq.compareTo(o2Freq);
+      if(retVal == 0){
+        retVal = o1.compareTo(o2);
+      }
+      return retVal;
     }
   }
 
