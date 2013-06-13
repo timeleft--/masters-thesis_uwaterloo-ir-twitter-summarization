@@ -649,7 +649,7 @@ public class DivergeBGMap {
         final SummaryStatistics confParent3_K = new SummaryStatistics();
         class StronglyClosedItemsetsFilter implements Runnable {
 
-          private static final boolean GRAPH_FILE = false;
+          private static final boolean GRAPH_FILE = true;
 
           Document gexDoc;
           Namespace gexNs = Namespace.getNamespace("http://www.gexf.net/1.2draft");
@@ -704,7 +704,7 @@ public class DivergeBGMap {
               for (Set<String> itemset : fgCountMap.keySet()) {
                 Element node = new Element("node", gexNs);
                 node.setAttribute("id", "n" + id++);
-                node.setAttribute("label", itemset.toString()); // TODONOT: do we need to escape this? Is it safe to escape
+                node.setAttribute("label", printHashset(itemset,fgCountMap).toString()); // TODONOT: do we need to escape this? Is it safe to escape
 // it? will gefi unescape?
                 // apparently not needed since only " ' & < > have meaning and they are already filtered by tokenizer
                 gexNodes.addContent(node);
@@ -2583,7 +2583,7 @@ public class DivergeBGMap {
     Collections.sort(elts, new FrequencyDescComparator(fgCountMap));
 // Arrays.sort(elts);
     for (String e : elts) {
-      retVal.append("," + e + "(1)");
+      retVal.append("," + e); // + "(1)");
     }
     return retVal.substring(1);
   }

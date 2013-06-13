@@ -2295,7 +2295,7 @@ that we find interesting is shown below it.
      65 [yesss, obama] \\
      66 [president, obama, barack] 
 \end{minipage}
-\caption{Itemsets containing `barack' or `romeny' that are closed but not distinct}
+\caption{Itemsets containing `barack' or `romeny' that are closed but not \emph{distinct}}
 \label{fig:closedNDistinct}
 \end{figure}
 
@@ -2338,12 +2338,51 @@ This will also filter out any itemsets %remaining language constructs, because t
 that do not belong to any particular topic
 since they will not be part of a cluster.
 The similarity of a \emph{distinct} itemset,
-$s_d$, and another distinct itemset, $s_c$,
+$s_d$, and another \emph{distinct} itemset, $s_c$,
 is measured as the overlap of the \emph{transactions} containing both of them
 with the transactions containing $s_c$. 
+According to equation~\ref{eq:conf} this is the confidence
+of the association rule that $s_c \rightarrow s_d$.
+%Notice that c
+Confidence is not a symmetric measure,
+but our proposed clustering makes use of the order
+in which PPC-extension generates itemsets 
+(as discussed in section~\ref{sec:lcm})
+to know which itemset should be the antecedent 
+and which should be the consequent.
+
+If PPC-extension uses a total ordering 
+of items that is non-increasing in item frequency,
+then 
+% items are processed in non frequency
+%we only have to check the confidence that 
+an itemset generated earlier %implies
+should be the antecedent, and
+an itemset generated later
+should be the consequent.
+This depends on that
+variable length N-grams
+are used as items,
+as described in section~\ref{sec:ngrams},
+so that the most frequent items
+are not function words.
+In that case, following the non-increasing order 
+of item frequency leads to the following:
+\begin{itemize}
+\item The most discriminative itemset from each topic (according to users' selection) will be mined first, 
+because each of them will  be composed of items having the highest support within its topic.
+If 
+\item Itemsets
+\end{itemize}
+and 
+
+
 A \emph{distinct} itemset is clustered with another itemset if one exists
 such that the overlap exceeds a similarity threshold,
 which we take to be $1-\kappa$ (the indistinctiveness of $s_d$ from $s_c$).
+%If no itemset satisfies this condition, a new cluster containing 
+%is formed --> this contradicts the statement above.. duh! 
+%Then clust with oneself should be off by default.. why do I have it on?
 If more than one satisfies this condition,
 the  \emph{distinct} itemset is clustered with the one having the highest
 overlap ratio.
@@ -2351,7 +2390,8 @@ When  a \emph{distinct} itemset is clustered with an itemset that is already
 part of a cluster, the \emph{distinct} itemset is added to the existing cluster.
 Finally, the \emph{strongly closed} itemset is the union of all cluster members,
 and its support is the size of the union of their postings lists.
-We define the  desired clustering  and the strongly closed itemset
+Using $\mathcal{D}$ to denote the set of \emph{distinct} itemsets,  
+we define the  desired clustering  and the strongly closed itemset
 represented by each cluster as follows:
 \begin{align*}\label{eq:strongClosedFormal}
 \mathcal{R} = \{r: r = \bigcup_i{(s_i, s_j)}\; where\; s_i \in \mathcal{D} \, and \, s_j \in \mathcal{D} 
@@ -2381,9 +2421,6 @@ For each itemset, $s_i$, we find the itemsets produced before it
 and overlapping with it in one or more items.
 Then we find the candidate, $s_c$, that maximizes
 $conf(s_c \rightarrow s_i)$ such that the confidence exceeds $1-\kappa$.
-Notice that confidence is not a symmetric measure,
-and we only check the confidence of the rule that the clustering candidate
-implies the itemset. 
 
 
 \begin{algorithm}
