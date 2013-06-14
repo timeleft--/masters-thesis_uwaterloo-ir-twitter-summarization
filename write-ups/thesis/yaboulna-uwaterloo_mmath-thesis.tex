@@ -2338,7 +2338,7 @@ This will also filter out any itemsets %remaining language constructs, because t
 that do not belong to any particular topic
 since they will not be part of a cluster.
 The similarity of a \emph{distinct} itemset,
-$s_d$, and another \emph{distinct} itemset, $s_c$,
+$s_d$, and another \emph{distinct} itemset, $s_c$, % YES, not any closed itemset
 is measured as the overlap of the \emph{transactions} containing both of them
 with the transactions containing $s_c$. 
 According to equation~\ref{eq:conf} this is the confidence
@@ -2348,7 +2348,7 @@ Confidence is not a symmetric measure,
 but our proposed clustering makes use of the order
 in which PPC-extension generates itemsets 
 (as discussed in section~\ref{sec:lcm})
-to know which itemset should be the antecedent 
+to determine which itemset should be the antecedent 
 and which should be the consequent.
 
 If PPC-extension uses a total ordering 
@@ -2371,7 +2371,7 @@ are not function words.
 In that case, following the non-increasing order 
 of item frequency leads to the following:
 \begin{itemize}
-\item Itemsets related to a certain topic will be mined close to each other.
+\item Itemsets related to a certain topic are mined close to each other.
 Recall that PPC-Extension is equivalent to a depth first traversal 
 of a hypothetical prefix tree of closed itemsets.
 That is, closed supersets of each itemset are generated before 
@@ -2382,7 +2382,9 @@ before other itemsets from the same topic,
 because it is composed of items having the highest support within its topic.
 \item If an itemset branches out into supersets related to two topics 
 or two opinions within one topic, this itemset is mined before itemsets from 
-either of the two branches. It should not belong to either of the clusters. % as we will see later.
+either of the two branches. It should not 
+be clustered with either of the branches.
+%belong to either of the clusters. % as we will see later.
 \item 
 %Itemsets belonging to each topic will be mined 
 %in descending order of the frequency of topical words
@@ -2516,10 +2518,15 @@ Algorithm~\ref{algo:alliance}  shows a possible implementation.
 	$C \gets \{s_c: s_c \in \mathcal{C} \, and \, c < i \, and \, |s_c \cap s_i| > 0\}$\tcp*{Candidates for clustering}
 	$P \gets \{s_p: s_p \in \mathcal{C} \, and \, p < i \, and \, s_p \cap s_i = s_p\}$\tcp*{$s_i$'s subsets (ancestors)} % of the itemset}
 	$s_p \gets \textbf{argmax}_{s_p \in P}\frac{|T_{s_i}|}{|T_{s_p}|}$ \tcp*{Direct parent}
-	\uIf{$s_p$ = null \textbf{OR} $\frac{|T_{s_i}|}{|T_{s_p}|} < \kappa$}{continue\tcp*{Not a distinct itemset}}
+	\If( \tcp*[f]{Not a distinct itemset}){$s_p$ = null \textbf{OR} $\frac{|T_{s_i}|}{|T_{s_p}|} < \kappa$}{
+		$\mathcal{C} \gets \mathcal{C} \setminus s_i$  
+		\tcp*{Should not be considered in later iterations}
+		continue		\tcp*{Should not be added to a cluster}
+		
+	}
 %	$s_m \gets s_i$  \tcp*{Cluster centroid, initially self}
-	$s_m \gets null$  \tcp*{Cluster centroid}
-	$maxConf \gets 0$ \tcp*{Best candidate's score}
+	%$s_m \gets null$  \tcp*{Cluster centroid}
+	$s_m \gets null$, $maxConf \gets 0$ \tcp*{Best clustering candidate and its score}
 	\ForEach{$s_c \in C$}{
 		$\Delta \gets (1 - (1-\kappa)) |T_{s_c}|$ \tcp*{Maximum difference}
 		$\delta \gets$ difference($T_{s_c},T_{s_c \cup s_i},\Delta$) \tcp*{Terminates early if $\delta > \Delta$}
@@ -2572,10 +2579,10 @@ generated before it.
 The support of the best candidate is not necessarily higher than
 the support of the itemset being clustered, 
 but all itemsets within the topic has a support lower 
-than that of the topic's most discriminative itemset \{sham\}. %, and, travesty\}.
+than that of the topic's most discriminative itemset, n810=\{sham\}. %, and, travesty\}.
 For example, the hierarchy $n1018 \rightarrow n1019 \rightarrow n1075$
 has support values 120, 124, 126 respectively, 
-which are all less than the support of n810 (142). %134 
+which are all less than 142 (the support of n810). %134 
 %the pre-last itemsets (n925, support: 134) is 
 %under (n908, support: 132).
 %This is not a problem as long as 
@@ -2589,17 +2596,20 @@ which are all less than the support of n810 (142). %134
 Finally, we note that 
 this single \emph{strongly closed itemset} cluster 
 replaces 26  \emph{distinct} itemsets. 
-Furthermore, each itemset that has only one 
-\emph{distinct} superset must have had 
-another closed superset that is not distinct.
+%Furthermore, each itemset that has only one 
+%\emph{distinct} superset must have had 
+%another closed superset that is not distinct.
 %If an itemset has more than one superset
 %the overlap between them 
+The overall reduction in the number of itemsets will 
+be discussed in section~\ref{sec:effic}. %\ref{sec:effectiveness}.
 
 Another example is given in figure~\ref{fig:hierEma} to illustrate % how 
 an itemset that branches into different opinions within one topic.
-Fans were voting for different artists to win the MTV Europe Music Awards (MTVEMA).
+These itemsets are mined from tweets of 
+fans voting for different artists to win the MTV Europe Music Awards (MTVEMA).
 There are 4 distinct clusters in the figure; one for each artist, and one for
-the itemsets not mentioning any artist.
+itemsets not mentioning any artist.
 %There is a separate MTVEMA cluster is distinct from the 
 
 \begin{landscape}
@@ -2641,18 +2651,58 @@ Id & Itemset &  Support\\ \hline
 \end{figure}
 \end{landscape}
 
-\subsection{Bounding Time and Space Requirements}
-The average number of positions  between an itemset  %backwards
-and an itemset with which it could potentially be clustered 
-is 1973.11.
-%(member of the set C formed at line 2 of algorithm \ref{algo:alliance}) 
-However, the standard deviation is 1443.64, 
-indicating that the clustering candidates are 
-found either %at positions that ar
-less than 500 positions behind
-the itemset, or more several thousands positions away.
-Because of the way LCM finds itemsets
-only 
+\subsection{Bounding Space and Time Requirements}
+Algorithm~\ref{algo:alliance} requires
+keeping \emph{distinct} itemsets 
+and their postings lists
+%some of the results of LCM 
+in memory,
+so that the similarity between a \emph{distinct} itemset and 
+all the previously generated ones
+can be efficiently calculated. 
+This is an overhead that the original LCM does not incur, 
+but it is not a large overhead;
+due to the limited number of \emph{distinct} itemsets,
+the memory requirements does not exceed 6 GB
+for mining hour long epochs using 
+a Java implementation that uses a lot of objects. % of RAM
+%select args, count(*), avg(value), stddev(value)  from perf_mon where args like '%4wk%1hr%ULBuff%' and key='MemoryMBUsed' group by args;
+However, it is possible to use less memory
+and also bound the memory requirement by keeping
+only a limited number of itemsets in memory.
+
+The number of positions between an itemset
+and a clustering candidate is 1973.11 on average,
+with a standard deviation of 1443.64. 
+The large standard deviation indicates that
+candidates are either found close to the itemset
+(less than 500 positions behind),
+or in a position that is several thousands 
+of itemsets behind.
+According to our observation that itemsets 
+from one topic are generated close to each other, 
+when the total ordering is descending in items frequency,
+we limit the mining results kept in memory 
+to the last 1000 \emph{distinct} itemsets and their postings lists.
+%then itemsets whose candidates are so many itemsets between 
+This sets a bound on the memory requirement,
+as well as the runtime which is 
+% number of
+dominated by the
+similarity calculations. % will be bound by the
+Without limiting
+the number of itemsets kept in memory,
+the runtime 
+for filtering and clustering hour long epochs %the memory of about 1 GB 
+at $\kappa = 0.25$  
+is 5.2 seconds on average.
+%select args, count(*), avg(value), stddev(value)  from perf_mon where args like '%4wk%1hr%ULBuff%' and key='CPUMillisFilter' group by args;
+This is reduced to less than 1 second
+if only the last 1000 results from LCM 
+are kept in memory. 
+More detailed discussion of the runtime performance
+of the algorithm is given in section~\ref{sec:effic}.
+
 %merging with it
 % select args, count(*), avg(value), stddev(value)  from perf_mon where args like '%4wk%1hr%ULBuff%' and key='bufferSizeNeeded4CandidateMean' group by args;
 %[/home/yaboulna/fim_out/lcm_closed_cikm/4wk+1wk_ngram5-relsupp1_oct-nov-dec/, /home/yaboulna/fim_out/lcm_closed_cikm/1hr+30min_ngram5-relsupp10_11032233-11151120_graph/, ULBuff_Canddist_LowCos_conf0.25,  ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD=0.5 ITEMSET_SIMILARITY_PROMISING_THRESHOLD=0.0 ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH=3 ITEMSET_SIMILARITY_BAD_THRESHOLD=0.1 CONFIDENCE_HIGH_THRESHOLD=0.25] |   555 | 1973.11206069111 | 240.226242426062
@@ -2733,7 +2783,8 @@ strongly closed itemsets:
 
 
 \section{Efficiency}
-\label{sec:bounding}
+\label{sec:effic}
+%\label{sec:bounding}
 We analyze the performance of the filtering conditions proposed by applying
 them to the mining results of all one-hour long epochs in the Twitter data.
 The average number of itemsets mined from an hour-long epoch is
@@ -2810,7 +2861,7 @@ averages at 5.2 seconds for filtering a one-hour epoch.
 \end{figure}
 
 \section{Effectiveness}
-
+\label{sec:effectiveness}
 We now show examples of the performance the proposed methods in creating
 a synopses of the 2012 election day, November $6^{th}$, and another less
 eventful day, November $9^{th}$.
