@@ -2730,57 +2730,102 @@ is investigated in section~\ref{sec:effectiveness}.
 \section{Temporal Ranking}
 \label{sec:rank}
 
-A General Measure of Rule Interestingness
-Szymon Jaroszewicz and Dan A. Simovici
-University of Massachusetts at Boston
-
-The previous filtering steps reduce the number of itemsets to under 1\% of their
-original number.
-In this section, we present a method for ranking itemset clusters according to
-their novelty when compared to other time periods.
-These itemsets can then be presented to users in rank order, providing a
-synopis of events in the epoch, or used as input to additional search or
-summarization steps.
+%A General Measure of Rule Interestingness
+%Szymon Jaroszewicz and Dan A. Simovici
+%University of Massachusetts at Boston
+The number of \emph{strongly closed itemsets} from an hour long epoch is 224 itemsets on average, 
+%which is a very big reduction 
+which is under 1\% of the number of closed itemsets returned by LCM 
+without any of our proposed methods (61,505.16 on average).
+We now propose a ranking function that scores itemsets 
+%according to their temporal novelty, 
+according to their novelty,
+such that the ordered list of itemsets 
+can be presented to a user as a summary of 
+what is happening on Twitter in the mined epoch.
+The ranks can also be used as weights for itemsets when
+used by other system components, 
+such as a search component that uses itemsets for query expansion.
+Novelty is measured compared to %between the mined epoch
+a longer period of time 
+leading up to the mined epoch
+~---~the background model.
+%that is not far in the past.
+%in the recent past
+%This can be done using cascade methods (Azin's paper)
 
 A good indicator of novelty is the pointwise Kullback-Leibler Divergence (KLD)
-between an itemset's probability in the current epoch and in a longer past
-epoch~---~the background model.
+between an itemset's probability in the current epoch and in the background model.
 The KLD of the probability of an itemset $s_i$ in the background
 model $Q$ from the current epoch's model $P$ can be considered as
-the information gain, IG: 
-\begin{align}IG(P(s_i),Q(s_i))  = - (H(P(s_i)) - H(P(s_i),Q(s_i))) \notag\\ = \sum{P(s_i) \log{P(s_i)}} - \sum{P(s_i) \log{Q(s_i)}} \notag\\ = KLD(P(s_i)||Q(s_i))\end{align}
+the Information Gain, IG: 
+\begin{align}IG(P(s_i),Q(s_i))  &= - (H(P(s_i)) - H(P(s_i),Q(s_i))) \notag\\ &= \sum{P(s_i) \log{P(s_i)}} - \sum{P(s_i) \log{Q(s_i)}} \notag\\ &= KLD(P(s_i)||Q(s_i))\end{align}
+This interprets the KLD of an itemset as the number of extra bits
+in the representation of the itemset
+used by an encoding based on Q as compared to the number of bits
+used by an encoding based on P; 
+hence, the information gain in moving from a prior distribution to 
+a posterior distribution.
 
-To calculate the collective IG of a strongly closed itemset cluster,
+To calculate the collective IG of itemsets in a \emph{strongly closed itemset},
 we have to take into account that the itemsets of the cluster are not independent. 
 For simplicity we will consider only the pairwise dependence between 
 every itemset and the smallest common subset.
 %when calculating the IG of the whole cluster.
-The joint probability of an itemset, $s_i$, and its superset,
-$s_j$, is equal to the probability of the superset.
-Thus, the IG of the appearance of an itemset and its superset
-together is essentially the IG of the superset.
-Also, their pointwise mutual information (PMI) is the self information (SI) of
-the subset. Therefore, the IG of a superset is different from the
-IG of its subset by the information gained because
-of the additional items. 
-
-Hence, the IG of a strongly closed itemset cluster,
-$S=\{s_{i1},..,s_{im}\}$, 
+The joint probability of the smallest common subset, $s_{min}$,
+%occurs and any itemset in the 
+and any itemset in the cluster, $s_{j}$, is basically the probability of the itemset $s_{j}$,
+since $s_{min} \subset s_{j}$. % is its subsets. 
+In other words, the probability of $s_{min}$ conditioned
+on any itemset $s_{j}$ in the cluster is 1,
+and there is no information in the occurrence
+of $s_{min}$ given that $s_{j}$ occurred.
+%Therefore,  
+%Alternatively, this can be interpreted 
+An alternative interpretation is that
+there is a shared component in the IG of all itemsets in the cluster,
+%information from any two itemsets in the cluster %IG of
+which is the IG of $s_{min}$.
+%Consider that probabilities of itemsets in the cluster
+%are conditioned on the probability of $s_{min}$;
+%$prob(s_j) = prob(s_{min})\,prob(s_j|s_{min})$.
+%It is easy to see that IG(P(s_j)) = P(s_j|s_{min}) IG(P(s_min),Q(s_{min})) + P(s_{min})....
+%In that case, 
+%comes from the IG of $s_{min}$; 
+%if $P(s_{min})$ were used in the creation of an encoding 
+%that is otherwise base on Q, 
+%for itemsets in the cluster that is based on 
+%then the number of extra bits used for encoding each itemset  in the cluster %$s_{j}$
+%would be less than the number of extra bits used 
+%in an encoding that is completely based on Q.
+%if we add the IG of all of the itemsets in the cluster
+%we will be adding the IG of $s_{min}$
+%we will be adding the com
+%This is 
+Hence, the IG of an itemset cluster,
+$r=\{s_{i_1},..,s_{i_m}\}$, 
 can be approximated as the IG of its smallest subset, $s_{min}$,
-plus the differences between the IGs of member itemsets and the smallest subset.
-We use the squares of the differences, because it can be between two negative number, and we only care about the magnitude of the difference.
-To give the self information of the smallest subset the same influence,
-we also square it.
-Thus, the information gain of a strong closed itemset is given by:
-\begin{multline}IG^2(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im})) =\notag\\ I^2(s_{min}) + \notag\\ 
-\sum_{j = i1..im}{(IG(P(s_j)||Q(s_j)) - IG(P(s_{min})||Q(s_{min})))^{2}} \end{multline}
+plus the IG of each itemset in the cluster conditioned on $s_{min}$:
+\begin{align}
+IG(P(s_{i_1},...s_{i_m}),Q(s_{i_1},...s_{i_m})) &= IG(P(s_{min})) \notag \\
+&+ \sum_{j = i_1..i_m}{IG(P(s_j|s_{min})||Q(s_j|s_{min}))}
+\end{align} 
+This formula avoids implicitly adding the information gain from $s_{min}$
+multiple times to the total information gain. %with the add
+%It neglects the overlap between itemsets,
+%but 
+%it provides an approximation that is good enough
+%for ranking itemset clusters 
+%as we will see in section~\ref{sec:effectiveness}.
+%Several other ranking formulae were tried
+%and this one gives the best results.
 
 The formula above can be used directly for ranking clusters,
-but it will favour larger ones.
+but it will favour larger clusters.
 We normalize by the size of the cluster giving our final ranking formula for
 strongly closed itemsets:
-\begin{equation}\label{eq:avgIG}\overline{IG}(S) = \frac{IG^2(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im}))}{m}\end{equation}
-
+\begin{equation}\label{eq:avgIG}score(r) = \frac{IG(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im}))}{m}\end{equation}
+%\overline{IG}
 
 \chapter{Evaluation}
 \label{sec:empirical}
