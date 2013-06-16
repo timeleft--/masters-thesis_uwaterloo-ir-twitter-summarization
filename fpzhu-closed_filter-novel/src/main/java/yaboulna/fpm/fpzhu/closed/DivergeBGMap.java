@@ -322,7 +322,7 @@ public class DivergeBGMap {
   static int maxSiblingsThreshold = 33;
 
 
-  static boolean sortItemsetsDescFreq = true;
+  static boolean sortItemsetsDescFreq = false;
 
   /**
    * @param args
@@ -371,7 +371,7 @@ public class DivergeBGMap {
       clusteringLocally = !args[3].contains("ClustGloba");
       satisfyMinDiff = args[3].contains("satisfyMinDiff");
       clusterWithOneSelf = args[3].contains("SelClust");
-      sortItemsetsDescFreq = !args[3].contains("NoSort");
+      sortItemsetsDescFreq = args[3].contains("SortIS");
       alwaysFindParent = args[3].contains("FindPapa");
       int maxSibIx = args[3].indexOf("MaxSib");
       if (maxSibIx != -1) {

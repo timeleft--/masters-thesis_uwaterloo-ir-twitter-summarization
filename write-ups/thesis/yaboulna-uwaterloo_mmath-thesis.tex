@@ -2827,18 +2827,31 @@ strongly closed itemsets:
 \begin{equation}\label{eq:avgIG}score(r) = \frac{IG(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im}))}{m}\end{equation}
 %\overline{IG}
 
+
+% ==========================================
+% C H A P T E R     5
+% ==========================================
+
+
 \chapter{Evaluation}
 \label{sec:empirical}
 
+In this chapter we analyze the performance of the filtering conditions proposed by applying
+them to the mining results of all one-hour long epochs in the Twitter data.
+We evaluate their efficiency in reducing the number of mined itemsets in section~\ref{sec:effic},
+and we assess the effectiveness of the filtering in choosing a high quality synopsis in section~\ref{sec:effectiveness}.
 
 \section{Efficiency}
 \label{sec:effic}
 %\label{sec:bounding}
-We analyze the performance of the filtering conditions proposed by applying
-them to the mining results of all one-hour long epochs in the Twitter data.
-The average number of itemsets mined from an hour-long epoch is
-2439.17 closed itemsets of length 2 or more;
-that is, excluding itemsets that are merely a frequent item.
+
+We evaluate the efficiency of our proposed filtering and clustering methods 
+in terms of the number of itemsets before and after their application,
+and the runtime overhead they add on top of the runtime of the LCM algorithm.
+Using variable length N-grams as items, 
+the average number of itemsets mined from an hour-long epoch is
+2439.17 closed itemsets of length 2 or more after flattening;
+that is, excluding itemsets that are merely a frequent unigram.
 
 %The number of length 2 or more maximal itemsets is 1831.92,
 %which we provide just as a reference to the result of a basic way of filtering.
