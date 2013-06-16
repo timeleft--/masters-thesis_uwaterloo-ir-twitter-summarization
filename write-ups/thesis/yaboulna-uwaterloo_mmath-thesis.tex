@@ -2733,7 +2733,7 @@ is investigated in section~\ref{sec:effectiveness}.
 %A General Measure of Rule Interestingness
 %Szymon Jaroszewicz and Dan A. Simovici
 %University of Massachusetts at Boston
-The number of \emph{strongly closed itemsets} from an hour long epoch is 224 itemsets on average, 
+The number of \emph{strongly closed itemsets} from an hour long epoch is XYZ itemsets on average, 
 %which is a very big reduction 
 which is under 1\% of the number of closed itemsets returned by LCM 
 without any of our proposed methods (61,505.16 on average).
@@ -2840,6 +2840,10 @@ In this chapter we analyze the performance of the filtering conditions proposed 
 them to the mining results of all one-hour long epochs in the Twitter data.
 We evaluate their efficiency in reducing the number of mined itemsets in section~\ref{sec:effic},
 and we assess the effectiveness of the filtering in choosing a high quality synopsis in section~\ref{sec:effectiveness}.
+The experiments were run using a single threaded Java implementation of
+algorithm \ref{algo:alliance}. % and the LCM implementation provided by Uno et al. on their website\footnote{}.
+The experiments were run on a 1.4GHz processor with 2MB of cache.
+
 
 \section{Efficiency}
 \label{sec:effic}
@@ -2852,42 +2856,46 @@ Using variable length N-grams as items,
 the average number of itemsets mined from an hour-long epoch is
 2439.17 closed itemsets of length 2 or more after flattening;
 that is, excluding itemsets that are merely a frequent unigram.
+We start by analyzing the reduction in this number at different values
+of the distinctiveness threshold, $\kappa$.
 
 %The number of length 2 or more maximal itemsets is 1831.92,
 %which we provide just as a reference to the result of a basic way of filtering.
 
 Figure \ref{fig:kappa} show the effect of varying $\kappa$ on the mean number
-of \emph{distinct} and \emph{strong closed} itemsets.
+of \emph{distinct} and \emph{strongly closed} itemsets.
 The number of \emph{distinct} itemsets drops as the distinctiveness threshold
 increases.
-On the other hand, the number of \emph{strong closed} clusters formed increases
-as the similarity (indistinctiveness) threshold decreases.
+On the other hand, the number of \emph{strongly closed} clusters formed increases
+as the similarity/indistinctiveness threshold (taken as $1 - \kappa$) decreases.
 The dashed line shows that the number of unclustered distinct itemsets reaches
 zero at $\kappa=0.5$, explaining why the number of clusters changes very
 slightly after that. 
-We use $\kappa = 0.25$ in the remainder of the paper,
+We use $\kappa = 0.25$ in this thesis, %the remainder of the paper,
 which is an arbitrary choice based on the definition not the data.
 The average number of itemsets (\emph{strongly closed} and unclustered
 \emph{distinct}) mined from one-hour epochs at this value of
-$\kappa$ is only 224.48, which is about 10\% of the number of closed itemsets.
+$\kappa$ is only XYZ, which is about 10\% of the number before filtering and clustering. %of closed itemsets.
 
 
 
 \begin{figure}
-
+\centering
+\scalebox{0.8}{
 \includegraphics{kappa_effect.eps}
+}
 \caption{Effect of changing $\kappa$ on mining results }
 \label{fig:kappa}
 \end{figure}
 
 
-
+%We now 
 Figure \ref{fig:lcmvsfpzhu} shows the total runtime of the LCM algorithm plus
 filtering based on the distinct condition and clustering into strong closed
 itemsets at different epoch spans.
 The runtime of LCM alone is also plotted for reference.
 We also plot the performance of another frequent itemset mining algorithm,
-FP-Zhu \cite{grahne2004reducing}, which was the runner up at
+FP-Zhu~\cite{grahne2004reducing}, which was the runner up at
 FIMI 2004~\cite{DBLP:conf/fimi/2004}.
 We include it to show that our extensions do not degrade the performance of
 LCM even in the context of competitions.
@@ -2898,27 +2906,14 @@ so it is affected by the number of closed itemsets produced.
 This explains why it takes slightly longer time for clustering results from
 the 15-minute epoch and then takes a constant time for epochs of a longer span. 
 
-The experiments were run using a single threaded Java implementation of
-algorithm \ref{algo:alliance}.
-The experiments were run on a 1.4GHz processor with 2MB of cache.
-Unlike the original LCM algorithm, filtering low confidence itemsets requires
-us to keep mined results in memory to calculate the confidence of newly
-generated ones.
-The memory requirement is not large because the number of itemsets averages
-at about 6000.
-In our experience with the Twitter data it was enough to keep only a buffer
-of 1000 itemsets, and this is what we use for the runtime performance
-evaluation and the empirical evaluation of the filtering results in
-sections \ref{sec:empirical}.
-If all itemsets are kept in memory the runtime increases slightly and
-averages at 5.2 seconds for filtering a one-hour epoch.
 
 
-
-\begin{figure}
+\begin{figure}[h]
 \centering
+\scalebox{0.9}{
 \includegraphics{runtime_lcm-lcm+filter-fpzhu_seconds.eps}
-\caption{Runtime of itemset mining alone and with filtering and clustering at different epoch spans}
+}
+\caption{Runtime of two itemset mining algorithms alone and of the LCM algorithm with filtering and clustering, at different epoch spans}
 \label{fig:lcmvsfpzhu}
 \end{figure}
 
