@@ -2147,7 +2147,7 @@ where the itemsets from the ``sham and travesty'' tweet are in the middle.
 %Other clusters of itemsets are easy to guess what they are about.
 Close to the bottom left of the page there are itemsets showing the number
 of electoral votes each candidate got so far (\{191, 238\} and \{191, 249\}). 
-%~\footnote{https://plus.google.com/+NBCNews/posts/gNw1sYLWtE8}
+%\footnote{https://plus.google.com/+NBCNews/posts/gNw1sYLWtE8}
 It is clear from the figure that considerable redundancy remains in
 \emph{distinct} itemsets. 
 %However, most interesting itemsets
@@ -2807,8 +2807,8 @@ $r=\{s_{i_1},..,s_{i_m}\}$,
 can be approximated as the IG of its smallest subset, $s_{min}$,
 plus the IG of each itemset in the cluster conditioned on $s_{min}$:
 \begin{align}
-IG(P(s_{i_1},...s_{i_m}),Q(s_{i_1},...s_{i_m})) &= IG(P(s_{min})) \notag \\
-&+ \sum_{j = i_1..i_m}{IG(P(s_j|s_{min})||Q(s_j|s_{min}))}
+IG(P(s_{i_1},...s_{i_m}),Q(s_{i_1},...s_{i_m})) &= IG(P(s_{min}), Q(s_{min})) \notag \\
+&+ \sum_{j = i_1..i_m}{IG(P(s_j|s_{min}), Q(s_j|s_{min}))}
 \end{align} 
 This formula avoids implicitly adding the information gain from $s_{min}$
 multiple times to the total information gain. %with the add
@@ -2824,8 +2824,14 @@ The formula above can be used directly for ranking clusters,
 but it will favour larger clusters.
 We normalize by the size of the cluster giving our final ranking formula for
 strongly closed itemsets:
-\begin{equation}\label{eq:avgIG}score(r) = \frac{IG(P(s_{i1},...s_{im}),Q(s_{i1},...s_{im}))}{m}\end{equation}
+\begin{equation}\label{eq:avgIG}score(r) = IG(P(s_{min}), Q(s_{min})) + \frac{ \sum_{ j = i_1..i_m } { IG(P(s_j|s_{min}), Q(s_j|s_{min})) } } { m } \end{equation}
 %\overline{IG}
+
+In this thesis, the background model we use for each day is the results of mining the 4 weeks
+before it, using a \emph{minimum support} value of 1 occurrence.
+Mining the background model at such a low support increases the number of
+produced itemsets, which is desirable for a background model.
+All probability estimates are smoothed by add-one smoothing. 
 
 
 % ==========================================
@@ -2919,22 +2925,159 @@ the 15-minute epoch and then takes a constant time for epochs of a longer span.
 
 \section{Effectiveness}
 \label{sec:effectiveness}
-We now show examples of the performance the proposed methods in creating
-a synopses of the 2012 election day, November $6^{th}$, and another less
-eventful day, November $9^{th}$.
-The background model we use for each day is the results of mining the 4 weeks
-before it, using a \emph{minimum support} value of 1 occurrence.
-Mining the background model at such a low support increases the number of
-produced itemsets, which is desirable for a background model.
-All probability estimates are smoothed by add-one smoothing. 
+We now show examples of the synopses produced by ranking
+the \emph{strongly closed} itemsets as discussed in section~\ref{sec:rank}.
+The examples will serve as our assessment of the quality of 
+the synopses. 
+We do an effort to choose epochs from time periods when 
+%important events were known to happen
+%important happenings were 
+%known happenings were being talked about. 
+it is known what people should be talking about. 
+In section~\ref{sec:electionsday}, 
+we show how the 2012 US presidential elections day is summarized by our methods, %hour-by-hour
+and we compare our summary to the one produced my the MTV algorithm~\cite{mampaey2011tell}.
+In section~\ref{sec:gtrends},
+we show the synopses of hours selected by the aid of Google Trends\footnote{http://www.google.ca/trends},
+assessing which popular queries were or were not reflected in our synopses.
 
-Tables \ref{table:nov6} and \ref{table:nov9}  show the top 3 itemsets for
-one-hour epochs in the days examined.
+\subsection{US presidential elections day}
+\label{sec:electionsday}
+In this section, we compare the quality of the synopsis created by
+our proposed methods to the quality of the synopsis created by
+mining the top itemsets with the MTV algorithm~\cite{mampaey2011tell} 
+(according to a maximum entropy model).
+The synopses should be suitable for giving 
+a user an overview of what people were Tweeting about at%understanding of 
+different times on the 2012 US presidential election day, November $6^{th}$.
+
+Table \ref{table:nov6} shows the top 3 \emph{strongly closed} itemsets
+from one-hour epochs
+%starting either at the hour or the half-hour mark. 
+using a half-hour time step.
 The itemsets shown are the first appearances of the most interesting itemsets;
-that is, an hour is shown only if its top 3 feature novel interesting itemsets. The first column is the beginning of the hour, EST time.
+that is, an hour is shown only if its top 3 feature novel interesting itemsets. 
+The first column is the beginning of the hour, EST time.
 The second column is the top itemsets.
-The third column is a commentary to explain the itemsets,
-but we omit it from table \ref{table:nov9} to save space since the itemsets are self explanatory.
+The third column is a commentary to explain the itemsets.
+The top 3 itemset mined by the MTV algorithm~\cite{mampaey2011tell}  are shown in table \ref{table:mtv}.
+% we show the top 3 itemsets picked by the MTV algorithm~\cite{mampaey2011tell} for the same epochs and support.
+%for one-hour epochs. 
+% 
+We show only hours in which the top 3 itemsets included interesting itemsets. 
+For brevity, we truncate itemsets that are complete tweets and append the tweet id for reference.
+% 
+%It is noteworthy that tweets that spark a conversation contribute multiple redundant itemsets, and several of them are ranked high.
+% (Nov. 6 22:00). This stresses the importance of clustering.
+%The harm from redundancy is amplified by the low values of K that has to be used. 
+% to attain an acceptable runtime.
+The input to the algorithm was transactions made up of N-grams up to 5 terms long, 
+which helped the algorithm converge faster since the distribution is flatter. 
+The use of N-grams also overcomes the dominance of language constructs, 
+which are otherwise ranked high in all hours. 
+All the topically relevant itemsets chosen by MTV are present in the top 50 \emph{strongly closed} itemsets.
+
+\begin{table}
+\begin{center}
+\footnotesize
+\def\arraystretch{1.1}
+\begin{tabular}{|p{1cm}|p{6cm}|p{9cm}|}
+\hline
+\multirow{3}{*}{\texttt{13:00}} 	&  \em 0, 1, de, jong 			& De Jong scores for Ajax \\ \cline{2-3} %http://www.dailymail.co.uk/sport/football/article-2228815/Manchester-City-2-Ajax-2--match-report-Siem-Jong-Yaya-Toure-Sergio-Aguero-Champions-League.html
+					   	& \em geordie, shore		& Season 5 of the TV series starts \\ \cline{2-3}
+						& \em get, out, and, vote		& Still early in the U.S. elections day \\\hline
+
+\multirow{3}{*}{\texttt{17:00}} 	& \em  if, obama, wins		& Speculations regarding elections \\ \cline{2-3}
+					   	& \em  USERNAME, spots, my, club		&  Pyramidal marketing. People retweet to make money.  \\ \cline{2-3}
+						& \em the, polls, close		& Polls to start closing at 6 PM \\\hline %http://www.huffingtonpost.com/2012/11/06/what-time-do-polls-close_n_2080894.html
+
+\multirow{3}{*}{\texttt{19:00}} 	&  \em A partir de que idade voc\^{e} considera algu\'{e}m velho?		& Internet meme from Brazil, discussing when to start considering a person old. \\ \cline{2-3}
+					   	& \em food, stamps		& Discussions pertaining to elections \\ \cline{2-3}
+						& \em linda, mcmahon, senate		&  Linda McMahon loses CT senate race \\\hline
+
+\multirow{3}{*}{\texttt{20:00}} 	& \em obama, got, this		&  Announcing states that Obama got \\ \cline{2-3}
+					   	& \em projected, winner		& Early projections about who will win \\ \cline{2-3}
+						& \em moving, to, canada		&  Reaction to projections \\\hline
+
+
+\multirow{3}{*}{\texttt{21:00}} 	& \em elizabeth, warren		&  MA senate elections winner \\ \cline{2-3}
+					   	& \em popular, vote		& Comparing Popular vs Electoral votes \\ \cline{2-3}
+						& \em who, is, the, president?		&  Anticipation for the elections results\\\hline
+						
+
+\multirow{3}{*}{\texttt{22:00}} 	& \em \#forward, \#obama2012		&  Obama won, time to move \#forward \\ \cline{2-3}
+					   	& \em my, president, is, still		& Some were saying black, others blue (party colour) \\ \cline{2-3}
+						&\em  back, in, office		&   Obama is back in office\\\hline
+
+\multirow{3}{*}{\texttt{22:30}} 	& \em once, you, go, black		& A popular cultural reference.\\ \cline{2-3} %  .. you never go back. 
+					   	& \em @realdonaldtrump, this, elections, ... [tweet id: 266035509162303492] 		& Donald Trump is a Republican and he did not accept Obama's victory. This cluster merges 26 \emph{distinct} itemsets.\\ \cline{2-3}
+						& \em concession, speech, write		&   The losing candidate has to concede in a speech 
+						%before the winner declares victory 
+						\\\hline
+						
+\multirow{3}{*}{\texttt{23:00}} 	&\em  weed, is, legal, in, colorado		&  News that got a lot of attention regardless of the elections  \\ \cline{2-3}
+					   	&\em  karl, rove		& Fox news challenges results from Ohio\\ \cline{2-3}
+						& \em our, country, is, trouble		&   Dramatic reactions to elections \\\hline						
+\multirow{3}{*}{\texttt{23:30}} 	&\em  acceptance, speech, wrote		&  Obama wrote his speech, ...\\ \cline{2-3}
+					   	& \em give, his, speech		& ... and is going to deliver it ... \\ \cline{2-3}
+						& \em on, cnn		&   ... on CNN. \\\hline	
+						
+\multirow{3}{*}{\texttt{00:30}} 	& \em behind, obama, with, flag, in, her [hair]		&  During the speech, attention on social media goes to a woman appearing behind Obama on TV! \\ \cline{2-3}
+					   	& \em the, best, is, yet, to, come		&  Quote from Obama's speech\\ \cline{2-3}
+						& \em flag, that, weaves	& Play on words about the ``flag in hair'' \\\hline																			
+\end{tabular}
+\end{center}
+\caption{Top 3 \emph{strongly closed} itemsets for hours in US presidential elections day}
+ \label{table:nov6}
+\end{table}
+
+
+ 
+
+ 
+ \begin{table}
+ \begin{center}
+\small
+\def\arraystretch{1.1}
+\begin{tabular}{|p{1cm}|p{17.5cm}|}
+
+\hline
+
+\multirow{3}{*}{\texttt{22:00}}
+
+& @realdonaldtrump,this,elections,...[266035509162303492] \\\cline{2-2} %This election is a total sham and a travesty. We are not a democracy! 
+&we, re, all, in, this, together, ..., bo [266031109979131904]  \\\cline{2-2} % That's how we campaigned, and that's who we are. Thank you. -bo
+& @realdonaldtrump,our,country,is,...[266037143628038144] \\\hline %Our country is now in serious and unprecedented trouble...like never before.
+
+
+
+\multirow{3}{*}{\texttt{23:00}}
+
+&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
+&house,of,representatives,shouldnt,...[266040877552656385]  \\\cline{2-2} % House of Representatives shouldn't give anything to Obama unless he terminates Obamacare.
+& URL,\#android,\#androidgames,\#gameinsight \\\hline 
+
+\multirow{3}{*}{\texttt{23:30}}
+
+&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
+&URL,\#android,\#androidgames,\#gameinsight  \\\cline{2-2} 
+&@barackobama,@ryanseacrest, what, was, your, first, words, in, reaction, to, re, election, 2\\\hline 
+
+
+\multirow{3}{*}{\texttt{00:00}}
+
+&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
+
+&the, best, is, yet, to, come \\\cline{2-2} 
+ & URL,\#android,\#androidgames,\#gameinsight \\\hline 
+
+\end{tabular}
+\end{center}
+\caption{Top 3 itemsets picked by the MTV algorithm for hours in US presidential elections day}
+ \label{table:mtv}
+\end{table}
+
+
 
 In table \ref{table:nov6}, we can see how the events of the US presidential
 elections  unwind from ``get out and vote'' to the projections and debates,
@@ -2952,6 +3095,14 @@ selecting the news of greatest importance to social media users.
 The user centric definition of importance is also evident in attention
 given to the ``lady behind Obama  with a flag in her hair'' during the
 acceptance speech. 
+
+\subsection{Google Trends}
+\label{sec:gtrends}
+People\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=people\&geo=US\&date=201211}
+Sports teams\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=sports\_teams\&geo=US\&date=201211}
+Soccer teams\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=soccer\_teams\&geo=US\&date=201211}
+TV Shows\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=tv\_shows\&geo=US\&date=201211}
+
 
 On November $9^{th}$, table \ref{table:nov9}, the most interesting hour is
 15:00.
@@ -2981,61 +3132,6 @@ language identification can be applied on the itemsets and tweets from their
 postings lists.
 Moving language identification downstream avoids affecting the results of
 mining because of error in an upstream component.
-
-\begin{table}
-
-\begin{center}
-\small
-\def\arraystretch{1.1}
-\begin{tabular}{|p{.6cm}|p{2.5cm}|p{5cm}|}
-
-\hline
-\multirow{3}{*}{\texttt{13:00}} 	&  0, 1, de, jong 			& De Jong scores for Ajax \\ \cline{2-3} %http://www.dailymail.co.uk/sport/football/article-2228815/Manchester-City-2-Ajax-2--match-report-Siem-Jong-Yaya-Toure-Sergio-Aguero-Champions-League.html
-					   	& geordie, shore		& Season 5 of the TV series starts \\ \cline{2-3}
-						& get, out, and, vote		& Still early in the U.S. elections day \\\hline
-
-\multirow{3}{*}{\texttt{17:00}} 	&  if, obama, wins		& Speculations regarding elections \\ \cline{2-3}
-					   	& USERNAME, spots, my, club		&  Pyramidal marketing scam. Retweeted by people to make money.  \\ \cline{2-3}
-						& the, polls, close		& Polls to start closing at 6 PM \\\hline %http://www.huffingtonpost.com/2012/11/06/what-time-do-polls-close_n_2080894.html
-
-\multirow{3}{*}{\texttt{19:00}} 	&  A partir de que idade voc\^{e} considera algu\'{e}m velho?		& Internet meme from Brazil, discussing when to start considering a person old. \\ \cline{2-3}
-					   	& food, stamps		& Discussions pertaining to elections \\ \cline{2-3}
-						& linda, mcmahon, senate		&  Linda McMahon loses CT senate race \\\hline
-
-\multirow{3}{*}{\texttt{20:00}} 	& obama, got, this		&  Announcing states that Obama got \\ \cline{2-3}
-					   	& projected, winner		& Early projections about who will win \\ \cline{2-3}
-						& moving, to, canada		&  Reaction to projections \\\hline
-
-
-\multirow{3}{*}{\texttt{21:00}} 	& elizabeth, warren		&  MA senate elections winner \\ \cline{2-3}
-					   	& popular, vote		& Comparing Popular vs Electoral votes \\ \cline{2-3}
-						& who, is, the, president?		&  Anticipation for the elections results\\\hline
-						
-
-\multirow{3}{*}{\texttt{22:00}} 	& \#forward, \#obama2012		&  Obama won, time to move \#forward \\ \cline{2-3}
-					   	& my, president, is, still		& Some were saying Black (skin colour), others Blue (party colour) \\ \cline{2-3}
-						& back, in, office		&   Obama is back in office\\\hline
-
-\multirow{3}{*}{\texttt{22:30}} 	& once, you, go, black		& A popular cultural reference.\\ \cline{2-3} %  .. you never go back. 
-					   	& @realdonaldtrump, this, elections, ... [his famous tweet] 		& Donald Trump is a Republican and he did not accept Obama's victory. This cluster merges 15 \emph{distinct} itemsets.\\ \cline{2-3}
-						& concession, speech, write		&   The losing candidate has to concede before the winner declares victory \\\hline
-						
-\multirow{3}{*}{\texttt{23:00}} 	& weed, is, legal, in, colorado		&  This piece of news got the attention as soon as it was announced  \\ \cline{2-3}
-					   	& karl, rove		& Fox news challenges results from Ohio\\ \cline{2-3}
-						& our, country, is, trouble		&   Dramatic reactions to elections \\\hline						
-\multirow{3}{*}{\texttt{23:30}} 	& acceptance, speech, wrote		&  Obama wrote his speech, ...\\ \cline{2-3}
-					   	& give, his, speech		& ... and is going to deliver it ... \\ \cline{2-3}
-						& on, cnn		&   ... on CNN. \\\hline	
-						
-\multirow{3}{*}{\texttt{00:30}} 	& behind, obama, with, flag, in, her [hair]		&  During the speech, attention on social media goes to a woman appearing behind Obama on TV! \\ \cline{2-3}
-					   	& the, best, is, yet, to, come		&  Quote from Obama's speech\\ \cline{2-3}
-						& flag, that, weaves	& Play on words about the ``flag in hair'' \\\hline																			
-\end{tabular}
-\end{center}
-\caption{Top 3 itemsets for hours in November 6th}
- \label{table:nov6}
-\end{table}
-
 \begin{table}
 \begin{center}
 \small
@@ -3066,71 +3162,7 @@ mining because of error in an upstream component.
 \end{table}
 
 
-As a form of comparison, in table \ref{table:mtv} we show the top 3 itemsets picked by the MTV algorithm~\cite{mampaey2011tell} for the same epochs and support.
-%for one-hour epochs. 
-% 
-We show hours in which the top 3 itemsets included interesting itemsets. For brevity, we truncate itemsets that are complete tweets and append the tweet id for reference.
-% 
-%It is noteworthy that tweets that spark a conversation contribute multiple redundant itemsets, and several of them are ranked high.
-% (Nov. 6 22:00). This stresses the importance of clustering.
-%The harm from redundancy is amplified by the low values of K that has to be used. 
-% to attain an acceptable runtime.
-The input to the algorithm was transactions made up of N-grams up to 5 terms long, which helped the algorithm converge faster since the distribution is flatter. 
-The use of N-grams also overcomes the dominance of language constructs, which are otherwise ranked high in all hours. 
-All the topically relevant itemsets chosen by MTV are present in the top 50 \emph{strongly closed itemsets}.
 
- 
- \begin{table}
- \begin{center}
-\small
-\def\arraystretch{1.1}
-\begin{tabular}{|p{.6cm}|p{7.5cm}|}
-
-\hline
-
-\texttt{Nov}
-& @realdonaldtrump,this,elections,...[266035509162303492] \\\cline{2-2} %This election is a total sham and a travesty. We are not a democracy! 
-\texttt{6th,}
-&we, re, all, in, this, together, ..., bo [266031109979131904]  \\\cline{2-2} % That's how we campaigned, and that's who we are. Thank you. -bo
-\texttt{22:00} & @realdonaldtrump,our,country,is,...[266037143628038144] \\\hline %Our country is now in serious and unprecedented trouble...like never before.
-
-
-
-
-\texttt{Nov}
-&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
-\texttt{6th,}
-&house,of,representatives,shouldnt,...[266040877552656385]  \\\cline{2-2} % House of Representatives shouldn't give anything to Obama unless he terminates Obamacare.
-\texttt{23:00} & URL,\#android,\#androidgames,\#gameinsight \\\hline 
-
-
-\texttt{Nov}
-&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
-\texttt{6th,}
-&URL,\#android,\#androidgames,\#gameinsight  \\\cline{2-2} 
-\texttt{23:30} &@barackobama,@ryanseacrest, what, was, your, first, words, in, reaction, to, re, election, 2\\\hline 
-
-
-\texttt{Nov}
-&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
-\texttt{6th,}
-&the, best, is, yet, to, come \\\cline{2-2} 
-\texttt{00:00} & URL,\#android,\#androidgames,\#gameinsight \\\hline 
-
-
-
-\texttt{Nov}
-& \#emawinbieber, i, think, justin, bieber, ... [see table \ref{table:nov9}] \\\cline{2-2}
-\texttt{9th,}
-&@boyquotations,do,everyone,follow,followers,gain,more \\\cline{2-2} 
-\texttt{15:00} & \#emawinkaty, i, think, katy, perry, ... [see table \ref{table:nov9}] \\\hline 
-\end{tabular}
-\end{center}
-\caption{Top 3 picked by the MTV algorithm}
- \label{table:mtv}
-\end{table}
-
- 
 
 \chapter{Conclusion and future work}
 \label{sec:concfut}

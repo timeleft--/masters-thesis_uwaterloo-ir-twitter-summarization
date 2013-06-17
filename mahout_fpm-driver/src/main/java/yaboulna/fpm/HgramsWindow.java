@@ -355,7 +355,7 @@ public class HgramsWindow {
 
             cmd += " " + tmpFile.getAbsolutePath()
                 + (cmdMtv?
-                 " -s " + (support * 1.0/transIter.getRowsRead()) + " -o " + epochOutLocal +
+                 " -s " + String.format("%.15f", support * 1.0/transIter.getRowsRead()) + " -o " + epochOutLocal +
                  (cmdMtvSortOnly? //FIXME: The file needs to be <summport>\tItemID,ItemID,...
                  " -c /home/yaboulna/fim_out/lcm_closed_cikm/1hr+30min_ngram5-relsupp10_11032233-11151120_cluster-nondistinct/sel_HandOpt_conf0.2_Buff1000_" +
                  + epochLen + "_" + windowStartUx + "_supp" + support: ""):
