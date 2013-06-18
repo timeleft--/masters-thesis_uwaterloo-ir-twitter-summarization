@@ -3116,14 +3116,15 @@ lists of real-world people, places and things ranked in order of search volume
 %during different intervals of time. 
 during user specified intervals of time\footnote{https://support.google.com/trends/answer/3076011?hl=en}.
 We use the Top Charts of November 2012 
+for the people category\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=people\&geo=US\&date=201211}
 (only available for queries made from the USA)
 as an aid for finding out what social media users
 are expected to be talking about.
-We use the Top Charts of the following categories:
-people\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=people\&geo=US\&date=201211},
-sports teams\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=sports\_teams\&geo=US\&date=201211},
-soccer teams\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=soccer\_teams\&geo=US\&date=201211} and
-TV shows\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=tv\_shows\&geo=US\&date=201211}.
+%We use the Top Charts of the following categories:
+%people\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=people\&geo=US\&date=201211},
+%sports teams\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=sports\_teams\&geo=US\&date=201211},
+%soccer teams\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=soccer\_teams\&geo=US\&date=201211} and
+%TV shows\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=tv\_shows\&geo=US\&date=201211}.
 We found that named entities that make it to the top 10 chart in a certain category %occupying the top positions
 are usually divided into finer groups. %categories, 
 The queries about 
@@ -3174,7 +3175,7 @@ this is a number that can be conveniently displayed as a summary for a human use
 \caption{Google Trends' volume with time plot for the queries ``Barack Obama'' and ``Mitt Romney'', the top 2 in the Top Chart for the \emph{people} category in November 2012}
 \end{figure}
 
-\subsubsection{Pop Artists and Music Awards Events} 
+\subsubsection{Pop artists and music awards events} 
 
 
 %http://www.google.ca/trends/explore#q=Justin%20Bieber%2C%20Taylor%20Swift%2C%20Rihanna%2C%20Nicki%20Minaj%2C%20Selena%20Gomez&geo=US&date=11%2F2012%201m&cmpt=q
@@ -3284,21 +3285,6 @@ some hopeful comments:
 %https://twitter.com/katrinaa_xx/status/267118952071712768
 %apparently there is a rumor that justin bieber and selena gomez broke up? GO @jessleigh1122 GO!!!!!
 
-
-Four of the artists names appeared repeatedly in the top 30 itemsets
-of hours in the days of their respective higher search volume.
-However, Rihanna, never appeared in any \emph{strongly closed} itemset.
-Actually it rarely appeared in any itemset of length 2 or more. 
-It is not unusual for an itemset about an artist to be merely his or her name,
-%which is just one word in the case of some artists such as Rihanna and Adele
-%possibly because users talk about artists using different wordings.
-and several artists, like Rihanna, are known by their first name only.
-It is impossible for an itemset of length 1 to be \emph{distinct},
-since this condition requires that the itemsets be implied
-by one of its subsets with high confidence.
-Therefore \emph{distinct} and \emph{strongly closed} itemsets
-would never capture information in an itemset of length 1.
-
 \begin{table}
 \footnotesize
 \begin{tabular}{|p{0.5cm}|p{15cm}|}
@@ -3350,6 +3336,139 @@ would never capture information in an itemset of length 1.
 %head -n 30 *conf0.25*1351@(76|77|78|79|8)* | less -NS ==> taylor swift in top 30 at 1351825200 (11 / 01 / 12 @ 10:00:00pm EST), top 50 also in 1351828800 (11 / 01 / 12 @ 11:00:00pm EST) and 1351814400 (11 / 01 / 12 @ 7:00:00pm EST)
 
 
+\subsubsection{People appearing in Top Charts but not in the synopses}
+
+Out of the five pop artists appearing in the Top Chart,
+as shown in figure~\ref{fig:trendsPopArtists},
+the names of only four appeared repeatedly in the top 30 itemsets %artists
+of hours in the days of their respective higher search volume.
+The name of Rihanna never appeared in any \emph{strongly closed} itemset.
+Actually it rarely appeared in any itemset of length 2 or more. 
+It is not unusual for an itemset about an artist to be merely his or her name,
+%which is just one word in the case of some artists such as Rihanna and Adele
+%possibly because users talk about artists using different wordings.
+and several artists, like Rihanna, are known by their first name only.
+It is impossible for an itemset of length 1 to be \emph{distinct},
+since this condition requires that the itemsets be implied
+by one of its subsets with high confidence.
+Therefore \emph{distinct} and \emph{strongly closed} itemsets
+would never capture information in an itemset of length 1.
+The same happens with one more of the names in the Top Chart,
+Abraham Lincoln. 
+During the month of November people were talking on Twitter about 
+Lincoln the movie\footnote{http://www.imdb.com/title/tt0443272/}, 
+%not Abraham Lincoln as a 
+and this was reflected in mining the term as a closed 1-itemset from 
+several hours throughout the month.
+However, there were not any closed itemsets longer than 1 item,
+and thus there was no mention of Lincoln the movie in the synopses.
+This shortcoming can be overcome %would not occur
+by settitng a lower support threshold  
+so that longer itemsets are mined. 
+% for each 
+ 
+
+Another two celebrity who appears in the top 10 chart 
+but not the synopses are Kim Kardashian and Michael Jordan.
+The volume of queries about Kim Kardashian is different from other artists,
+since she is not a pop music artists and does not participate in music awards events.
+For these two celebrities, the volume of queries does not have high peaks, 
+and the curve is relatively flat. 
+Itemsets mined from Twitter rarely mention either of them. % Kim Kardashian.
+Of all itemsets mined from hour long epochs throughout the month of November, 
+only 37 closed itemsets contains ``Kim Kardashian'' or ``@kimkardashian'',
+and none contain ``Michael Jordan'' or ``@jumpman23''.
+%Only 16 of those \emph{distinct}
+This means that the number of occurrences of their names is lower than
+the support threshold in the all or almost all of the 1440 overlapping hour epochs
+in the month.
+%We cannot tell if this is because of the lack of special events,
+We do not know why the interest in Kim Kardashian and Michael Jordan 
+shown by Google search users % have shown 
+was not reflected by Twitter users,
+or maybe this is an artifact of the algorithms used to 
+enumerate the Top Charts.
+
+
+%How to search for something from   10 / 31 / 12 @ 11:13:20am EST  to 11 / 27 / 12 @ 1:06:40am EST
+% grep kardashian sel_*_conf0.25*135@(17|18|19|2|3)* | less -NS   
+
+%grep kardashian high*_conf0.25*135@(17|18|19|2|3)* | cut -f 1 | less -NS 
+%\begin{table}
+%\centering
+%\footnotesize
+%\begin{tabular}{|c|l|c|l|}
+ %\hline 
+%1 & Nov. 07 3:30 am EST & & @kimkardashian, london\\ \hline %1352280600
+%2 & Nov. 08 11:00 pm EST & & @harry\_styles, @khloekardashian\\ \hline %1352437200
+%3 & Nov. 08 11:30 pm EST & & @khloekardashian, \#onedirection\\ \hline %1352439000
+%4 & Nov. 08 11:30 pm EST & & @harry\_styles, @khloekardashian\\ \hline %1352439000
+%5 & Nov. 09 2:30 am EST & X & @kimkardashian, @kourtneykardash\\ \hline %1352449800
+%6 & Nov. 09 3:00 am EST & X & @kimkardashian, @kourtneykardash\\ \hline %1352451600_supp11
+%7 & Nov. 10 1:30 am EST & X & @khloekardashian, @kimkardashian, @kourtneykardash\\ \hline %1352532600_supp11 
+%8 & Nov. 10 2:00 am EST & X & @khloekardashian, @kourtneykardash\\ \hline % 1352534400_supp11 
+%9 & Nov. 10 3:30 am EST & X & kardashians, the\\ \hline % 1352539800_supp13 
+%10 & Nov. 10 4:00 am EST & X & kardashians, the\\ \hline % 1352541600_supp13 
+%11 & Nov. 11 1:00 pm EST & X & kardashian, kim\\ \hline % 1352660400_supp25 
+%12 & Nov. 11 1:30 pm EST & X & kardashian, kim\\ \hline % 1352662200_supp29: 
+%13  & Nov. 11 2:00 pm EST & X &kardashian, kim\\ \hline %1352664000_supp29: 
+%14  & Nov. 11 3:30 pm EST & X &kardashian, kim\\ \hline %1352665800_supp29: 
+%15  & Nov. 11 3:00 pm EST & X &kardashian, kim\\ \hline %_1352667600_supp29: 
+%16 & Nov. 11 3:30 pm EST & X & kardashian, kim\\ \hline % 1352669400_supp26:
+ %\end{tabular}  
+% \end{table}
+ %  1 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352449800_supp11:@kimkardashian(1),@kourtneykardash(2)\\ \hline 
+ %  2 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352451600_supp11:@kimkardashian(1),@kourtneykardash(2)\\ \hline 
+ %  3 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352532600_supp11:@khloekardashian(1),@kimkardashian(1),@kourtneykardash(2)\\ \hline 
+ %  4 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352534400_supp11:@khloekardashian(1),@kourtneykardash(2)\\ \hline 
+ %  5 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352539800_supp13:kardashians(2),the(1)\\ \hline 
+ %  6 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352541600_supp13:kardashians(2),the(1)\\ \hline 
+ %  7 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352660400_supp25:kim(1),kardashian(2)\\ \hline 
+ %  8 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352662200_supp29:kim(1),kardashian(2)\\ \hline 
+ %  9 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352664000_supp29:kardashian(2),kim(1)\\ \hline 
+ % 10 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352667600_supp29:kim(1),kardashian(2)\\ \hline 
+ % 11 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352669400_supp26:kim(1),kardashian(2)
+
+
+% 1 fp_3600_1352278800_supp11:@kimkardashian
+ % 2 fp_3600_1352280600_supp12:@kimkardashian
+ % 3 fp_3600_1352280600_supp12:@kimkardashian,london
+ % 4 fp_3600_1352282400_supp12:@kimkardashian
+ % 5 fp_3600_1352327400_supp26:@kimkardashian
+ % 6 fp_3600_1352329200_supp26:@kimkardashian
+ % 7 fp_3600_1352363400_supp11:@kimkardashian
+ % 8 fp_3600_1352365200_supp11:@kimkardashian
+ % 9 fp_3600_1352367000_supp12:@kimkardashian
+ % 10 fp_3600_1352370600_supp15:@kimkardashian
+ % 11 fp_3600_1352444400_supp12:@kimkardashian
+ % 12 fp_3600_1352446200_supp11:@kimkardashian
+ % 13 fp_3600_1352448000_supp11:@kimkardashian
+ % 14 fp_3600_1352448000_supp11:@kimkardashian,@kourtneykardash
+ % 15 fp_3600_1352449800_supp11:@kimkardashian
+ % 16 fp_3600_1352449800_supp11:@kimkardashian,@kourtneykardash
+ % 17 fp_3600_1352451600_supp11:@kimkardashian
+ % 18 fp_3600_1352451600_supp11:@kimkardashian,@kourtneykardash
+ % 19 fp_3600_1352453400_supp13:@kimkardashian
+ % 20 fp_3600_1352530800_supp11:@kimkardashian
+ % 21 fp_3600_1352532600_supp11:@kimkardashian
+ % 22 fp_3600_1352532600_supp11:@khloekardashian,@kimkardashian,@kourtneykardash
+ % 23 fp_3600_1352534400_supp11:@kimkardashian
+ % 24 fp_3600_1352538000_supp12:@kimkardashian
+ % 25 fp_3600_1352660400_supp25:kardashian,kim
+ % 26 fp_3600_1352662200_supp29:kardashian,kim
+ % 27 fp_3600_1352664000_supp29:kardashian,kim
+ % 28 fp_3600_1352665800_supp29:kardashian,kim
+ % 29 fp_3600_1352667600_supp29:kardashian,kim
+ % 30 fp_3600_1352669400_supp26:kardashian,kim
+ % 31 fp_3600_1352676600_supp23:@kimkardashian
+ % 32 fp_3600_1352941200_supp27:@kimkardashian
+ % 33 fp_3600_1352943000_supp28:@kimkardashian
+ % 34 fp_3600_1353076200_supp25:@kimkardashian
+ % 35 fp_3600_1353078000_supp25:@kimkardashian
+ % 36 fp_3600_1353340800_supp23:@kimkardashian
+ % 37 fp_3600_1353342600_supp23:@kimkardashian
+ % 
+  
 
 
 \chapter{Conclusion and future work}

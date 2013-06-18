@@ -2640,4 +2640,34 @@ public class DivergeBGMap {
     }
     return retVal.substring(1);
   }
+  
 }
+\\ \hline 
+1 & 11 / 07 / 12 @ 3:30:00am EST & & @kimkardashian, london\\ \hline %1352280600
+    2 & 11 / 08 / 12 @ 11:00:00pm EST & & @harry_styles, @khloekardashian\\ \hline %1352437200
+    3 & 11 / 08 / 12 @ 11:30:00pm EST & & @khloekardashian, \#onedirection\\ \hline %1352439000
+    4 & 11 / 08 / 12 @ 11:30:00pm EST & & @harry_styles, @khloekardashian\\ \hline %1352439000
+    5 & 11 / 09 / 12 @ 2:30:00am EST & X & @kimkardashian, @kourtneykardash\\ \hline %1352449800
+    6 & 11 / 09 / 12 @ 3:00:00am EST & X & @kimkardashian, @kourtneykardash\\ \hline %1352451600_supp11
+    7 & 11 / 10 / 12 @ 1:30:00am EST & X & @khloekardashian, @kimkardashian, @kourtneykardash\\ \hline %1352532600_supp11 
+    8 & 11 / 10 / 12 @ 2:00:00am EST & X & @khloekardashian, @kourtneykardash\\ \hline % 1352534400_supp11 
+    9 & 11 / 10 / 12 @ 3:30:00am EST & X & kardashians, the\\ \hline % 1352539800_supp13 
+   10 & 11 / 10 / 12 @ 4:00:00am EST & X & kardashians, the\\ \hline % 1352541600_supp13 
+   11 & 11 / 11 / 12 @ 1:00:00pm EST & X & kardashian, kim\\ \hline % 1352660400_supp25 
+   12 & 11 / 11 / 12 @ 1:30:00pm EST & X & kardashian, kim\\ \hline % 1352662200_supp29: 
+   13  & 11 / 11 / 12 @ 2:00:00pm EST & X &kardashian, kim\\ \hline %1352664000_supp29: 
+   14  & 11 / 11 / 12 @ 3:30:00pm EST & X &kardashian, kim\\ \hline %1352665800_supp29: 
+   15  & 11 / 11 / 12 @ 3:00:00pm EST & X &kardashian, kim\\ \hline %_1352667600_supp29: 
+   16 & 11 / 11 / 12 @ 3:30:00pm EST & X & kardashian, kim\\ \hline % 1352669400_supp26:
+   
+ %  1 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352449800_supp11:@kimkardashian(1),@kourtneykardash(2)\\ \hline 
+ %  2 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352451600_supp11:@kimkardashian(1),@kourtneykardash(2)\\ \hline 
+ %  3 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352532600_supp11:@khloekardashian(1),@kimkardashian(1),@kourtneykardash(2)\\ \hline 
+ %  4 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352534400_supp11:@khloekardashian(1),@kourtneykardash(2)\\ \hline 
+ %  5 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352539800_supp13:kardashians(2),the(1)\\ \hline 
+ %  6 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352541600_supp13:kardashians(2),the(1)\\ \hline 
+ %  7 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352660400_supp25:kim(1),kardashian(2)\\ \hline 
+ %  8 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352662200_supp29:kim(1),kardashian(2)\\ \hline 
+ %  9 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352664000_supp29:kardashian(2),kim(1)\\ \hline 
+ % 10 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352667600_supp29:kim(1),kardashian(2)\\ \hline 
+ % 11 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352669400_supp26:kim(1),kardashian(2)
