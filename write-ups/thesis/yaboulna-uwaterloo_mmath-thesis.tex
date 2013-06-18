@@ -2931,7 +2931,7 @@ We now show examples of the synopses produced by ranking
 the \emph{strongly closed} itemsets as discussed in section~\ref{sec:rank}.
 The examples will serve as our assessment of the quality of 
 the synopses. 
-We do an effort to choose epochs from time periods when 
+We make an effort to choose epochs from time periods when 
 %important events were known to happen
 %important happenings were 
 %known happenings were being talked about. 
@@ -2962,22 +2962,24 @@ that is, an hour is shown only if its top 3 feature novel interesting itemsets.
 The first column is the beginning of the hour, EST time.
 The second column is the top itemsets.
 The third column is a commentary to explain the itemsets.
-The top 3 itemset mined by the MTV algorithm~\cite{mampaey2011tell}  are shown in table \ref{table:mtv}.
-% we show the top 3 itemsets picked by the MTV algorithm~\cite{mampaey2011tell} for the same epochs and support.
-%for one-hour epochs. 
-% 
-We show only hours in which the top 3 itemsets included interesting itemsets. 
-For brevity, we truncate itemsets that are complete tweets and append the tweet id for reference.
-% 
-%It is noteworthy that tweets that spark a conversation contribute multiple redundant itemsets, and several of them are ranked high.
-% (Nov. 6 22:00). This stresses the importance of clustering.
-%The harm from redundancy is amplified by the low values of K that has to be used. 
-% to attain an acceptable runtime.
-The input to the algorithm was transactions made up of N-grams up to 5 terms long, 
-which helped the algorithm converge faster since the distribution is flatter. 
-The use of N-grams also overcomes the dominance of language constructs, 
-which are otherwise ranked high in all hours. 
-All the topically relevant itemsets chosen by MTV are present in the top 50 \emph{strongly closed} itemsets.
+%In table \ref{table:nov6}, 
+We can see how the events of the US presidential
+elections  unwind from ``get out and vote'' to the projections and debates,
+all the way to the ``acceptance speech''.
+Early in the day, itemsets about UEFA Champions football matches and a TV show
+``Geordie Shore'' appear in the top 3 along with itemsets about the still
+uneventful elections.
+Actually, the matches keep occupying top positions and timely updates of their
+scores appear in the top 30 itemsets, until they end and the elections
+heats up.
+Shortly after the results of the elections became clear, news that
+``weed is legal in Colorado'' occupies the top position.
+This exemplifies the power of social media as a collaborative filter,
+selecting the news of greatest importance to social media users.
+The user centric definition of importance is also evident in attention
+given to the ``lady behind Obama  with a flag in her hair'' during the
+acceptance speech. 
+
 
 \begin{table}
 \begin{center}
@@ -2985,6 +2987,7 @@ All the topically relevant itemsets chosen by MTV are present in the top 50 \emp
 \def\arraystretch{1.1}
 \begin{tabular}{|p{1cm}|p{6cm}|p{9cm}|}
 \hline
+Time & Itemset & Explanation \\ \hline
 \multirow{3}{*}{\texttt{13:00}} 	&  \em 0, 1, de, jong 			& De Jong scores for Ajax \\ \cline{2-3} %http://www.dailymail.co.uk/sport/football/article-2228815/Manchester-City-2-Ajax-2--match-report-Siem-Jong-Yaya-Toure-Sergio-Aguero-Champions-League.html
 					   	& \em geordie, shore		& Season 5 of the TV series starts \\ \cline{2-3}
 						& \em get, out, and, vote		& Still early in the U.S. elections day \\\hline
@@ -3019,7 +3022,7 @@ All the topically relevant itemsets chosen by MTV are present in the top 50 \emp
 						
 \multirow{3}{*}{\texttt{23:00}} 	&\em  weed, is, legal, in, colorado		&  News that got a lot of attention regardless of the elections  \\ \cline{2-3}
 					   	&\em  karl, rove		& Fox news challenges results from Ohio\\ \cline{2-3}
-						& \em our, country, is, trouble		&   Dramatic reactions to elections \\\hline						
+						& \em our, country, is, trouble		&   More dramatic reactions to elections from Donald Trump \\\hline						
 \multirow{3}{*}{\texttt{23:30}} 	&\em  acceptance, speech, wrote		&  Obama wrote his speech, ...\\ \cline{2-3}
 					   	& \em give, his, speech		& ... and is going to deliver it ... \\ \cline{2-3}
 						& \em on, cnn		&   ... on CNN. \\\hline	
@@ -3029,74 +3032,133 @@ All the topically relevant itemsets chosen by MTV are present in the top 50 \emp
 						& \em flag, that, weaves	& Play on words about the ``flag in hair'' \\\hline																			
 \end{tabular}
 \end{center}
+\vspace{-5mm}
 \caption{Top 3 \emph{strongly closed} itemsets for hours in US presidential elections day}
  \label{table:nov6}
 \end{table}
 
 
- 
-
- 
  \begin{table}
  \begin{center}
-\small
+\footnotesize
 \def\arraystretch{1.1}
-\begin{tabular}{|p{1cm}|p{17.5cm}|}
+\begin{tabular}{|p{1cm}|p{13cm}|c|c|} %p{9cm}|p{6cm}|}
 
 \hline
+Time & Itemset & \multicolumn{2}{c|}{Ranks} \\ %MTV & SC\\
+%\hline
+\hline
+\multirow{3}{*}{\texttt{19:00}} &
+ \emph{A partir de que idade voc\^{e} considera algu\'{e}m velho?}  & 1 & 1 \\ \cline{2-4} %22
+& \emph{A qu\'{e} edad consideras que alguien es viejo?} & 4 & 10 \\ \cline{2-4}
+& \emph{We'll find out if it's true. America went black, will it go back?} & 9 & 24 \\ \hline
 
-\multirow{3}{*}{\texttt{22:00}}
+\multirow{3}{*}{\texttt{20:30}} &
+\emph{Obama rhymes with Ohana. Ohana means family \& family means nobody gets left behind. Mitt rhymes with shit.} 
+& 3 & 3 \\\cline{2-4}
+& \emph{New Hampshire}	& 9 & 1 \\ \cline{2-4}
+& \emph{\#IamSickOf} & 10 & - \\ \hline
 
-& @realdonaldtrump,this,elections,...[266035509162303492] \\\cline{2-2} %This election is a total sham and a travesty. We are not a democracy! 
-&we, re, all, in, this, together, ..., bo [266031109979131904]  \\\cline{2-2} % That's how we campaigned, and that's who we are. Thank you. -bo
-& @realdonaldtrump,our,country,is,...[266037143628038144] \\\hline %Our country is now in serious and unprecedented trouble...like never before.
+\multirow{3}{*}{\texttt{21:00}} 
+& \emph{We're all in this together. That's how we campaigned, and that's who we are. Thank you. -bo} & 1 & 22 \\ \cline{2-4} %266031109979131904
+& \emph{@barackobama This happened because of you, thank you. } & 4 & 20 \\ \cline{2-4}
+& \emph{@barackobama Four more years URL} & 6 & 6 \\ \hline
 
-
+\multirow{3}{*}{\texttt{22:00}} &
+\emph{@realDonaldTrump: This election is a total sham and a travesty. We are not a democracy!} & 1 & 2  \\\cline{2-4} % 266035509162303492
+& \emph{@realDonaldTrump: Our country is now in serious and unprecedented trouble...like never before.} & 3 & 24 \\ \cline{2-4}
+%266037143628038144
+& \emph{@realDonaldTrump: He lost the popular vote by a lot and won the election. We should have a revolution in this country!} & 5 & 31 \\\hline %
 
 \multirow{3}{*}{\texttt{23:00}}
-
-&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
-&house,of,representatives,shouldnt,...[266040877552656385]  \\\cline{2-2} % House of Representatives shouldn't give anything to Obama unless he terminates Obamacare.
-& URL,\#android,\#androidgames,\#gameinsight \\\hline 
-
-\multirow{3}{*}{\texttt{23:30}}
-
-&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
-&URL,\#android,\#androidgames,\#gameinsight  \\\cline{2-2} 
-&@barackobama,@ryanseacrest, what, was, your, first, words, in, reaction, to, re, election, 2\\\hline 
-
-
-\multirow{3}{*}{\texttt{00:00}}
-
-&URL,and,autotweet,checked,followed,me,today,unfollowed \\\cline{2-2}
-
-&the, best, is, yet, to, come \\\cline{2-2} 
- & URL,\#android,\#androidgames,\#gameinsight \\\hline 
-
+& \emph{@realDonaldTrump: Lets fight like hell and stop this great \& disgusting injustice! The world is laughing at us.} 
+& 4 & 48
+\\ \cline{2-4}
+& \emph{House of Representatives shouldn't give anything to Obama unless he terminates Obamacare.} 
+& 6 & 15 \\\cline{2-4}
+% 266040877552656385
+& \emph{@adamlevine: That's what happens when you fu** with Sesame Street} 
+& 8 & 18 \\\hline 
 \end{tabular}
 \end{center}
-\caption{Top 3 itemsets picked by the MTV algorithm for hours in US presidential elections day}
+\caption{The 3 most interesting itemsets out of the top 10 picked by the MTV algorithm for hours in US presidential elections day. The actual rank given to each itemset by MTV is in column 3 and the rank of its equivalent \emph{strongly closed} itemset is in column 4.}
+%MTV tends to pick complete Tweets with lots of retweets.}
  \label{table:mtv}
 \end{table}
 
 
+%The top 3 itemset mined by the MTV algorithm~\cite{mampaey2011tell}  are shown in table \ref{table:mtv}.
+% we show the top 3 itemsets picked by the MTV algorithm~\cite{mampaey2011tell} for the same epochs and support.
+%for one-hour epochs. 
+%
+The top 3 itemset mined by the MTV algorithm~\cite{mampaey2011tell}
+are usually itemsets from Tweets sent by
+services reporting users' scores in games, 
+or the number of new followers each user got.
+However, the top 10 itemsets usually contain
+% topically relevant itemsets.
+interesting itemsets.
+Therefore, in table \ref{table:mtv} we show itemsets 
+%relevant to the U.S. presidential elections 
+that we find interesting
+from MTV's top 10,
+assuming that the itemsets from Tweets sent by automatic services
+can be filtered out by another dedicated filter.
+The actual rank in which the itemset appeared 
+is shown in column 3, 
+and the rank in which it appears among \emph{strongly closed}
+itemsets is shown in column 4.
+%prepended to it.  %the itemset.
+We show only hours in which the top 10 itemsets contain 
+novel interesting itemsets. 
+The itemsets chosen by MTV tend to be complete Tweets 
+which were retweeted by many users,
+thus we omit the explanation column for brevity.
+%For brevity, we truncate itemsets that are complete tweets and append the tweet id for reference.
+% 
+%It is noteworthy that tweets that spark a conversation contribute multiple redundant itemsets, and several of them are ranked high.
+% (Nov. 6 22:00). This stresses the importance of clustering.
+%The harm from redundancy is amplified by the low values of K that has to be used. 
+% to attain an acceptable runtime.
+The input to the algorithm was transactions made up of N-grams up to 5 terms long, 
+which helped the algorithm converge faster since the distribution is flatter. 
+The use of N-grams also overcomes the dominance of language constructs, 
+which are otherwise ranked high in all hours. 
 
-In table \ref{table:nov6}, we can see how the events of the US presidential
-elections  unwind from ``get out and vote'' to the projections and debates,
-all the way to the ``acceptance speech''.
-Early in the day, itemsets about UEFA Champions football matches and a TV show
-``Geordie Shore'' appear in the top 3 along with itemsets about the still
-uneventful elections.
-Actually, the matches keep occupying top positions and timely updates of their
-scores appear in the top 30 itemsets, until they end and the elections
-heats up.
-Shortly after the results of the elections became clear, news that
-``weed is legal in Colorado'' occupies the top position.
-This exemplifies the power of social media as a collaborative filter,
-selecting the news of greatest importance to social media users.
-The user centric definition of importance is also evident in attention
-given to the ``lady behind Obama  with a flag in her hair'' during the
-acceptance speech. 
+
+
+All the topically relevant itemsets chosen by MTV are present in 
+the top 50 \emph{strongly closed} itemsets
+~--~most of them are in the top 30.
+We do not know if all the top ranked \emph{strongly closed} itemsets 
+%are also in picked up at a relatively high rank
+would also be picked by MTV if we use it to mine more itemsets, 
+because the algorithm's space and time requirements
+becomes prohibitively large when the number
+of itemsets requested is increased.
+% beyond 
+At $k > 100$ the algorithm fails because of a memory error, 
+even though it was being run on a machine with 256 GB of RAM,
+with no limit on its resource consumption.
+At $k = 30$ the algorithm was left running for days and it finished 
+mining only a few hour long epochs. 
+%Therefore, we conclude from the comparison 
+%that our methods can  efficient
+%that MTV is not superior well rooted theoretically
+
+The small value of $k$ that has to be used 
+makes MTV inadequate for mining social media,
+where the high volume of posts 
+and the variety of topics users talk about
+is likely to result in more itemsets than 
+what MTV would pick as the top $k$.
+On the other hand, \emph{strongly closed} itemsets
+are efficiently mined and are not restricted to a predefined number.
+We have shown that the top 3 \emph{strongly closed} itemsets 
+from different hours are interesting, 
+and that itemsets that are picked by the MTV algorithm are almost all 
+among the top 30 \emph{strongly closed} itemsets.
+ 
 
 \subsection{Google Trends}
 \label{sec:gtrends}
