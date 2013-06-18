@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+    xmlns:latexdraw="http://latexdraw.sourceforge.net/namespaces/latexdraw"
+    version="1.1" baseProfile="full">
+    <defs>
+        <marker overflow="visible" orient="auto" id="arrow2-138">
+            <path
+                d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
+                latexdraw:arrSizeNum="2.0" fill="black"/>
+        </marker>
+        <marker overflow="visible" orient="auto" id="arrow2-139">
+            <path
+                d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
+                latexdraw:arrSizeNum="2.0" fill="black"/>
+        </marker>
+        <marker overflow="visible" orient="auto" id="arrow2-140">
+            <path
+                d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
+                latexdraw:arrSizeNum="2.0" fill="black"/>
+        </marker>
+        <marker overflow="visible" orient="auto" id="arrow2-141">
+            <path
+                d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
+                latexdraw:arrSizeNum="2.0" fill="black"/>
+        </marker>
+        <marker overflow="visible" orient="auto" id="arrow2-142">
+            <path
+                d="M 0.0 0.0 L -4.652083333333334 1.6614583333333335 L -2.79125 0.0 L -4.652083333333334 -1.6614583333333335 z "
+                latexdraw:arrSizeNum="2.0" fill="black"/>
+        </marker>
+    </defs>
+    <g>
+        <g latexdraw:type="picture" id="id121">
+            <image
+                xlink:href="/Users/yia/Code/thesis/write-ups/thesis/trends/pop-artists_raw.png"
+                x="2.0" y="4.0" height="275" width="758"/>
+        </g>
+        <g latexdraw:type="text" id="id123"
+            font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="120.0">
+            <text x="120.0" y="35.0"><![CDATA[Justin Bieber]]></text>
+        </g>
+        <g latexdraw:type="text" id="id126"
+            font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="67.0">
+            <text x="67.0" y="75.0"><![CDATA[Taylor Swift]]></text>
+        </g>
+        <g latexdraw:type="text" id="id129"
+            font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="324.0">
+            <text x="324.0" y="105.0"><![CDATA[Rihanna]]></text>
+        </g>
+        <g latexdraw:type="text" id="id132"
+            font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="511.0">
+            <text x="511.0" y="80.0"><![CDATA[Nicki Minaj]]></text>
+        </g>
+        <g latexdraw:type="text" id="id135"
+            font-family="Times New Roman" fill="black" font-size="18" latexdraw:x="294.0">
+            <text x="294.0" y="51.0"><![CDATA[Selena Gomez]]></text>
+        </g>
+        <g latexdraw:type="line" id="id138">
+            <line x1="114.0" x2="93.0" y1="81.0" y2="112.0"
+                stroke-width="2.0" stroke="black"
+                latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-138)"/>
+        </g>
+        <g latexdraw:type="line" id="id139">
+            <line x1="198.0" x2="234.0" y1="38.0" y2="58.0"
+                stroke-width="2.0" stroke="black"
+                latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-139)"/>
+        </g>
+        <g latexdraw:type="line" id="id140">
+            <line x1="330.0" x2="280.0" y1="54.0" y2="94.0"
+                stroke-width="2.0" stroke="black"
+                latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-140)"/>
+        </g>
+        <g latexdraw:type="line" id="id141">
+            <line x1="519.0" x2="481.0" y1="84.0" y2="120.0"
+                stroke-width="2.0" stroke="black"
+                latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-141)"/>
+        </g>
+        <g latexdraw:type="line" id="id142">
+            <line x1="344.0" x2="285.0" y1="107.0" y2="153.0"
+                stroke-width="2.0" stroke="black"
+                latexdraw:rotationAngle="0.0" marker-end="url(#arrow2-142)"/>
+        </g>
+    </g>
+    <metadata>
+        <latexdraw:metadata>
+            <latexdraw:displayBorders>false</latexdraw:displayBorders>
+            <latexdraw:autoAdjust>true</latexdraw:autoAdjust>
+            <latexdraw:ppc>50</latexdraw:ppc>
+            <latexdraw:zoom>1.0</latexdraw:zoom>
+            <latexdraw:unit>cm</latexdraw:unit>
+            <latexdraw:classicGrid>false</latexdraw:classicGrid>
+            <latexdraw:gridGap>10</latexdraw:gridGap>
+            <latexdraw:code>0</latexdraw:code>
+            <latexdraw:displayGrid>true</latexdraw:displayGrid>
+            <latexdraw:magneticGrid>false</latexdraw:magneticGrid>
+            <latexdraw:autoUpdate>true</latexdraw:autoUpdate>
+            <latexdraw:version>2.0.8</latexdraw:version>
+            <latexdraw:size>
+                <latexdraw:width>1440</latexdraw:width>
+                <latexdraw:height>798</latexdraw:height>
+            </latexdraw:size>
+            <latexdraw:position>
+                <latexdraw:x>0</latexdraw:x>
+                <latexdraw:y>22</latexdraw:y>
+            </latexdraw:position>
+            <latexdraw:dividerPosition>0.8256944444444444</latexdraw:dividerPosition>
+            <latexdraw:displayCodePanel>true</latexdraw:displayCodePanel>
+            <latexdraw:displayXScale>true</latexdraw:displayXScale>
+            <latexdraw:displayYScale>true</latexdraw:displayYScale>
+            <latexdraw:delimitorOpacity>130</latexdraw:delimitorOpacity>
+        </latexdraw:metadata>
+    </metadata>
+</svg>

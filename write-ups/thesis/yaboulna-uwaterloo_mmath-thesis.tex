@@ -3171,17 +3171,175 @@ this is a number that can be conveniently displayed as a summary for a human use
 
 }
 \label{fig:trendObamaRomney}
-\caption{Google Trends volume with time plot for the queries ``Barack Obama'' and ``Mitt Romney'', the top 2 in the Top Chart for people in November 2012}
+\caption{Google Trends' volume with time plot for the queries ``Barack Obama'' and ``Mitt Romney'', the top 2 in the Top Chart for the \emph{people} category in November 2012}
 \end{figure}
 
-% shows the volume plot
-We present the 
+\subsubsection{Pop Artists and Music Awards Events} 
 
-From 11 / 09 / 12 @ 4:30:00pm EST (1352500200) to 11 / 13 / 12 @ 3:30:00am EST (1352799000)
-\subsubsection{Pop Artists} 
-Pop artists occupy most of the top 10 The month of November 
-Justin Bieber comes at rank 3  
 
+%http://www.google.ca/trends/explore#q=Justin%20Bieber%2C%20Taylor%20Swift%2C%20Rihanna%2C%20Nicki%20Minaj%2C%20Selena%20Gomez&geo=US&date=11%2F2012%201m&cmpt=q
+
+Pop artists occupy most of the top 10 chart for the \emph{people} category.
+Five out of the top 10 are pop artists, and they occupy ranks as high as 3 (Justin Bieber) and 4 (Taylor Swift).
+This is due to music awards events, specially
+the MTV Europe Music Awards on November 11th\footnote{http://en.wikipedia.org/wiki/2012\_MTV\_Europe\_Music\_Awards} 
+and the American Music Awards on November 18th\footnote{http://en.wikipedia.org/wiki/American\_Music\_Awards\_of\_2012}. 
+Figure~\ref{fig:trendsPopArtists} shows the query volumes for the artists in the top 10 chart. 
+The curves for all of the artists show relatively high volume when those events were happening.
+
+\begin{figure}
+\centering
+\scalebox{0.5}{
+\includegraphics{trends/pop-artists.png}
+}
+\label{fig:trendsPopArtists}
+\caption{Google Trends' volume with time plot for the queries about pop artists in the Top Chart for the \emph{people} category in November 2012}
+\end{figure}
+
+
+
+The top 30 \emph{strongly closed} itemsets mined from hours leading to 
+% both of the events contain
+the MTV Europe Music Awards contain
+many itemsets about the events and the artists, 
+especially that this event used social media to collect audience votes. 
+Voting for the award winner is %MTV Europe Music Awards
+a good example of a topic where people have strongly different opinions.
+We have shown earlier, in figure~\ref{fig:hierEma},
+that such different opinions are all reported as separate \emph{strongly closed} itemsets, 
+because clustering using the postings lists avoid forming incohesive clusters.
+We also note that different  \emph{strongly closed} itemsets from one such topic
+can all occupy high ranks.
+%For example, the top 3 itemsets of the hour 15:00 on November 9th
+%are supporting ``Katy  Perry'', ``Justin Bieber'' and ``Lady Gaga'' respectively.
+For example, the top 10 itemsets for the hour starting 9:30 EST on November $11^{th}$
+are shown in table~\ref{table:mtvemaTop10}.
+The number in parenthesis next to each item is the number of 
+itemsets in the cluster which contain this item.
+Items in the itemset are sorted by their frequency in this hour, in descending order.
+The first itemset in the top 10 reflect the winner, Justin Bieber.
+Itemsets about other topics also appear in the top 10; 
+there was a football game between Chelsea and Liverpool, and 
+November $11^{th}$ is the day World War I ended 
+(observed as Remembrance day in the United Kingdom and the Commonwealth of Nations,
+% including Australia and Canada
+and Veteran's day in the USA).
+Several other hours have itemsets supporting different artists in the top 30,
+%Almost all of the itemsets about the event are vote itemsets, 
+which are all variations of the itemset: \{\#emawinARTIST, ARTIST, NAME, \#mtvema, i, think, will, be, the, big, winner, tweet, your, pick, at, URL\footnote{http://ema-twittertracker.mtv.com/live/predict.html}\}.
+
+\begin{table}
+\centering
+\footnotesize
+%cut -f 1 sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_1352647800_supp24 | less -NS
+\begin{tabular}{|p{0.5cm}|p{15cm}|}
+\hline 
+1 & \#emawinbieber(43), \#mtvema(92), URL(31), at(47), be(77), bieber(62), big(81), i(24), justin(62), pick(50), the(62), think(48), tweet(74), will(77), winner(67), your(65)\\ \hline 
+2 & \#jonasbrothers(3), \#emawinjoej(4), \#joejonas(3)\\ \hline 
+3 & \#emawinbieber(1), \#justinbieber(2)\\ \hline 
+4 & \#emawinbieber(2), \#justinbieber(2), \#emavotebieber(4)\\ \hline 
+5 & chelsea(2), liverpool(2), vs(3)\\ \hline 
+6 & \#staycurrent(3), you(1), @buysocialclout(2), can(1), follow(1), today(1)\\ \hline 
+7 & \#emavoteonedirection(1), URL(2), emavoteonedirection(1)\\ \hline 
+8 & \#emawinbieber(1), \#justinbieber(2), @justinbieber(2)\\ \hline 
+9 & remembrance(2), day(1)\\ \hline 
+10 & veteran(2), day(1), s(2)\\ \hline 
+\end{tabular}
+\label{table:mtvemaTop10}
+\caption{Top 10 itemsets in an hour in the morning of the day of MTVEMA }
+\end{table}
+
+The American Music Awards (AMAs) did not use social media
+to collect votes, so there was not as much posts about it as MTVEMA.
+However, itemsets about it still occupied top positions. 
+There are several hours where the itemset \{american, music, awards\}
+occupied the top position, but the hour we choose to show as an example does not.
+We chose this hour because 
+%it is the only one that contains actual 
+it contains an itemset that offers
+more information than what is contained in other
+itemsets from other hours;
+itemsets during this event were mainly
+names of artists, or the name of the event.
+% itemsets usually contain; 
+%itemsets are usually either a whole tweet that is indicate that 
+This contains an itemset (at position 26) about 
+how Justin Bieber appeared with his mother Pattie Mallette\footnote{http://hollywoodlife.com/2012/11/18/justin-bieber-brings-mom-to-amas-without-selena-gomez/\#!1/nokia-jenny-mccarthy/}
+instead of his usual escort Selena Gomez, his ex-girlfriend. 
+This is interesting news, 
+specially following Justin and Selena's break up
+that warranted both of their names a surge in 
+their popularity as search queries on November $9^{th}$ and $10^{th}$.
+The news of the break up also appeared in the top 30 itemsets.
+Tweets from the postings lists of the itemset \{justin, bieber, and, selena, gomez\}
+at that time period include shares of news articles such as:
+\emph{``Justin Bieber and Selena Gomez Break Up http://eonli.ne/SByVNK'' WHAT?!?!?! Is this truee? @justinbieber @selenagomez}, % https://twitter.com/emeliemcelroy/status/267119732208070656:
+sad comments such as: 
+% https://twitter.com/xAnnaVampx/status/267134185767055361
+\emph{Justin and Selena broke up? O\_o the awkward moment when he wrote a song about her and another with her name in it...}, and
+some hopeful comments:
+%https://twitter.com/katrinaa_xx/status/267118952071712768
+\emph{apparently there is a rumor that justin bieber and selena gomez broke up? GO @jessleigh1122 GO!!!!!}.
+%
+%https://twitter.com/katrinaa_xx/status/267118952071712768
+%apparently there is a rumor that justin bieber and selena gomez broke up? GO @jessleigh1122 GO!!!!!
+
+
+Four of the artists names appeared repeatedly in the top 30 itemsets
+of hours in the days of their respective higher search volume.
+However, Rihanna, never appeared in any \emph{strongly closed} itemset.
+Actually it rarely appeared in any itemset of length 2 or more. 
+It is not unusual for an itemset about an artist to be merely his or her name,
+%which is just one word in the case of some artists such as Rihanna and Adele
+%possibly because users talk about artists using different wordings.
+and several artists, like Rihanna, are known by their first name only.
+It is impossible for an itemset of length 1 to be \emph{distinct},
+since this condition requires that the itemsets be implied
+by one of its subsets with high confidence.
+Therefore \emph{distinct} and \emph{strongly closed} itemsets
+would never capture information in an itemset of length 1.
+
+\begin{table}
+\footnotesize
+\begin{tabular}{|p{0.5cm}|p{15cm}|}
+\hline 
+1 & @vinoalan(1), \#vinofollowspree(2)\\ \hline 
+2 & vote(2), \#peopleschoice(2), voted(1), retweet(2), @peopleschoice(4), URL(3), for(1), i(1), just(1), to(2), via(3)\\ \hline 
+3 & @simoncowell(2), follow(2), me(2), please(2), to(1)\\ \hline 
+4 & grinch(2), stole(2), all(3), christmas(2), for(2), haters(3), how(1), is(1), the(5), this(1)\\ \hline 
+5 & you(1), @real\_liam\_payne(2), thank(2)\\ \hline 
+6 & grinch(3), stole(2), how(1), the(3)\\ \hline 
+7 & all(3), amas(1), for(3), is(2), the(4), this(2), watching(2)\\ \hline 
+8 & grinch(1), stole(2), christmas(2)\\ \hline 
+9 & jepsen(3), carly(1), rae(2)\\ \hline 
+10 & dumb(1), dumber(2)\\ \hline 
+11 & 3(2), @real\_liam\_payne(2), URL(1), live(1), on(1)\\ \hline 
+12 & hi(2), say(1), to(2)\\ \hline 
+13 & oz(1), wizard(2), of(2), the(2)\\ \hline 
+14 & liam(1), @real\_liam\_payne(1), URL(1), ama(1), live(1), on(2), the(1)\\ \hline 
+15 & american(2), awards(2), music(3)\\ \hline 
+16 & ama(3), award(3), first(1), night(1), of(3), s(2), the(6), watching(1)\\ \hline 
+17 & @simoncowell(1), @real\_liam\_payne(1), call(2), follow(2), me(3), so(2)\\ \hline 
+18 & pone(3), triste(2), quŽ(1), te(3)\\ \hline 
+19 & is(1), on(1), red(1), the(2), wanted(1)\\ \hline 
+20 & @simoncowell(1), simon(3), call(1), follow(3), me(2), please(3)\\ \hline 
+21 & american(2), awards(1), music(2), the(2)\\ \hline 
+22 & carpet(2), red(1)\\ \hline 
+23 & oz(1), wizard(3), of(2)\\ \hline 
+24 & imessage(2), is(1)\\ \hline 
+25 & series(1), survivor(2)\\ \hline 
+26 & and(3), justin(2), pattie(2)\\ \hline 
+27 & you(4), @real\_liam\_payne(3), URL(1), found(2), i(2), live(1), love(1), on(1)\\ \hline 
+28 & \#getglue(2), URL(1)\\ \hline 
+29 & \#gameinsight(1), \#android(2), \#androidgames(1), URL(3), android(1)\\ \hline 
+30 & \#gameinsight(1), \#android(2), \#androidgames(3)\\ \hline 
+
+\end{tabular}
+\label{table:amaTop30}
+\caption{Top 30 itemsets from 18:30 EST on the day of American Music Awards (AMAs)}
+\end{table}
+
+%MTVEMA: From 11 / 09 / 12 @ 4:30:00pm EST (1352500200) to 11 / 13 / 12 @ 3:30:00am EST (1352799000)
 
 
 %yaboulna@hops:~/fim_out/lcm_closed_thesis/1hr+30min_ngram5-relsupp10_oct-nov-dec/sorted14_thesis-formula
@@ -3190,65 +3348,6 @@ Justin Bieber comes at rank 3
 %head -n 100 *conf0.25*135297* | less -NS ==> No bieber no taylor swift
 
 %head -n 30 *conf0.25*1351@(76|77|78|79|8)* | less -NS ==> taylor swift in top 30 at 1351825200 (11 / 01 / 12 @ 10:00:00pm EST), top 50 also in 1351828800 (11 / 01 / 12 @ 11:00:00pm EST) and 1351814400 (11 / 01 / 12 @ 7:00:00pm EST)
-
-
-
-On November $9^{th}$, table \ref{table:nov9}, the most interesting hour is
-15:00.
-The MTV Europe Music Awards (MTVEMA) was taking place and votes were solicited
-from the audience through Twitter.
-This is an example of a topic where people have strongly different opinions.
-The top 3 itemsets of the hour 15:00 are supporting ``Katy  Perry'',
-``Justin Bieber'' and ``Lady Gaga'' respectively.
-They are all reported as separate itemsets, showing how clustering using the
-postings lists avoid forming incohesive clusters.
-No other major events were happening but many overlapping minor ones happened.
-The day started by news about the end of two careers;
-the Laker's ``coach Mike Brown'' got fired  and ``CIA director David Petraeus
-resigns''.
-A personal relationship of Justin Bieber also ends as he
-``broke, up, with, Selena, Gomez'' at 22:00.
-This event overlaps with his participation in the MTVEMA,
-and both topics occupied high (but distinct) rankings. 
-By the end of the day in North America, many congratulations for the
-Indonesian Hero's day (``Hari Pahlawan'') appear, and the Turkish
-commemoration day of Ataturk is also mentioned as the 10th of November has
-started in these countries.
-These are examples of itemsets from languages with a relatively low number of
-users, showing how the absolute popularity of a topic does not affect its rank.
-If itemsets from only a specific language is desired,
-language identification can be applied on the itemsets and tweets from their
-postings lists.
-Moving language identification downstream avoids affecting the results of
-mining because of error in an upstream component.
-\begin{table}
-\begin{center}
-\small
-\def\arraystretch{1.1}
-\begin{tabular}{|p{.6cm}|p{7.5cm}|}
-
-\hline
-\multirow{3}{*}{\texttt{12:00}} 
-& \#iwillneverunderstand, why\\\cline{2-2}
-& breaking, news, head, coach, mike, brown, have, fired  \\\cline{2-2}
-& USERNAME, spots, available, my, club \\\hline
-\multirow{3}{*}{\texttt{14:00}} 
-& cia, director, david, petraeus, resigns \\\cline{2-2}
-& voc\^{e}, acha, que \\\cline{2-2}
-& \#tvoh [the voice of Holland], babette \\\hline
-\multirow{3}{*}{\texttt{15:00}} & \#emawinkaty, i, think, katy, perry, will, be, the, big,  \#mtvema, winner, tweet, your, pick, at, URL
-\\ \cline{2-2}
-& \#emawinbieber, i, think, justin, bieber, ... [same as above] \\ \cline{2-2}
-& \#emawingaga, ... [same as above]  \\\hline														
-\multirow{3}{*}{\texttt{22:00}} & justin, bieber, and, selena, gomez, broke, up
-\\ \cline{2-2}
-& selamat, hari, pahlawan \\\cline{2-2}
-& aniyoruz, kemal, mustafa [ataturk] \\ \hline
-\end{tabular}
-\end{center}
-\caption{Top 3 itemsets for hours in November 9th}
- \label{table:nov9}
-\end{table}
 
 
 
