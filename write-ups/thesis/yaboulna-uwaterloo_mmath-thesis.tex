@@ -2985,9 +2985,13 @@ acceptance speech.
 \begin{center}
 \footnotesize
 \def\arraystretch{1.1}
-\begin{tabular}{|p{1cm}|p{6cm}|p{9cm}|}
+\begin{tabular}{|p{1cm}|p{6cm}|p{8cm}|c|}
 \hline
-Time & Itemset & Explanation \\ \hline
+Time & Itemset & Explanation & MTV \\ \hline
+\multirow{3}{*}{\texttt{08:30} 
+& \em get out and vote & & - \\ \cline{2-4}
+& \em happy elections day & & - \\ \cline{2 - 4}
+& \em it's elections day & & - \\ \cline{2-4}
 \multirow{3}{*}{\texttt{13:00}} 	&  \em 0, 1, de, jong 			& De Jong scores for Ajax \\ \cline{2-3} %http://www.dailymail.co.uk/sport/football/article-2228815/Manchester-City-2-Ajax-2--match-report-Siem-Jong-Yaya-Toure-Sergio-Aguero-Champions-League.html
 					   	& \em geordie, shore		& Season 5 of the TV series starts \\ \cline{2-3}
 						& \em get, out, and, vote		& Still early in the U.S. elections day \\\hline
@@ -3133,7 +3137,8 @@ the top 50 \emph{strongly closed} itemsets
 %We do not know if all the top ranked \emph{strongly closed} itemsets 
 %are also in picked up at a relatively high rank
 %would also be picked by MTV if we use it to mine more itemsets, 
-The quality of the results are comparable, but
+The quality of the results is comparable, but
+BALH ASHFKAKFJA HSJSSJS
 because the algorithm's space and time requirements
 %becomes prohibitively large when the number
 of itemsets requested is increased.
@@ -3155,10 +3160,7 @@ is likely to result in more itemsets than
 what MTV would pick as the top $k$.
 On the other hand, \emph{strongly closed} itemsets
 are efficiently mined and are not restricted to a predefined number.
-We have shown that the top 3 \emph{strongly closed} itemsets 
-from different hours are interesting, 
-and that itemsets that are picked by the MTV algorithm are almost all 
-among the top 30 \emph{strongly closed} itemsets.
+
  
 \begin{figure}
 \centering
@@ -3166,6 +3168,7 @@ among the top 30 \emph{strongly closed} itemsets.
 \includegraphics{mtv_runtime.png}
 }
 \caption{Runtime of the MTV algorithm~\cite{mampaey2011tell} at different resultset sizes (top k)}
+\label{fig:mtvPerf}
 \end{figure}
 
 \subsection{Google Trends}
@@ -3627,7 +3630,9 @@ Such itemsets are filtered out by
 %selecting only itemsets
 %which are distinctively different from their subsets.
 the \emph{distinct} condition, 
-given that documents are tokenized into variable length N-grams.
+given that transactions are made up 
+%documents are tokenized into 
+variable length N-grams as items.
 
 \item \emph{Distinct} itemsets are clustered into \emph{strongly closed} itemsets
 for a further reduction in the number of itemsets.
@@ -3650,36 +3655,78 @@ reducing redundancy in the mining results.
 Another important contribution is a formula for ranking \emph{strongly closed} itemsets 
 based on their temporal novelty, using the collective Information Gain of itemsets in the cluster,
 taking into account the dependence between itemsets in a cluster.
-The
-The top 3 itemsets from the hours of election day and another less eventful
-day shows that the synopses captures important events, and might reasonably
-be directly presented to users as a summary.
+
+
+\section{Results}
+
+We have shown the effectiveness of our methods 
+by applying them to tweets posted in the time frames of
+various real world events.
+We use a minimum support threshold and an epoch length that
+we set according to certain characteristics of the data,
+which can be easily found out if the dataset is changed.
+However, we set the parameter that controls the
+distinctiveness between two itemsets, $\kappa$, 
+to an arbitrary value according to its definition.
+%which controls tolerance to redundancy. 
+%Even though the use or variable length N-grams
+
+We have shown that using our 
+proposed methods and ranking formula
+the top \emph{strongly closed} itemsets 
+from different hours are relevant to 
+the real world events known to be taking place
+at those hours.
+We have shown how the top 3 itemsets from different hours
+in the day the US presidential elections
+can be used to compose a summary of how the day unwound.
+We also compared our synopses for that day to the ones created 
+by the MTV algorithm~\cite{mampaey2011tell}.
+We have shown that our algorithm efficiently 
+creates synopses that cover the information
+in the synopses created by MTV
+~--~itemsets that are picked by the MTV algorithm are almost all 
+among the top 30 \emph{strongly closed} itemsets.
+We have also assessed the quality of the synopses 
+%as a temporal 
+against data from Google Trends.
+Google Trends was used to learn about real world
+events and entities in which Google search users
+were particularly interested at different peroids of time.
+The synopses was then examined to see
+if they also reflect similar user interest.
+We have found that there is a strong similarity
+in the majority of cases, 
+and we analyzed the cases where
+our synopses did not reflect the same
+user interest as Google Trends.
+
+\subsection{The Complete Results of Mining the Twitter Dataset}
+The complete results of mining all one hour epochs (with half hour time steps)
+of Twitter data collected
+in the last 3 months of 2012 is available for download\footnote{http://plg.uwaterloo.ca/$\sim$yaboulna/thesis\_results/twitter\_synopses}. 
+% at URL.
+The mining results at different values of $\kappa$,
+for \emph{minimum support} 10, 
+are available as GZipped Tar balls.
+The result of each epoch is a tab separated file
+including the itemsets, 
+their postings lists, and values of several ranking formulae.
+%The ranking formula used in this thesis is in column 14,
+%and the files are already sorted in its descending order.
+The itemsets are sorted in the descending order of the 
+ranking formula used in this thesis (column 14).
+
+
+\section{Future Work}
+
+
+
 A possible future direction is to use itemsets that appear as a sequence for
 building extractive coherent summaries of the social media stream at
 different times.
 
-\section{Results}
 
-The distinctiveness between two itemsets is based on a parameter, $\kappa$, which controls tolerance to redundancy. %Even though the use or variable length N-grams
-
-
-\subsection{The Complete Mining Results}
-The complete results of mining all one hour epochs (with half hour time steps)
-of Twitter data collected
-in the last 3 months of 2012 is available for download\footnote{}. 
-% at URL.
-%The file includes the mining results at different values of $\kappa$,
-%for \emph{minimum support} 10.
-The result of each epoch is a tab separated file
-including the itemsets, 
-their postings lists, and values of several ranking formulae.
-%The ranking formula used in this thesis is in column 12,
-%and the files are already sorted in its descending order.
-The itemsets are sorted in the descending order of the 
-ranking formula used in this thesis (column 12).
-
-
-\section{Future Work}
 
 We aim to exploit the synopses for temporal query expansion in our future work. Terms from itemsets relevant to a query (or occurring in a relevant document)
 can be used for query expansion, thus acting as precomputed results of 
