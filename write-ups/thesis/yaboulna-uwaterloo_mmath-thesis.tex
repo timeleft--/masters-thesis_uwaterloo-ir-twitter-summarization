@@ -3426,7 +3426,7 @@ would never capture information in an itemset of length 1.
 The same happens with one more of the names in the Top Chart,
 Abraham Lincoln. 
 During the month of November people were talking on Twitter about 
-Lincoln the movie\footnote{http://www.imdb.com/title/tt0443272/}, 
+Lincoln the movie %\footnote{http://www.imdb.com/title/tt0443272/}, 
 %not Abraham Lincoln as a 
 and this was reflected in mining the term as a closed 1-itemset from 
 several hours throughout the month.
@@ -3539,7 +3539,20 @@ enumerate the Top Charts.
  % 37 fp_3600_1353342600_supp23:@kimkardashian
  % 
   
-
+\section{The Complete Mining Results}
+The complete results of mining all one hour epochs (with half hour time steps)
+of Twitter data collected
+in the last 3 months of 2012 is available for download\footnote{}. 
+% at URL.
+%The file includes the mining results at different values of $\kappa$,
+%for \emph{minimum support} 10.
+The result of each epoch is a tab separated file
+including the itemsets, 
+their postings lists, and values of several ranking formulae.
+%The ranking formula used in this thesis is in column 12,
+%and the files are already sorted in its descending order.
+The itemsets are sorted in the descending order of the 
+ranking formula used in this thesis (column 12).
 
 \chapter{Conclusion and future work}
 \label{sec:concfut}
