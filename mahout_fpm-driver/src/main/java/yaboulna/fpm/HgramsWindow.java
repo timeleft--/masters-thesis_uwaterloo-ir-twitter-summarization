@@ -65,7 +65,7 @@ public class HgramsWindow {
    * @param args
    *          windowStartUx (1352260800 for wining hour 1352199600 for elections day, 1349085600 for oct 1st 2012 5am)
    *          windowEndUx (1352264400 for end of winning hour 1352286000 for end of elections day, 1357038000 jan1,13)
-   *          path of output
+   *          path of output as a fully qualified URL.. do not forget fil:///, because we use Hadoop Path :(
    *          epochStep for example 28800/3600 for an 8 hour window with 1 hour steps, 2419200/604800 4wk/1wk
    *          [cmd] absolute path to the command to use, or mahout to fall back to its unreliable slow implementation
    *          [minSupp/support] The minimum support, that is the absolute support desired at the trough of the day volume,

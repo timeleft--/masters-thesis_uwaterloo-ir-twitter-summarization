@@ -2166,7 +2166,7 @@ In the mining results of hour long epochs from the
 first two weeks of November 2012, 
 the number of \emph{distinct} itemsets 
 averages at 911.71 itemsets 
-as compared to 2428.3 closed itemsets
+as compared to 2,428.3 closed itemsets
 (37.55\%). 
 To make sure that no important information is filtered out, 
 we look at itemsets that are filtered out.
@@ -3130,22 +3130,23 @@ which are otherwise ranked high in all hours.
 All the topically relevant itemsets chosen by MTV are present in 
 the top 50 \emph{strongly closed} itemsets
 ~--~most of them are in the top 30.
-We do not know if all the top ranked \emph{strongly closed} itemsets 
+%We do not know if all the top ranked \emph{strongly closed} itemsets 
 %are also in picked up at a relatively high rank
-would also be picked by MTV if we use it to mine more itemsets, 
+%would also be picked by MTV if we use it to mine more itemsets, 
+The quality of the results are comparable, but
 because the algorithm's space and time requirements
-becomes prohibitively large when the number
+%becomes prohibitively large when the number
 of itemsets requested is increased.
 % beyond 
 At $k > 100$ the algorithm fails because of a memory error, 
 even though it was being run on a machine with 256 GB of RAM,
 with no limit on its resource consumption.
-At $k = 30$ the algorithm was left running for days and it finished 
-mining only a few hour long epochs. 
+%At $k = 30$ the algorithm was left running for days and it finished 
+%mining only a few hour long epochs. 
 %Therefore, we conclude from the comparison 
 %that our methods can  efficient
 %that MTV is not superior well rooted theoretically
-
+The runtime performance at $k \le 100$ is plotted in figure~\ref{fig:mtvPerf}.
 The small value of $k$ that has to be used 
 makes MTV inadequate for mining social media,
 where the high volume of posts 
@@ -3159,6 +3160,13 @@ from different hours are interesting,
 and that itemsets that are picked by the MTV algorithm are almost all 
 among the top 30 \emph{strongly closed} itemsets.
  
+\begin{figure}
+\centering
+\scalebox{0.9}{
+\includegraphics{mtv_runtime.png}
+}
+\caption{Runtime of the MTV algorithm~\cite{mampaey2011tell} at different resultset sizes (top k)}
+\end{figure}
 
 \subsection{Google Trends}
 \label{sec:gtrends}
@@ -3539,7 +3547,123 @@ enumerate the Top Charts.
  % 37 fp_3600_1353342600_supp23:@kimkardashian
  % 
   
-\section{The Complete Mining Results}
+\chapter{Conclusion and Future Work}
+\label{sec:concfut}
+We have proposed a method for efficiently creating temporal synposes of social
+media streams, based on a frequent itemset mining algorithm that is suitable
+for sparse data, LCM.
+The synposes can be used to explore social media, 
+and they can also reflect what is going on in the real world.
+Several studies have shown that social media is a 
+good source of information about real world events, 
+offering timely information from a variety of sources.
+Actually some of the information on social media 
+is not available in traditional news media, or 
+might be available on social media first then get picked up by news media.
+Social media allows citizen journalists and ordinary people 
+to make posts that can get disseminated widely 
+based on the quality of the post, 
+and regardless of the fame of the poster.
+Our methods focus of the content of posts,
+without explicitly giving different weights to posts 
+made by different types of account owners.
+Thus the results reflect what social media users 
+find interesting at any point in time, 
+giving voice to ordinary people and allowing
+the dynamics of social media to surface
+content that users find interesting.
+
+\section{Contributions}
+Our method summarizes an hour of Twitter data (119,035.49 tweets on average) into
+139.1 itemsets in 1,945.68 milliseconds on average, %224
+and scales for longer epochs of data.
+The direct application of LCM on one-hour epochs of Twitter data results in
+an average of 61,505.16 closed itemsets 
+and takes 2,506.58 milliseconds onaverage.
+The improvement is due to the following contributions: 
+\begin{itemize}
+
+\item Using variable length term N-grams as items,
+to mitigate the effect of the skewness of the frequency distribution of unigrams.
+Frequently occurring sequential multi-word expressions 
+are concatenated into one item during tokenization,
+resulting in transactions made up of items coming
+from a relatively flat distribution.
+We proposed a simple method to do this;
+tokenizing documents (Tweets) into unigrams, 
+then repeatedly replacing any token whose
+probability exceeds a threshold by two tokens
+formed by concatenating to it the unigrams before and after it.
+This simple preprocessing step results in dropping the
+number of itemsets mined from an hour long epoch
+from more than 60,000 to just above 6,000 itemsets.
+The reduction comes from avoiding the creation of itemsets
+that are combinations of function words. 
+This preprocessing step was successfully used to improve
+results from the MTV algorithm~\cite{mampaey2011tell} as well as our algorithm.
+
+\item The use of the \emph{distinct} condition to select only itemsets 
+which are distinctly different from their closed subsets. 
+The condition strengthens the closure property 
+%such that variations of a topical itemset, 
+%common to itemsets mined from social media,  
+%do not result 
+%is included in the mining results only if 
+%it is implied by its topical subsets with high confidence.
+such that an itemset is included in the mining results only if
+its support is different from the support of its longest subset by 
+a substantial proportion.
+The closed property is easily satisfied by itemsets that 
+are trivially different from their subsets, which 
+results in many uninteresting itemsets 
+specially short ones
+~--~itemsets made up of a commonly
+used term along with another term that
+%is not always used with the 
+%does not carry information. % yet
+%\emph{maximal itemsets}~--~if enough support
+does not have a strong association with it.
+Such itemsets are filtered out by 
+%selecting only itemsets
+%which are distinctively different from their subsets.
+the \emph{distinct} condition, 
+given that documents are tokenized into variable length N-grams.
+
+\item \emph{Distinct} itemsets are clustered into \emph{strongly closed} itemsets
+for a further reduction in the number of itemsets.
+We propose an efficient clustering scheme that exploits the order in which
+itemsets are generated by LCM. %(using a certain configuration total ordering)
+%to efficiently cluster itemsets such that 
+The resulting clusters group together
+itemsets belonging to a certain fine grained topic,
+or an opinion within a topic,
+and avoids forming non-coherent clusters.
+The union of items in each cluster is a
+\emph{strongly closed} itemset,
+which groups together several \emph{distinct} itemsets,
+reducing redundancy in the mining results.
+% and
+%filtering out 
+
+\end{itemize}
+
+Another important contribution is a formula for ranking \emph{strongly closed} itemsets 
+based on their temporal novelty, using the collective Information Gain of itemsets in the cluster,
+taking into account the dependence between itemsets in a cluster.
+The
+The top 3 itemsets from the hours of election day and another less eventful
+day shows that the synopses captures important events, and might reasonably
+be directly presented to users as a summary.
+A possible future direction is to use itemsets that appear as a sequence for
+building extractive coherent summaries of the social media stream at
+different times.
+
+\section{Results}
+
+The distinctiveness between two itemsets is based on a parameter, $\kappa$, which controls tolerance to redundancy. %Even though the use or variable length N-grams
+
+
+\subsection{The Complete Mining Results}
 The complete results of mining all one hour epochs (with half hour time steps)
 of Twitter data collected
 in the last 3 months of 2012 is available for download\footnote{}. 
@@ -3554,31 +3678,8 @@ their postings lists, and values of several ranking formulae.
 The itemsets are sorted in the descending order of the 
 ranking formula used in this thesis (column 12).
 
-\chapter{Conclusion and future work}
-\label{sec:concfut}
-We have proposed a method for efficiently creating temporal synposes of social
-media streams, based on a frequent itemset mining algorithm that is suitable
-for sparse data, LCM.
-Our method summarizes an hour of Twitter data (116920 tweets on average) into
-224 itemsets in 1945.68 milliseconds on average,
-and scales for longer epochs of data.
-The direct application of LCM on one-hour epochs of Twitter data results in
-an average of 61505.16 closed itemsets and takes 2506.58 milliseconds on
-average.
-The improvement is due to the following contributions: 
-(1) strengthening  the closure condition such that it selects an itemset only if
-it is distinctively different from its subsets and other itemsets, and 
-(2) using variable length N-grams to mitigate the effect
-of the skewness of the frequency distribution of unigrams.
-The distinctiveness between two itemsets is based on a parameter, $\kappa$, which controls tolerance to redundancy. %Even though the use or variable length N-grams
 
-Another important contribution is a method for ranking itemsets based on their temporal novelty.
-The top 3 itemsets from the hours of election day and another less eventful
-day shows that the synopses captures important events, and might reasonably
-be directly presented to users as a summary.
-A possible future direction is to use itemsets that appear as a sequence for
-building extractive coherent summaries of the social media stream at
-different times.
+\section{Future Work}
 
 We aim to exploit the synopses for temporal query expansion in our future work. Terms from itemsets relevant to a query (or occurring in a relevant document)
 can be used for query expansion, thus acting as precomputed results of 
@@ -3586,6 +3687,8 @@ pseudo-revelance feedback.
 We also wish to explore ways to make use of the temporal signal during mining,
 such as when calculating similarity during clustering.
 
+ 
+ 
  
  % The \appendix statement indicates the beginning of the appendices.
 \appendix
