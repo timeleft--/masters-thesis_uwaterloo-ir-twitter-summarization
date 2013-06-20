@@ -225,12 +225,12 @@ such as Internet memes or large scale discussions~\cite{naaman2011hip}.
 Nevertheless, the collective stream from all users is overwhelmed by personal
 updates and non-informative chatter~\cite{java2007we,hurlock2011searching}. 
 Furthermore, the attention span given to the majority of topics is quite short~\cite{kwak2010twitter}.
-Timely finding posts about topics of interest requires an
-efficient mining algorithm.
+Finding posts about topics of interest in a timely fashion
+requires an efficient mining algorithm.
 
 To realize the benefits of social media in giving a voice to ordinary people,
 the algorithm should mine the content of posts 
-without explicitly assigning weights based on merits of users. % to posts made by ``influencers''.
+without explicitly assigning weights based on popularity of users. % to posts made by ``influencers''.
 However, the nature of text in social media poses a challenge when applying
 traditional text mining algorithms. 
 Text in social media is usually short, undermining the effectiveness of within document frequency counting.
@@ -257,7 +257,7 @@ social media text without degrading its efficiency:
 The number of itemsets mined grows with the number of
 distinct items~--~which is particularly high in the text domain.
 In social media, the problem is complicated by the continuous creation 
-of new tokens~\cite{lin2012study}, in the form of hashtags or usernames
+of new tokens~\cite{lin2012study}, in the form of hashtags or usernames,
 and due to shortening of words because of the length limit of some platforms.
 
 \item
@@ -290,13 +290,13 @@ itemsets caused by trivial differences in the language used.
 
 
 \section{Motivation and Contributions}
-Frequent itemset mining is suitable for the dynamic nature of social media streams.
+Frequent itemset mining is suitable to the dynamic nature of social media streams.
 It does not require prior knowledge of the distribution of items,
 nor does it require selecting a few items to monitor 
 or a preset number of topics to mine.
 It is fast, efficient and scalable. 
 It is also robust against data sparsity, 
-and can actually exploit it for faster computation.
+and can actually exploit this sparsity for faster computation.
 Unlike trending topics\footnote{\url{http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}}
 \cite{mathioudakis2010twittermonitor}, the results of frequent itemset
 mining include itemsets that have high frequency because of sustained interest,
@@ -319,7 +319,7 @@ As we shall see in later examples, the top ranked itemsets cover a variety
 of open topics, and within one topic different opinions are reported as
 separate contrastive itemsets.
 
-Previous works have proposed methods tailored for the use of frequent itemsets (patterns) to improve search performance.  
+Previous work has proposed methods tailored for the use of frequent itemsets (patterns) to improve search performance.  
 Itemsets provide better semantics than keywords, and have better statistical properties than phrases~\cite{wu2006deploying}.
 By using carefully selected itemsets and filtering out ``meaningless'' ones, 
 \emph{pattern-based} approaches achieve better performance
@@ -343,7 +343,7 @@ Our main contributions are as follows:
 \begin{itemize}
 \item We propose the use of variable length N-grams as items to avoid mining uninformative language constructs as itemsets. 
 \item We propose conditions for selecting informative itemsets and reducing redundancy in the mining results.
-\item We propose a formula for ranking itemsets according to novelty.
+\item We propose a formula for ranking itemsets according to temporal novelty.
 \end{itemize}
 The effectiveness of our methods is shown quantitatively, 
 in terms of the drop in the number of itemsets at each processing step. 
@@ -416,10 +416,10 @@ We now introduce the notation used in this paper:
 Frequent itemset mining comprises a large body of work that goes back to the
 early 1990s~\cite{agrawal1993mining}. 
 %A variety of algorithms have been proposed, and they work in totally different ways. 
-We categorize frequent itemset mining algorithms into 
-algorithms that operate in the item space, 
-algorithms that operate in the transaction space, 
-and algorithms that operate in the solution space. 
+We categorize frequent itemset mining algorithms into
+1) algorithms that operate in the item space, 
+2) algorithms that operate in the transaction space, 
+and 3) algorithms that operate in the solution space. 
 While a comprehensive survey is beyond the scope of this thesis, 
 we discuss at least one representative from each category of algorithms.
 
@@ -524,7 +524,8 @@ Building conditional pattern bases and sub-FP-trees becomes very time and space 
 The last category of frequent itemset mining algorithms comprises algorithms that operate in the solution space. 
 It can be argued that algorithms that traverse a representation of the DB are operating in the solution space rather than the transaction space~--~given that they avoid generating candidates with low support. 
 However, in our categorization we focus on the logic behind how itemsets are generated or pruned rather than the data structure used to generate them.
-After all, any algorithm must calculate the support of itemsets, and this needs either maintaining a representation of the DB or scanning the transactions. 
+After all, any algorithm must calculate the support of itemsets, 
+and this requires the algorithm to either maintain a representation of the DB or scan the transactions. 
 Algorithms that operate in the solution space prune itemsets that do not possess certain properties. 
 The limited number of itemsets that possess the desired property are sufficient to deduce the rest of the solution (other frequent itemsets and their support).
 The reduction in the number of itemsets mined improves the performance of such algorithms, 
@@ -688,10 +689,10 @@ the value of a downward closed measure cannot increase as the size of the itemse
 and \emph{any-confidence} which is neither upward nor downward closed.
 Algorithms that mine itemsets based on the above measures were proposed~\cite{lee2003comine,kim2004ccmine},
 but if an application specific measure is to be used then it has to be evaluated in a post mining stage 
-or within the Redundancy-Aware Top-K framework~\cite{xin2006extracting}.
+or within the Redundancy-Aware Top-K Framework~\cite{xin2006extracting}.
 
 
-The Redundancy-Aware Top-K framework~\cite{xin2006extracting} selects the top K itemsets according to an 
+The Redundancy-Aware Top-K Framework~\cite{xin2006extracting} selects the top K itemsets according to an 
 interestingness criterion. % was first %proposed by Xin et al.~\cite{xin2006extracting}. 
 The major difference between their approach and all of the previous works is that 
 it emphasizes both interestingness and redundancy on the selected top K itemsets, 
