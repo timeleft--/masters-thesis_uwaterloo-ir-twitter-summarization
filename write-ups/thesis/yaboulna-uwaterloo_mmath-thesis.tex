@@ -297,7 +297,7 @@ or a preset number of topics to mine.
 It is fast, efficient and scalable. 
 It is also robust against data sparsity, 
 and can actually exploit it for faster computation.
-Unlike trending topics\footnote{http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}
+Unlike trending topics\footnote{\url{http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}}
 \cite{mathioudakis2010twittermonitor}, the results of frequent itemset
 mining include itemsets that have high frequency because of sustained interest,
 as well as a spike of interest.
@@ -738,7 +738,7 @@ from prior knowledge.
 It is also possible to use the Minimum Description Length (MDL)
 as a criterion for selecting itemsets.
 We compare our selection of itemsets to ones obtained from MTV using 
-the implementation provided by the authors\footnote{http://www.adrem.ua.ac.be/implementations}.
+the implementation provided by the authors\footnote{\url{http://www.adrem.ua.ac.be/implementations}}.
 However, the value of K has to be kept low (at most 50) for the algorithm to finish without an error, 
 even though it is running without a limit on its resource usage on a machine with 256 GB of RAM.
 In our work we focus on efficiency, allowing the summary to include larger numbers
@@ -840,7 +840,7 @@ because
 of censorship on journalism, 
 such as the 2009~-~10 Iranian election protests 
 (nicknamed ``Iran's Twitter Revolution''
-\footnote{http://www.theatlantic.com/technology/archive/2010/06/evaluating-irans-twitter-revolution/58337/}).
+\footnote{\url{http://www.theatlantic.com/technology/archive/2010/06/evaluating-irans-twitter-revolution/58337/}}).
 Other stories are reported mainly on social media
 because of the 
 content creator happens to be at the right place
@@ -848,12 +848,12 @@ at the right time.
 This could be by chance like in the case of
 the emergency landing of a US Airways plane 
 on the Hudson river in New York
-\footnote{http://www.telegraph.co.uk/technology/twitter/4269765/New-York-plane-crash-Twitter-breaks-the-news-again.html}.
+\footnote{\url{http://www.telegraph.co.uk/technology/twitter/4269765/New-York-plane-crash-Twitter-breaks-the-news-again.html}}.
 This could also be an intentional act
 of citizen journalism. 
 Citizen journalists are ``the people formerly known as the audience,'' who ``were on the receiving end of a media system that ran one way, in a broadcasting pattern, with high entry fees and a few firms competing to speak very loudly while the rest of the population listened in isolation from one another~--~ and who today are not in a situation like that at all. "
 %... The people formerly known as the audience are simply the public made realer, less fictional, more able, less predictable.''
-\footnote{http://archive.pressthink.org/2006/06/27/ppl\_frmr.html\#more}.
+\footnote{\url{http://archive.pressthink.org/2006/06/27/ppl_frmr.html\#more}}.
 
 In a study of the use of Twitter as a news medium during the 2011 Tunisia and Egypt revolutions, 
 Lotan et al.~\cite{lotan2011revolutions}  categorized 963 accounts that made influential posts according to the \emph{type of actor}. 
@@ -1284,7 +1284,7 @@ operations are counting (line 15) and projection (line 24).
 However, the fast execution time and the low memory requirements of the
 algorithm makes it possible that a distributed implementation will
 cause unnecessary overhead for all but the largest data sets.
-We experimented with Hadoop\footnote{http://hadoop.apache.org}
+We experimented with Hadoop\footnote{\url{http://hadoop.apache.org}}
 %, an open source map/reduce framework, 
 and the overhead was in the order of minutes.
 Besides, many problems start to arise 
@@ -1347,7 +1347,7 @@ X $\gets$ Inverted index of E\;
 \section{Using LCM for Mining Social Media Text}
 \subsection{Dataset}
 Throughout this paper we use data collected from the Twitter public
-stream\footnote{https://dev.twitter.com/docs/streaming-apis/streams/public}
+stream\footnote{\url{https://dev.twitter.com/docs/streaming-apis/streams/public}}
 since October 1st, 2012. 
 We use only tweets written in the Latin script to facilitate tokenization
 using white space and other word boundaries.
@@ -1522,12 +1522,12 @@ The peaks on the $3^{rd}$, $16^{th}$ and $22^{nd}$
 %~-~the days of 
 %These peaks might be caused by 
 coincide with
-the presidential debates\footnote{http://www.uspresidentialelectionnews.com/2012-debate-schedule/}, and
+the presidential debates\footnote{\url{http://www.uspresidentialelectionnews.com/2012-debate-schedule/}}, and
 the peak on the $28^{th}$ coincide with 
 the emergency declaration for
 the North Easter states of the USA
 in anticipation of 
-Hurricane Sandy\footnote{http://www.fema.gov/hurricane-sandy-timeline\#oct28}.
+Hurricane Sandy\footnote{\url{http://www.fema.gov/hurricane-sandy-timeline\#oct28}}.
 %However, it is 	
 The use of such a model to indicate the presence
 of interesting information can be investigated further,
@@ -1791,7 +1791,7 @@ slightly until it starts decreasing at $N \le 5$.
 The decrease happens because all 4-grams with probability above the threshold
 are parts of tweets from services that use the same text and append a URL,
 such as tweets reporting scores from
-Game Insight\footnote{http://www.game-insight.com/}.
+Game Insight\footnote{\url{http://www.game-insight.com/}}.
 Such tweets are tokenized into more 4-grams than 5-grams, and the 4-grams
 appearing in them do not appear elsewhere.
 Thus, each pair is reduced to one 5-gram.
@@ -2015,7 +2015,7 @@ enough to be mined as itemsets.
 
 Figure \ref{fig:sham} illustrates closed itemsets related to Donald
 Trump's famous tweets in reaction to Obama's victory in the
-2012 US elections\footnote{http://www.huffingtonpost.com/2012/11/07/donald-trump-election-revolution\_n\_2085864.html}.  
+2012 US elections\footnote{\url{http://www.huffingtonpost.com/2012/11/07/donald-trump-election-revolution_n_2085864.html}}.  
 Each area in the figure represents the transactions containing the itemset
 formed by concatenating the items in all intersecting ellipses.  
 In the figure, the most discriminative words are ``sham, and, travesty''
@@ -2129,7 +2129,7 @@ The itemsets shown are \emph{distinct} at $\kappa = 0.25$.
 %Each itemset has its support next to it, 
 The figure is produced by the graph drawing algorithm proposed by Yifan Hu~\cite{hu2005efficient},
 using the implementation provided 
-in the graph visualization platform Gephi\footnote{https://gephi.org/}.
+in the graph visualization platform Gephi\footnote{\url{https://gephi.org/}}.
 We run the algorithm on a graph with a node for each itemset and 
 an edge between similar itemsets.
 Similarity between itemsets
@@ -2940,7 +2940,7 @@ In section~\ref{sec:electionsday},
 we show how the 2012 US presidential elections day is summarized by our methods, %hour-by-hour
 and we compare our summary to the one produced my the MTV algorithm~\cite{mampaey2011tell}.
 In section~\ref{sec:gtrends},
-we investigate the synopses of hours selected by the aid of Google Trends\footnote{http://www.google.ca/trends},
+we investigate the synopses of hours selected by the aid of Google Trends\footnote{\url{http://www.google.ca/trends}},
 assessing which popular queries were or were not reflected in our synopses.
 
 \subsection{US presidential elections day}
@@ -2958,7 +2958,9 @@ from one-hour epochs
 %starting either at the hour or the half-hour mark. 
 using a half-hour time step.
 The itemsets shown are the first appearances of the most interesting itemsets;
-that is, an hour is shown only if its top 3 feature novel interesting itemsets. 
+that is, an hour is shown only if its top 3 feature novel interesting itemsets
+\footnote{The top 50 itemsets in the hours from 5 AM on the 6th till 
+almost 9 AM on the 7th are available for download at \url{http://plg.uwaterloo.ca/~yaboulna/thesis_results/twitter_synopses/elections-day_nov6-0500_nov7-0850_top50-strongly-closed.txt}}.
 The first column is the beginning of the hour, EST time.
 The second column is the top itemsets.
 The third column is a commentary to explain the itemsets.
@@ -2977,7 +2979,10 @@ Itemsets about the elections stop occupying the top 3 ranks until the evening.
 Instead, there were itemsets about UEFA Champions football matches
 with timely updates of their scores, and about TV shows. 
 We include the top 3 itemsets of 3 PM as an example.
-In the evening, events about the elections keep occupying the top 3 positions.
+In the evening, events about the elections keep occupying the top positions.
+At 10 PM all the top 5 were relevant and very interesting 
+that we decided to include an extra two itemsets in the example 
+(we do this for MTV as well in the hour of acceptance speech).
 Shortly after the results of the elections became clear, news that
 Marijuana and same sex marriage were legalized in some states
 occupies the top position.
@@ -3035,36 +3040,36 @@ during the acceptance speech.
 
 
 \multirow{5}{*}{\texttt{22:00}} 
-& \em The electoral college &  Republicans complaining about the voting system  & - \\ \cline{2 - 4}
-& \em President of the unites states & Barack Obama is the 44th president of the USA   & - \\ \cline{2-4} %(uh oh!)
+& \em The electoral college &  Republicans complaining about the voting system  & 9 \\ \cline{2 - 4}
+& \em President of the unites states & Barack Obama is the 44th president of the USA   & 8 \\ \cline{2-4} %(uh oh!)
 & \em who voted for & People turning against each other & - \\ \cline{2-4} % 
-& \em once you go black you never go [back] & A popular cultural reference & - \\ \cline{2-4} %(uh oh!)
+& \em once you go black you never go [back] & A popular cultural reference & 15 \\ \cline{2-4} %(uh oh!)
 & \em my president is black & Americans proud about the equality of opportunities & - \\ \hline % 
 
 \multirow{3}{*}{\texttt{22:30} }
 & \em @realdonaldtrump this elections $\langle$ see table \ref{table:mtv} for the rest of the tweet $\rangle$ 		& One of Donald Trump's famous melt down tweets. This cluster merges 26 \emph{distinct} itemsets. & 1  \\ \cline{2-4}
 & \em concede to & The losing candidate has to concede  & - \\ \cline{2-4} %(uh oh!)
-& \em Obama won. I  & People's reactions to the results & - \\ \hline % 
+& \em Obama won. I ... & People's reactions to the results & - \\ \hline % 
 
 \multirow{3}{*}{\texttt{23:00} }
-& \em same sex marriage	& Some states legalized it & -  \\ \cline{2-4}
-& \em for recreational use & Colorado legalized Marijuana for recreational use   & - \\ \cline{2-4} %(uh oh!)
-& \em acceptance speech & People anticipating the speech & - \\ \hline % 
+& \em same sex marriage	& Some states legalized same sex marriage & 27  \\ \cline{2-4}
+& \em for recreational use & Colorado legalized Marijuana for recreational use   & 21 \\ \cline{2-4} %(uh oh!)
+& \em acceptance speech & People anticipating the speech & 26 \\ \hline % 
 
 \multirow{3}{*}{\texttt{00:30} }
-& \em Delivered, sealed, signed & Stevie Wonder's song used in Obama's campaigns & -  \\ \cline{2-4}
-& \em The best is yet to come & Quote from Obama's speech  & - \\ \cline{2-4} %(uh oh!)
-& \em with the flag in her [hair]	&  During the speech, attention on social media goes to a woman appearing behind Obama on TV! & - \\ \hline %  \cline{2-3}
+& \em Delivered, sealed, signed & Stevie Wonder's song used in Obama's campaigns & 10  \\ \cline{2-4}
+& \em The best is yet to come & Quote from Obama's speech  & 2 \\ \cline{2-4} %(uh oh!)
+& \em with the flag in her [hair]	&  During the speech, attention on social media goes to a woman appearing behind Obama on TV! & 14 \\ \hline %  \cline{2-3}
 
 \multirow{3}{*}{\texttt{01:00} }
-& \em Four more years & Barack Obama's tweet; the most retweeted in 2012\footnote{http://ca.news.yahoo.com/blogs/ticket/obama-wins-twitter-election-most-rt-d-tweet-174452713--election.html} & 6 \\  \cline{2-4}
-& \em @paulmyers47: spots & Pyramidal marketing; people retweet to make money & 26 \\  \cline{2-4}
+& \em Four more years & Barack Obama's tweet; the most retweeted in 2012\footnote{\url{http://ca.news.yahoo.com/blogs/ticket/obama-wins-twitter-election-most-rt-d-tweet-174452713--election.html}} & 20  \\  \cline{2-4} %(now)
+& \em @paulmyers47: spots & Pyramidal marketing; people retweet to make money & 12 \\  \cline{2-4}
 & \em President Barack Obama & News headlines about the speech uses the formal title & - \\\hline
 											
 \end{tabular}
 \end{center}
 \vspace{-5mm}
-\caption{Top 3 \emph{strongly closed} itemsets for hours in US presidential elections day}
+\caption{Top 3 (or 5) \emph{strongly closed} itemsets for hours in US presidential elections day}
  \label{table:nov6}
 \end{table}
 
@@ -3097,8 +3102,16 @@ during the acceptance speech.
 & \emph{@barackobama This happened because of you, thank you. } & 4 & 20 \\ \cline{2-4}
 & \emph{@barackobama Four more years URL} & 6 & 6 \\ \hline
 
-\multirow{3}{*}{\texttt{22:00}} &
-\emph{@realDonaldTrump: This election is a total sham and a travesty. We are not a democracy!} & 1 & 2  \\\cline{2-4} % 266035509162303492
+\multirow{3}{*}{\texttt{22:00}} 
+& \emph{@realDonaldTrump: We can't let this happen. We should march on Washington and stop this travesty. Our nation is totally divided!} & 5 & 44  \\ \cline{2-4}
+& \emph{President of the United States} & 8 & 2  \\\cline{2-4} % 266035509162303492
+& \emph{@realDonaldTrump: The electoral college is a disaster for a democracy.} & 9 & 1
+%266037143628038144
+\\\hline %
+
+
+\multirow{3}{*}{\texttt{22:30}} &
+\emph{@realDonaldTrump: This election is a total sham and a travesty. We are not a democracy!} & 1 &1  \\\cline{2-4} % 266035509162303492
 & \emph{@realDonaldTrump: Our country is now in serious and unprecedented trouble...like never before.} & 3 & 24 \\ \cline{2-4}
 %266037143628038144
 & \emph{@realDonaldTrump: He lost the popular vote by a lot and won the election. We should have a revolution in this country!} & 5 & 31 \\\hline %
@@ -3107,14 +3120,26 @@ during the acceptance speech.
 & \emph{@realDonaldTrump: Lets fight like hell and stop this great \& disgusting injustice! The world is laughing at us.} 
 & 4 & 48
 \\ \cline{2-4}
-& \emph{House of Representatives shouldn't give anything to Obama unless he terminates Obamacare.} 
+& \emph{@realDonaldTrump: House of Representatives shouldn't give anything to Obama unless he terminates Obamacare.} 
 & 6 & 15 \\\cline{2-4}
 % 266040877552656385
 & \emph{@adamlevine: That's what happens when you fu** with Sesame Street} 
 & 8 & 18 \\\hline 
+
+
+\multirow{3}{*}{\texttt{00:30}} &
+\emph{The best is yet to come} & 2 & 2  \\\cline{2-4} % 266035509162303492
+& \emph{Michelle, I have never loved you more} & 5 & 12 \\ \cline{2-4}
+%266037143628038144
+& \emph{We are an American Family, and we rise ...} & 8 & 20 \\ \cline{2-4}
+%266037143628038144
+& \emph{Delivered, sealed, signed, I'm yours} & 10 & 1 
+\\\hline %
+
+
 \end{tabular}
 \end{center}
-\caption{The 3 most interesting itemsets out of the top 10 picked by the MTV algorithm for hours in US presidential elections day. The actual rank given to each itemset by MTV is in column 3 and the rank of its equivalent \emph{strongly closed} itemset is in column 4.}
+\caption{The most interesting itemsets out of the top 10 picked by the MTV algorithm for hours in US presidential elections day. The actual rank given to each itemset by MTV is in column 3 and the rank of its equivalent \emph{strongly closed} itemset is in column 4.}
 %MTV tends to pick complete Tweets with lots of retweets.}
  \label{table:mtv}
 \end{table}
@@ -3130,7 +3155,9 @@ services reporting users' scores in games,
 or the number of new followers each user got.
 However, the top 10 itemsets usually contain
 % topically relevant itemsets.
-interesting itemsets.
+interesting itemsets
+\footnote{The top 30 itemsets in the hours from 5 AM on the 6th till 
+5 AM on the 7th are available for download at \url{http://plg.uwaterloo.ca/~yaboulna/thesis_results/twitter_synopses/elections-day_nov6-0500_nov7-0500_top30-MTV.txt}}.
 Therefore, in table \ref{table:mtv} we show itemsets 
 %relevant to the U.S. presidential elections 
 that we find interesting
@@ -3206,20 +3233,20 @@ are efficiently mined and are not restricted to a predefined number.
 Google Trends is a freely available service provided by Google.
 It analyzes queries submitted to the Google search engine by millions of users worldwide,
 and it can be used to know the most popular queries %what people 
-for different geographies\footnote{http://www.google.ca/trends/}.
+for different geographies\footnote{\url{http://www.google.ca/trends/}}.
 %are searching for.
 It can also be used to compute
 trends of user specified queries
-over time\footnote{https://support.google.com/trends/answer/87276?hl=en}.
-Queries that are named entities according to Google's Knowledge Graph\footnote{http://www.google.com/insidesearch/features/search/knowledge.html} 
+over time\footnote{\url{https://support.google.com/trends/answer/87276?hl=en}}.
+Queries that are named entities according to Google's Knowledge Graph\footnote{\url{http://www.google.com/insidesearch/features/search/knowledge.html}} 
 are automatically tracked 
 and aggregated by category
-into Top Charts\footnote{http://www.google.ca/trends/topcharts}~---~
+into Top Charts\footnote{\url{http://www.google.ca/trends/topcharts}}~---~
 lists of real-world people, places and things ranked in order of search volume 
 %during different intervals of time. 
-during user specified intervals of time\footnote{https://support.google.com/trends/answer/3076011?hl=en}.
+during user specified intervals of time\footnote{\url{https://support.google.com/trends/answer/3076011?hl=en}}.
 We use the Top Charts of November 2012 
-for the people category\footnote{http://www.google.ca/trends/topcharts\#vm=chart\&cid=people\&geo=US\&date=201211}
+for the people category\footnote{\url{http://www.google.ca/trends/topcharts\#vm=chart&cid=people&geo=US&date=201211}}
 (only available for queries made from the USA)
 as an aid for finding out what social media users
 are expected to be talking about.
@@ -3241,11 +3268,12 @@ For example, the top two % positions in the \emph{people} category
 most searched for people are
 Barack Obama and Mitt Romney.
 Figure \ref{fig:trendObamaRomney} is the plot showing the volume of queries about either of them,
-as displayed by Google trends\footnote{http://www.google.ca/trends/explore\#q=Barack\%20Obama\%2C\%20Mitt\%20Romney\&geo=US\&date=11\%2F2012\%201m\&cmpt=q}. 
+as displayed by Google trends
+\footnote{\url{http://www.google.ca/trends/explore\#q=Barack\%20Obama\%2C\%20Mitt\%20Romney&geo=US&date=11\%2F2012\%201m&cmpt=q}}. 
 The two curves in the plot are similar; 
 both have peaks at the elections day
 and are otherwise flat.
-Note that the y-Axis in the figure is scaled\footnote{https://support.google.com/trends/answer/87282?hl=en\&ref\_topic=13975} so that the 
+Note that the y-Axis in the figure is scaled\footnote{\url{https://support.google.com/trends/answer/87282?hl=en&ref_topic=13975}} so that the 
 maximum volume per day for either of the queries becomes 100 
 (to our surprise the curve for ``Barack Obama'' is much lower that that of ``Mitt Romney'',
 even though they occupy positions 1 and 2 respectively in the chart).
@@ -3288,8 +3316,8 @@ this is a number that can be conveniently displayed as a summary for a human use
 Pop artists occupy most of the top 10 chart for the \emph{people} category.
 Five out of the top 10 are pop artists, and they occupy ranks as high as 3 (Justin Bieber) and 4 (Taylor Swift).
 This is due to music awards events, specially
-the MTV Europe Music Awards on November 11th\footnote{http://en.wikipedia.org/wiki/2012\_MTV\_Europe\_Music\_Awards} 
-and the American Music Awards on November 18th\footnote{http://en.wikipedia.org/wiki/American\_Music\_Awards\_of\_2012}. 
+the MTV Europe Music Awards on November 11th\footnote{\url{http://en.wikipedia.org/wiki/2012_MTV_Europe_Music_Awards}} 
+and the American Music Awards on November 18th\footnote{\url{http://en.wikipedia.org/wiki/American_Music_Awards_of_2012}}. 
 Figure~\ref{fig:trendsPopArtists} shows the query volumes for the artists in the top 10 chart. 
 The curves for all of the artists show relatively high volume when those events were happening.
 
@@ -3332,7 +3360,7 @@ November $11^{th}$ is the day World War I ended
 and Veteran's day in the USA).
 Several other hours have itemsets supporting different artists in the top 30,
 %Almost all of the itemsets about the event are vote itemsets, 
-which are all variations of the itemset: \{\#emawinARTIST, ARTIST, NAME, \#mtvema, i, think, will, be, the, big, winner, tweet, your, pick, at, URL\footnote{http://ema-twittertracker.mtv.com/live/predict.html}\}.
+which are all variations of the itemset: \{\#emawinARTIST, ARTIST, NAME, \#mtvema, i, think, will, be, the, big, winner, tweet, your, pick, at, URL\footnote{\url{http://ema-twittertracker.mtv.com/live/predict.html}}\}.
 
 \begin{table}
 \centering
@@ -3371,7 +3399,7 @@ names of artists, or the name of the event.
 %itemsets are usually either a whole tweet that is indicate that 
 The itemsets from this hour, shown in table~\ref{table:amaTop30},
 contains an itemset (at position 26) about 
-how Justin Bieber appeared with his mother Pattie Mallette\footnote{http://hollywoodlife.com/2012/11/18/justin-bieber-brings-mom-to-amas-without-selena-gomez/\#!1/nokia-jenny-mccarthy/}
+how Justin Bieber appeared with his mother Pattie Mallette\footnote{\url{http://hollywoodlife.com/2012/11/18/justin-bieber-brings-mom-to-amas-without-selena-gomez/\#!1/nokia-jenny-mccarthy/}}
 instead of his usual escort Selena Gomez, his ex-girlfriend. 
 This is interesting news, 
 specially following Justin and Selena's break up
@@ -3393,7 +3421,7 @@ some hopeful comments:
 
 The itemsets in table~\ref{table:amaTop30}
 also include the name of another artists that is not in the Top Chart.  
-Carly Rae Jepsen also performed and won at the American Music Awards\footnote{http://blog.muchmusic.com/carly-rae-jepsen-wins-at-the-american-music-awards-puts-on-fun-and-flirty-performance/}.
+Carly Rae Jepsen also performed and won at the American Music Awards\footnote{\url{http://blog.muchmusic.com/carly-rae-jepsen-wins-at-the-american-music-awards-puts-on-fun-and-flirty-performance/}}.
 
 
 \begin{table}
@@ -3734,7 +3762,8 @@ user interest as Google Trends.
 \subsection{The Complete Results of Mining the Twitter Dataset}
 The complete results of mining all one hour epochs (with half hour time steps)
 of Twitter data collected
-in the last 3 months of 2012 is available for download\footnote{http://plg.uwaterloo.ca/$\sim$yaboulna/thesis\_results/twitter\_synopses}. 
+in the last 3 months of 2012 is available for download\footnote{\url{http://plg.uwaterloo.ca/~yaboulna/thesis_results/twitter_synopses/1hr+30min_ngram5-relsupp10_oct-nov-dec/}}.
+%http://plg.uwaterloo.ca/$\sim$yaboulna/thesis\_results/twitter\_synopses/1hr+30min\_ngram5-relsupp10\_oct-nov-dec}. 
 % at URL.
 The mining results at different values of $\kappa$,
 for \emph{minimum support} 10, 
