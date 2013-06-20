@@ -349,28 +349,35 @@ The effectiveness of our methods is shown quantitatively,
 in terms of the drop in the number of itemsets at each processing step. 
 The quality of the final outcome is verified by showing mining results from various time periods.
 
-\section{Thesis outline (SKIP READING.. NOT READY YET}
+\section{Thesis outline}
 
-The next three chapters provide necessary background.
+The next two chapters provide necessary background.
 We start by discussing related work in chapter \ref{sec:related},
-we then explain frequent itemset mining and the algorithm on which we build
-our work in chapters \ref{sec:fim} and \ref{sec:lcm} respectively.
-Chapters \ref{sec:socmine}, \ref{sec:strong} and \ref{sec:rank} present
-our contributions for applying frequent
-itemset mining to social media text.
-We present the outline of those chpaters graphically using a
-frequency ordered prefix tree of the itemsets.
-Each path from root to a leaf in such a tree represents an itemset,
-where each itemset is ordered in non-increasing order of the frequency of
-items.
-Itemsets having the same prefix share the nodes representing this prefix.
-This representation is typical in the literature, and it is actually a very
-good representation of the frequent itemset mining problem.
-Figure \ref{fig:outline} shows conceptually how our contributions in chapters  \ref{sec:socmine},
-\ref{sec:strong} and \ref{sec:rank}  affect different parts of the
-problem. We overlay the contributions on such a figure to make it clear how each one addresses a particular challenge of applying frequent itemset mining to text data from social media. In chapter \ref{sec:concfut}, we conclude our presentation and
-suggest future directions.
-
+we then explain the algorithm on which we build
+our work in chapter~\ref{sec:socmine}.
+We also introduce the dataset we use, 
+and the data prepocessing necessary for 
+running a frequent itemset mining algorithm
+on social media text effectively.
+The most important contribution in this chapter
+is a simple method to flatten the Zipfean distribution
+of items, and thus reduce the number of itemsets 
+%that are language constructs.
+made up of function words.
+Chapter~\ref{sec:strong} presents
+our main contributions for creating temporal synopses 
+from frequent itemsets. % mining to social media text.
+We propose a condition for selecting itemsets,
+a clustering scheme for grouping together itemsets
+according to their topic,
+and a ranking formula that is suitable
+for ranking clusters according to the 
+collective Infomration Gain of itemsets in them.
+In chapter~\ref{sec:empirical} we empirically 
+evaluate the efficiency and the effectiveness 
+of our proposed methods. 
+Finally, we conclude our presentation and
+suggest future directions in chapter \ref{sec:concfut}.
 
 \section{Terminology and Notation}
 Classically, frequent itemset mining is applied to a \emph{database} of
@@ -395,17 +402,6 @@ We now introduce the notation used in this paper:
 \end{itemize}
 
 
-
-\begin{landscape}
-\begin{figure}
-\centering
-\scalebox{0.7}{
-\includegraphics{pyramid-road-map.png}
-}
-\caption{Most important contributions overlaid on a frequency ordered prefix tree}
-\label{fig:outline}
-\end{figure}
-\end{landscape}
 
 
 %=====================================
