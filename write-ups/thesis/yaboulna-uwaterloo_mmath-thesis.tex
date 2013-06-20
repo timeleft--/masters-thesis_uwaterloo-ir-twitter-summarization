@@ -220,7 +220,7 @@
 \section{Social Media Text}
 Text posted on social media outlets, such as Twitter, is a good and timely source of information
 about real world events~\cite{ritter2012open}. 
-It also includes posts about topics attracting the collective attention of user communities, 
+It also includes posts about other topics attracting the collective attention of user communities, 
 such as Internet memes or large scale discussions~\cite{naaman2011hip}.
 Nevertheless, the collective stream from all users is overwhelmed by personal
 updates and non-informative chatter~\cite{java2007we,hurlock2011searching}. 
@@ -244,8 +244,10 @@ Frequent itemset mining algorithms count the number of times each
 combination of ``items'' appear together. 
 This is called the support of the itemset.
 An itemset is considered frequent if its support is above a threshold.
-To mine textual data, an item can be a token and a set of items can
-be considered as appearing together if they appear within the same document
+When mining textual data, 
+an item is usually taken to be a unigram. %can be a unigram or 
+A set of items are considered to be
+appearing together if they appear within the same document
 or paragraph. The frequent itemset mining family of algorithms is fast and efficient,
 however it is not readily suited for application on text. 
 Following are a number of challenges faced when applying 
@@ -267,12 +269,12 @@ association rules mining, which sifts through the numerous itemsets and
 produces a smaller number of rules associating combinations of items with each other.
 To reduce the number of itemsets, they may be limited by setting a high
 support threshold. This is not possible in text mining because
-frequencies of most items is low, and only a few items have high frequencies;
+the frequency of most items is low, and only a few items have high frequencies;
 that is, frequencies of items follow a long-tailed Zipfean distribution.
 
 \item
 Function words are among the few items having high frequencies. 
-This leads to mining itemsets that are uninformative language constructs.
+This leads to mining a large number of itemsets which are uninformative language constructs.
 Even if a maximum frequency threshold is set, incurring the risk that we
 will filter out important itemsets, many  non-English constructs will be
 mined because the proportion of posts in English is much higher than
@@ -293,7 +295,7 @@ itemsets caused by trivial differences in the language used.
 Frequent itemset mining is suitable to the dynamic nature of social media streams.
 It does not require prior knowledge of the distribution of items,
 nor does it require selecting a few items to monitor 
-or a preset number of topics to mine.
+or a number of topics to mine. %preset
 It is fast, efficient and scalable. 
 It is also robust against data sparsity, 
 and can actually exploit this sparsity for faster computation.
@@ -307,9 +309,16 @@ used as a preliminary step for search and summarization.
 For example, the collection of mining results from different epochs of time
 can be used for temporal 
 query expansion and document expansion~\cite{choi2012temporal, efron2012improving}.
-The results from each epoch can be treated as a document, facilitating the
-creation of a ``temporal profile''~\cite{jones2007temporal} of the query
-or document being expanded.
+Expansion methods can be specially developed  
+%to build on the mining results,
+based on the mining results,
+but it is also possible to use existing methods.
+The results from each epoch can be treated as a document,
+and relevant ``documents'' can be used to
+%facilitating the creation of 
+create
+a \emph{temporal profile}~\cite{jones2007temporal} 
+of the query or document being expanded.
 For summarization, frequent itemsets can provide a good foundation for summary
 creation.
 While the frequent itemsets themselves are not summaries, since they lack
@@ -335,14 +344,14 @@ In a more recent work, an unsupervised version that relies on co-occurrence of
 itemsets within the same paragraph has been proposed~\cite{albathan2012using}.
 
 In this thesis, we propose efficient methods for filtering out non-informative frequent itemsets,
-reducing redundancy in the mining results, and ranking the selection according to novelty.
+reducing redundancy in the mining results, and ranking the selection according to temporal novelty.
 Our methods exploit the dynamics of social media and make use of the collaborative filtering
 that users naturally undergo on social media, 
 by sharing interesting posts and participating in conversations.
 Our main contributions are as follows:
 \begin{itemize}
-\item We propose the use of variable length N-grams as items to avoid mining uninformative language constructs as itemsets. 
-\item We propose conditions for selecting informative itemsets and reducing redundancy in the mining results.
+\item We propose the use of variable length term N-grams as items to avoid mining uninformative language constructs as itemsets. 
+\item We propose a condition for selecting informative itemsets, and a clustering scheme for reducing redundancy in the mining results.
 \item We propose a formula for ranking itemsets according to temporal novelty.
 \end{itemize}
 The effectiveness of our methods is shown quantitatively, 
@@ -353,31 +362,33 @@ The quality of the final outcome is verified by showing mining results from vari
 
 The next two chapters provide necessary background.
 We start by discussing related work in chapter \ref{sec:related},
-we then explain the algorithm on which we build
+then we explain the algorithm on which we build
 our work in chapter~\ref{sec:socmine}.
-We also introduce the dataset we use, 
+In chapter~\ref{sec:socmine}, 
+we also introduce the dataset we use, 
 and the data prepocessing necessary for 
 running a frequent itemset mining algorithm
 on social media text effectively.
 The most important contribution in this chapter
-is a simple method to flatten the Zipfean distribution
+is a simple method for flattening the Zipfean distribution
 of items, and thus reduce the number of itemsets 
 %that are language constructs.
 made up of function words.
 Chapter~\ref{sec:strong} presents
 our main contributions for creating temporal synopses 
 from frequent itemsets. % mining to social media text.
-We propose a condition for selecting itemsets,
-a clustering scheme for grouping together itemsets
+We present in it our proposed condition for selecting itemsets,
+the clustering scheme for grouping together itemsets
 according to their topic,
 and a ranking formula that is suitable
-for ranking clusters according to the 
-collective Infomration Gain of itemsets in them.
-In chapter~\ref{sec:empirical} we empirically 
+for ranking clusters according to  
+temporal novelty (based on the
+collective Infomration Gain of itemsets in them).
+In chapter~\ref{sec:empirical}, we empirically 
 evaluate the efficiency and the effectiveness 
 of our proposed methods. 
 Finally, we conclude our presentation and
-suggest future directions in chapter \ref{sec:concfut}.
+suggest future directions in chapter~\ref{sec:concfut}.
 
 \section{Terminology and Notation}
 Classically, frequent itemset mining is applied to a \emph{database} of
@@ -392,10 +403,10 @@ The epoch's \emph{span} is the length of this period in hours,
 and the \emph{volume velocity} at this epoch is the number of transactions in the epoch
 divided by its \emph{span}.
 
-We now introduce the notation used in this paper:
+We now introduce the notation used in this thesis:
 \begin{itemize}
-\item $W = \{w_1,w_2,\ldots, w_n\}$: The set of all items occurring within the epoch of data being mined. Items can be terms or term N-grams in this paper. % This is the \emph{vocabulary} in Information Retrieval.
-\item $t_a = \{w_{a1},\ldots, w_{am}\}$: A transaction made up of a set of items. Each transaction has a sequential id, denoted by the subscript letter, derived from its timestamp.
+\item $W = \{w_1,w_2,\ldots, w_n\}$: The set of all items occurring within the epoch of data being mined. Items can be terms or term N-grams in this thesis. % This is the \emph{vocabulary} in Information Retrieval.
+\item $t_a = \{w_{a_1},\ldots, w_{a_m}\}$: A transaction made up of a set of items. Each transaction has a sequential id derived from its timestamp (denoted by the subscript letter).
 \item $E^{span} = \langle t_a, t_b, \ldots, t_v\rangle$: An epoch of data of a certain span, such as an hour, made up of the sequence of the transactions created within this hour.
 \item $s \subset W$: An itemset; any possible combination of items. 
 \item $T_s = \{t: t \in E \, and \, s \subseteq t\}$: All transactions containing itemset s. We refer to it as the itemset's postings list, as is common in the Information Retrieval (IR) literature.
