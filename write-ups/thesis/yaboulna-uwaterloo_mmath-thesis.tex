@@ -441,7 +441,7 @@ we discuss at least one representative from each category of algorithms.
 %proposed by Agrawal et al. as part of the solution to the problem of association rules mining. 
 %It's goal was finding itemsets that can be broken into a precedent and an antecedent
 Agrawal et al.~\cite{agrawal1994fast} proposed the Apriori algorithm 
-as part of the first efficient solution to the problem if association rules mining~\cite{agrawal1993mining}.
+as part of the first efficient solution to the problem of association rules mining~\cite{agrawal1993mining}.
 In the domain of market basked data, 
 an association rule is an implication that an item is likely to be purchased
 in the same transaction with a certain set of items.
@@ -450,12 +450,12 @@ then producing a rule with each individual item as a consequent to the purchase 
 The Apriori algorithm finds frequent itemsets of increasing lengthes iteratively.
 It starts by counting frequencies of individual items (itemsets of length 1). 
 Then it iteratively increases the length of itemsets.
-At each iteration, it generates candidate itemsets of length K (K-itemsets) 
-by merging frequent itemsets of length (K-1) ((K-1)-itemsets) 
+At each iteration, it generates candidate itemsets of length $k$ ($k$-itemsets) 
+by merging frequent itemsets of length ($k$-1) (($k$-1)-itemsets) 
 that differ in only 1 item, 
 usually the last item given a certain total ordering of items.
-By using only the frequent  (K-1)-itemsets for generating candidate K-itemsets,
-many possible K-itemsets are implicitly pruned, 
+By using only the frequent  ($k$-1)-itemsets for generating candidate $k$-itemsets,
+many possible $k$-itemsets are implicitly pruned, 
 based on the anti-monotonicity between itemsets' support and length:
 all subsets of a frequent itemset have to be frequent. 
 However, each candidate has to be explicitly checked to verify that it does not
@@ -513,8 +513,10 @@ which is prepended to all itemsets mined from the conditional FP-tree.
 Figure \ref{fig:fpgrowth}, borrowed from Han et. al~\cite{han2004mining}, shows a few steps in the FP-Growth algorithm.
 %during the call.
 
-While the navigation of a representation of the database directly
-derives itemsets from the transaction space, 
+The navigation of a representation of the database 
+avoids the candidate generation bottleneck,
+by directly deriving itemsets from the transaction space.
+However,
 the creation of such representation is a bottleneck itself. 
 Building conditional pattern bases and sub-FP-trees becomes very time and space consuming as the recursion goes deep and the number of patterns goes large~\cite{wang2002top}.
 %Many alternate representations as well as enhancements to the original FP-Growth
@@ -600,7 +602,7 @@ Our work is based on LCM (which stands for Linear-time Closed itemset Mining)~\c
 As a starting point for our work, we use the implementation of LCM submitted
 to the workshop for Frequent Itemset Mining Implementations (FIMI) in
 2004~\cite{DBLP:conf/fimi/2004}, which was the workshop's award winner. 
-This algorithm is robust against data sparsity, 
+The LCM algorithm is robust against data sparsity, 
 and has low memory requirements 
 since it does not store intermediate results.
 We will explain the closure property and describe LCM in detail in  section \ref{sec:lcm}. 
@@ -615,11 +617,12 @@ picking out  representative itemsets that satisfy a certain condition.
 %based on the conciseness or interestingness or the selection.
 The representative itemsets are not necessarily sufficient to
 deduce the rest of the solution (itemsets and their support information).
-In this thesis we propose two conditions for selecting interesting itemsets;
-\emph{distinct} itemsets and  \emph{strongly closed} itemsets.
+In this thesis we propose a condition for selecting interesting itemsets, 
+which we call
+\emph{distinct} itemsets. % and  \emph{strongly closed} itemsets.
 Related approaches to picking out representative itemsets are %: 
-choosing a set that will minimize the reconstruction error of the full solution, 
-and limiting the number of itemsets to a user specified number.
+1) choosing a set that will minimize the reconstruction error of the full solution, 
+and 2) limiting the number of itemsets to a user specified number.
 
 
 %Most similar to the \emph{distinct} itemsets we propose in this thesis
@@ -652,25 +655,32 @@ then it is considered to be covered by the superset and can be pruned.
 On the other hand, the \emph{distinct} condition
 %selects only itemsets that are implied by a subset with high confidence.
 sets a lower bound on the confidence of a derived association rule.
-Nevertheless, the $\delta$-clusters are similar to the \emph{strongly closed
+Nevertheless, the clustering scheme Xin et al.~\cite{xin2005mining} propose
+($\delta$-clusters) is similar to the \emph{strongly closed
 itemset} clusters proposed in this thesis. 
-The efficient version of the clustering algorithm proposed by Xin et al.~\cite{xin2005mining}, RPLocal, 
+The efficient version of the clustering algorithm, RPLocal, % proposed by Xin et al.
 limits the search space for clustering candidates using a similar reasoning to 
 the reasoning used in our algorithm~--~exploiting the sequence in which frequent itemsets are found.
-The difference between $\delta$-clusters and \emph{strongly closed itemset} clusters
+The main difference between $\delta$-clusters and \emph{strongly closed itemset} clusters
 is that $\delta$-clusters are soft clusters, while \emph{strongly closed itemset} clusters
 are hard clusters. 
 Also, the distance measure used in $\delta$-clusters is the Jaccard distance,
 while the \emph{strongly closed itemset} clusters are based on association rule confidence.
 
-Yan et al.~\cite{yan2005summarizing} proposed a method to choose K \emph{master} itemsets as representatives of the itemsets. 
-However, rather than leaving K as a user specified parameter
-a method is proposed for choosing K by minimizing the restoration error of support information. %,
+Yan et al.~\cite{yan2005summarizing} proposed a method to choose $k$
+itemsets as representatives of the itemsets in the full solution, which they call  \emph{master} itemsets. 
+%However, r
+Rather than leaving $k$ as a user specified parameter,
+a method is proposed for choosing $k$ by minimizing the restoration error of support information. %,
 %thus it can be considered as a lossy compression approach
-A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemset}. 
-While the use of clustering is similarly motivated by the trivial difference between itemsets, the K \emph{master} itemsets  have to cover all itemsets.  
-On the other hand,  \emph{strongly closed itemsets}  actually avoid clustering together itemsets representing different topics or different opinions within a topic.
-Furthermore, Yan et al. improve performance by approximating the calculation of the distance between itemsets, to avoid accessing the data. 
+A \emph{master} pattern is the union of all itemsets in a cluster,
+similar to our proposed \emph{strongly closed itemsets}. 
+While the use of clustering is similarly motivated by the trivial difference between itemsets, 
+the $k$ \emph{master} itemsets  have to cover all itemsets.  
+On the other hand,  \emph{strongly closed itemsets}  actually avoid 
+clustering together itemsets representing different topics or different opinions within a topic.
+Furthermore, Yan et al. improve performance by 
+approximating the calculation of the distance between itemsets, to avoid accessing the data. 
 We can achieve high performance without approximation because our mining results include the postings list of each itemset. 
 %we apply clustering to subsets of the data that are very likely to be close to each other.
 
@@ -682,18 +692,18 @@ Commonly used \emph{objective} measures include (a more extensive coverage is pr
 Geng et al.~\cite{geng2006interestingness}
 and Tan et al.~\cite{tan2002selecting}):
 \begin{enumerate}
-\item \emph{Support}: The number (or fraction) of transactions that contain the itemset
+\item \emph{Support}: The number (or fraction) of transactions that contain the itemset.
 \item \emph{Confidence}: The confidence of a rule derived from the itemset. 
 A rule is derived from the itemset by treating one item, $w$, as the consequent of the rule 
 while the rest of items, $s \setminus w$, are the antecedent. 
 The confidence of the rule is then defined as: 
 \begin{equation}conf(s \setminus w \rightarrow s) = \frac{|T_s|}{|T_{s \setminus w}|} \end{equation}
 Since different rules with varying confidence can be derived from an itemset, either the minimum (\emph{all-confidence}) or the maximum (\emph{any-confidence}) is used~\cite{omiecinski2003alternative}.
-\item \emph{Lift}~\cite{brin1997beyond}: Probability (support) of the itemset over the product of the probabilities of all items in the itemset. This is a measure of dependence and can be linked to Pointwise Mutual Information~\cite{bouma2009normalized}. Such a measure is suitable for Knowledge Discovery or Exploratory Search tasks, where the goal is to extract correlated item sets or significant phrases.
+\item \emph{Lift}~\cite{brin1997beyond}: The probability (support) of the itemset over the product of the probabilities of all items in the itemset. This is a measure of dependence and can be linked to Pointwise Mutual Information~\cite{bouma2009normalized}. Such a measure is suitable for Knowledge Discovery or Exploratory Search tasks, where the goal is to extract correlated item sets or significant phrases.
 \item \emph{Bond (or Coherence)}~\cite{omiecinski2003alternative}: The support of an itemset over the number of transactions containing \emph{any} of its items.
 \end{enumerate}
 
-An important property of a measure, upon which all Apriori based mining algorithm are built, is the downward closure property; 
+An important property of a measure, upon which all Apriori based mining algorithms are built, is the downward closure property; 
 the value of a downward closed measure cannot increase as the size of the itemset increases.
  All the above measures are downward closed~\cite{bayardo1999mining} with the exception of \emph{lift} which is upward closed 
 (cannot decrease with the increase of the size of the itemset), 
@@ -703,16 +713,19 @@ but if an application specific measure is to be used then it has to be evaluated
 or within the Redundancy-Aware Top-K Framework~\cite{xin2006extracting}.
 
 
-The Redundancy-Aware Top-K Framework~\cite{xin2006extracting} selects the top K itemsets according to an 
+The Redundancy-Aware Top-K Framework~\cite{xin2006extracting} selects the top $k$ itemsets according to an 
 interestingness criterion. % was first %proposed by Xin et al.~\cite{xin2006extracting}. 
-The major difference between their approach and all of the previous works is that 
-it emphasizes both interestingness and redundancy on the selected top K itemsets, 
-and the itemset interestingness is defined in the context of the application; 
+The major difference between their approach and all of the previous work is that 
+it emphasizes both interestingness and redundancy 
+when selecting the top $k$ itemsets.
+%on the selected top $k$ itemsets, 
+The itemset interestingness is defined in the context of the application; 
 summarizing the whole collection of itemsets is not the goal.
-Our work fits in the proposed framework: 
+Our work fits in this framework: %the proposed
 we reduce redundancy through filtering and clustering, 
 and we propose a ranking that orders itemsets according to some definition of interestingness.
-If only the top K itemsets are desired, itemsets ranked at positions higher than K can be omitted.
+If only the top $k$ itemsets are desired, 
+itemsets ranked at positions higher than $k$ can be omitted.
 An explicit number of itemsets needs not be set, however.
 This makes our computational model more efficient, 
 since we do not need to solve a constrained optimization problem.
@@ -731,16 +744,19 @@ for our purposes.
 Selecting unexpected itemsets entails building a probabilistic model to use it for 
 estimating itemsets probabilities. 
 Jaroszewicz and Simovici~\cite{jaroszewicz2004interestingness} use a Baysian Network as a model,
-which is suitable for cases where items are value levels of a limited number of attributes.
+which is suitable for cases where items 
+denote discrete values 
+%are value levels 
+of a limited number of attributes.
 A commonly used model is the maximum entropy model~\cite{wang2006summarizing,tatti2008maximum,mampaey2011tell}.
-The Maximally informaTiVe itemsets (MTV) algorithm, proposed by Mampaey et al.~\cite{mampaey2011tell},
-uses a greedy algorithm to select K itemsets whose probabilities diverge the most 
+The Maximally informaTiVe itemsets (MTV) algorithm~\cite{mampaey2011tell} %, proposed by Mampaey et al.~\cite{mampaey2011tell},
+uses a greedy algorithm to select $k$ itemsets whose probabilities diverge the most 
 from the estimate given by a maximum entropy model.
 The maximum entropy model is initialized as a uniform distribution.
-After selecting each of the K itemsets it is updated 
+After selecting each of the $k$ itemsets it is updated 
 to fit the selected itemsets actual frequencies
-using the Iterative Scaling procedure~\cite{darroch1972generalized}.
-If K is set to infinity, the algorithm will generate the best model
+using the \emph{iterative scaling} procedure~\cite{darroch1972generalized}.
+If $k$ is set to infinity, the algorithm will generate the best model
 according to the Bayesian Information Criterion (BIC). 
 Since BIC incorporates a penalty term for the number of parameters
 (itemsets included in the model), this selection will  
@@ -751,14 +767,15 @@ It is also possible to use the Minimum Description Length (MDL)
 as a criterion for selecting itemsets.
 We compare our selection of itemsets to ones obtained from MTV using 
 the implementation provided by the authors\footnote{\url{http://www.adrem.ua.ac.be/implementations}}.
-However, the value of K has to be kept low (at most 50) for the algorithm to finish without an error, 
+However, the value of $k$ has to be kept low (at most 100) for the algorithm to finish without an error, 
 even though it is running without a limit on its resource usage on a machine with 256 GB of RAM.
 In our work we focus on efficiency, allowing the summary to include larger numbers
-of itemsets than the values of K for which MTV is efficient (at most 10). 
+of itemsets than the values of $k$ for which MTV finishes in a reasonable time (at most 10). 
 This is crucial for scalability to the volumes of data typical in social media streams.
 
 Another approach to picking out itemsets is choosing ones that 
-can be used to compress the data. The KRIMP algorithm~\cite{vreeken2011krimp} is 
+can be used to compress the data (not the itemsets). % and their support). 
+The KRIMP algorithm~\cite{vreeken2011krimp} is 
 a good example of methods that follow this approach. Our goal is different because
 we aim to filter out itemsets pertaining to personal updates, which make up a large
 portion of social media data. 
@@ -3190,7 +3207,7 @@ thus we omit the explanation column for brevity.
 % 
 %It is noteworthy that tweets that spark a conversation contribute multiple redundant itemsets, and several of them are ranked high.
 % (Nov. 6 22:00). This stresses the importance of clustering.
-%The harm from redundancy is amplified by the low values of K that has to be used. 
+%The harm from redundancy is amplified by the low values of $k$ that has to be used. 
 % to attain an acceptable runtime.
 The input to the algorithm was transactions made up of N-grams up to 5 terms long, 
 which helped the algorithm converge faster since the distribution is flatter. 
