@@ -3754,17 +3754,39 @@ ranking formula used in this thesis (column 14).
 
 \section{Future Work}
 
+This work provides a foundation for the use of social in temporal information retrieval.
+The mining results captures people's interest at different times,
+and can be used to create a temporal profile for a query.
+This profile can then be used for weighting documents
+according to the time in which they were published.
 
-
-A possible future direction is to use itemsets that appear as a sequence for
-building extractive coherent summaries of the social media stream at
-different times.
-
-
-
-We aim to exploit the synopses for temporal query expansion in our future work. Terms from itemsets relevant to a query (or occurring in a relevant document)
+The synopses can be also directly used for temporal query expansion. 
+Terms from itemsets relevant to a query 
 can be used for query expansion, thus acting as precomputed results of 
 pseudo-revelance feedback.
+It is also possible to use terms from documents where 
+relevant itemsets occur as the resultset 
+to be used as input for pseudo-revelance feedback.
+The ranks of itemsets can be used to  
+weight expansion terms, 
+if temporal novelty is desired.
+
+The efficiency of the proposed algorithms
+makes it possible to use the mining results
+as input to other real-time systems.
+For example,
+association rules created from the itemsets
+such that the consequent is a hashtag
+can be used to help a user discover hashtags
+he can add to his post 
+(this can also be done as automatic document expansion).
+%The itemsets can actually be used
+%as t
+
+Another possible future direction is to use itemsets that appear as a sequence for
+building extractive coherent summaries of the social media stream. 
+% at different times.
+
 We also wish to explore ways to make use of the temporal signal during mining,
 such as when calculating similarity during clustering.
 
