@@ -77,6 +77,10 @@
 %\newcommand{\texorpdfstring}[2]{#1} % does nothing, but defines the command
 % Anything defined here may be redefined by packages added below...
 
+\usepackage{floatpag}
+%\usepackage{geometry}
+%\usepackage[strict]{changepage}
+
 % This package allows if-then-else control structures.
 \usepackage{ifthen}
 \newboolean{PrintVersion}
@@ -2962,78 +2966,105 @@ that is, an hour is shown only if its top 3 feature novel interesting itemsets.
 The first column is the beginning of the hour, EST time.
 The second column is the top itemsets.
 The third column is a commentary to explain the itemsets.
+The fourth column is the rank of an equivalent itemset 
+if one exists in the top 30 itemsets mined by the MTV algorithm.
 %In table \ref{table:nov6}, 
+
 We can see how the events of the US presidential
 elections  unwind from ``get out and vote'' to the projections and debates,
 all the way to the ``acceptance speech''.
-Early in the day, itemsets about UEFA Champions football matches and a TV show
-``Geordie Shore'' appear in the top 3 along with itemsets about the still
-uneventful elections.
-Actually, the matches keep occupying top positions and timely updates of their
-scores appear in the top 30 itemsets, until they end and the elections
-heats up.
+Early in the day, people were excited 
+and congratulating each for being on the elections day. 
+The excitement  continues for one more hour, 
+with some people taking it too far by sending pictures of their ballots.
+Itemsets about the elections stop occupying the top 3 ranks until the evening. 
+Instead, there were itemsets about UEFA Champions football matches
+with timely updates of their scores, and about TV shows. 
+We include the top 3 itemsets of 3 PM as an example.
+In the evening, events about the elections keep occupying the top 3 positions.
 Shortly after the results of the elections became clear, news that
-``weed is legal in Colorado'' occupies the top position.
+Marijuana and same sex marriage were legalized in some states
+occupies the top position.
 This exemplifies the power of social media as a collaborative filter,
 selecting the news of greatest importance to social media users.
 The user centric definition of importance is also evident in attention
-given to the ``lady behind Obama  with a flag in her hair'' during the
-acceptance speech. 
+given to the ``lady with a flag in her hair'' appearing on TV behind Obama 
+during the acceptance speech. 
 
+%\addtolength{\voffset}{-3cm}
+%\newgeometry{top=1cm,bottom=1cm}
+%\changepage{1cm}
 
 \begin{table}
+%\vspace{-3cm}
+\thisfloatpagestyle{empty}
+%\thispagestyle{empty}
 \begin{center}
 \footnotesize
 \def\arraystretch{1.1}
 \begin{tabular}{|p{1cm}|p{6cm}|p{8cm}|c|}
 \hline
-Time & Itemset & Explanation & MTV \\ \hline
-\multirow{3}{*}{\texttt{08:30} 
-& \em get out and vote & & - \\ \cline{2-4}
-& \em happy elections day & & - \\ \cline{2 - 4}
-& \em it's elections day & & - \\ \cline{2-4}
-\multirow{3}{*}{\texttt{13:00}} 	&  \em 0, 1, de, jong 			& De Jong scores for Ajax \\ \cline{2-3} %http://www.dailymail.co.uk/sport/football/article-2228815/Manchester-City-2-Ajax-2--match-report-Siem-Jong-Yaya-Toure-Sergio-Aguero-Champions-League.html
-					   	& \em geordie, shore		& Season 5 of the TV series starts \\ \cline{2-3}
-						& \em get, out, and, vote		& Still early in the U.S. elections day \\\hline
+\textbf{Time} & \textbf{Itemset} & \textbf{Explanation} & \textbf{MTV} \\ \hline
+\multirow{3}{*}{\texttt{08:30}}
+& \em get out and vote & Encouraging participation & 17 \\ \cline{2-4}
+& \em happy elections day & Congratulations & 27 \\ \cline{2 - 4}
+& \em it's elections day & Excitement  & - \\ \hline
 
-\multirow{3}{*}{\texttt{17:00}} 	& \em  if, obama, wins		& Speculations regarding elections \\ \cline{2-3}
-					   	& \em  USERNAME, spots, my, club		&  Pyramidal marketing. People retweet to make money.  \\ \cline{2-3}
-						& \em the, polls, close		& Polls to start closing at 6 PM \\\hline %http://www.huffingtonpost.com/2012/11/06/what-time-do-polls-close_n_2080894.html
+\multirow{3}{*}{\texttt{09:30}}
+& \em if romney wins & People dreading the thought & - \\ \cline{2 - 4}
+& \em of your ballot & Telling people to stop sending pictures of ballots & - \\ \cline{2-4}
+& \em in line to vote & Tweeting while standing in line  & 28 \\ \hline
 
-\multirow{3}{*}{\texttt{19:00}} 	&  \em A partir de que idade voc\^{e} considera algu\'{e}m velho?		& Internet meme from Brazil, discussing when to start considering a person old. \\ \cline{2-3}
-					   	& \em food, stamps		& Discussions pertaining to elections \\ \cline{2-3}
-						& \em linda, mcmahon, senate		&  Linda McMahon loses CT senate race \\\hline
+\multirow{3}{*}{\texttt{15:00}}
+& \em Borussia Dortmund Real Madrid 2 & Score update of UEFA match & 17 \\ \cline{2 - 4}
+& \em incroyable talent & France's version of the Got Talent TV show & - \\ \cline{2-4}
+& \em City Ajax 2 & Score of Manchester City vs Ajax  & - \\ \hline
 
-\multirow{3}{*}{\texttt{20:00}} 	& \em obama, got, this		&  Announcing states that Obama got \\ \cline{2-3}
-					   	& \em projected, winner		& Early projections about who will win \\ \cline{2-3}
-						& \em moving, to, canada		&  Reaction to projections \\\hline
+\multirow{3}{*}{\texttt{19:30}}
+& \em Linda  McMahon		&  Linda McMahon loses CT senate race & - \\ \cline{2 - 4}
+& \em Florida is so ... & tight or close; the number of votes  & - \\ \cline{2-4}
+& \em Romney is winning & Speculations about the results  & - \\ \hline %He did take the lead for a while
 
 
-\multirow{3}{*}{\texttt{21:00}} 	& \em elizabeth, warren		&  MA senate elections winner \\ \cline{2-3}
-					   	& \em popular, vote		& Comparing Popular vs Electoral votes \\ \cline{2-3}
-						& \em who, is, the, president?		&  Anticipation for the elections results\\\hline
-						
+\multirow{3}{*}{\texttt{20:00}}
+& \em New Hampshire &  Obama won in NH & 9 \\ \cline{2 - 4}
+& \em Obama to win / is winning & Two itemsets speculating  & - \\ \cline{2-4}
+& \em too close to call & The results are still not clear & 22 \\ \hline
 
-\multirow{3}{*}{\texttt{22:00}} 	& \em \#forward, \#obama2012		&  Obama won, time to move \#forward \\ \cline{2-3}
-					   	& \em my, president, is, still		& Some were saying black, others blue (party colour) \\ \cline{2-3}
-						&\em  back, in, office		&   Obama is back in office\\\hline
 
-\multirow{3}{*}{\texttt{22:30}} 	& \em once, you, go, black		& A popular cultural reference.\\ \cline{2-3} %  .. you never go back. 
-					   	& \em @realdonaldtrump, this, elections, ... [tweet id: 266035509162303492] 		& Donald Trump is a Republican and he did not accept Obama's victory. This cluster merges 26 \emph{distinct} itemsets.\\ \cline{2-3}
-						& \em concession, speech, write		&   The losing candidate has to concede in a speech 
-						%before the winner declares victory 
-						\\\hline
-						
-\multirow{3}{*}{\texttt{23:00}} 	&\em  weed, is, legal, in, colorado		&  News that got a lot of attention regardless of the elections  \\ \cline{2-3}
-					   	&\em  karl, rove		& Fox news challenges results from Ohio\\ \cline{2-3}
-						& \em our, country, is, trouble		&   More dramatic reactions to elections from Donald Trump \\\hline						
-\multirow{3}{*}{\texttt{23:30}} 	&\em  acceptance, speech, wrote		&  Obama wrote his speech, ...\\ \cline{2-3}
-					   	& \em give, his, speech		& ... and is going to deliver it ... \\ \cline{2-3}
-						& \em on, cnn		&   ... on CNN. \\\hline	
-						
-\multirow{3}{*}{\texttt{00:30}} 	& \em behind, obama, with, flag, in, her [hair]		&  During the speech, attention on social media goes to a woman appearing behind Obama on TV! \\ \cline{2-3}
-					   	& \em the, best, is, yet, to, come		&  Quote from Obama's speech\\ \cline{2-3}
-						& \em flag, that, weaves	& Play on words about the ``flag in hair'' \\\hline																			
+\multirow{3}{*}{\texttt{21:00}}
+& \em Ohio and Florida &  Obama won 2 more states & - \\ \cline{2 - 4}
+& \em Sarah Palin & Sarah Palin appears on Fox news  & - \\ \cline{2-4} %(uh oh!)
+& \em concession speech & Todd Akin's concession speech & - \\ \hline
+
+
+\multirow{5}{*}{\texttt{22:00}} 
+& \em The electoral college &  Republicans complaining about the voting system  & - \\ \cline{2 - 4}
+& \em President of the unites states & Barack Obama is the 44th president of the USA   & - \\ \cline{2-4} %(uh oh!)
+& \em who voted for & People turning against each other & - \\ \cline{2-4} % 
+& \em once you go black you never go [back] & A popular cultural reference & - \\ \cline{2-4} %(uh oh!)
+& \em my president is black & Americans proud about the equality of opportunities & - \\ \hline % 
+
+\multirow{3}{*}{\texttt{22:30} }
+& \em @realdonaldtrump this elections $\langle$ see table \ref{table:mtv} for the rest of the tweet $\rangle$ 		& One of Donald Trump's famous melt down tweets. This cluster merges 26 \emph{distinct} itemsets. & 1  \\ \cline{2-4}
+& \em concede to & The losing candidate has to concede  & - \\ \cline{2-4} %(uh oh!)
+& \em Obama won. I  & People's reactions to the results & - \\ \hline % 
+
+\multirow{3}{*}{\texttt{23:00} }
+& \em same sex marriage	& Some states legalized it & -  \\ \cline{2-4}
+& \em for recreational use & Colorado legalized Marijuana for recreational use   & - \\ \cline{2-4} %(uh oh!)
+& \em acceptance speech & People anticipating the speech & - \\ \hline % 
+
+\multirow{3}{*}{\texttt{00:30} }
+& \em Delivered, sealed, signed & Stevie Wonder's song used in Obama's campaigns & -  \\ \cline{2-4}
+& \em The best is yet to come & Quote from Obama's speech  & - \\ \cline{2-4} %(uh oh!)
+& \em with the flag in her [hair]	&  During the speech, attention on social media goes to a woman appearing behind Obama on TV! & - \\ \hline %  \cline{2-3}
+
+\multirow{3}{*}{\texttt{01:00} }
+& \em Four more years & Barack Obama's tweet; the most retweeted in 2012\footnote{http://ca.news.yahoo.com/blogs/ticket/obama-wins-twitter-election-most-rt-d-tweet-174452713--election.html} & - \\  \cline{2-4}
+& \em @paulmyers47: spots & Pyramidal marketing; people retweet to make money & - \\  \cline{2-4}
+& \em President Barack Obama & News headlines about the speech uses the formal title & - \\\hline
+											
 \end{tabular}
 \end{center}
 \vspace{-5mm}
@@ -3041,6 +3072,8 @@ Time & Itemset & Explanation & MTV \\ \hline
  \label{table:nov6}
 \end{table}
 
+%\restoregeometry
+%\addtolength{\voffset}{3cm}
 
  \begin{table}
  \begin{center}
@@ -3049,7 +3082,7 @@ Time & Itemset & Explanation & MTV \\ \hline
 \begin{tabular}{|p{1cm}|p{13cm}|c|c|} %p{9cm}|p{6cm}|}
 
 \hline
-Time & Itemset & \multicolumn{2}{c|}{Ranks} \\ %MTV & SC\\
+\textbf{Time} & \textbf{Itemset} & \multicolumn{2}{c|}{\textbf{Ranks}} \\ %MTV & SC\\
 %\hline
 \hline
 \multirow{3}{*}{\texttt{19:00}} &
@@ -3134,14 +3167,13 @@ which are otherwise ranked high in all hours.
 All the topically relevant itemsets chosen by MTV are present in 
 the top 50 \emph{strongly closed} itemsets
 ~--~most of them are in the top 30.
-%We do not know if all the top ranked \emph{strongly closed} itemsets 
+We do not know if all the top ranked \emph{strongly closed} itemsets 
 %are also in picked up at a relatively high rank
-%would also be picked by MTV if we use it to mine more itemsets, 
-The quality of the results is comparable, but
-BALH ASHFKAKFJA HSJSSJS
+would also be picked by MTV if we use it to mine more itemsets,
+since we did not have time to get its results for all epochs at $k > 30$,
 because the algorithm's space and time requirements
 %becomes prohibitively large when the number
-of itemsets requested is increased.
+of itemsets requested is increased. 
 % beyond 
 At $k > 100$ the algorithm fails because of a memory error, 
 even though it was being run on a machine with 256 GB of RAM,
@@ -3160,6 +3192,8 @@ is likely to result in more itemsets than
 what MTV would pick as the top $k$.
 On the other hand, \emph{strongly closed} itemsets
 are efficiently mined and are not restricted to a predefined number.
+%The quality of the results is comparable, but
+%The efficiency does not cquality of the results of 
 
  
 \begin{figure}
