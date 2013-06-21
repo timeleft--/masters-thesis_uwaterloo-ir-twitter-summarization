@@ -1009,7 +1009,7 @@ The problem of Topic Detection and Tracking (TDT) was introduced by Allan et al.
 %and the community defined five tasks that a TDT system should be able to perform: 
 %\emph{Topic Tracking, Link Detection, Topic Detection, First Story Detection and Story Segmentation}.
 %Out of those tasks Topic Detection is the most releted to our work, but the rest are also related. 
-Topic Detection is the discovery of previously unknown topics, 
+Topic detection is the discovery of previously unknown topics, 
 where a topic was first defined as an ``event'' then 
 its definition was broadened to include the triggering event 
 as well as 	other events and activities directly related to it.
@@ -1024,54 +1024,95 @@ and the solutions developed for this domain are not directly applicable to
 data from other domains. 
 
 In the domain of social media, Petrovi\'{c} et al.~\cite{petrovic2010streaming}
-used an adaptation for Locality Sensitive Hashing (LSH)~\cite{indyk1998approximate} to
+used an adaptation of Locality Sensitive Hashing (LSH)~\cite{indyk1998approximate} to
 perform first story detection at scale. 
 The computation framework is the same as the one
-used in traditional systems~\cite{yang1998study,allan2000detections}.
-For each tweet find the nearest neighbour in the vector space of terms. 
-If the distance is less than a threshold then add the document to the topic represented by the cluster containing the nearest neighbour.
-Otherwise, create a new cluster representing a new topic. 
-The current document is the first story of the topic.
-The adaptation to LSH that they propose reduces 
-the number of times a document is considered far
-from all its neighbours while it actually is not.
-They do that by comparing the document to 
+used in traditional systems~\cite{yang1998study,allan2000detections}:
+\begin{itemize}
+%For each tweet the nearest neighbour in the vector space of terms is found. 
+%Tweets are represented in the vector space of terms.
+\item The distance between a tweet and its nearest neighbour from the preceding tweets is calculated.
+\item If the distance is less than a threshold, then the tweet is added to the topic 
+represented by the cluster containing the nearest neighbour.
+\item If the distance is greater than the threshold, a new cluster is created.
+The new cluster represents a new topic, with
+the current tweet as its first story. % of the topic.
+\end{itemize}
+The adaptation of LSH that Petrovi\'{c} et al. propose reduces 
+the number of times a tweet is considered far
+from all of its neighbours while it actually is not.
+In case of failure to find a near neighbour, 
+a tweet is compared with
+%They do that by comparing the document to 
 %a fixed number of documents that are posted
 %within the 
-the last 1000 tweets, and update the minimum distance if necessary.
-Using LSH, with the adaptation, didn't affect the quality of results much 
-as compared to the UMass FSD system~\cite{allan2000detections}
-on a traditional TDT task (TDT-5).
-On the other hand, the run time was decreased from 28 hours to 2 hours.
-The UMass system could not finish processing a dataset 
+the last 1000 tweets, updating the minimum distance if necessary.
+%Using LSH, with the adaptation, didn't affect the quality of results much 
+%as compared 
+The performance of the modified LSH
+on a traditional TDT task (TDT-5)
+was comparable to the UMass FSD system~\cite{allan2000detections}.
+On the other hand, the run times of the two systems are 2 hours and 28 hours respectively.
+% decreased from 28 hours to 2 hours.
+%The UMass system could not finish processing a dataset 
+Another experiment was done on a dataset
 of a 160 million tweets
-collected over a period of 6 months from Twitter,
-while their proposed system can process each
+collected over a period of 6 months from Twitter.
+The UMass system failed to terminate,
+while the LSH based system could process each
 tweet in bounded space and time.
 One problem remains, however.
-The precision of determining if a tweet cluster
-is actually pertaining to an event or just normal chatter
-or spam is low. 
-Actually their system can detect spam clusters
-with high precision ($average\,precision=0.963$), but not events ($average\,precision=0.34$).
+Their system does not achieve high precision in 
+determining if a tweet cluster
+pertains to an event or not.
+%is actually pertaining to an event 
+%or just normal chatter or spam.
+Actually, their system can detect spam clusters
+with high precision ($average\,precision=0.963$), 
+%but not events ($average\,precision=0.34$).
+%but cannot detect 
+but not
+event clusters ($average\,precision=0.34$).
 The problem of identifying event clusters was further studied by Beker et al.~\cite{becker2011beyond},
 where they used a Support Vector Machine (SVM) classifier and achieved a higher precision.
-However, their test set was limited to 5 hours of Twitter data and the precision decreases as 
-the number of clusters increases because the classifier is trained on the positive case.
+However, the test set used was limited to 5 hours of Twitter data and the precision decreases as 
+the number of clusters increases.
+% because the classifier is trained on the positive case.
 %of about 0.65 correctly classified event clusters out of 20 clusters.
 
-Another method of event detection follows the framework of bursty keywords detection proposed by Kleinberg~\cite{kleinberg2003bursty}. %, for topic detection in e-mail streams. 
+Another approach to event detection follows the framework of bursty keywords detection proposed by Kleinberg~\cite{kleinberg2003bursty}. %, for topic detection in e-mail streams. 
 In this framework, a set of keywords are tracked~--~possibly all tokens in the dataset.
-A state machine is used to indicate the stat of each keyword, 
+A state machine is used to indicate the state of each keyword, 
 where consequitive states correspond to higher levels of \emph{burst} intensity. 
-Each transition between states is associated with a cost, 
-and a keyword moves between the states to minimize the overall cost of its transitions.
-A simplified version of this framework is use by Parikh and Karlapalem~\cite{parikh2013events},
-where there are two states for each token. 
+Each state transition is associated with a cost, 
+and a keyword is moved
+between states such that
+%between the states to minimize 
+the overall cost of its transitions is minimized.
+A simplified version of this framework is used by Parikh and Karlapalem~\cite{parikh2013events}.
+%where there are two states for each token. 
+In their work, 
+there are only two states for each token: the normal state, and the bursty state.
 A token is moved to the state of being bursty
 if the increase in its frequency exceeds a threshold,
 and it stays in this state for a fixed time interval. 
-The bursty tokens are then clustered into events.
+The timeline is divided into fixed length intervals,
+and a token is totally ignored in intervals when it is
+in the normal state.
+Tokens are then clustered according to the similarity of
+the sets of bigrams with which the co-occur,
+and the pattern of their \emph{appearance} 
+(moving to the bursty state).
+The clusters are considered to be events, 
+and they are ranked according to their sizes.
+%They have to process the data in 
+The clustering has to process the data from long intervals
+in one batch, so that the similarity of appearance can be calculated.
+This approach is not suitable for stream processing.
+Besides, the number of clusters produced by their methods
+is much lower than the number of events one would expect
+to have happened in such long intervals of time.
+%The bursty tokens are then clustered into events.
 %is higher than the increase between all other intervals.
 %the difference in the frequency of each token is tracked in of fixed span and keywords are considered bursty
 Another method that tracks the frequency of all tokens is EDCoW~\cite{weng2011event}, 
@@ -1083,32 +1124,36 @@ Other methods based on burst detection track a small set of keywords.
 Lehmann et al.~\cite{lehmann2012dynamical} track hashtags and study 
 their usage pattern.
 Chakrabarti and Punera~\cite{chakrabarti2011event} track 
-tokens appearing in tweets tagged by an American Football team name,
-and use them to create a summary of the game.
+tokens appearing in tweets tagged by the name of an American football team,
+and use them to create a summary of a game.
 
-Our work can be seen in the light of Meme-tracking~\cite{leskovec2009meme},
+Our work can be seen in the light of meme-tracking~\cite{leskovec2009meme},
 where a particularly interesting quotation (meme) is tracked across news and blog posts.
 The quotation being tracked is not quoted verbatim in all posts, 
 but rather parts of it are selected and it could be slightly paraphrased.
 This is similar to modifications made during retweeting an interesting tweet.
 Leskovec et al.~\cite{leskovec2009meme} tracked quotations made by
 American politicians during the 2008 U.S. presidential elections.
-Phrases made up of 4 words or more are tracked if they got repeated 10 times or more,
+Phrases made up of 4 words or more are tracked if they got repeated 10 times or more 
+in blogs and news articles,
 where at most 25\% of the repetitions could be on the same domain name.
-A directed acyclic graph is constructed where phrases are vertices 
-and edges are weighted according to the edit distance between phrases, 
+A directed acyclic graph is constructed where vertices represent phrases
+% phrases are vertices 
+and edges are weighted according to the edit distance between 
+the phrases, 
 as well as the number of occurrences of the longer phrase.
 The graph is then divided into clusters where each cluster contains
 one \emph{root} that has no outgoing edges. 
 Each vertex is assigned to the cluster 
 with which it has the highest number of edges.
-Clusters are then ranked according to the number of news and blog posts 
+Clusters are then ranked according to the number of news articles and blog posts 
 containing any phrase from the cluster.
-Leskovec et al. then use the clusters and their associated news and blog posts
+Leskovec et al. then use the clusters and their associated news articles and blog posts
 to perform an analysis of the temporal variation of the volume of posts about
 each meme.
 They propose a model that fits the data well, 
-and study the difference between blog posts and news.
+and study the difference between blog posts and news articles
+in terms of how fast a meme is picked and how long it remains in focus before getting dropped.
 In our work, we are also using the volume of posts 
 containing phrases and their variations (itemsets).
 We also do clustering but in a different way, 
@@ -1122,13 +1167,14 @@ Frequent itemsets are a better starting point than phrases,
 since there are much more phrases than frequent itemsets.
 
 Event detection in Twitter can also be done using 
-Natural Language Processing
+natural language processing
 to identify \emph{event} parts of speech~\cite{ritter2012open},
 or to identify action phrases~\cite{popescu2011extracting}.
 Of course, it is also possible to apply topic modelling 
 by Latent Dirichlet Allocation (LDA)~\cite{hong2010empirical}
 or an online varient~\cite{hoffman2010online,yao2009efficient}.
-Our method tackles the problem in a totally different way.
+Our method tackles the problem in a totally different way
+than these two approaches.
 
 % ===================================
 % ===================================
