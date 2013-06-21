@@ -1225,7 +1225,7 @@ The properties of closed itemsets are as follows:
 \begin{enumerate}
 \item Adding an item to a closed itemset reduces its support. 
 \item A subset of a closed itemset is not necessarily closed, but one or more closed subset must exist for any itemset (formally this could be the empty set, given that any item that appears in all transactions is removed in a preprocessing step). 
-\item If a closed K-itemset can be extended any further then one of its supersets will be closed, however not necessarily a (K+1) superset. Itemsets that cannot be extended any further are called \emph{maximal itemsets}, which form a subclass of closed itemsets.
+\item If a closed $k$-itemset can be extended any further then one of its supersets will be closed, however not necessarily a ($k$+1) superset. Itemsets that cannot be extended any further are called \emph{maximal itemsets}, which form a subclass of closed itemsets.
 \end{enumerate}
 
 Besides being much smaller than the solution space of frequent itemsets,
@@ -1253,19 +1253,19 @@ which have to be removed to get
 an itemset with greater support.
 Notice that they are necessarily 
 %at the end of the itemset,
-the last items added to the itemsets,
+the last items added to the itemset,
 regardless of the total ordering.
 Finally, we call the first item added to the suffix of the itemset its
 \emph{suffix head}.
-With this terminology, the rules for \emph{PPC-Extentsion} are:
+With this terminology, the rules for \emph{PPC-Extentsion} are as follows:
 \begin{enumerate}
-\item An itemset must be extended by all items that occur in $T_{itemset}$, 
+\item An itemset must be extended by every item that occurs in $T_{itemset}$, 
 except items which are \emph{smaller} than its \emph{suffix head};
 extending by \emph{smaller} items will lead to closed itemsets already generated in an earlier step. 
 %An itemset can be extended only by items \emph{larger} than its \emph{suffix head}; 
 %extending by \emph{smaller} items will lead to closed itemsets already generated. 
 %Each itemset must be extended by all the qualified items that occur in $T_{itemset}$.
-Extension items are added to the itemset in the order given by the total ordering,
+Extension items are added to the itemset in turn in the order given by the total ordering,
 %and the maximal itemset 
 recursively applying PPC-Extension to the extended itemset before adding the next extension item.
 \item After adding an extension item, $w_e$, to an itemset, $s$, we add all other items that appear in all transaction containing $s \cup \{w_e\}$ ~--~ 
@@ -1278,7 +1278,7 @@ The newly added items become the \emph{suffix}.
 Table \ref{table:PPCExample} is an example of how \emph{PPC-Extentsion} is
 used to generate closed itemsets starting from the
 \emph{1}-itemset \{`barack'\}.
-The upper table enumerates $T_{\{barack\}}$.
+The upper table enumerates $T_{\{`barack'\}}$.
 The lower table shows steps of itemsets generation.
 The current itemset along with its frequency is in column 2.
 Itemsets marked by an (*) are the closed itemsets that are part of the solution.
@@ -1292,7 +1292,8 @@ are shown with a line striked through them.
 For each itemset, the extension items are kept 
 so that it is known which extension item 
 is next in turn to be added.
-An item is bolded when it is being added because its turn has come. %The item being added
+An item is bolded when its turn to be added has come.
+%An item is bolded when it is being added because its turn has come. %The item being added
 %Column 4 is a comment explaining the step.
 %An item is bolded when its turn to be added has come. 
 After adding each item, a pass is done on $T_{itemset}$ to 
@@ -1308,11 +1309,11 @@ and the only additional storage required, besides storage for the documents,
 is that required for possible extension items.
 Of course, this is a simplified example, but it shows in essence how LCM
 achieves its low run time and memory requirements.
-We refer the interested reader to Uno et al.\cite{uno2004lcm} for a
+We refer the interested reader to Uno et al.~\cite{uno2004lcm} for a
 theoretical proof that the algorithm runs in linear time in the number of
 closed itemsets,
 and that this number is quadratic in the number of transactions.
-Performance on a real data set is shown in section \ref{sec:socmine}.
+Performance on a real data set is shown in section \ref{sec:realdata}.
 We proceed by describing how to implement this algorithm using an inverted
 index.
 
@@ -1321,6 +1322,7 @@ index.
 %{\tiny
 
 \begin{table}
+\thisfloatpagestyle{empty}
 \centering
 \begin{tabular}{|c|p{5cm}||c|p{5cm}|} \hline
 Doc. Id & Document & Doc. Id & Document\\\hline
@@ -1335,7 +1337,9 @@ Documents (two per row)\\\\
 \hline
 Step&Current Itemset&Possible Extension Items&Comments\\ \hline
 
-1& \{barack\} (4) & mitt (2), obama (3), romney (2) & {\small Items in $T_{\{`barack'\}}$ are counted. No items should be added to the itemset.}\\\hline %with `barack'
+1& \{barack\} (4) & mitt (2), obama (3), romney (2) & {\small Items in $T_{\{`barack'\}}$ are counted. There is not an item appearing in all transactions.}\\\hline 
+%  which must be added to the suffix.
+%with `barack'
 %appears in all transactions.%
 %This is not shown as a step in the rest of the example.
 2& \{\emph{barack}\} (4)* & mitt (2), obama (3), romney (2) &  {\small Rule 3: suffix is ordered, add itemset to solution. This is not shown as a separate step in the rest of the example. } \\ \hline
@@ -1344,7 +1348,7 @@ Step&Current Itemset&Possible Extension Items&Comments\\ \hline
 5 & \{barack, \emph{mitt}, obama\} (1) & romney (1)                       &  {\small Rule 2: `romney' appears in all $T_{itemset}$. } \\\hline
 6 & \{barack, mitt, \emph{obama, romney}\}(1)* & & {\small Rule 3: `obama'  is the \emph{suffex head}. } \\\hline
 7 & \{\emph{barack}\} (4) & mitt (2), \textbf{obama} (3), romney (2) &  {\small Nothing more to add, back to \{`barack'\}.}\\\hline
-8 & \{barack, \emph{obama}\} (3)* & \sout{mitt} (1), \textbf{romney} (2) &  {\small Rule 1: skipping `mitt', adding `romney'  } \\\hline
+8 & \{barack, \emph{obama}\} (3)* & \sout{mitt} (1), \textbf{romney} (2) &  {\small Rule 1: skipping `mitt', adding `romney'  } \\ %.\hline
 9 & \{barack, obama, \emph{romney}\} (2)* & \sout{mitt} (1) &  {\small Rule 1: Nothing more to add.  } \\\hline
 10 & \{\emph{barack}\} (4) & mitt (2), obama (3), \textbf{romney} (2) &  {\small Back to \{`barack'\}, adding `romney'. } \\\hline
 11 & \{\emph{barack}, romney\} (2) &  mitt (1), obama (2) &  {\small Rule 2: add `obama' after `romney'. } \\\hline
@@ -1362,12 +1366,12 @@ Closed itemsets containing `barack'
 \end{landscape}
 
 \subsection{Implementation Details}
-We show in algorithm~\ref{algo:lcmix} how to implement LCM and PPO-Extension
+We show in algorithm~\ref{algo:lcmix} how to implement LCM and PPC-Extension
 using an inverted index.
 The algorithm assumes the presence of a search infrastructure,
 with the ability of performing boolean queries efficiently.
 Besides the high likelihood that such an infrastructure already exists,
-it is also a very good representation of textual data.
+it is also a  good representation of textual data.
 %It provides a more succinct rep
 %We experimented with other representation that are designed to provide 
 Other representations that are designed for databases in general
@@ -1391,12 +1395,12 @@ The symbol $\succ$ denotes that the lefthand side  succeeds the righthand
 side in the total ordering.
 In the implementation shown, it is not necessary that the inverted index's tokens  list (X.tokens)
 follow the total ordering; all itemsets of length 1 will be considered anyway. 
-Each 1-itemset is then expanded according to the PPO-Extension rules.
+Each 1-itemset is then expanded according to the PPC-Extension rules.
 Lines 11-18 are the enumeration and occurrence counting of possible extension items, 
-except line 15 which forms the closed itemset according to PPO-Extension rule 2.
-Lines 19-20 prunes a solution branch according to the rule 3, 
+except line 15 which forms the closed itemset according to PPC-Extension rule number 2.
+Lines 19-20 prune a solution branch according to rule number 3, 
 and line 21 adds the itemset to the solution according to the rule's complement.
-Lines 22-27 extends the itemset according to rule 1, 
+Lines 22-27 extend the itemset according to rule number 1, 
 where line 23 (along with line 5) enforces the support threshold.
 
 
@@ -1430,7 +1434,7 @@ C $\gets \{\langle \emptyset, E\rangle\}$ \tcp*{$\emptyset$ is a closed itemset.
 X $\gets$ Inverted index of E\;
 \ForEach{$w \in X.tokens$}{
 	$T_{\{w\}} \gets$ X.postingsList[$w$]\;
-	\uIf(\tcp*[f]{Support threshold for 1-itemsets}){$|T_{\{w\}}| \geq support$}{ %\alpha * |E|$}{ %\frac{|E|}{E.span}
+	\uIf(\tcp*[f]{Support threshold enforcement on 1-itemsets}){$|T_{\{w\}}| \geq support$}{ %\alpha * |E|$}{ %\frac{|E|}{E.span}
 		LCM($\{w\}, w, T_{\{w\}}$) \;
 	}
 }
@@ -1443,18 +1447,20 @@ X $\gets$ Inverted index of E\;
 		\ForEach{$w \in t$}{ 
 			frequency[$w$]++\;
 			\lIf{frequency[$w$] $ = |T_s|$}{
-				suffix.add($w$)%	\tcp*{ PPO-Extension Rule 2}
+				%suffix.add($w$)%	\tcp*{ PPC-Extension Rule 2}
+				suffix $\gets$ suffix $ \cup\, \{ w\}$
 			}  
 		}
 	}
 	\uIf{$\exists v \in suffix: w_{sh} \succ v$ }{
-		\Return \tcp*{Prune according to PPO-Extension Rule 3}
+		\Return \tcp*{Prune according to PPC-Extension Rule 3}
 	} 
-	C.add($\langle s \cup {suffix}, T_s\rangle$)\;
+	%C.add($\langle s \cup {suffix}, T_s\rangle$)\;
+	C $\gets$ C $ \cup \, \{\langle s \cup {suffix}, T_s\rangle \}$\;
 	\ForEach{$v \succ w_{sh}$ and $v \notin $ suffix}{
 		\If{frequency[$v$] $\geq support$}{%\alpha * |E|$}{%\frac{|E|}{E.span}
-			$T \gets T_s \cap T_{\{v\}}$	\tcp*{Results of query $s$ AND $v$}
-			LCM($s \cup suffix \cup \{v\}, v, T$) 
+			$T_{s \,\cup\, \{v\}} \gets T_s \cap T_{\{v\}}$	\tcp*{Results of query $s$ AND $v$}
+			LCM($s \cup suffix \cup \{v\}, v, T_{s \,\cup \,\{v\}}$) 
 		}
 	}
 }
@@ -1467,6 +1473,7 @@ X $\gets$ Inverted index of E\;
 
 %\section{Dataset and Data Preprocessing}
 \section{Using LCM for Mining Social Media Text}
+\label{sec:realdata}
 \subsection{Dataset}
 Throughout this paper we use data collected from the Twitter public
 stream\footnote{\url{https://dev.twitter.com/docs/streaming-apis/streams/public}}
