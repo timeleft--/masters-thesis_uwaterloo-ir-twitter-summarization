@@ -782,72 +782,105 @@ portion of social media data.
 
 \section{Frequent Itemsets in Search and Summarization}
 
-Different ways to use Frequent Itemset Mining in search %the field of Information Retrieval 
-has been proposed. 
+Different ways to use frequent itemset mining in search %the field of Information Retrieval 
+have been proposed. 
 Possas et al.~\cite{possas2002set}  proposed using closed itemsets
 in place of terms, using them in exactly the same way as terms are used.
-In the tokenization process, they use CHARM~\cite{zaki2002charm} to mine closed itemsets from 
-frequent tokens in the document.
+In the tokenization process, they use CHARM~\cite{zaki2002charm} 
+%to mine closed itemsets from 
+%frequent tokens in the document.
+to mine closed itemsets of
+terms from each document.
 They then add the document to the postings lists of each closed itemset
-present in the document. 
+%present in it. % the document. 
+it contains.
 Queries are tokenized similarly and results are ranked using TF-IDF.
 This simple approach achieves increased precision on various test collections, 
 possibly because frequent itemsets take into account collocation information.
-The approach is so simplistic, however. 
-The overlap in closed itemsets was not taken into account while tokenizing documents and queries into itemsets.
+The approach is  simplistic, however. %so
+The overlap between %in closed 
+itemsets was not taken into account while tokenizing documents and queries into itemsets.
 Also, the mining algorithm was not modified to accommodate the high number of terms %, 
 and the greater length of documents compared to the length of transactions typical to market basket data.
 Finally, the number of itemsets is higher than the number of terms so the index size will increase.
 
 Wu et al.~\cite{wu2004automatic,wu2006deploying}
-propose the use of sequential closed patterns instead of terms, 
-in what they call \emph{pattern based approach} to information retrieval.
+proposed the use of sequential closed patterns in place of terms, %instead
+in what they call a \emph{pattern based approach} to information retrieval.
 They consider patterns as surrogates to phrases that have
 better statistical properties than phrases, 
 thus achieving a break through in the performance 
 of \emph{phrase based approaches}.
 ``Although phrases contain less ambiguous and narrower meanings than individual words, the likely
 reasons for the discouraging performance~\cite{lewis1992evaluation} from the use of phrases are: (1) phrases have inferior statistical properties to words, (2) they have low frequency of occurrence, and (3) there are a large number of redundant and noisy phrases among them.''~\cite{wu2006deploying}
-They address the problem of overlap in closed patterns,
+They addressed the problem of overlap between itemsets, %closed patterns,
 and they developed an algorithm specifically tailored for mining closed sequential patterns from text.
-Documents are broken into paragraphs which are the unit of mining and retrieval.
-This alleviates the problem of having documents that are much longer than traditional market basket transactions.
-Albathan et al.~\cite{albathan2012using} extend the work of Wu et al. by 
+Documents are broken into paragraphs %which are the unit of mining and retrieval.
+such that a paragraph is 
+the unit of mining and retrieval.
+This alleviates the problem 
+%of having documents that are
+that documents are usually
+much longer than traditional market basket transactions.
+Albathan et al.~\cite{albathan2012using} extended the work of Wu et al. by 
 proposing a method for further reducing the number of closed patterns.
 Lau et al.~\cite{laumicroblog} used related methods for term weighting 
 in pseudo-relevance feedback for Twitter search,
 and achieved substantial improvements over a baseline.
+
 In an earlier work~\cite{abounlaga2012frequent}, 
 we have also explored the viability 
 of using frequent itemsets for query expansion in microblog search. 
 We could achieve improvements over a strong baseline
-on the TREC 2011 microblog track queries, 
-using frequent itemsets 
+on the TREC 2011 microblog track queries.
+As a baseline, we used Okapi BM25~\cite{robertson1995okapi} 
+with its parameters tuned to achieve
+the best performance on short documents.
+The baseline's performance ranked high compared
+to the TREC 2011 submissions.
+After query expansion, the performance
+was better than all of the TREC 2011 submissions.
+Queries were expanded using terms from itemsets
+that are most relevant to the query,
+according to the same relevance ranking formula
+used in the baseline.
+We used frequent itemsets 
 %which are mined  using 
 mined by
 an unmodified mining algorithm that 
-returns the top-k itemsets according to their support.
-This work can provide such methods by a short ranked list of itemsets. 
+returns the top $k$ itemsets according to their support\footnote{\url{https://cwiki.apache.org/MAHOUT/parallel-frequent-pattern-mining.html}}.
+However, query expansion achieved
+no improvement over the baseline
+on the TREC 2012 microblog track queries. 
+This indicates that there was not enough relevant itemsets,
+because of the use of support to limit the number of itemsets.
+The methods proposed in this thesis can be used for 
+mining a short ranked list of relevant itemsets,
+which can then be used by methods such as our earlier work,
+or the work of Wu et al.
+%This work can provide such methods by. 
 
 
-Our work complements the work done by Yang et al.~\cite{yang2012framework} for 
+This work also complements the work done by Yang et al.~\cite{yang2012framework} for 
 using frequent itemsets as a temporal summary. 
 They have proposed a framework for storing mining results of 
 temporally consecutive intervals (batches of data) using a pyramidal time window. 
 Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
-However, the itemsets stored for each interval is not selected for providing the best summary.
-Itemsets are selected according to their utility in a
-lossy compression algorithm.
-The algorithm is based on representing transactions as itemsets that cover them, 
-possibly introducing items that are not originally in the transaction or omitting items from the transaction.
+However, the itemsets stored for each interval are not selected for providing the best summary.
+Instead, they are selected according to their utility in compressing the data.
+%Itemsets are selected according to their utility in a
+%lossy compression algorithm.
+%The algorithm is based on representing transactions as itemsets that cover them, 
+%possibly introducing items that are not originally in the transaction or omitting items from the transaction.
 %and it might introduce false positives and negatives. 
 %The algorithm could meet the desired  constraints on memory consumption (set at 20MB) and on processing data as a stream, but there was no justification why such tight constraints should be set. On the other hand, 
 %The quality of the summary seems to be affected by the choice of utility function, but the only assessment made about this was showing that 
-The actual transactions can be reconstructed with an accuracy that is expected to be high 
-if the transaction contains ``both recent and frequent keywords''. 
-The temporal summary is created from the reconstructed transactions in a separate step.
+%The actual transactions can be reconstructed with an accuracy that is expected to be high 
+%if the transaction contains ``both recent and frequent keywords''. 
+%The temporal summary is created from the reconstructed transactions in a separate step.
+The temporal summary is created from transactions relevant to a query in a separate step.
 First, the pyramidal time window is queried using keywords and a specific time intervals 
-(for example, ``world cup'' on the day before a certain matche).
+(for example, ``world cup'' on the day before a certain match).
 Then, non-negative matrix factorization is used to extract topics from the returned transactions.
 The pyramidal time window structure can be used to store itemsets
 selected by our methods, 
