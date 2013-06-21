@@ -828,6 +828,7 @@ Lau et al.~\cite{laumicroblog} used related methods for term weighting
 in pseudo-relevance feedback for Twitter search,
 and achieved substantial improvements over a baseline.
 
+\newpage
 In an earlier work~\cite{abounlaga2012frequent}, 
 we have also explored the viability 
 of using frequent itemsets for query expansion in microblog search. 
@@ -900,7 +901,7 @@ in these media.
 Some stories are reported mainly on social media 
 because 
 of censorship on journalism, 
-such as the 2009 Iranian elections protests  %~-~10
+such as the 2009 Iranian elections protests  %~--~10
 (nicknamed ``Iran's Twitter Revolution''\footnote{\url{http://www.theatlantic.com/technology/archive/2010/06/evaluating-irans-twitter-revolution/58337/}}).
 Other stories are reported mainly on social media
 because the 
@@ -1484,7 +1485,12 @@ We collect only the tweet text to avoid reliance on any features specific to a
 certain social medium,
 and to make the algorithms applicable to other media where text is short such
 as Facebook or Google+ status updates.
+YouTube comment data is a particularly promising candidate since 
+comments are limited to 500 characters;
+the itemsets could provide textual highlights 
+of non-textual content. %, or at least of what the users say about it.
 %The only preprocessing we performed was to
+
 We remove duplicate original tweets
 (not retweets) using a Bloom filter~\cite{metwally2005duplicate}.
 This filtering removes spam tweets sent by botnets, averaging at 2.86\% of the stream. 
@@ -1554,7 +1560,8 @@ of the activity on the social network.
 % number of tweets %volume velocity 
 % at each hour can be calculated using a state space model
 
-\subsection{Timeseries model of the dataset}
+
+\subsection{Timeseries Model of the Dataset}
 Arrivals entering a system are commonly modelled as
 a Poisson stochastic process.
 A Poisson process can be 
@@ -1571,18 +1578,21 @@ Since social media has arrival rates larger than 1000
 posts per minute 
 (the time unit is arbitrary but must be long enough to have more then 1000 arrivals),
 it is therefore possible to assume a normal distribution
-and use a state space model 
+and use a timeseries model % state space model 
 to describe the activity on the social network.
+One class of timeseries models
+which is particularly useful for analysis
+is the class of state space models.
 
-Values of a variable in time series data is known to be correlated,
+Values of a variable in timeseries data is known to be correlated,
 and specialized models are developed to deal with such explicit correlation.
 The explicit autocorrelation (correlation between values of the same variable) is usually uninteresting, 
 since it is known and expected.
 For example, the data can be known to have a trend such as a chronic increase in the volume velocity. % of Twitter.
-Also, a cyclic increases and decreases in the volume velocity according to the time of day can be expected~-~this is called the seasonal effect in time series analysis.
-State space methods provide an explicit structural framework for the decomposition of time series~\cite{commandeur2007introduction}.
-%in order to diagnose all the dynamics in the time series data simultaneously 
-Unlike the more popular Box~-~Jenkins ARIMA models, 
+Also, a cyclic increase and decrease in the volume velocity according to the time of day can be expected~--~this is called the seasonal effect in timeseries analysis.
+State space methods provide an explicit structural framework for the decomposition of timeseries~\cite{commandeur2007introduction}.
+%in order to diagnose all the dynamics in the timeseries data simultaneously 
+Unlike the more popular Box-Jenkins ARIMA models, 
 trend and seasonal effects are not treated as nuisance parameters, 
 and it is not necessary to remove the trend and seasonal effects 
 from the series before the analysis can begin.
@@ -1601,6 +1611,8 @@ volume velocity of Twitter is the following: %Gaussian Random Walk
 \item A deterministic seasonal cycle that is 1 day long, which captures the effect of the hour of day on the number of posts. 
 \item A stochastic level component, which represents the volume velocity specific to each hour. The stochasticity is represented as a variance attached to the level component.
 \end{enumerate}
+
+\newpage
 There was no need to add a trend component,
 maybe because the sampling used by the Twitter API %the data coming from the
 public stream endpoint emits a stable volume of Tweets, 
@@ -1608,7 +1620,7 @@ and maybe because there was actually no significant growth in the
 use of Twitter during the months of data collection.
 In our model we use the timestamps of tweet creation,
 and we did not keep the timestamps of when the API returned
-each tweet as part of the sample. %~-~which could be later th .
+each tweet as part of the sample. %~--~which could be later th .
 
 Figures \ref{fig:volvel1} and \ref{fig:volvel2} show 
 different components of the model 
@@ -1616,8 +1628,10 @@ when it is fitted to the hourly number of tweets
 in the month of October 2012. 
 Figure \ref{fig:volvel1}
 shows the daily cycle component (green)
-and the noise component (black), 
-which must be present in all state space models.
+and the noise component (black). 
+The noise component must be present in all state space models,
+to capture small variabilities in the observed value 
+so that the model does not over-fit the data.
 The cycle is perfectly aligned with the days
 in the Hawaii Standard Time (HST) time zone,
 %in which midnight corresponds to 5 AM EST
@@ -1648,13 +1662,13 @@ The peaks in the level component
 %and they 
 coincide with real world events.
 The peaks on the $3^{rd}$, $16^{th}$ and $22^{nd}$  
-%~-~the days of 
+%~--~the days of 
 %These peaks might be caused by 
 coincide with
 the presidential debates\footnote{\url{http://www.uspresidentialelectionnews.com/2012-debate-schedule/}}, and
 the peak on the $28^{th}$ coincide with 
 the emergency declaration for
-the North Easter states of the USA
+the northeastern states of the USA
 in anticipation of 
 Hurricane Sandy\footnote{\url{http://www.fema.gov/hurricane-sandy-timeline\#oct28}}.
 %However, it is 	
@@ -1676,7 +1690,26 @@ of their row and column.
 We will not use timeseries models
 any further than this exposition.
 
-Nevertheless, it is necessary to 
+
+\begin{figure}
+\centering
+\includegraphics[clip=true,trim=0in 1.5in 0in 1in]
+{data-plots_oct/random-walk+days_NUMTWEETS_irregular+repeating.pdf}
+\caption{Seasonal and noise components of the volume velocity}
+\label{fig:volvel1}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics%[clip=true,trim=0in 1.5in 0in 1in]
+{data-plots_oct/random-walk+days_NUMTWEETS_level+sma.pdf}
+\caption{Stochastic level of the volume velocity}
+\label{fig:volvel2}
+\end{figure}
+
+\subsection{Dynamic Support Threshold}
+%Nevertheless, it
+It is necessary to 
 %As mentioned earlier, a \emph{frequent itemset} is a set of items that occur together a number of
 %times higher than a given threshold, called the \emph{support} threshold.
 %We 
@@ -1689,17 +1722,18 @@ as an absolute number.
 %To do this when the volume velocity is 
 We therefore define the \emph{minimum support threshold} as the threshold at the hour
 of the least volume velocity during the day.
-The \emph{minimum support} is supplied as an absolute number %, $a$, 
+The \emph{minimum support threshold} is supplied as an absolute number %, $a$, 
 and then converted to a ratio, $\alpha$, % = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
-through dividing by the average of the number of tweets in the hour of minimum volume velocity in different days. 
-The actual \emph{support} threshold used for mining any given epoch, $E$, is thus
+by dividing it by the average of the number of tweets in the hour of minimum volume velocity in different days. 
+The actual support threshold used for mining any given epoch, $E$, is thus
 $\alpha$ multiplied by the number of tweets in the epoch: %'s volume velocity:
 \begin{align}
-support &= \alpha \times |E|  \hspace*{1in}  where\,\alpha: support\,ratio\\ %\frac{|E|}{E.span}
-&= \frac{minimum\_support\_threshold}{\textbf{avg}(\min_{day}{(vol.\, vel.)})} \times |E| %\frac{|E|}{E.span} 
+dynamic\_support\_threshold &= \alpha \times |E|  \hspace*{1.2cm}  where\,\alpha: support\,ratio\\ %\frac{|E|}{E.span}
+&= \frac{minimum\_support\_threshold}{\textbf{avg}(\min_{day}{(volume\, velocity)})} \times |E| %\frac{|E|}{E.span} 
 \end{align}
 
-Calculating the support as described makes it intuitive to select a support threshold,
+Calculating the support threshold dynamically as such
+makes it intuitive to select a minimum support threshold,
 but it would lead to a high support threshold in epochs including a burst of tweets. % caused by any event.
 %(peaks in the leve
 %if a long epoch span is used the support might
@@ -1716,21 +1750,8 @@ about the topic that is causing the burst.
 Mining a sliding window can alleviate this problem.
 
 
-\begin{figure}
-\includegraphics[clip=true,trim=0in 1.5in 0in 1in]
-{data-plots_oct/random-walk+days_NUMTWEETS_irregular+repeating.pdf}
-\caption{Seasonal and noise components of the volume velocity}
-\label{fig:volvel1}
-\end{figure}
 
-\begin{figure}
-\includegraphics%[clip=true,trim=0in 1.5in 0in 1in]
-{data-plots_oct/random-walk+days_NUMTWEETS_level+sma.pdf}
-\caption{Stochastic level of the volume velocity}
-\label{fig:volvel2}
-\end{figure}
-
-\subsection{Sliding window model}
+\subsection{Sliding Window Model}
 
 One of the prominent stream processing models is the sliding window model,
 where a window of  data  \emph{slides} forwards through the stream. 
@@ -1750,12 +1771,12 @@ smoothing the data~\cite{gilbert2001surfing},
 %storing approximate statistics (sketch)
 and weighting data according to its age~\cite{giannella2003mining}.
 
-We apply the algorithms to epochs of data, 
+We apply our algorithms to epochs of data, 
 similar to the \emph{block evolution} stream mining approach~\cite{ganti2002mining,zhu2003efficient}.
 However, our algorithms are not strictly stream processing algorithms.
 Stream processing algorithms are supposed to process transactions one at a time
 as they arrive, looking at each transaction only once
-~--~in other words, they should make one pass on the data then discard it.
+--~in other words, they should make one pass on the data then discard it.
 This complicates the model of computation % a lot
 and there is no justification to process social media data as a stream.
 The stream processing model of computation is justified when
@@ -1774,14 +1795,26 @@ acceptable for a \emph{real time} system.
 
 
 %We can regard the way we process the social media stream as 
-In essence, processing epochs of data is still 
+In essence, processing epochs of data is similar to %still 
 mining a sliding window that is moved forward by time steps of short span.
 The time step must be longer than the time needed to mine an epoch of data,
 and the performance of our algorithms makes it possible to use a time step
 as short as a few seconds for epochs up to a day long.
+The window must be moved such that the combinations of
+transactions not processed together in a batch is minimal.
+This is achieved by using a time step as short as possible, 
+within the limits of available resources
+(such as storage space for mining results, if they are retained).
+Moreover, the time step must be less than the epoch length
+%cannot exceed half of the epoch length,
+%if it does, 
+to avoid missing mining results from a spike % of what?
+happening at the boundary between two epochs.
+
+
 Figure \ref{fig:runtimeEpochs} shows the runtime of LCM on epochs of
-increasing length, and we will show in section \ref{sec:bounding} that our
-extensions do not degrade performance.
+increasing length, and we will show in section \ref{sec:effic} that our
+extensions do not degrade its performance.
 The times reported in figure \ref{fig:runtimeEpochs} are averages across all
 epochs of the specified length in the last 3 months of 2012, % October, November and December,
 using a time step that is half the epoch length.
@@ -1812,20 +1845,25 @@ threshold translates at different epoch spans.
 \end{figure}
 
 %TODONOT elaborate on that.. show figures.
+\newpage
 In the rest of this paper we mine epochs of 1 hour span.
 The reason behind this choice is an observation that the number of closed
 itemsets mined from epochs of span 1 hour or more,
-at the same support threshold, remains the same.
+at the same minimum support threshold, 
+remains the same.
 This indicates that itemsets mined from shorter epochs % of social media text
 are not included in the results of mining longer epochs. 
 Therefore, the epoch span should be minimized.
 However, when the epoch span is shorter than an hour the frequency required
 to surpass the support threshold becomes very low,
-and number of mined itemsets increases, 
+and the number of mined itemsets increases, 
 with many noise itemsets appearing in the results.
 %Figure \ref{fig:epochLenNumItemsets} shows the number of 
 %closed itemsets at different epoch lengthes.. maximal ones too.. but using N-Gram 5.
-
+%For example, the number of itemsets is doubled
+%when the epoch length is reduced to 15 minutes instead of an hour.
+For example, the number of itemsets mined from a 15 minutes epoch
+is double that mined from an hour long epoch.
 
 Regardless of the length of the epoch,
 many mined itemsets are combinations of function words.
@@ -1867,6 +1905,7 @@ N-grams that appeared within the last month, for N up to 7.
 % or maybe I tried having a background model and found it
 % not satisfactory (no i didn't).
 
+\newpage
 The tokenization of a tweet starts by tokenizing it into unigrams, 
 as described in appendinx \ref{AppendixA} % the next section. % \ref{sec:tokenization}.
 Then, each
@@ -1904,7 +1943,7 @@ Increasing the maximum N-gram length
 reduces the peakedness  as well as 
 the variance in the peakedness between different
 hours of day.
-%~-~ the difference between the maximum 1-gram frequencies 
+%~--~ the difference between the maximum 1-gram frequencies 
 %at different hours of day is in the order of thousands.
 Figure \ref{fig:ngramsLen} shows how the maximum N-gram length
 affects the mining algorithm; it shows
@@ -2098,7 +2137,7 @@ One way is by using the ``retweet'' feature of the Twitter client,
 which simply forwards the tweet to the user's network.
 The ``retweet'' feature keeps a reference to the original tweet
 in the forwarded tweet, but it does not allow editing it
-~-~it automatically prepends ``RT: @\emph{orignal\_poster\_username}''.
+~--~it automatically prepends ``RT: @\emph{orignal\_poster\_username}''.
 %The retweet feature was introduced
 %Only a small fraction of retweets are forwarded using the 
 %``retweet feature
@@ -2878,7 +2917,7 @@ such as a search component that uses itemsets for query expansion.
 Novelty is measured compared to %between the mined epoch
 a longer period of time 
 leading up to the mined epoch
-~---~the background model.
+~--~the background model.
 %that is not far in the past.
 %in the recent past
 %This can be done using cascade methods (Azin's paper)
@@ -3370,7 +3409,7 @@ over time\footnote{\url{https://support.google.com/trends/answer/87276?hl=en}}.
 Queries that are named entities according to Google's Knowledge Graph\footnote{\url{http://www.google.com/insidesearch/features/search/knowledge.html}} 
 are automatically tracked 
 and aggregated by category
-into Top Charts\footnote{\url{http://www.google.ca/trends/topcharts}}~---~
+into Top Charts\footnote{\url{http://www.google.ca/trends/topcharts}}~--~
 lists of real-world people, places and things ranked in order of search volume 
 %during different intervals of time. 
 during user specified intervals of time\footnote{\url{https://support.google.com/trends/answer/3076011?hl=en}}.
