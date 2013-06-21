@@ -1886,7 +1886,9 @@ There are many measures of association that can be used to detect multiword
 expressions, but each measure is good only under certain conditions~\cite{ramisch2012broad}.
 After preliminary experiments with various measures, we determined that
 the best performance
-could be obtained by tokenizing the documents into term N-grams with varying N. 
+could be obtained by tokenizing the documents into term N-grams 
+of varying length.
+%with varying N. 
 
 
 We use term N-gram tokens such that N-grams of high probability are replaced by
@@ -1907,7 +1909,7 @@ N-grams that appeared within the last month, for N up to 7.
 
 \newpage
 The tokenization of a tweet starts by tokenizing it into unigrams, 
-as described in appendinx \ref{AppendixA} % the next section. % \ref{sec:tokenization}.
+as described in appendinx \ref{AppendixA}. % the next section. % \ref{sec:tokenization}.
 Then, each
 unigram of high probability is replaced by two term bigrams, by
 attaching to it the unigrams before and after it.
@@ -1918,9 +1920,9 @@ until there are no more such N-grams. %; thus, the distribution is relatively fl
 
 The threshold of high probability is different for each value of N. 
 The threshold for unigrams is determined as follows: 
-We picked a topical term that is known to  steadily  appear with a rather high frequency, 
-and is talked about in all languages; `obama'. 
-The maximum likely hood estimate of the probability of the term `obama' within the whole collection of Tweets is 0.0001. 
+We pick a topical term that is known to  steadily  appear with a rather high frequency, 
+and is talked about in all languages; for example, `obama'. 
+The maximum likelihood estimate of the probability of the term `obama' within the whole collection of tweets is 0.0001. 
 %in a similar fashion to how we determined the support threshold. 
 We use $\eta_1 = P(``obama") = 0.0001$.
 At each N, the probability threshold is adjusted to account for the increase
@@ -1952,9 +1954,10 @@ the number of tokens in the input, the number of closed itemsets,
 and the runtime of mining one hour of data.
 The values shown are averages across all one-hour epochs in the month of
 November 2012.
-The value of $\eta$ used is 0.0001.
+The value of $\eta_1$ used is 0.0001.
 Figure \ref{fig:ngramsLen}(a) shows that the number of distinct items
-increases substantially as maximum N goes from 1 to 2, then continues increasing
+increases substantially as the maximum N-gram length
+increases from 1 to 2, then continues increasing
 slightly until it starts decreasing at $N \le 5$.
 The decrease happens because all 4-grams with probability above the threshold
 are parts of tweets from services that use the same text and append a URL,
@@ -1962,34 +1965,53 @@ such as tweets reporting scores from
 Game Insight\footnote{\url{http://www.game-insight.com/}}.
 Such tweets are tokenized into more 4-grams than 5-grams, and the 4-grams
 appearing in them do not appear elsewhere.
-Thus, each pair is reduced to one 5-gram.
+%Thus, each three adjacent 4-grams are replaced by two 5-grams.
+Thus, some adjacent 4-grams are replaced by fewer 5-grams.
 Figure \ref{fig:ngramsLen}(b) shows that the number of itemsets continues to
-decrease as expected.
-Figure \ref{fig:ngramsLen}(c) shows that runtime also decreases as N goes
-from 1 to 5, since LCM runtime is proportional to the number of closed
-itemsets, and is not affected by the sparsity of data.
+decrease as expected, with the biggest reduction when the maximum N-gram length
+increases from 1 to 2.
+Figure \ref{fig:ngramsLen}(c) shows that runtime also decreases as
+the maximum N-gram length increases
+from 1 to 5, since LCM's runtime is proportional to the number of closed
+itemsets, and it %is not affected by the sparsity of data.
+can take advantage of the sparsity of data.
 The runtimes in this figure are slightly less than those in
 figure \ref{fig:runtimeEpochs} because they do not include the time taken for
 writing the posting list of each itemset.
 
-The number of itemsets in the plots include 
-itemsets of length 1 (frequent N-grams). 
-At $N \le 5$, the number of closed itemsets of length 2 or more
-that are mined from an hour epoch averages at 2,439.17.
-The number of maximal itemsets of length 2 or more
-averages at 1,831.92, 
-which shows that there aren't many internal nodes
-in the itemset prefix tree 
-%when items are ($N \le 5$)-grams
-(recall that closed itemsets include maximal itemsets).
-All of these numbers are counts of distinct unigram sets.
+The numbers of itemsets reported in the plots 
+are counts of distinct unigram sets.
 After mining itemsets of term N-grams we flatten the itemsets to sets of unigrams again.
 This is necessary since an itemset will have different N-gram set representations,
 and its postings list is the union of those of the different representations.
-This also removes overlap between N-grams of the same itemset,
+%Flattening N-gram itemsets into unigram itemsets
+This
+also removes overlap between N-grams of the same itemset,
 making it easier to reason about how itemsets relate to each other.
 We will use the relation between an itemset and its subsets to
 select interesting itemsets in the next chapter.
+
+%The counts include itemsets of length 1 (frequent unigrams).
+The condition for selecting itemsets that we propose in the next chapter
+cannot select itemsets of length 1 (frequent unigrams).
+Thus, to assess its filtering characteristics we have to 
+compare the number of itemsets it selects to 
+the number of itemsets of length 2 or more before its application.
+At $N \le 5$, the number of \emph{closed itemsets} of length 2 or more
+that are mined from an hour long epoch averages at 2,439.17.
+We also note that the number of \emph{maximal itemsets} of length 2 or more
+averages at 1,831.92.
+This high number of \emph{maximal itemsets} 
+show that they cannot substitute
+the \emph{strongly closed itemsets},
+%even though
+which we propose in the next chapter.
+%which shows that there aren't many internal nodes
+%in the itemset prefix tree 
+%%when items are ($N \le 5$)-grams
+%(recall that closed itemsets include maximal itemsets).
+
+
 %filter out uninformative itemset 
 
 
@@ -2042,7 +2064,7 @@ select interesting itemsets in the next chapter.
 \end{tabular}
 %\caption{Mean runtime in milliseconds}
 %\label{fig:ngramsLenC}
-\caption{Average of token frequency deciles at different times of day and maximum N} %-gram length
+\caption{Average of token frequency percentiles at different times of day and maximum N-gram length}
 \label{fig:ngramsDist}
 \end{figure} 
 
