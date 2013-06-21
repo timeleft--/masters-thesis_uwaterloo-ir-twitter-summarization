@@ -1103,6 +1103,8 @@ Tokens are then clustered according to the similarity of
 the sets of bigrams with which the co-occur,
 and the pattern of their \emph{appearance} 
 (moving to the bursty state).
+%The similarity of co-occurrence is in essence similar to
+%what frequent itemset mining does..is it?
 The clusters are considered to be events, 
 and they are ranked according to their sizes.
 %They have to process the data in 
@@ -1117,6 +1119,8 @@ to have happened in the interval of time processed
 %The bursty tokens are then clustered into events.
 %is higher than the increase between all other intervals.
 %the difference in the frequency of each token is tracked in of fixed span and keywords are considered bursty
+%They use some ideas similar to ours to improve the performance
+
 Another method that tracks the frequency of all tokens is EDCoW~\cite{weng2011event}, 
 where the wavelet transformation is used to convert counts of occurrences from the time domain to the frequency domain
 then auto-correlation is used to detect burstiness.
