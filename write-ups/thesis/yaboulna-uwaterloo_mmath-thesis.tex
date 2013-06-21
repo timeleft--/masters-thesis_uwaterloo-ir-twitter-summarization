@@ -1106,12 +1106,14 @@ and the pattern of their \emph{appearance}
 The clusters are considered to be events, 
 and they are ranked according to their sizes.
 %They have to process the data in 
-The clustering has to process the data from long intervals
-in one batch, so that the similarity of appearance can be calculated.
+The clustering they propose has to process data from a long interval,
+%as one batch,
+so that the similarity of appearance can be calculated.
 This approach is not suitable for stream processing.
 Besides, the number of clusters produced by their methods
-is much lower than the number of events one would expect
-to have happened in such long intervals of time.
+is small compared to the number of events one would expect
+to have happened in the interval of time processed
+(23 in 20 days and 15 in a week).
 %The bursty tokens are then clustered into events.
 %is higher than the increase between all other intervals.
 %the difference in the frequency of each token is tracked in of fixed span and keywords are considered bursty
