@@ -2295,50 +2295,56 @@ to mine itemsets. It has to be used in a post-processing phase.
 %a variation has to be used
 %(for example, \emph{all confidence}). % \cite{kim2004ccmine}
 The confidence of an assocation rule that the presence of an itemset,
-$s_{j}$, implies the presence of another itemset, $s_i$, is  defined as:
-\begin{equation}\label{eq:conf}conf(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
+$s_{antecedent}$, implies the presence of another itemset, $s_{consequent}$, is  defined as:
+\begin{equation}\label{eq:conf}conf(s_{antecedent} \rightarrow s_{consequent}) = \frac{|T_{s_{antecedent}} \cap T_{s_{consequent}}|}{|T_{s_{antecedent}}|}\end{equation}
 
 
 The \emph{distinct} condition is a novel strengthening of the closed condition
-so that it is not easily satisfied by any superset of a closed itemset.
+so that it is not easily satisfied by any modification of a closed itemset. %modification??
 %violated by trivial differences.
-A closed itemset of length $k$, call it $s_p$, % with high support %(say 100 occurrences in an hour)
-can have as many frequent supersets of length $k+1$ as its support, %divided by the support threshold,
-where $s_p$ will be the intersection of the supersets.
-From the properties of closed itemsets, 
-each superset that has enough support
-will result in one or more closed itemsets;
-if a superset is a maximal itemset then 
-it will result in only one closed itemset,
-and if it can be extended further it will 
-result in more closed itemsets.
-Now consider that $s_p$ has a particularly high support,
+%A closed itemset of length $k$, call it $s_p$, % with high support %(say 100 occurrences in an hour)
+%can have as many frequent supersets of length $k+1$ as its support, %divided by the support threshold,
+%where $s_p$ will be the intersection of the supersets.
+%From the properties of closed itemsets, 
+%each superset that has enough support
+%will result in one or more closed itemsets;
+%if a superset is a maximal itemset then 
+%it will result in only one closed itemset,
+%and if it can be extended further it will 
+%result in more closed itemsets.
+%Now consider that $s_p$ has a particularly high support,
+Consider a closed itemset $s_{antecedent}$ that has a particularly high support,
 as is the case for itemsets made up of the 
-most discriminative words of a certain topic.
+most discriminative words of a certain topic,
+or a language construct used in different topics.
 In this case, we can filter out
-closed supersets that have
+closed supersets of $s_{antecedent}$ that have
 support high enough to satisfy the support threshold
-but much lower than $s_p$'s support.
-These itemsets have enough support to be mined as frequent itemsets 
-and they are closed because they have a closed subset, 
+but much lower than $s_{antecedent}$'s support.
+These itemsets have enough support to be mined as frequent itemsets, 
+%and they are closed because they have a closed subset, 
 but they do not represent 
 a \emph{distinctive} piece of information or opinion 
-within the topic that $s_p$ represents.
-This is similar in essence to mining itemsets
+within the topic that $s_{antecedent}$ represents.
+%The same reasoning can be applied to 
+%an itemset that is created by removing 
+%Note that this reasoning applies
+
+The \emph{distinct} condition is similar in essence to mining itemsets
 at multiple minimum supports~\cite{liu1999mining,seno2005finding,wang2000mining,xiong2003mining}, 
 where a different support threshold is used for 
 %different categories of items according to their relative frequency.
 each itemset according to the frequency of its components, or its length, 
 or some other function that calculates the \emph{suitable} support threshold.
-However, we filter or keep itemsets based on a very simple condition
+However, \emph{distinct} itemsets are based on a very simple condition
 that is easy to implement efficiently and intuitive to reason about.
 
 
 We define a \emph{distinct} itemset as a closed itemset whose frequency
 comprises more than a certain proportion of the frequency of its least
-frequent subset. 
-This condition chooses closed itemsets which substantially violate the closed
-condition of their subsets.
+frequent subset~--~we call this its \emph{parent} itemset. 
+%This condition chooses closed itemsets which substantially violate the closed
+%condition of their subsets.
 The proportion is a parameter, $\kappa$, that controls the selectivity 
 of the condition,
 or the \emph{distinctiveness} of itemsets selected by the condition.
@@ -2346,104 +2352,64 @@ This can be interpreted as selecting itemsets which are implied by a subset
 with confidence greater than $\kappa$.
 Formally, the set of \emph{distinct} itemsets, $\mathcal{D}$,
 is defined as follows:
-\begin{equation}\mathcal{D} = \{s: s \in \mathcal{C} \, and \, \exists \; s_{p} \subset s \; where \; \frac{|T_{s}|}{|T_{s_{p}}|} \ge \kappa 
+\begin{equation}\mathcal{D} = \{s: s \in \mathcal{C} \, and \, \exists \; s_{parent} \subset s \; where \; \frac{|T_{s}|}{|T_{s_{parent}}|} \ge \kappa 
 \}
 \end{equation}
 
 
-In figure \ref{fig:sham}, \emph{distinct} itemsets are illustrated in solid lines, 
-and closed itemsets that do not satisfy the distinctiveness condition are illustrated in dashed lines.
-This is not an accurate illustration that is only meant 
-to give an intuition of how \emph{distinct} itemset are different from closed itemsets that are not \emph{distinct}.
-
-Figure \ref{fig:winningHr} is a more realistic example.
-It shows some itemsets (and their support, next to them) from the hour when 
-the US presidential election results were becoming clear.
-The itemsets shown are \emph{distinct} at $\kappa = 0.25$.
-%Each itemset has its support next to it, 
-The figure is produced by the graph drawing algorithm proposed by Yifan Hu~\cite{hu2005efficient},
-using the implementation provided 
-in the graph visualization platform Gephi\footnote{\url{https://gephi.org/}}.
-We run the algorithm on a graph with a node for each itemset and 
-an edge between similar itemsets.
-Similarity between itemsets
-is determined based on 
-association rule confidence,
-%The using the formula introduced in the next section. % of the rule that the smaller set 
-as explained in the next section.
-The similarity is used as the edge weight,
-thus it determines the distance between itemsets.
-%Even though the support threshold There are
-The figure shows a lot of interesting itemsets.
-Itemsets pertaining to Donald Trump's tweets appear on the right side of the page,
-where the itemsets from the ``sham and travesty'' tweet are in the middle.
-%Barack Obama (BO) also made an 
-%Other clusters of itemsets are easy to guess what they are about.
-Close to the bottom left of the page there are itemsets showing the number
-of electoral votes each candidate got so far (\{191, 238\} and \{191, 249\}). 
-%\footnote{https://plus.google.com/+NBCNews/posts/gNw1sYLWtE8}
-It is clear from the figure that considerable redundancy remains in
-\emph{distinct} itemsets. 
-%However, most interesting itemsets
-In the next section we propose overcoming this redundancy 
-by clustering similar itemsets together.
-
-
-To assess the filtering power of the \emph{distinct} condition
+%To assess the filtering power of the \emph{distinct} condition
 %and make sure that no important information is filtered out, 
 %we calculate the difference between 
-we compare the sizes of 
-the set \emph{distinct} itemsets ($\kappa = 0.25$)
-with
-the set of closed itemsets of length 2 or more. 
+%we compare the sizes of 
+%the set \emph{distinct} itemsets ($\kappa = 0.25$)
+%with
+%the set of closed itemsets of length 2 or more. 
 In the mining results of hour long epochs from the 
 first two weeks of November 2012, 
-the number of \emph{distinct} itemsets 
+the number of \emph{distinct} itemsets, at $\kappa = 0.25$,
 averages at 911.71 itemsets 
 as compared to 2,428.3 closed itemsets
 (37.55\%). 
-To make sure that no important information is filtered out, 
-we look at itemsets that are filtered out.
-To facilitate the investigation, we look at
+To make sure that no important information is filtered out
+we look at itemsets that are filtered out,
+and
+to facilitate the investigation we restrict it to %look at
 itemsets containing known topical terms.
-In the mining results of hour long epochs from the 
-first two weeks of November 2012, 
-the number of closed itemsets
+%In the mining results of hour long epochs from the 
+%first two weeks of November 2012, 
+The number of closed itemsets
 containing at least one of the unigrams 
 `obama' or `romney' 
 but are not \emph{distinct} 
-averages at 7.2 itemsets.
-(an epoch is included in the average only if the keywords occur in it).
+averages at 7.2 itemsets
+--~an epoch is included in the average only if a keyword occur in it.
 %These are mainly 2-itemsets.
-The hour of the 2012 US elections victory announcement happens
-to be the hour with the most number of such itemsets, 
+The hour when 
+the US presidential elections result became clear
+%of the 2012 US presidential elections victory announcement
+(10 PM EST on 6 November, 2012)
+happens to be the hour with the most number of such itemsets, 
 because of the large number of posts about `obama' and `romney'.
 Figure \ref{fig:closedNDistinct} shows
 the filtered itemsets from this hour.
 %between closed and and 
 Most of the itemsets in the figure are not interesting.
 Furthermore, interesting ones have surrogates
-in the set of \emph{distinct} itemsets,
-either a subset or a superset or an alternative 
+in the set of \emph{distinct} itemsets:
+%either 
+a subset or a superset or an alternative 
 with similar (sometimes more accurate) information.
-The \emph{distinct} surrogate for each filtered itemset 
-that we find interesting is shown below it.
+In the figure, 
+%the \emph{distinct} surrogate for each filtered itemset 
+%that we find interesting is shown below it.
+we include below each filtered itemset that we find interesting 
+the \emph{distinct} itemset that we consider its surrogate.
 
-
-\begin{landscape}
-\begin{figure}
-\scalebox{0.75}{
-\frame{\includegraphics[trim=1in 0 3in 0, clip=true]{clustering/elections-day_10pm-est_2.pdf}}
-}
-\caption{Scatter plot of \emph{distinct} itemsets from the hour starting at 10 PM EST on 6 Nov. 2012 }
-%(US Presidential Elections day)
-\label{fig:winningHr}
-\end{figure}
-\end{landscape}
 
 
 %(below it with an arrow).
-\begin{figure}[h]
+\begin{figure} %[h]
+\centering
 \footnotesize
 \begin{minipage}[t]{0.33\textwidth}
 1 [romney, that] \\
@@ -2529,9 +2495,69 @@ that we find interesting is shown below it.
      65 [yesss, obama] \\
      66 [president, obama, barack] 
 \end{minipage}
-\caption{Itemsets containing `barack' or `romeny' that are closed but not \emph{distinct}}
+\caption{Itemsets  from the hour starting at 10 PM EST on 6 Nov. 2012,
+which contains `barack' or `romeny' and are closed but not \emph{distinct}}
 \label{fig:closedNDistinct}
 \end{figure}
+
+In figure \ref{fig:sham}, \emph{distinct} itemsets are illustrated in solid lines, 
+and closed itemsets that do not satisfy the distinctiveness condition are illustrated in dashed lines.
+This is not an accurate illustration and it is only meant 
+to give an intuition of how \emph{distinct} itemset are different from closed itemsets which are not \emph{distinct}.
+%Figures \ref{fig:winningHr} and \ref{fig:closedNDistinct} 
+%are realistic examples of itemsets that are selected or 
+%rejected by the \emph{distinct} condition.
+%Both figures show itemsets from the hour .
+%The \emph{distinct} condition was applied at $\kappa = 0.25$.
+We have seen in figure~\ref{fig:closedNDistinct} some realistic
+examples of itemsets that are rejected by the \emph{distinct} condition.
+Figure~\ref{fig:winningHr} shows the itemsets it selects
+from the same hour at the same $\kappa$.
+%The itemsets shown are \emph{distinct} at $\kappa = 0.25$.
+%Each itemset has its support next to it, 
+%The figure is produced by the graph drawing algorithm proposed by Yifan Hu~\cite{hu2005efficient},
+%using the implementation provided 
+%in the graph visualization platform Gephi\footnote{\url{https://gephi.org/}}.
+%We run the algorithm on a graph with a node for each itemset and 
+%an edge between similar itemsets.
+%Similarity between itemsets
+%is determined based on 
+%association rule confidence,
+%The using the formula introduced in the next section. % of the rule that the smaller set 
+%as explained in the next section.
+%The similarity is used as the edge weight,
+%thus it determines the distance between itemsets.
+%Even though the support threshold There are
+%The figure shows a lot of interesting itemsets.
+%Figures \ref{fig:winningHr} shows the \emph{distinct} itemsets from that hour.
+%Itemsets pertaining to Donald Trump's tweets appear on the right side of the page,
+%where the itemsets from the ``sham and travesty'' tweet are in the middle.
+%Barack Obama (BO) also made an 
+%Other clusters of itemsets are easy to guess what they are about.
+Donald Trump's ``sham and travesty'' tweet appear on the right side of the figure.
+Close to the bottom left of the figure there are itemsets showing the number
+of electoral votes each candidate got at different points of time (\{191, 238\} and \{191, 249\}). 
+%\footnote{https://plus.google.com/+NBCNews/posts/gNw1sYLWtE8}
+It is clear from the figure that considerable redundancy remains in
+\emph{distinct} itemsets. 
+%However, most interesting itemsets
+In the next section we propose overcoming this redundancy 
+by clustering similar itemsets together.
+
+
+\begin{landscape}
+\begin{figure}
+\centering
+\scalebox{0.75}{
+\frame{\includegraphics[trim=1in 0 3in 0, clip=true]{clustering/elections-day_10pm-est_2.pdf}}
+}
+\caption{Scatter plot of \emph{distinct} itemsets from the hour starting at 10 PM EST on 6 Nov. 2012 }
+%(US Presidential Elections day)
+\label{fig:winningHr}
+\end{figure}
+\end{landscape}
+
+
 
 
 %wc -l diff_bieber-fox-romney-israel-hamas-syria-cnn-gomez-obama-trump_novel_ULBuff_Canddist_conf0.25_-sel_ULBuff_Canddist_conf0.25_3600_1352* | less -NS
