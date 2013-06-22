@@ -2126,15 +2126,16 @@ In section~\ref{sec:ngrams}, we discussed our handling of function words,
 using a technique that exploits LCM's tolerance to sparsity.
 After applying this technique, the average number of closed itemsets 
 mined from an
-hour of twitter data drops from 61,505 to 6,146.
-In this chapter we propose two conditions
-that reduces the number of itemsets even further.
-The first condition filters out some itemsets,
-and the second condition merges together
+hour of Twitter data drops from 61,505 to 6,146.
+In this chapter we propose two methods
+for reducing the number of itemsets even further.
+The first is a condition for selecting itemsets,
+% that filters out some itemsets,
+and the second is a clustering scheme that merges together
 similar itemsets to reduce redundancy.
 We also propose a ranking function that
-scores itemsets according to their novelty.
-Both conditions and the ranking function 
+scores itemsets according to their temporal novelty.
+The two methods and the ranking function all
 exploit the dynamics of social media,
 therefore we start by discussing it.
 %and specifically how people use retweeting
@@ -2159,7 +2160,7 @@ One way is by using the ``retweet'' feature of the Twitter client,
 which simply forwards the tweet to the user's network.
 The ``retweet'' feature keeps a reference to the original tweet
 in the forwarded tweet, but it does not allow editing it
-~--~it automatically prepends ``RT: @\emph{orignal\_poster\_username}''.
+--~it automatically prepends ``RT: @\emph{orignal\_poster\_username}''.
 %The retweet feature was introduced
 %Only a small fraction of retweets are forwarded using the 
 %``retweet feature
@@ -2176,14 +2177,17 @@ way to re-share a tweet along with the user's comment.
 
 %originally there was no way to link a certain tweet to another,
 %thus a tweet that sparked a conversation on Twitter 
-There are several \emph{styles} of manual retweeting~\cite{boyd2010tweet}.
-They all basically 
+There are several conventions for manual retweeting~\cite{boyd2010tweet}. %\emph{styles} 
+%They are all basically to
+All the conventions basically
 quote the original tweet along 
 with its poster's username and a retweet indicator,
-and prepend the user's comment.
+%and prepend the user's comment.
 %had to be quoted in a retweet
 %along with the retweeter's comment.
-Due to the 140 characters length limit of tweets the quotation is usually 
+with the retweeter's comment prepended.
+Due to the 140 characters limit set on the length of tweets 
+the quotation is usually 
 edited to be as short as possible 
 by selecting only the most discriminative words. 
 This selection is an act of collaborative filtering,
@@ -2199,25 +2203,37 @@ enough to be mined as itemsets.
 \scalebox{0.5}{
 \includegraphics{sham.png}
 }
-\caption{Closed, distinct and strongly closed sets}
+\caption{Venn diagram of transactions containing items from highly retweeted tweets} % closed itemsets
 \label{fig:sham}
 \end{figure}
 
-Figure \ref{fig:sham} illustrates closed itemsets related to Donald
-Trump's famous tweets in reaction to Obama's victory in the
+Figure \ref{fig:sham} illustrates closed itemsets related to two of
+Donald Trump's famous tweets in reaction to Obama's victory in the
 2012 US elections\footnote{\url{http://www.huffingtonpost.com/2012/11/07/donald-trump-election-revolution_n_2085864.html}}.  
 Each area in the figure represents the transactions containing the itemset
 formed by concatenating the items in all intersecting ellipses.  
-In the figure, the most discriminative words are ``sham, and, travesty''
+%In the figure, the most discriminative words are ``sham, and, travesty''
+The figure shows that one of the tweets was most distinguishable by the words ``sham, and, travesty'',
 which are quoted along with Donald Trump's user name in most of the retweets.
-Other people choose to also include ``not, democracy'' and/or ``elections'',
-and in most of the cases the retweet indicator ``rt'' is added. 
+Other people also chose to include ``not, democracy'' and/or ``elections'' in their retweets,
+and in most of the cases the retweet indicator ``rt'' was added to the retweet. 
 A few people also added something about Donald Trump's ``hair'' 
-while retweeting, and some people talked about ``fraud''. 
+while retweeting.
+The second tweet's most discriminative words are ``the, world, is, laughing, at''.
+Some people completed this by the original tweet's ``us'',
+and others replaced it by ``you''.
+At the same time interval, some people tweeted about ``fraud'' 
+mentioning Donald Trump in their tweets
+but without any quotation from his tweets. 
 
 The figure illustrates how
-the closed property of an itemset is easily violated by modifying one
-transaction that contains the itemset and removing one of its items.
+the closed property of an itemset is easily satisfied by an itemset
+created through the modification of 
+transactions that contain another closed itemset.
+For example, if a transaction containing a closed itemset
+is modified by removing one of its items,
+another closed itemset with enough support is immediately formed
+resulting in a two closed itemsets instead of one.
 While an update operation is not supported in the model of frequent itemset mining, 
 a similar effect happens when people retweet, 
 or even when they are writing original posts about 
@@ -2232,14 +2248,42 @@ and adding their own thoughts.
 This results in many closed itemsets 
 about the topic that
 are trivially different from each other.
+%We now propose a condition that exploits this 
 
+The fact that any \emph{maximal} itemset is a closed itemset
+is another \emph{weakness} of the closed condition
+when used for mining social media text.
+%If an item is added to a number of retweets higher than the support threshold
+%it results in a \emph{maximal} itemset.
+%The itemset will be closed by definition even if the support threshold
+%is much lower than the total number of retweets
+If a closed itemset is expanded by a certain item a number of times
+over the support threshold, this results in a maximal itemset
+which is closed by definition.
+%If the support of the original itemset is much higher than the support threshold,
+%the newly created itemset might not 
+%but might not be carrying 
+%if the support 
+%threshold is much lower than the 
+%Now consider that in social media a low support threshold has to be used.
+Now consider that a tweet is retweeted hundreds of times 
+%resulting in some closed itemsets,
+and different groups of people append the same words to it,
+but no group is considerably large relative to the number of retweets.
+Since  a low support threshold has to be used when mining text,
+this will result in many maximal itemsets that 
+might not be adding any information to the closed itemset.
+%If the support threshold is around 10, 
+%would a maximal itemset certain comment added by 10 people be worth 
 
+%enough tweets add the same  similar effect happens
 
 \section{Distinct Itemsets}
 
 We have seen that the dynamics of posting on social media result in redundant closed itemsets.
-To reduce redundancy, we propose the \emph{distinct} condition which is not as easily violated 
-as the closed condition and use it for selecting itemsets.
+To reduce redundancy, we propose the \emph{distinct} condition,
+which is not as easily satisified %violated  
+as the closed condition, and use it for selecting itemsets.
 The \emph{distinct} condition builds on the concept of \emph{association rule confidence}.
 Confidence is the basic property used for association rules mining,
 and it is used in the definition of $\delta$-free sets~\cite{boulicaut2003free}.
