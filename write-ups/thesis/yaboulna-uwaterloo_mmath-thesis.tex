@@ -3963,16 +3963,19 @@ and regardless of the fame of the poster.
 Our methods focus of the content of posts,
 without explicitly giving different weights to posts 
 made by different types of account owners.
-Thus the results reflect what social media users 
-find interesting at any point in time, 
+Thus, the synopses reflect 
+%what social media users %results
+%find interesting 
+the interests of social media users
+at different points of time, 
 giving voice to ordinary people and allowing
 the dynamics of social media to surface
-content which users find interesting.
+content which users find intriguing. %interesting.
 
 \section{Contributions}
 Our method summarizes an hour of Twitter data (119,035.49 tweets on average) into
 139.1 itemsets in 1,945.68 milliseconds on average, %224
-and scales for longer epochs of data.
+and scales well for longer epochs of data.
 The direct application of LCM on one-hour epochs of Twitter data results in
 an average of 61,505.16 closed itemsets 
 and takes 2,506.58 milliseconds onaverage.
@@ -3985,7 +3988,9 @@ Frequently occurring sequential multi-word expressions
 are concatenated into one item during tokenization,
 resulting in transactions made up of items coming
 from a relatively flat distribution.
-We proposed a simple method to do this;
+%We proposed 
+Section~\ref{sec:ngrams} propose
+a simple method to do this;
 tokenizing documents (Tweets) into unigrams, 
 then repeatedly replacing any token whose
 probability exceeds a threshold by two tokens
@@ -4011,9 +4016,9 @@ its support is different from the support of its longest subset by
 a substantial proportion.
 The closed property is easily satisfied by itemsets that 
 are trivially different from their subsets, which 
-results in many uninteresting itemsets 
-specially short ones
-~--~itemsets made up of a commonly
+results in many uninteresting itemsets~--
+specially short %ones
+itemsets made up of a commonly
 used term along with another term that
 %is not always used with the 
 %does not carry information. % yet
@@ -4023,7 +4028,7 @@ Such itemsets are filtered out by
 %selecting only itemsets
 %which are distinctively different from their subsets.
 the \emph{distinct} condition, 
-given that transactions are made up 
+given that transactions are made up of
 %documents are tokenized into 
 variable length N-grams as items.
 
@@ -4064,29 +4069,35 @@ to an arbitrary value according to its definition.
 %which controls tolerance to redundancy. 
 %Even though the use or variable length N-grams
 
-We have shown that using our 
-proposed methods and ranking formula
-the top \emph{strongly closed} itemsets 
+We have shown that 
+%using our 
+%proposed methods and ranking formula
+the top ranked \emph{strongly closed} itemsets 
 from different hours are relevant to 
 the real world events known to be taking place
 at those hours.
-We have shown how the top 3 itemsets from different hours
-in the day the US presidential elections
+%We have shown how 
+For example,
+the top 3 itemsets from different hours
+in the day of the US presidential elections
 can be used to compose a summary of how the day unwound.
 We also compared our synopses for that day to the ones created 
-by the MTV algorithm~\cite{mampaey2011tell}.
+by a state of the art algorithm for creating a summary based on 
+frequent itemsets; the MTV algorithm~\cite{mampaey2011tell}.
 We have shown that our algorithm efficiently 
 creates synopses that cover the information
-in the synopses created by MTV
-~--~itemsets that are picked by the MTV algorithm are almost all 
-among the top 30 \emph{strongly closed} itemsets.
+in the summary created by MTV
+--~itemsets that are picked by the MTV algorithm are all %almost all 
+among the top 50 \emph{strongly closed} itemsets. %30
+Furthermore, our synopses contain information 
+not present in the summary created by MTV.
 We have also assessed the quality of the synopses 
 %as a temporal 
 against data from Google Trends.
 Google Trends was used to learn about real world
-events and entities in which Google search users
+events and entities in which Google Search users
 were particularly interested at different peroids of time.
-The synopses was then examined to see
+The synopses were then examined to see
 if they also reflect similar user interest.
 We have found that there is a strong similarity
 in the majority of cases, 
@@ -4095,17 +4106,22 @@ our synopses did not reflect the same
 user interest as Google Trends.
 
 \subsection{The Complete Results of Mining the Twitter Dataset}
-The complete results of mining all one-hour epochs (with half hour time steps)
-of Twitter data collected
-in the last 3 months of 2012 is available for download\footnote{\url{http://plg.uwaterloo.ca/~yaboulna/thesis_results/twitter_synopses/1hr+30min_ngram5-relsupp10_oct-nov-dec/}}.
+The complete results of mining all one-hour epochs %(with half-hour time steps)
+of the Twitter dataset 
+%(collected in the last 3 months of 2012) 
+is available for download\footnote{\url{http://plg.uwaterloo.ca/~yaboulna/thesis_results/twitter_synopses/1hr+30min_ngram5-relsupp10_oct-nov-dec/}}.
 %http://plg.uwaterloo.ca/$\sim$yaboulna/thesis\_results/twitter\_synopses/1hr+30min\_ngram5-relsupp10\_oct-nov-dec}. 
 % at URL.
 The mining results at different values of $\kappa$,
-for \emph{minimum support} 10, 
+at \emph{minimum support} 10, 
 are available as GZipped Tar balls.
-The result of each epoch is a tab separated file
-including the itemsets, 
-their postings lists, and values of several ranking formulae.
+The result of each one-hour epoch in the 
+last 3 months of 2012 (with half-hour time steps)
+is a tab separated file which contains:
+%including
+1) the \emph{strongly closed} itemsets, 
+2) their postings lists, and 
+3) values of several ranking formulae.
 %The ranking formula used in this thesis is in column 14,
 %and the files are already sorted in its descending order.
 The itemsets are sorted in the descending order of the 
@@ -4114,8 +4130,11 @@ ranking formula used in this thesis (column 14).
 
 \section{Future Work}
 
-This work provides a foundation for the use of social in temporal information retrieval.
-The mining results captures people's interest at different times,
+This work provides a foundation for the use of 
+data from social media
+in temporal information retrieval.
+The synopses we create
+capture people's interest at different points in times,
 and can be used to create a temporal profile for a query.
 This profile can then be used for weighting documents
 according to the time in which they were published.
@@ -4135,16 +4154,17 @@ The efficiency of the proposed algorithms
 makes it possible to use the mining results
 as input to other real-time systems.
 For example,
-association rules created from the itemsets
+hashtag suggestions can be offered based on
+association rules created from the itemsets,
 such that the consequent is a hashtag
-can be used to help a user discover hashtags
-he can add to his post 
+%can be used to help a user discover hashtags
+%he can add to his post 
 (this can also be done as automatic document expansion).
 %The itemsets can actually be used
 %as t
 
 Another possible future direction is to use itemsets that appear as a sequence for
-building extractive coherent summaries of the social media stream. 
+building coherent extractive summaries of the social media stream. 
 % at different times.
 
 We also wish to explore ways to make use of the temporal signal during mining,
@@ -4172,7 +4192,7 @@ are allowed within it.
 The tokenizer also does the following:
 \begin{itemize}
 \item All URLs (from `http[s]:' to the next whitespace)  are replaced by the unigram ``URL''. 
-\item Runs of the same character is reduced to only 3 repetitions (for example, ``coooool'' is replaced by  ``coool''). 
+\item Runs of the same character are reduced to only 3 repetitions (for example, ``coooool'' is replaced by  ``coool''). 
 \item Hashtags are stored twice, with and without the the `\#' character. 
 The tag without the `\#' character is left at tag's positions, while the other is appended at the end of the tweet.
 This handles cases where the hashtag is used in place of a word, such as ``president \#obama...''.
