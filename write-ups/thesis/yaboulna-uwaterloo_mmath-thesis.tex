@@ -2841,10 +2841,10 @@ Algorithm~\ref{algo:alliance}  shows a possible implementation.
 	%$s_m \gets null$  \tcp*{Cluster centroid}
 	$s_m \gets null$, $maxConf \gets 0$ \tcp*{Best clustering candidate and its score}
 	\ForEach{$s_c \in C$}{
-		$\Delta \gets (1 - (1-\kappa)) |T_{s_c}|$ \tcp*{Maximum difference}
+		$\Delta \gets (1 - (1-\kappa)) \times |T_{s_c}|$ \tcp*{Maximum difference for confidence 1-$\kappa$}
 		$\delta \gets$ difference($T_{s_c},T_{s_c \cup s_i},\Delta$) \tcp*{Terminates early if $\delta > \Delta$}
 		
-		\If{$\delta \le \Delta$}{ 
+		\If( \tcp*[f]{The confidence exceeds the threshold}){$\delta \le \Delta$}{ 
 			$conf \gets \frac{|T_{s_c}| - \delta}{ |T_{s_c}|}$\;
 			\If{$conf > maxConf$}{
 				$s_m \gets s_k$ \tcp*{Best clustering candidate}
@@ -2893,7 +2893,8 @@ generated before it.
 The support of the best candidate is not necessarily higher than
 the support of the itemset being clustered, 
 but all itemsets within the topic has a support lower 
-than that of the topic's most discriminative itemset, n810=\{sham\}. %, and, travesty\}.
+than that of the topic's most discriminative itemset, 
+n810=\{sham\} in this case. %, and, travesty\}.
 For example, the hierarchy $n1018 \rightarrow n1019 \rightarrow n1075$
 has support values 120, 124, 126 respectively, 
 which are all less than 142 (the support of n810). %134 
@@ -2982,8 +2983,10 @@ for mining hour long epochs using
 a Java implementation that uses a lot of objects. % of RAM
 %select args, count(*), avg(value), stddev(value)  from perf_mon where args like '%4wk%1hr%ULBuff%' and key='MemoryMBUsed' group by args;
 However, it is possible to use less memory
-and also bound the memory requirement by keeping
-only a limited number of itemsets in memory.
+and also bound the memory requirement by 
+%keeping
+%only a limited number of itemsets in memory.
+setting a hard limit on the number of itemsets kept in memory.
 
 The number of positions between an itemset
 and a clustering candidate is 1973.11 on average,
