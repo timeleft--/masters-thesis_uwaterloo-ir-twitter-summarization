@@ -2758,7 +2758,8 @@ Also, calculating confidence requires calculating the intersection only,
 so it is easier to terminate the calculation early 
 if the confidence would not be more than the required threshold.
 Second, this clustering can be implemented efficiently using techniques similar to
-the ones proposed by Bayardo et al. \cite{bayardo2007scaling}. Next section?
+the ones proposed by Bayardo et al. \cite{bayardo2007scaling}. 
+In the next section we wilNext section?
 
 WHY does the strongly closed itemset clusters build upon the distinct condition?
 WHY does the strongly closed itemset clusters build upon the distinct condition?
@@ -3015,10 +3016,12 @@ is investigated in section~\ref{sec:effectiveness}.
 %A General Measure of Rule Interestingness
 %Szymon Jaroszewicz and Dan A. Simovici
 %University of Massachusetts at Boston
-The number of \emph{strongly closed itemsets} from an hour long epoch is 139.1 itemsets on average, 
+The number of \emph{strongly closed itemsets} from an hour long epoch 
+averages to 139.1 itemsets.
+%is 139.1 itemsets on average, 
 %which is a very big reduction 
-which is under 0.25\% of the number of closed itemsets returned by LCM 
-without any of our proposed methods (61,505.16 on average).
+This is less than 0.25\% of the average number of closed itemsets returned by LCM 
+without any of our proposed methods (61,505.16). % on average).
 We now propose a ranking function that scores itemsets 
 %according to their temporal novelty, 
 according to their novelty,
@@ -3028,21 +3031,21 @@ what is happening on Twitter in the mined epoch.
 The ranks can also be used as weights for itemsets when
 used by other system components, 
 such as a search component that uses itemsets for query expansion.
-Novelty is measured compared to %between the mined epoch
+
+We measure novelty compared to %between the mined epoch %is measured 
 a longer period of time 
 leading up to the mined epoch
-~--~the background model.
+--~a background model.
 %that is not far in the past.
 %in the recent past
 %This can be done using cascade methods (Azin's paper)
-
 A good indicator of novelty is the pointwise Kullback-Leibler Divergence (KLD)
 between an itemset's probability in the current epoch and in the background model.
-The KLD of the probability of an itemset $s_i$ in the background
-model $Q$ from the current epoch's model $P$ can be considered as
+The KLD of the probability of an itemset, $s_i$, in the background
+model, $Q$, from the current epoch's model, $P$, can be considered as
 the Information Gain, IG: 
 \begin{align}IG(P(s_i),Q(s_i))  &= - (H(P(s_i)) - H(P(s_i),Q(s_i))) \notag\\ &= \sum{P(s_i) \log{P(s_i)}} - \sum{P(s_i) \log{Q(s_i)}} \notag\\ &= KLD(P(s_i)||Q(s_i))\end{align}
-This interprets the KLD of an itemset as the number of extra bits
+This interprets the KLD of an itemset's probability as the number of extra bits
 in the representation of the itemset
 used by an encoding based on Q as compared to the number of bits
 used by an encoding based on P; 
@@ -3101,10 +3104,10 @@ multiple times to the total information gain. %with the add
 %as we will see in section~\ref{sec:effectiveness}.
 %Several other ranking formulae were tried
 %and this one give`s the best results.
-
-The formula above can be used directly for ranking clusters,
+%The formula above 
+It can be used for ranking clusters,
 but it will favour larger clusters.
-We normalize by the size of the cluster giving our final ranking formula for
+We normalize by the size of the cluster, giving our final ranking formula for
 strongly closed itemsets:
 \begin{equation}\label{eq:avgIG}score(r) = IG(P(s_{min}), Q(s_{min})) + \frac{ \sum_{ j = i_1..i_m } { IG(P(s_j|s_{min}), Q(s_j|s_{min})) } } { m } \end{equation}
 %\overline{IG}
