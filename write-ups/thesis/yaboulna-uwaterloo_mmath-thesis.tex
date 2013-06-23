@@ -2759,16 +2759,47 @@ so it is easier to terminate the calculation early
 if the confidence would not be more than the required threshold.
 Second, this clustering can be implemented efficiently using techniques similar to
 the ones proposed by Bayardo et al. \cite{bayardo2007scaling}. 
-In the next section we wilNext section?
+This will be detailed in the next section.
 
-WHY does the strongly closed itemset clusters build upon the distinct condition?
-WHY does the strongly closed itemset clusters build upon the distinct condition?
-WHY does the strongly closed itemset clusters build upon the distinct condition?
-WHY does the strongly closed itemset clusters build upon the distinct condition?
-WHY does the strongly closed itemset clusters build upon the distinct condition?
-WHY does the strongly closed itemset clusters build upon the distinct condition?
+The number of \emph{strongly closed itemsets} from an hour long epoch 
+averages to 139.1 itemsets.
+%is 139.1 itemsets on average, 
+%which is a very big reduction 
+This is less than 0.25\% of the average number of closed itemsets returned by LCM 
+without any of our proposed methods (61,505.16). % on average).
+\emph{Strongly closed} itemset clusters can be made up 
+of \emph{distinct} itemsets or closed itemsets. 
+The result of the clustering remains the same, 
+but the runtime of the clustering increases
+% slightly
+by 50\% when  closed itemsets are used. %2650.775 / 1762.973
+Besides, when \emph{distinct} itemsets are used
+it is also possible to include the \emph{distinct} itemsets
+that are not part of any cluster in the result.
+This increases the average number of itemsets in the synopsis
+from 139.1 to 224.49, at $\kappa = 0.25$.
+%The extra itemsets 
+%and allow
+\emph{Distinct} itemsets that are not part of any cluster
+in the Twitter dataset are either
+language constructs, or
+named entities that had just enough support to 
+mine them as an itemset, 
+but did not have support that is high enough to make them 
+a centroid of a cluster.
+We do not rule out the possibility of including them in the synopses,
+%but in the case of the Twitter dataset we found that they
+%do not contribute was not ruled out
+but we chose not to include them in the current work.
 
-\section{Implementation }
+ %[/home/yaboulna/fim_out/lcm_closed_cikm/4wk+1wk_ngram5-relsupp1_oct-nov-dec/, /home/yaboulna/fim_out/lcm_closed_thesis/1hr+30min_ngram5-relsupp10_oct-nov-dec/, ClustNonDistinct_conf0.25_Buff1000,  ITEMSET_SIMILARITY_COSINE_GOOD_THRESHOLD=0.5 ITEMSET_SIMILARITY_PROMISING_THRESHOLD=0.0 ITEMSET_SIMILARITY_PPJOIN_MIN_LENGTH=3 ITEMSET_SIMILARITY_BAD_THRESHOLD=0.1 CONFIDENCE_HIGH_THRESHOLD=0.25]          |  4285 |  2650.7747957993 |  1154.6404798233
+
+
+%java -cp target/diff_itemset-collections-0.0.1-SNAPSHOT.jar yaboulna.fpm.Diff /home/yaboulna/fim_out/lcm_closed_thesis/1hr+30min_ngram5-relsupp10_oct-nov-dec/ sel_June16Defaults_NoLonely_conf0.25_Buff1000_3600_ sel_SelClust_conf0.25_Buff1000_3600_ 
+
+\section{Algorithm for Selecting and Clustering Itemsets}
+It is straightforward to implement an efficient algorithm
+for selecting and clustering itemsets as described in the last two sections.
 The main ideas for an efficient implementation are 
 to limit the comparisons to a few candidates,
 and to terminate the comparison early if the similarity threshold will not
@@ -2777,7 +2808,7 @@ In our case, the postings lists are longer than the itemsets.
 %so we generate candidates for comparison by calculating similarity between
 %itemsets. 
 %Itemsets that intersect in one item with the itemset being clustered 
-We calculate the similarity between the postings lists of two itemsets
+Thus, we calculate the similarity between the postings lists of two itemsets
 only if they intersect in one item at least.
 When calculating the similarity between two postings lists,
 we can terminate early if the difference exceeds the maximum difference
@@ -3016,12 +3047,6 @@ is investigated in section~\ref{sec:effectiveness}.
 %A General Measure of Rule Interestingness
 %Szymon Jaroszewicz and Dan A. Simovici
 %University of Massachusetts at Boston
-The number of \emph{strongly closed itemsets} from an hour long epoch 
-averages to 139.1 itemsets.
-%is 139.1 itemsets on average, 
-%which is a very big reduction 
-This is less than 0.25\% of the average number of closed itemsets returned by LCM 
-without any of our proposed methods (61,505.16). % on average).
 We now propose a ranking function that scores itemsets 
 %according to their temporal novelty, 
 according to their novelty,
@@ -3168,20 +3193,9 @@ which is an arbitrary choice based on the definition not the data.
 The average number of \emph{strongly closed} itemsets mined from one-hour epochs at this value of
 $\kappa$ is 139.1, which is about 5.7\% of the number of closed itemsets of length 2 or more.
 %before filtering and clustering. %of closed itemsets.
-%If we also include unclustered \emph{distinct} itemsets, 
-%the number increases to 224.49 itemsets per hour long epoch on average.
+If we also include unclustered \emph{distinct} itemsets in the synopses, 
+their average size increases to 224.49 itemsets per hour long epoch. % on average.
 
-
-
-
-\begin{figure}
-\centering
-\scalebox{0.7}{
-\includegraphics{kappa_effect.eps}
-}
-\caption{Effect of changing $\kappa$ on mining results }
-\label{fig:kappa}
-\end{figure}
 
 
 %We now 
@@ -3208,7 +3222,16 @@ the 15-minute epoch and then takes a constant time for epochs of a longer span.
 %Recall that the number of itemsets from epochs of span 
 %less than an hour is higher
 
-\begin{figure}[h]
+\begin{figure}
+\centering
+\scalebox{0.83}{
+\includegraphics{kappa_effect.eps}
+}
+\caption{Effect of changing $\kappa$ on mining results }
+\label{fig:kappa}
+\end{figure}
+
+\begin{figure}
 \centering
 \scalebox{0.9}{
 \includegraphics{runtime_lcm-lcm+filter-fpzhu_seconds.eps}
