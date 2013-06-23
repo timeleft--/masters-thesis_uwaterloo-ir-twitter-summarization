@@ -1889,8 +1889,13 @@ public class DivergeBGMap {
 
                 if (!allied) {
                   unalliedItemsets.put(itemset, maxConfidence);// klDiver);
-                  if (clusterWithOneSelf && maxConfidence >= confThreshold // this check on confidence is redundant
-                      && parentItemset != null) { // make use the optimization
+                  if (clusterWithOneSelf && 
+                      (!ignoreNondistinctItemsets
+                           || (maxConfidence >= confThreshold && // this check on confidence is redundant
+                           parentItemset != null) ) ) { 
+//                      (ignoreNondistinctItemsets &&
+//                          maxConfidence >= confThreshold) && // this check on confidence is redundant
+//                       parentItemset != null) { // make use the optimization
                     Set<String> theOnlyOneIllMerge = itemset;
                     if (theOnlyOneIllMerge != null) {
                       if (LOG.isTraceEnabled())
