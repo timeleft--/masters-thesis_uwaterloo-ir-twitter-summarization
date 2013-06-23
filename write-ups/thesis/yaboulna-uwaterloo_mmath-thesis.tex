@@ -2374,16 +2374,24 @@ To make sure that no important information is filtered out
 we look at itemsets that are filtered out,
 and
 to facilitate the investigation we restrict it to %look at
-itemsets containing known topical terms.
+itemsets containing one of the topical terms `obama' or `romney'.
 %In the mining results of hour long epochs from the 
 %first two weeks of November 2012, 
-The number of closed itemsets
-containing at least one of the unigrams 
-`obama' or `romney' 
-but are not \emph{distinct} 
-averages at 7.2 itemsets
---~an epoch is included in the average only if a keyword occur in it.
+%The number of closed itemsets
+%containing 
+%a topical term
+%at least one of the unigrams 
+%`obama' or `romney' 
+%but are not \emph{distinct} 
+%averages at 7.2 itemsets
+%--~an epoch is included in the average only if a keyword occur in it.
 %These are mainly 2-itemsets.
+Excluding epochs in which the terms do not occur at all,
+the average number of filtered out %(closed but not \emph{distinct})
+itemsets that contain a topical term 
+%by are not 
+%that are not distinct 
+is 7.2 itemsets per epoch.
 The hour when 
 the US presidential elections result became clear
 %of the 2012 US presidential elections victory announcement
@@ -2405,7 +2413,10 @@ In the figure,
 we include below each filtered itemset that we find interesting 
 the \emph{distinct} itemset that we consider its surrogate.
 
-
+%To generate the diff:
+%java -cp target/diff_itemset-collections-0.0.1-SNAPSHOT.jar yaboulna.fpm.Diff /home/yaboulna/fim_out/lcm_closed_thesis/1hr+30min_ngram5-relpp10_oct-nov-dec highConf_June16Defaults_NoLonely_conf0.25_Buff1000_ novel_June16Defaults_NoLonely_conf0.25_Buff1000_
+%To find the surrogates:
+%
 
 %(below it with an arrow).
 \begin{figure} %[h]
@@ -2496,7 +2507,7 @@ the \emph{distinct} itemset that we consider its surrogate.
      66 [president, obama, barack] 
 \end{minipage}
 \caption{Itemsets  from the hour starting at 10 PM EST on 6 Nov. 2012,
-which contains `barack' or `romeny' and are closed but not \emph{distinct}}
+which contain `barack' or `romeny' and are closed but not \emph{distinct}}
 \label{fig:closedNDistinct}
 \end{figure}
 
@@ -2511,7 +2522,7 @@ to give an intuition of how \emph{distinct} itemset are different from closed it
 %The \emph{distinct} condition was applied at $\kappa = 0.25$.
 We have seen in figure~\ref{fig:closedNDistinct} some realistic
 examples of itemsets that are rejected by the \emph{distinct} condition.
-Figure~\ref{fig:winningHr} shows the itemsets it selects
+Figure~\ref{fig:winningHr} shows the \emph{distinct} itemsets % it selects
 from the same hour at the same $\kappa$.
 %The itemsets shown are \emph{distinct} at $\kappa = 0.25$.
 %Each itemset has its support next to it, 
@@ -2534,6 +2545,7 @@ from the same hour at the same $\kappa$.
 %where the itemsets from the ``sham and travesty'' tweet are in the middle.
 %Barack Obama (BO) also made an 
 %Other clusters of itemsets are easy to guess what they are about.
+Itemsets pertaining to
 Donald Trump's ``sham and travesty'' tweet appear on the right side of the figure.
 Close to the bottom left of the figure there are itemsets showing the number
 of electoral votes each candidate got at different points of time (\{191, 238\} and \{191, 249\}). 
@@ -2594,15 +2606,15 @@ by clustering similar itemsets together.
 \section{Strongly Closed Itemsets}
 To remove the redundancy in \emph{distinct} itemsets we merge similar ones
 into \emph{strongly closed} itemset clusters.
-This will also filter out any itemsets %remaining language constructs, because they
-that do not belong to any particular topic
-since they will not be part of a cluster.
+This will also filter out any itemset %remaining language constructs, because they
+that does not belong to a particular topic
+since it will not be part of a cluster.
 The similarity of a \emph{distinct} itemset,
-$s_d$, and another \emph{distinct} itemset, $s_c$, % YES, not any closed itemset
+$s_{antecedent}$, and another \emph{distinct} itemset, $s_{consequent}$, % YES, not any closed itemset
 is measured as the overlap of the \emph{transactions} containing both of them
-with the transactions containing $s_c$. 
+with the transactions containing $s_{antecedent}$. 
 According to equation~\ref{eq:conf} this is the confidence
-of the association rule that $s_c \rightarrow s_d$.
+of the association rule that $s_{antecedent} \rightarrow s_{consequent}$.
 %Notice that c
 Confidence is not a symmetric measure,
 but our proposed clustering makes use of the order
@@ -2632,7 +2644,7 @@ In that case, following the non-increasing order
 of item frequency leads to the following:
 \begin{itemize}
 \item Itemsets related to a certain topic are mined close to each other.
-Recall that PPC-Extension is equivalent to a depth first traversal 
+Notice that PPC-Extension is equivalent to a depth first traversal 
 of a hypothetical prefix tree of closed itemsets.
 That is, closed supersets of each itemset are generated before 
 moving to an itemset that is not a superset. 
@@ -2690,34 +2702,35 @@ we cluster itemsets as follows:
 \begin{enumerate}
 \item Itemsets are processed one by one as they are generated by 
 PPC-extension 
-(using a total ordering that is non-decreasing in frequency).
+(using a total ordering that is non-increasing in frequency).
 %(using the descending frequency of items as the total ordering).
 \item If the itemset is not \emph{distinct} it is discarded.
-\item A \emph{distinct} itemset is clustered with 
-a previously generated itemset if one exists 
+\item A \emph{distinct} itemset, $s_{consequent}$, is clustered with 
+a previously generated itemset, $s_{antecedent}$, if one exists 
 %another itemset if one exists
-such that the overlap exceeds a similarity threshold,
-which we take to be $1-\kappa$ (the indistinctiveness of $s_d$ from $s_c$).
+such that the confidence $conf(s_{antecedent} \rightarrow s_{consequent})$ exceeds a threshold,
+which we take to be $1-\kappa$ (the indistinctiveness of $s_{consequent}$ from $s_{antecedent}$).
 %If no itemset satisfies this condition, a new cluster containing 
 %is formed --> this contradicts the statement above.. duh! 
 %Then clust with oneself should be off by default.. why do I have it on?
-\item If more than one satisfies this condition,
-the  \emph{distinct} itemset is clustered with the one having the highest
-overlap ratio.
-\item When  a \emph{distinct} itemset is clustered with an itemset that is already
-part of a cluster, the \emph{distinct} itemset is added to the existing cluster.
+\item If more than one antecedent itemset result in rules with confidence higher than the threshold, %satisfies this condition,
+the consequent itemset is clustered with the one
+% having the highest overlap ratio.
+resulting in the rule with the highest confidence.
+\item When an itemset is clustered with another that is already %itemset
+part of a cluster, it is added to the existing cluster.
 \end{enumerate}
 %Finally, the
 Each cluster is aggregated into 
 a \emph{strongly closed} itemset, 
 which is the union of all cluster members,
-and its support is the size of the union of their postings lists.
+and its  postings list the union of their postings lists. %support is the size of
 
 This clustering scheme adds an itemset, $s_i$, to the cluster
 containing the itemset, $s_j$, which 
 %selects the cluster that contains the itemset which
 maximizes the confidence of the rule $conf(s_j \rightarrow s_i)$,
-with a lower bound on the overlap to maintain distinctiveness. 
+with a lower bound on the confidence to maintain distinctiveness. 
 Using $\mathcal{D}$ to denote the set of \emph{distinct} itemsets,  
 we define the  desired clustering  and the strongly closed itemset
 represented by each cluster as follows:
@@ -2745,17 +2758,25 @@ Also, calculating confidence requires calculating the intersection only,
 so it is easier to terminate the calculation early 
 if the confidence would not be more than the required threshold.
 Second, this clustering can be implemented efficiently using techniques similar to
-the ones proposed by Bayardo et al. \cite{bayardo2007scaling}.
+the ones proposed by Bayardo et al. \cite{bayardo2007scaling}. Next section?
 
+WHY does the strongly closed itemset clusters build upon the distinct condition?
+WHY does the strongly closed itemset clusters build upon the distinct condition?
+WHY does the strongly closed itemset clusters build upon the distinct condition?
+WHY does the strongly closed itemset clusters build upon the distinct condition?
+WHY does the strongly closed itemset clusters build upon the distinct condition?
+WHY does the strongly closed itemset clusters build upon the distinct condition?
+
+\section{Implementation }
 The main ideas for an efficient implementation are 
 to limit the comparisons to a few candidates,
 and to terminate the comparison early if the similarity threshold will not
 be met.
-In our case, the postings lists are longer than the itemsets,
-so we generate candidates for comparison by calculating similarity between
-itemsets. 
+In our case, the postings lists are longer than the itemsets.
+%so we generate candidates for comparison by calculating similarity between
+%itemsets. 
 %Itemsets that intersect in one item with the itemset being clustered 
-We calculate the similarity between the postings lists of two itemsets,
+We calculate the similarity between the postings lists of two itemsets
 only if they intersect in one item at least.
 When calculating the similarity between two postings lists,
 we can terminate early if the difference exceeds the maximum difference
@@ -2773,7 +2794,7 @@ Algorithm~\ref{algo:alliance}  shows a possible implementation.
 \LinesNumbered
 \KwIn{$\kappa$: Minimum distinctiveness threshold} 
 \KwData{$\mathcal{C}$: Closed itemsets produced by LCM, in the order they were generated}
-\KwResult{$\mathcal{R}$: Strong closed itemset clusters}
+\KwResult{$\mathcal{R}$: Strongly closed itemset clusters}
 \For{$i \gets 2$ to $|\mathcal{C}|$}{
 	$C \gets \{s_c: s_c \in \mathcal{C} \, and \, c < i \, and \, |s_c \cap s_i| > 0\}$\tcp*{Candidates for clustering}
 	$P \gets \{s_p: s_p \in \mathcal{C} \, and \, p < i \, and \, s_p \cap s_i = s_p\}$\tcp*{$s_i$'s subsets (ancestors)} % of the itemset}
@@ -2823,16 +2844,17 @@ the ``sham and travesty'' tweet.
 The figure shows a tree structure of how itemsets 
 were added to the cluster.
 An itemset's parent in the tree is the itemset
-that resulted in the rule with the maximum confidence;
+that resulted in the rule with the maximum confidence, %$s_m$,
 %that was the best candidate.
-we call it the best clustering candidate.
+%we call it the best clustering candidate s_m.
+which we call the best clustering candidate.
 An itemset is added to a cluster
-through its best candidate, 
-and if the best candidate 
-does not belong to a cluster
-a new one is created with 
-the best merge candidate as the centroid.
-The best merge candidate always has a smaller id, 
+through its best clustering candidate. 
+%If the best clustering candidate 
+%does not belong to a cluster,
+%a new one is created with 
+%the best clustering candidate as the centroid.
+The best clustering candidate always has a smaller id, 
 since ids are given sequentially to itemsets 
 and we cluster each itemset with ones that were
 generated before it.

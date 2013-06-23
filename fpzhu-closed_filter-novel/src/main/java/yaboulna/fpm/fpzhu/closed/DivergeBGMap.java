@@ -320,6 +320,8 @@ public class DivergeBGMap {
   static boolean filterLargeNumSiblings = false;
   static boolean alwaysFindParent = false;
   static int maxSiblingsThreshold = 33;
+  
+  static boolean ignoreNondistinctItemsets = true;
 
 
   static boolean sortItemsetsDescFreq = false;
@@ -382,6 +384,8 @@ public class DivergeBGMap {
       PROB_KLD = args[3].contains("ProbKLD");
       SUPP_KLD = !PROB_KLD; // && args[3].contains("SuppKLD");
       REAL_WEIGHT_SUPP_KLD = args[3].contains("RealWSuppKLD");
+      
+      ignoreNondistinctItemsets = !args[3].contains("ClustNonDistinct");
     }
 
     LOG.info("unLimitedBufferSize: " + unLimitedBufferSize);
@@ -1128,7 +1132,7 @@ public class DivergeBGMap {
                 if (parentItemset != null) {
                   itemsetParentMap.put(itemset, parentItemset);
                   parentItemsetsMap.put(parentItemset, itemset);
-                  if (maxConfidence < confThreshold) {
+                  if (ignoreNondistinctItemsets && maxConfidence < confThreshold) {
                     continue;
                   }
                 }
