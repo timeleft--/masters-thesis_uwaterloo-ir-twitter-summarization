@@ -412,6 +412,8 @@ public class DivergeBGMap {
     LOG.info("clusterWithOneSelf: " + clusterWithOneSelf);
     LOG.info("alwaysFindParent: " + alwaysFindParent);
     LOG.info("filterLargeNumSiblings: " + filterLargeNumSiblings);
+    
+    LOG.info("ClustNonDistinct: " + ClustNonDistinct);
 
     LOG.info("PROB_KLD: " + PROB_KLD);
     LOG.info("SUPP_KLD: " + SUPP_KLD);
