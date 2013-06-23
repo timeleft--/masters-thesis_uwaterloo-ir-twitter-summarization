@@ -3229,58 +3229,62 @@ We make an effort to choose epochs from time periods when
 %known happenings were being talked about. 
 it is known what people should be talking about. 
 In section~\ref{sec:electionsday}, 
-we show how the 2012 US presidential elections day is summarized by our methods, %hour-by-hour
-and we compare our summary to the one produced my the MTV algorithm~\cite{mampaey2011tell}.
+we show how the 2012 US presidential elections day is summarized by our methods. %hour-by-hour
+We also compare our summary to the one produced by a state of the art algorithm,
+which generates better quality summaries than other summarization algorithms based on itemsets~\cite{mampaey2011tell}. %my the MTV algorithm
 In section~\ref{sec:gtrends},
 we investigate the synopses of hours selected by the aid of Google Trends\footnote{\url{http://www.google.ca/trends}},
 assessing which popular queries were or were not reflected in our synopses.
 
 \subsection{US presidential elections day}
 \label{sec:electionsday}
-In this section, we compare the quality of the synopsis created by
+In this section, we focus on the 
+2012 US presidential elections day, November $6^{th}$.
+We compare the quality of the synopsis of the day created by
 our proposed methods to the quality of the synopsis created by
 mining the top itemsets with the MTV algorithm~\cite{mampaey2011tell} 
 (according to a maximum entropy model).
-The synopses should be suitable for giving 
-a user an overview of what people were Tweeting about at%understanding of 
-different times on the 2012 US presidential election day, November $6^{th}$.
+The synopsis should be suitable for giving 
+a user an overview of what people were Tweeting about at %understanding of 
+different times of the day. %on the 2012 US presidential election
 
 Table \ref{table:nov6} shows the top 3 \emph{strongly closed} itemsets
-from one-hour epochs
+from one-hour epochs on the elections day, 
 %starting either at the hour or the half-hour mark. 
 using a half-hour time step.
 The itemsets shown are the first appearances of the most interesting itemsets;
-that is, an hour is shown only if its top 3 feature novel interesting itemsets
-\footnote{The top 50 itemsets in the hours from 5 AM on the 6th till 
+that is, an hour is shown only if its top 3 feature novel interesting itemsets\footnote{The top 50 itemsets in the hours from 5 AM on the 6th till 
 almost 9 AM on the 7th are available for download at \url{http://plg.uwaterloo.ca/~yaboulna/thesis_results/twitter_synopses/elections-day_nov6-0500_nov7-0850_top50-strongly-closed.txt}}.
 The first column is the beginning of the hour, EST time.
 The second column is the top itemsets.
 The third column is a commentary to explain the itemsets.
 The fourth column is the rank of an equivalent itemset 
-if one exists in the top 30 itemsets mined by the MTV algorithm.
+in the top 30 itemsets mined by the MTV algorithm, if one exists.
 %In table \ref{table:nov6}, 
 
 We can see how the events of the US presidential
 elections  unwind from ``get out and vote'' to the projections and debates,
 all the way to the ``acceptance speech''.
 Early in the day, people were excited 
-and congratulating each for being on the elections day. 
+and congratulating each other for being on the elections day. 
 The excitement  continues for one more hour, 
 with some people taking it too far by sending pictures of their ballots.
 Itemsets about the elections stop occupying the top 3 ranks until the evening. 
-Instead, there were itemsets about UEFA Champions football matches
-with timely updates of their scores, and about TV shows. 
+During the day, the top 3 ranks were occupied by itemsets about UEFA Champions football matches
+(with timely updates of their scores), and about TV shows. 
 We include the top 3 itemsets of 3 PM as an example.
-In the evening, events about the elections keep occupying the top positions.
+In the evening, the elections heat up 
+and events about it keep occupying top positions
+in all epochs.
 At 10 PM all the top 5 were relevant and very interesting 
 that we decided to include an extra two itemsets in the example 
-(we do this for MTV as well in the hour of acceptance speech).
+(we do this for MTV as well, in the hour of the acceptance speech).
 Shortly after the results of the elections became clear, news that
 Marijuana and same sex marriage were legalized in some states
-occupies the top position.
+occupy the top rank.
 This exemplifies the power of social media as a collaborative filter,
 selecting the news of greatest importance to social media users.
-The user centric definition of importance is also evident in attention
+The user centric definition of importance is also evident in the attention
 given to the ``lady with a flag in her hair'' appearing on TV behind Obama 
 during the acceptance speech. 
 
@@ -3304,12 +3308,12 @@ during the acceptance speech.
 & \em it's elections day & Excitement  & - \\ \hline
 
 \multirow{3}{*}{\texttt{09:30}}
-& \em if romney wins & People dreading the thought & - \\ \cline{2 - 4}
+& \em if romney wins & People reflecting about the different possible results & - \\ \cline{2 - 4} %dreading the thought (according
 & \em of your ballot & Telling people to stop sending pictures of ballots & - \\ \cline{2-4}
 & \em in line to vote & Tweeting while standing in line  & 28 \\ \hline
 
 \multirow{3}{*}{\texttt{15:00}}
-& \em Borussia Dortmund Real Madrid 2 & Score update of UEFA match & 17 \\ \cline{2 - 4}
+& \em Borussia Dortmund Real Madrid 2 & Score update of UEFA football match & 17 \\ \cline{2 - 4}
 & \em incroyable talent & France's version of the Got Talent TV show & - \\ \cline{2-4}
 & \em City Ajax 2 & Score of Manchester City vs Ajax  & - \\ \hline
 
@@ -3326,20 +3330,20 @@ during the acceptance speech.
 
 
 \multirow{3}{*}{\texttt{21:00}}
-& \em Ohio and Florida &  Obama won 2 more states & - \\ \cline{2 - 4}
+& \em Ohio and Florida &  Obama won in 2 more states & - \\ \cline{2 - 4}
 & \em Sarah Palin & Sarah Palin appears on Fox news  & - \\ \cline{2-4} %(uh oh!)
 & \em concession speech & Todd Akin's concession speech & - \\ \hline
 
 
 \multirow{5}{*}{\texttt{22:00}} 
 & \em The electoral college &  Republicans complaining about the voting system  & 9 \\ \cline{2 - 4}
-& \em President of the unites states & Barack Obama is the 44th president of the USA   & 8 \\ \cline{2-4} %(uh oh!)
+& \em President of the Unites States & Barack Obama is the 44th president of the USA   & 8 \\ \cline{2-4} %(uh oh!)
 & \em who voted for & People turning against each other & - \\ \cline{2-4} % 
-& \em once you go black you never go [back] & A popular cultural reference & 15 \\ \cline{2-4} %(uh oh!)
+& \em once you go black you never go [back] & A popular culture reference & 15 \\ \cline{2-4} %(uh oh!)
 & \em my president is black & Americans proud about the equality of opportunities & - \\ \hline % 
 
 \multirow{3}{*}{\texttt{22:30} }
-& \em @realdonaldtrump this elections $\langle$ see table \ref{table:mtv} for the rest of the tweet $\rangle$ 		& One of Donald Trump's famous melt down tweets. This cluster merges 26 \emph{distinct} itemsets. & 1  \\ \cline{2-4}
+& \em @realdonaldtrump this elections (see table \ref{table:mtv} for the rest of the tweet) 		& One of Donald Trump's famous melt down tweets. This cluster merges 26 \emph{distinct} itemsets. & 1  \\ \cline{2-4}
 & \em concede to & The losing candidate has to concede  & - \\ \cline{2-4} %(uh oh!)
 & \em Obama won. I ... & People's reactions to the results & - \\ \hline % 
 
@@ -3350,7 +3354,7 @@ during the acceptance speech.
 
 \multirow{3}{*}{\texttt{00:30} }
 & \em Delivered, sealed, signed & Stevie Wonder's song used in Obama's campaigns & 10  \\ \cline{2-4}
-& \em The best is yet to come & Quote from Obama's speech  & 2 \\ \cline{2-4} %(uh oh!)
+& \em The best is yet to come & Quote from Obama's acceptance speech  & 2 \\ \cline{2-4} %(uh oh!)
 & \em with the flag in her [hair]	&  During the speech, attention on social media goes to a woman appearing behind Obama on TV! & 14 \\ \hline %  \cline{2-3}
 
 \multirow{3}{*}{\texttt{01:00} }
@@ -3361,7 +3365,7 @@ during the acceptance speech.
 \end{tabular}
 \end{center}
 \vspace{-5mm}
-\caption{Top 3 (or 5) \emph{strongly closed} itemsets for hours in US presidential elections day}
+\caption{Top 3 \emph{strongly closed} itemsets for hours in US presidential elections day} %(or 5)
  \label{table:nov6}
 \end{table}
 
@@ -3379,8 +3383,8 @@ during the acceptance speech.
 %\hline
 \hline
 \multirow{3}{*}{\texttt{19:00}} &
- \emph{A partir de que idade voc\^{e} considera algu\'{e}m velho?}  & 1 & 1 \\ \cline{2-4} %22
-& \emph{A qu\'{e} edad consideras que alguien es viejo?} & 4 & 10 \\ \cline{2-4}
+ \emph{A partir de que idade voc\^{e} considera algu\'{e}m velho? (Portuguese for ``From what age do you consider someone old?'')}  & 1 & 22 \\ \cline{2-4} %
+& \emph{A qu\'{e} edad consideras que alguien es viejo? (Spanish for the same question above; we do not know what started this meme)} & 4 & 10 \\ \cline{2-4}
 & \emph{We'll find out if it's true. America went black, will it go back?} & 9 & 24 \\ \hline
 
 \multirow{3}{*}{\texttt{20:30}} &
@@ -3447,8 +3451,7 @@ services reporting users' scores in games,
 or the number of new followers each user got.
 However, the top 10 itemsets usually contain
 % topically relevant itemsets.
-interesting itemsets
-\footnote{The top 30 itemsets in the hours from 5 AM on the 6th till 
+interesting itemsets\footnote{The top 30 itemsets in the hours from 5 AM on the 6th till 
 5 AM on the 7th are available for download at \url{http://plg.uwaterloo.ca/~yaboulna/thesis_results/twitter_synopses/elections-day_nov6-0500_nov7-0500_top30-MTV.txt}}.
 Therefore, in table \ref{table:mtv} we show itemsets 
 %relevant to the U.S. presidential elections 
@@ -3472,10 +3475,11 @@ thus we omit the explanation column for brevity.
 % (Nov. 6 22:00). This stresses the importance of clustering.
 %The harm from redundancy is amplified by the low values of $k$ that has to be used. 
 % to attain an acceptable runtime.
-The input to the algorithm was transactions made up of N-grams up to 5 terms long, 
-which helped the algorithm converge faster since the distribution is flatter. 
+The input to the algorithm was transactions made up of N-grams up to 5 terms long. 
+%which 
+This helped the algorithm converge faster since the distribution is flatter. 
 The use of N-grams also overcomes the dominance of language constructs, 
-which are otherwise ranked high in all hours. 
+which are ranked high in all hours if unigrams are used. % instead.
 
 
 
@@ -3484,13 +3488,17 @@ the top 50 \emph{strongly closed} itemsets
 ~--~most of them are in the top 30.
 We do not know if all the top ranked \emph{strongly closed} itemsets 
 %are also in picked up at a relatively high rank
-would also be picked by MTV if we use it to mine more itemsets,
-since we did not have time to get its results for all epochs at $k > 30$,
-because the algorithm's space and time requirements
-%becomes prohibitively large when the number
-of itemsets requested is increased. 
+would also be picked by MTV if we use it to mine more itemsets.
+%since 
+The space and time requirements of MTV
+becomes prohibitively large when the number
+of itemsets requested is increased,
+as it takes more than an hour to mine 
+the top 50 itemset from an hour long epoch.
+%and
+%we did not have time to get its results for all epochs at $k > 30$.
 % beyond 
-At $k > 100$ the algorithm fails because of a memory error, 
+At $k > 100$ the MTV algorithm fails because of a memory error, 
 even though it was being run on a machine with 256 GB of RAM,
 with no limit on its resource consumption.
 %At $k = 30$ the algorithm was left running for days and it finished 
@@ -3560,15 +3568,14 @@ For example, the top two % positions in the \emph{people} category
 most searched for people are
 Barack Obama and Mitt Romney.
 Figure \ref{fig:trendObamaRomney} is the plot showing the volume of queries about either of them,
-as displayed by Google trends
-\footnote{\url{http://www.google.ca/trends/explore\#q=Barack\%20Obama\%2C\%20Mitt\%20Romney&geo=US&date=11\%2F2012\%201m&cmpt=q}}. 
+as displayed by Google trends\footnote{\url{http://www.google.ca/trends/explore\#q=Barack\%20Obama\%2C\%20Mitt\%20Romney&geo=US&date=11\%2F2012\%201m&cmpt=q}}. 
 The two curves in the plot are similar; 
 both have peaks at the elections day
 and are otherwise flat.
 Note that the y-Axis in the figure is scaled\footnote{\url{https://support.google.com/trends/answer/87282?hl=en&ref_topic=13975}} so that the 
 maximum volume per day for either of the queries becomes 100 
 (to our surprise the curve for ``Barack Obama'' is much lower that that of ``Mitt Romney'',
-even though they occupy positions 1 and 2 respectively in the chart).
+even though they occupy positions 1 and 2 respectively in the Top Chart).
 %According to the observation that
 Since entities can be grouped together
 %we compare the itemsets found by our  results of
@@ -3582,7 +3589,7 @@ real world events which were of interest to internet users.
 We evaluate the use of \emph{strongly closed} itemsets 
 as temporal synopses by
 investigating the mining results from 
-the epochs when these events were happening.
+the time periods when these events were happening.
 We look for itemsets about
 those entities and events in the top 30 \emph{strongly closed} itemset,
 and assess which 
@@ -3633,7 +3640,7 @@ Voting for the award winner is %MTV Europe Music Awards
 a good example of a topic where people have strongly different opinions.
 We have shown earlier, in figure~\ref{fig:hierEma},
 that such different opinions are all reported as separate \emph{strongly closed} itemsets, 
-because clustering using the postings lists avoid forming incohesive clusters.
+because clustering in the transaction space avoids forming incohesive clusters. %using the postings lists 
 We also note that different  \emph{strongly closed} itemsets from one such topic
 can all occupy high ranks.
 %For example, the top 3 itemsets of the hour 15:00 on November 9th
@@ -3652,7 +3659,8 @@ November $11^{th}$ is the day World War I ended
 and Veteran's day in the USA).
 Several other hours have itemsets supporting different artists in the top 30,
 %Almost all of the itemsets about the event are vote itemsets, 
-which are all variations of the itemset: \{\#emawinARTIST, ARTIST, NAME, \#mtvema, i, think, will, be, the, big, winner, tweet, your, pick, at, URL\footnote{\url{http://ema-twittertracker.mtv.com/live/predict.html}}\}.
+which are all variations of the itemset: \{i, think, ARTIST, NAME, will, be, the, big, winner, tweet, your, pick, at, URL\footnote{\url{http://ema-twittertracker.mtv.com/live/predict.html}}, \#mtvema\}.
+%\#emawinARTIST, 
 
 \begin{table}
 \centering
@@ -3679,7 +3687,7 @@ The American Music Awards (AMAs) did not use social media
 to collect votes, so there was not as much posts about it as MTVEMA.
 However, itemsets about it still occupied top positions. 
 There are several hours where the itemset \{american, music, awards\}
-occupied the top position, but the hour we choose to show as an example does not.
+occupied the top rank, but the hour we choose to show as an example does not.
 We chose this hour because 
 %it is the only one that contains actual 
 it contains an itemset that offers
@@ -3697,23 +3705,31 @@ This is interesting news,
 specially following Justin and Selena's break up
 that warranted both of their names a surge in 
 their popularity as search queries on November $9^{th}$ and $10^{th}$.
-The news of the break up also appeared in the top 30 itemsets.
-Tweets from the postings lists of the itemset \{justin, bieber, and, selena, gomez\}
-at that time period include shares of news articles such as:
-\emph{``Justin Bieber and Selena Gomez Break Up http://eonli.ne/SByVNK'' WHAT?!?!?! Is this truee? @justinbieber @selenagomez}, % https://twitter.com/emeliemcelroy/status/267119732208070656:
-sad comments such as: 
+The news of the break up appeared in the top 30 itemsets of different hours on those days.
+We include some example tweets randomly selected from the
+tweets in the postings lists of the \emph{strongly closed} itemset \{justin, bieber, and, selena, gomez\}.
+This shows how including the postings lists in the mining results makes the synopses 
+particularly rich, because the actual posts from which they were mined can be easily retrieved: 
+%at that time period include shares of news articles such as:
+\begin{itemize}
+\item \emph{``Justin Bieber and Selena Gomez Break Up http://eonli.ne/SByVNK'' WHAT?!?!?! Is this truee? @justinbieber @selenagomez}'' % https://twitter.com/emeliemcelroy/status/267119732208070656:
+%sad comments such as: 
 % https://twitter.com/xAnnaVampx/status/267134185767055361
-\emph{Justin and Selena broke up? O\_o the awkward moment when he wrote a song about her and another with her name in it...}, and
-some hopeful comments:
+\item \emph{``Justin and Selena broke up? O\_o the awkward moment when he wrote a song about her and another with her name in it...''}
+%, and
+%some hopeful comments:
 %https://twitter.com/katrinaa_xx/status/267118952071712768
-\emph{apparently there is a rumor that justin bieber and selena gomez broke up? GO @jessleigh1122 GO!!!!!}.
-%
+\item \emph{``apparently there is a rumor that justin bieber and selena gomez broke up? GO @jessleigh1122 GO!!!!!''}.
 %https://twitter.com/katrinaa_xx/status/267118952071712768
 %apparently there is a rumor that justin bieber and selena gomez broke up? GO @jessleigh1122 GO!!!!!
-
+\end{itemize}
 The itemsets in table~\ref{table:amaTop30}
-also include the name of another artists that is not in the Top Chart.  
-Carly Rae Jepsen also performed and won at the American Music Awards\footnote{\url{http://blog.muchmusic.com/carly-rae-jepsen-wins-at-the-american-music-awards-puts-on-fun-and-flirty-performance/}}.
+also include the names of other artists that are not in the Top Chart.  
+Liam Payne (rank number 5) is a member of the band One Direction, 
+which won several awards that night.
+Carly Rae Jepsen (rank number 9) also performed and won an award at the American Music Awards\footnote{\url{http://blog.muchmusic.com/carly-rae-jepsen-wins-at-the-american-music-awards-puts-on-fun-and-flirty-performance/}}.
+
+
 
 
 \begin{table}
@@ -3767,7 +3783,7 @@ Carly Rae Jepsen also performed and won at the American Music Awards\footnote{\u
 %head -n 30 *conf0.25*1351@(76|77|78|79|8)* | less -NS ==> taylor swift in top 30 at 1351825200 (11 / 01 / 12 @ 10:00:00pm EST), top 50 also in 1351828800 (11 / 01 / 12 @ 11:00:00pm EST) and 1351814400 (11 / 01 / 12 @ 7:00:00pm EST)
 
 
-\subsubsection{People appearing in Top Charts but not in the synopses}
+\subsubsection{People appearing in the Top Charts but not in the synopses}
 
 Out of the five pop artists appearing in the Top Chart,
 as shown in figure~\ref{fig:trendsPopArtists},
@@ -3799,22 +3815,23 @@ so that longer itemsets are mined.
 % for each 
  
 
-Another two celebrity who appears in the top 10 chart 
+Another two celebrities who appear in the top 10 chart 
 but not the synopses are Kim Kardashian and Michael Jordan.
 The volume of queries about Kim Kardashian is different from other artists,
-since she is not a pop music artists and does not participate in music awards events.
+since she is not a pop music artist and does not participate in music awards events.
 For these two celebrities, the volume of queries does not have high peaks, 
 and the curve is relatively flat. 
 Itemsets mined from Twitter rarely mention either of them. % Kim Kardashian.
 Of all itemsets mined from hour long epochs throughout the month of November, 
-only 37 closed itemsets contains ``Kim Kardashian'' or ``@kimkardashian'',
-and none contain ``Michael Jordan'' or ``@jumpman23''.
+only 37 closed itemsets contain ``Kim Kardashian'' or ``@kimkardashian'',
+and none contain ``Michael Jordan'' or ``@jumpman23'' (his verified username).
 %Only 16 of those \emph{distinct}
 This means that the number of occurrences of their names is lower than
-the support threshold in the all or almost all of the 1440 overlapping hour epochs
+the support threshold in the all or almost all of the 1,440 overlapping hour epochs
 in the month.
 %We cannot tell if this is because of the lack of special events,
-We do not know why the interest in Kim Kardashian and Michael Jordan 
+We do not know why is it the case that 
+the interest %Kim Kardashian and Michael Jordan 
 shown by Google search users % have shown 
 was not reflected by Twitter users,
 or maybe this is an artifact of the algorithms used to 
