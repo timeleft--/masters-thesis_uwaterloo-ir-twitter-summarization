@@ -3127,13 +3127,14 @@ All probability estimates are smoothed by add-one smoothing.
 \chapter{Evaluation}
 \label{sec:empirical}
 
-In this chapter we analyze the performance of the filtering conditions proposed by applying
-them to the mining results of all one-hour long epochs in the Twitter data.
+In this chapter we analyze the performance of the methods proposed by applying
+them to the mining results of all one-hour long epochs in the Twitter dataset.
 We evaluate their efficiency in reducing the number of mined itemsets in section~\ref{sec:effic},
-and we assess the effectiveness of the filtering in choosing a high quality synopsis in section~\ref{sec:effectiveness}.
+and we assess their effectiveness for choosing a high quality synopsis in section~\ref{sec:effectiveness}. %of the filtering
 The experiments were run using a single threaded Java implementation of
-algorithm \ref{algo:alliance}. % and the LCM implementation provided by Uno et al. on their website\footnote{}.
-The experiments were run on a 1.4GHz processor with 2MB of cache.
+algorithm \ref{algo:alliance}, % and the LCM implementation provided by Uno et al. on their website\footnote{}.
+%The experiments were 
+running on a 1.4 GHz processor with 2 MB of cache.
 
 
 \section{Efficiency}
@@ -3145,7 +3146,7 @@ in terms of the number of itemsets before and after their application,
 and the runtime overhead they add on top of the runtime of the LCM algorithm.
 Using variable length N-grams as items, 
 the average number of itemsets mined from an hour-long epoch is
-2439.17 closed itemsets of length 2 or more after flattening;
+2,439.17 closed itemsets of length 2 or more after flattening;
 that is, excluding itemsets that are merely a frequent unigram.
 We start by analyzing the reduction in this number at different values
 of the distinctiveness threshold, $\kappa$.
@@ -3165,7 +3166,8 @@ slightly after that.
 We use $\kappa = 0.25$ in this thesis, %the remainder of the paper,
 which is an arbitrary choice based on the definition not the data.
 The average number of \emph{strongly closed} itemsets mined from one-hour epochs at this value of
-$\kappa$ is only 139.1, which is about 5.7\% of the number before filtering and clustering. %of closed itemsets.
+$\kappa$ is 139.1, which is about 5.7\% of the number of closed itemsets of length 2 or more.
+%before filtering and clustering. %of closed itemsets.
 %If we also include unclustered \emph{distinct} itemsets, 
 %the number increases to 224.49 itemsets per hour long epoch on average.
 
@@ -3174,7 +3176,7 @@ $\kappa$ is only 139.1, which is about 5.7\% of the number before filtering and 
 
 \begin{figure}
 \centering
-\scalebox{0.8}{
+\scalebox{0.7}{
 \includegraphics{kappa_effect.eps}
 }
 \caption{Effect of changing $\kappa$ on mining results }
@@ -3196,10 +3198,15 @@ The y-Axis is in logarithmic scale to keep the scale of the plot suitable for
 seeing slight differences.
 The output of LCM is the input to the filtering and clustering step,
 so it is affected by the number of closed itemsets produced.
+Recall that the number of itemsets from epochs of span 
+%one hour or more is constant,
+less than an hour is higher than that from epoch of span
+one hour or more. %(which is constant at the same minimum support threshold).
 This explains why it takes slightly longer time for clustering results from
 the 15-minute epoch and then takes a constant time for epochs of a longer span. 
 
-
+%Recall that the number of itemsets from epochs of span 
+%less than an hour is higher
 
 \begin{figure}[h]
 \centering
@@ -4045,7 +4052,7 @@ our synopses did not reflect the same
 user interest as Google Trends.
 
 \subsection{The Complete Results of Mining the Twitter Dataset}
-The complete results of mining all one hour epochs (with half hour time steps)
+The complete results of mining all one-hour epochs (with half hour time steps)
 of Twitter data collected
 in the last 3 months of 2012 is available for download\footnote{\url{http://plg.uwaterloo.ca/~yaboulna/thesis_results/twitter_synopses/1hr+30min_ngram5-relsupp10_oct-nov-dec/}}.
 %http://plg.uwaterloo.ca/$\sim$yaboulna/thesis\_results/twitter\_synopses/1hr+30min\_ngram5-relsupp10\_oct-nov-dec}. 
