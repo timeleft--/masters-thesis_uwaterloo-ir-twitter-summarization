@@ -413,7 +413,7 @@ public class DivergeBGMap {
     LOG.info("alwaysFindParent: " + alwaysFindParent);
     LOG.info("filterLargeNumSiblings: " + filterLargeNumSiblings);
     
-    LOG.info("ClustNonDistinct: " + ClustNonDistinct);
+    LOG.info("ignoreNondistinctItemsets: " + ignoreNondistinctItemsets);
 
     LOG.info("PROB_KLD: " + PROB_KLD);
     LOG.info("SUPP_KLD: " + SUPP_KLD);
