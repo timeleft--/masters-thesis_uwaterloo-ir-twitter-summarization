@@ -231,8 +231,7 @@ set size'' \cite{liu2012finding}.
 The $\delta$-free condition is similar to the \emph{distinct} condition,
 but it is used to eliminate different itemsets, since its motivation
 is to provide a compressed representation of itemsets by sacrificing support
-information. The mining results of our method include the postings list of
-occurrences of each itemset.
+information. 
 
 Another approach to picking out itemsets is choosing ones that 
 can be used to compress the data. The KRIMP algorithm~\cite{vreeken2011krimp} is 
@@ -245,6 +244,7 @@ top K itemsets according to the KL-Diverge between the itemset's  frequency and 
 In this work we focus on efficiency, allowing the summary to include larger numbers
 of itemsets than the values of K for which MTV is efficient.
 This is crucial for scalability to the volumes of data typical in social media streams.
+However, we compare our results to the ones obtained from MTV.
 
 Likewise, Yan et al.~\cite{yan2005summarizing} choose K \emph{master} patterns as representatives of the data. A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemset}. 
 While the use of clustering is similarly motivated by the trivial difference between itemsets, the K \emph{master} itemsets  have to cover the whole data, unlike the \emph{strongly closed itemsets} which actually avoid clustering together different topics or different opinions within a topic.
@@ -258,8 +258,19 @@ While the use of clustering is similarly motivated by the trivial difference bet
 %This motivation leads to decisions different from those required to mine the
 %most informative itemsets mined from text.
 
-Our work complements the work done by Yang et al.~\cite{yang2012framework} for using frequent itemsets as a temporal summary. They have proposed a framework for storing mining results of temporally consecutive batches of data using a pyramidal time window. Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
-The choice of itemsets from each batch is based on their utility in compressing the data, and thus they use non-negative matrix factorization to extract topics related to a query. We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
+Our work complements the work done by Yang et al.~\cite{yang2012framework} for using 
+frequent itemsets to build a temporal index on social media posts. 
+They use frequent itemsets to decrease the space requirements of the index,  
+but they choose itemsets to include in the index based on their utility in compressing the data. 
+We propose methods to choose itemsets that are topically relevant, 
+making use of the nature of social media.
+% to choose topically relevant itemsets.
+%Our work complements the work done by Yang et al.~\cite{yang2012framework} for using frequent itemsets as a temporal summary. They have proposed a framework for storing mining results of temporally consecutive batches of data using a pyramidal time window. Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
+%The choice of itemsets from each batch is based on their utility in compressing the data, and thus they use non-negative matrix factorization to extract topics related to a query. We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
+
+%Our work is also related to methods of indexing social media streams~\cite{yao2012provenance,yang2012framework}. To enhance the speed of indexing, Yao et al.~\cite{yao2012provenance} use... NO they are not related at all!
+
+
 
 The use of frequent itemsets for improving search performance has been considered before. 
 For example, in Li et al.~\cite{li2010mining} itemsets are mined from
@@ -273,6 +284,34 @@ and achieved substantial improvements over a baseline.
 Our work can provide such methods by a short ranked list of itemsets.
 %, potentially improving their results.
 
+%Other efforts for summarizing social media %, specially Twitter
+%Many efforts 
+%usually take an existing  technique and adapt it for the new medium. 
+Existing techniques for summarization and topic extraction were adapted for social media.
+Zhao et al.~\cite{Zhao:2011:TKE:2002472.2002521} build summaries based on an adaptation of Latent Dirichlet Allocation (LDA) for Twitter.
+Parikh and Karlapalem~\cite{parikh2013events} extract topics from Tweets using a simplified state machine for burst detection.
+The short length of social media text is overcome by 
+applying the adapted techniques on large batches of posts made in a long period of time. 
+Our method processes data in batches as small as an hour worth of posts, 
+resulting in temporally relevant synopses. 
+%The number of topics that either of the adaptations discover is small (less than 30) compared to what 
+%would be expected to be found in such a large amount of social media posts. 
+Petrovi\'{c} et al.~\cite{petrovic2010streaming}
+used an adaptation of Locality Sensitive Hashing (LSH) %~\cite{indyk1998approximate} 
+to perform first story detection at scale.
+Their system clusters tweets efficiently,
+but it does not achieve high precision in 
+determining if a tweet cluster
+pertains to an event or not.
+
+The use of Twitter to provide a summary of a specific event 
+has also been studied. 
+Chakrabarti and Punera~\cite{chakrabarti2011event} track 
+tokens appearing in tweets tagged by the name of an American football team,
+and use them to create a summary of a game using statistically improbable phrases.
+Sharifi et al.~\cite{sharifi2010summarizing} also use phrases from tweets about a user specified event.
+Their method ends up to be very similar to frequent itemset mining,
+but uses a graph of terms.
 
 \section{Frequent itemset mining}
 \label{sec:fim}
@@ -1310,7 +1349,7 @@ such as when calculating similarity during clustering.
 %% Thank YOU!
 
 
-
+\small
 % The following two commands are all you need in the
 % initial runs of your .tex file to
 % produce the bibliography for the citations in your paper.
