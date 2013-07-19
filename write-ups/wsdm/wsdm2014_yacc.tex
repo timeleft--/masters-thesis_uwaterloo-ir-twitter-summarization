@@ -12,7 +12,7 @@
 \usepackage{multirow}
 
 \begin{document}
-\conferenceinfo{CIKM}{'13 Burlingame, California USA}
+\conferenceinfo{WSDM}{'14 New York City, NY, USA}
 \title{Efficient Temporal Synopsis of Social Media Streams}
 
 \maketitle
@@ -29,18 +29,73 @@ Search and summarization of streaming social media, such as Twitter, requires th
 \newpage
 \section{Introduction}
 
-The nature of text in social media poses a challenge when applying
-traditional text mining algorithms.
-Text in social media is usually short, lacks context and structure,
-and is created at a high rate. %very
+%The sheer volume of user generated content continuously posted on social media 
+%has taken the problem of summarization has taken a totally different dimension 
+%gives rise to a new type of problem, or
+%User generated content that is continuously posted on social media 
+%contains valuable information, which is sometimes not available on other media. 
+%The use of social media as a source of information about real world events
+%is motivated by the diversity of the content posted on it.
+
+
+%Users of social media generate a large amount of content 
+%about every real world event, internet meme, TV show episode 
+%or anything that happens to capture their attention.
+%The large number of users making posts about a certain topic
+%diversify the content in terms of points of view,
+%and their distribution all over the globe increases the propensity
+%that some of them will witness an event and make unique posts about it.
+%However, the totality of user generated content is overwhelmed 
+%by social chatter and non
+
+The problem of mining social media text is unique 
+because of the text's content and form.
+The user generated content includes a substantial 
+amount of social chatter, %and topically irrelevant posts.
+which has to be filtered out by mining algorithms.
+In terms of form, social media posts are short thus
+undermining the effectiveness of within document 
+term frequency counting.
+They also lack structure and other formatting cues,
+thus important terms cannot be pinpointed easily. 
+%Moreover, social media platforms started allowing
+%posts to link to each other only recently 
+%and in a restricted fashion, 
+%thus posts lack context
+Moreover, the rate at which users generate and consume
+social media posts necessitates the use of efficient algorithms
+to provide users by real-time mining results.
 To realize the benefits of social media in giving a voice to ordinary people,
-this work focuses on the content of posts.
-However, the collective stream from all users is overwhelmed with personal
-updates, and timely finding posts about topics of interest requires an
-efficient mining algorithm.
+it is desirable to devise techniques that focuses on the content of posts.
+
+In this work we study the use of frequent itemset mining
+to create a synopsis of social media streams. 
+This family of algorithms is suitable for application 
+on collections of short sets of items,
+regardless of what a set or an item represents.
+It finds items that co-occur together frequently,
+filtering out itemsets with a number of occurrences
+less than a  threshold. %user specified
+%which can be set to 
 The frequent itemset mining family of algorithms is fast and efficient,
 however it is not readily suited for application on text.
-First, the number of itemsets mined is large and grows with the number of
+Following are the main problems we address in this work.
+After addressing them, the frequent itemset mining results become
+suitable for use as a synopsis representing what is happening
+on social media at different points of time. 
+The synopsis is particularly rich because it
+includes the itemsets as well as the ids of posts in which they occur.
+
+%The nature of text in social media poses a challenge when applying
+%traditional text mining algorithms.
+%Text in social media is usually short, lacks context and structure,
+%and is created at a high rate. %very
+%To realize the benefits of social media in giving a voice to ordinary people,
+%this work focuses on the content of posts.
+%However, the collective stream from all users is overwhelmed with personal
+%updates, and timely finding posts about topics of interest requires an
+%efficient mining algorithm.
+The first problem is that the number of itemsets mined is large and grows with the number of
 distinct items~--~which is particularly high in the text domain.
 Frequent itemset mining was originally proposed as a preliminary stage for
 association rules mining, which sifts through the numerous itemsets and
@@ -50,13 +105,16 @@ frequency threshold, but this is not possible in text mining because
 frequencies of items follow a long-tailed Zipfean distribution.
 Second, the high frequency of stop words and language constructs is a problem
 that frequent itemset mining is not equipped to handle.
-Even if a maximum frequency threshold is set, incurring the risk that we
-will filter out important itemsets, many  non-English constructs will be
+Even if a maximum frequency threshold is set to filter sets of stop words,
+incurring the risk of filtering important itemsets, 
+many  non-English constructs will be
 mined because the proportion of posts in English is much higher than
 other languages.  Finally, there is considerable redundancy in frequent
 itemsets caused by trivial differences in the language used.
-In this paper we address those problems, adapting frequent itemset mining to
-social media text without degrading its efficiency.
+%In this paper we address those problems, adapting frequent itemset mining to
+%social media text without degrading its efficiency.
+Those are the problems with applying frequent itemset mining to text, 
+following we list some advantages of using it.
 
 Unlike trending
 topics\footnote{http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}
@@ -79,157 +137,57 @@ understandable at the user level.
 As we shall see in later examples, the top ranked itemsets cover a variety
 of open topics, and within one topic different opinions are reported as
 separate contrastive itemsets.
+The ranking used is according 
+to a formula we propose,
+which orders
+itemsets in terms of their temporal novelty.
+%thus turning the synopsis into a summary that 
 
+An empirical evaluation of the effectiveness of our proposed methods
+shows that the hour by hour synopses of two different days
+actually reflects what was happening on those days.
+The synopses generated by a state of the art algorithm 
+for summarization based on itemset mining, MTV~\cite{mampaey2011tell}, 
+are also shown for comparison. 
+The synopses of all hours in the last 3 months of 2012
+is available for download\footnote{blinded}. 
+The evaluation is only empirical because our work
+results in a synopsis that is made up of sets of items,
+which is different from the summaries generated by
+other extractive or abstractive summarization algorithms.
+The synopsis is most similar to the one generated by 
+key phrase extraction algorithms~\cite{Zhao:2011:TKE:2002472.2002521},
+but the number of topics our algorithm mines is much larger 
+inhibiting the construction of a gold standard needed for evaluation
+using the measures used for keyphrase extraction.
+Actually, we find that evaluating our system would best be done
+by an evaluation measure that is suitable for exploratory search tasks.
+However, this is an open problem~\cite{jack} and 
+we leave the creation of an evaluation measure as 
+a potential future direction.
+
+The rest of the paper is organized as follows.
 The next three sections provide necessary background.
 We start by discussing related work in section \ref{sec:related},
 we then explain frequent itemset mining and the algorithm on which we build
 our work in sections \ref{sec:fim} and \ref{sec:lcm} respectively.
-In sections \ref{sec:socmine}, \ref{sec:strong} and \ref{sec:rank} we
-propose solutions to different problems faced when applying frequent
-itemset mining to social media text.
-We present the outline of those sections graphically using a
-frequency ordered prefix tree of the itemsets.
-Each path from root to a leaf in such a tree represents an itemset,
-where each itemset is ordered in non-increasing order of the frequency of
-items.
-Itemsets having the same prefix share the nodes representing this prefix.
-This representation is typical in the literature, and it is actually a very
-good representation of the frequent itemset mining problem.
-Figure \ref{fig:outline} shows conceptually how our contributions in sections  \ref{sec:socmine},
-\ref{sec:strong} and \ref{sec:rank}  affect different parts of the
-problem. We overlay the contributions on such a figure to make it clear how each one addresses a particular challenge of applying frequent itemset mining to text data from social media. In section \ref{sec:concfut}, we conclude our presentation and
-suggest future directions.
+In sections \ref{sec:socmine} and \ref{sec:strong} we
+propose solutions to the problems faced when applying frequent
+itemset mining to social media text. 
+Section \ref{sec:socmine} deals with the large number of language
+constructs and reduces the number of itemsets.
+In section  \ref{sec:strong} we propose a condition for selecting
+itemsets and filtering out ones that are not \emph{distinct} from 
+their subsets, and we propose a clustering that merges
+together similar itemsets into \emph{strongly closed itemsets}.
+In section \label{sec:rank} we introduce a ranking formula
+specially tailored for ranking \emph{strongly closed itemsets}.
+We use this formula to rank itemsets and construct 
+the examples used for evaluation. % in section \label{eval}.
+Finally, section \ref{sec:concfut} concludes our presentation and
+suggests future directions.
 
-\begin{figure*}
-\centering
-% Generated with LaTeXDraw 2.0.8
-% Fri May 17 20:11:57 EDT 2013
-% \usepackage[usenames,dvipsnames]{pstricks}
-% \usepackage{epsfig}
-% \usepackage{pst-grad} % For gradients
-% \usepackage{pst-plot} % For axes
-\scalebox{0.7} % Change this value to rescale the drawing.
-{
-\begin{pspicture}(0,-4.41)(17.948048,4.4013004)
-\pstriangle[linewidth=0.04,dimen=outer](8.617168,-4.41)(17.14,8.82)
-\psline[linewidth=0.04cm](0.827168,-3.59)(16.367168,-3.61)
-\psline[linewidth=0.04cm,linestyle=dashed,dash=0.16cm 0.16cm](0.30716797,2.61)(16.767167,2.59)
-\usefont{T1}{ptm}{m}{n}
-\rput(8.60748,-4.005){Items with low frequency in the data are excluded by frequent itemset mining, and hence not part of the tree}
-\psline[linewidth=0.04cm,linestyle=dashed,dash=0.16cm 0.16cm](0.14716797,-2.03)(17.007168,-2.03)
-\usefont{T1}{ptm}{m}{n}
-\rput(3.4739747,4.075){The top of the tree is not as small as it seems.}
-\usefont{T1}{ptm}{m}{n}
-\rput(3.6774805,3.655){It contains a large number of itemsets which are}
-\usefont{T1}{ptm}{m}{n}
-\rput(2.7,3.2){most likely language constructs.}
-\usefont{T1}{ptm}{m}{n}
-\rput(12.646406,4.055){In section \ref{sec:socmine} we reduce the number of itemsets}
-\usefont{T1}{ptm}{m}{n}
-\rput(13.064883,3.675){made up of items from the head of the Zipfean}
-\usefont{T1}{ptm}{m}{n}
-\rput(2.1554394,0.675){The closed property selects }
-\usefont{T1}{ptm}{m}{n}
-\rput(1.9119726,0.295){non-redundant itemsets, }
-\usefont{T1}{ptm}{m}{n}
-\rput(3.1164062,2.295){Itemsets whose lowest frequency item is}
-\usefont{T1}{ptm}{m}{n}
-\rput(2.779746,1.895){within the mid-range of frequencies}
-\usefont{T1}{ptm}{m}{n}
-\rput(2.456875,1.515){contain interesting information,}
-\usefont{T1}{ptm}{m}{n}
-\rput(2.4698632,1.095){but there are too many of them.}
-\usefont{T1}{ptm}{m}{n}
-\rput(1.8698633,-0.105){but it is easily violated.}
-\usefont{T1}{ptm}{m}{n}
-\rput(13.823125,2.335){In section \ref{sec:strong} we propose the strongly closed}
-\usefont{T1}{ptm}{m}{n}
-\rput(14.255615,1.895){itemsets, which are clusters of itemsets}
-\usefont{T1}{ptm}{m}{n}
-\rput(14.45792,1.495){such that every itemset makes up a}
-\usefont{T1}{ptm}{m}{n}
-\rput(14.534248,1.055){high proportion of the support of}
-\usefont{T1}{ptm}{m}{n}
-\rput(14.824629,0.695){its subsets. This eleminates clo-}
-\usefont{T1}{ptm}{m}{n}
-\rput(14.88792,0.295){sed itemsets generated by a }
-\usefont{T1}{ptm}{m}{n}
-\rput(15.1511135,-0.105){slight violation of the cl-}
-\usefont{T1}{ptm}{m}{n}
-\rput(15.304863,-0.525){osed condition. It also}
-\usefont{T1}{ptm}{m}{n}
-\rput(1.6074805,-0.505){It also doesn't solve}
-\usefont{T1}{ptm}{m}{n}
-\rput(1.4252441,-0.925){redundancy from }
-\usefont{T1}{ptm}{m}{n}
-\rput(1.0541503,-1.705){in language.}
-\usefont{T1}{ptm}{m}{n}
-\rput(1.3320996,-1.305){slight variations}
-\usefont{T1}{ptm}{m}{n}
-\rput(15.58497,-0.945){reduces redundancy}
-\usefont{T1}{ptm}{m}{n}
-\rput(8.506817,-2.345){After mining itemsets based on support and reducing their redundancy, we rank}
-\usefont{T1}{ptm}{m}{n}
-\rput(8.663008,-3.285){and features intrinsic to itemsets don't result in a good ranking. We propose a ranking scheme in section \ref{sec:rank}.}
-\usefont{T1}{ptm}{m}{n}
-\rput(8.621269,-2.805){the remiaining itemsets using temporal features. The majority of itemsets has low support, }
-\usefont{T1}{pcr}{m}{n}
-\rput(8.550049,3.535){the}
-\usefont{T1}{pcr}{m}{n}
-\rput(7.6920705,2.835){obama}
-\usefont{T1}{pcr}{m}{n}
-\rput(8.255322,1.035){won}
-\usefont{T1}{pcr}{m}{n}
-\rput(7.4495215,1.875){president}
-\usefont{T1}{pcr}{m}{n}
-\rput(10.28207,-1.625){\#mtvema}
-\usefont{T1}{pcr}{m}{n}
-\rput(9.840049,2.175){bieber}
-\usefont{T1}{pcr}{m}{n}
-\rput(10.185322,1.475){justin}
-\usefont{T1}{pcr}{m}{n}
-\rput(11.12207,0.655){selena}
-\usefont{T1}{pcr}{m}{n}
-\rput(7.958799,0.115){elections}
-\usefont{T1}{pcr}{m}{n}
-\rput(7.7585354,-0.925){\#elections2012}
-\usefont{T1}{pcr}{m}{n}
-\rput(11.554756,0.055){gomez}
-\usefont{T1}{pcr}{m}{n}
-\rput(6.0433006,0.615){barack}
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.607168,4.35)(7.827168,3.05)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(7.727168,2.65)(7.367168,2.03)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(6.887168,1.63)(6.447168,0.81)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.427168,0.83)(8.387168,0.37)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.307168,-0.11)(8.3271675,-0.69)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.667168,2.59)(8.467168,1.25)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.607168,4.29)(8.547168,3.71)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.667168,4.35)(9.867168,2.41)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(9.227168,0.85)(10.047168,-1.39)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(11.187168,0.43)(11.347168,0.19)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(6.0871677,0.43)(5.447168,-1.03)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(10.007168,1.97)(10.267168,1.61)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(9.487168,2.01)(9.167168,1.21)
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(10.467168,1.29)(10.787168,0.83)
-\usefont{T1}{pcr}{m}{n}
-\rput(8.892071,2.815){obama}
-\usefont{T1}{pcr}{m}{n}
-\rput(9.2153225,1.055){won}
-\psline[linewidth=0.04cm,linestyle=dotted,dotsep=0.16cm,arrowsize=0.05291667cm 2.0,arrowlength=1.4,arrowinset=0.4]{->}(8.587168,3.29)(8.607168,2.93)
-\usefont{T1}{pcr}{m}{n}
-\rput(5.458535,-1.365){\#elections2012}
-\usefont{T1}{ptm}{m}{n}
-\rput(12.963448,3.295){distribution by flattening the distribution.}
-\usefont{T1}{ptm}{m}{n}
-\rput(15.73415,-1.705){in language.}
-\usefont{T1}{ptm}{m}{n}
-\rput(15.563946,-1.325){from variations}
-\end{pspicture} 
-}
-
-\caption{Most important contributions overlaid on a frequency ordered prefix tree}
-\label{fig:outline}
-\end{figure*}
+\newpage
 
 \section{Related Work}
 \label{sec:related}
@@ -1357,7 +1315,7 @@ such as when calculating similarity during clustering.
 % initial runs of your .tex file to
 % produce the bibliography for the citations in your paper.
 \bibliographystyle{abbrv}
-\bibliography{younos_cikm2013}  % sigproc.bib is the name of the Bibliography in this case
+\bibliography{younos_wsdm2014}  % sigproc.bib is the name of the Bibliography in this case
 % You must have a proper ".bib" file
 %  and remember to run:
 % latex bibtex latex latex
