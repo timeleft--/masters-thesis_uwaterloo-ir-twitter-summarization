@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+    xmlns:latexdraw="http://latexdraw.sourceforge.net/namespaces/latexdraw"
+    version="1.1" baseProfile="full">
+    <defs/>
+    <g>
+        <g latexdraw:type="rectangle" id="id24">
+            <rect x="2.449999988079071" y="0.44999998807907104"
+                width="231.10000002384186" height="125.10000002384186"
+                latexdraw:borderPos="outer"
+                stroke-width="0.8999999761581421" stroke="black" fill="none"/>
+        </g>
+        <g latexdraw:type="circle" id="id25">
+            <circle cx="76.0" cy="69.0" r="46.55000001192093"
+                latexdraw:borderPos="outer"
+                stroke-width="0.8999999761581421" stroke="black" fill="none"/>
+        </g>
+        <g latexdraw:type="circle" id="id27">
+            <circle cx="100.0" cy="69.0" r="44.55000001192093"
+                latexdraw:borderPos="outer"
+                stroke-width="0.8999999761581421" stroke="black" fill="none"/>
+        </g>
+        <g latexdraw:type="circle" id="id29">
+            <circle cx="192.5" cy="43.5" r="13.050000011920929"
+                latexdraw:borderPos="outer"
+                stroke-width="0.8999999761581421" stroke="black"
+                fill="none" stroke-dasharray="8.0, 8.0"/>
+        </g>
+        <g latexdraw:type="text" id="id31" font-family="Times New Roman"
+            fill="black" font-size="18" latexdraw:x="13.0">
+            <text x="13.0" y="18.0"><![CDATA[Justin, Selena]]></text>
+        </g>
+        <g latexdraw:type="text" id="id33" font-family="Times New Roman"
+            fill="black" font-size="18" latexdraw:x="34.0">
+            <text x="34.0" y="83.0"><![CDATA[broke, up]]></text>
+        </g>
+        <g latexdraw:type="text" id="id35" font-family="Times New Roman"
+            fill="black" font-size="18" latexdraw:x="84.0">
+            <text x="84.0" y="62.0"><![CDATA[\#jelena]]></text>
+        </g>
+        <g latexdraw:type="text" id="id37" font-family="Times New Roman"
+            fill="black" font-size="18" latexdraw:x="165.0">
+            <text x="165.0" y="27.0"><![CDATA[Drew]]></text>
+        </g>
+        <g latexdraw:type="circle" id="id39">
+            <circle cx="193.5" cy="86.5" r="14.050000011920929"
+                latexdraw:borderPos="outer"
+                stroke-width="0.8999999761581421" stroke="black"
+                fill="none" stroke-dasharray="8.0, 8.0"/>
+        </g>
+        <g latexdraw:type="text" id="id41" font-family="Times New Roman"
+            fill="black" font-size="18" latexdraw:x="164.0">
+            <text x="164.0" y="112.0"><![CDATA[Marie]]></text>
+        </g>
+    </g>
+    <metadata>
+        <latexdraw:metadata>
+            <latexdraw:displayBorders>false</latexdraw:displayBorders>
+            <latexdraw:autoAdjust>true</latexdraw:autoAdjust>
+            <latexdraw:ppc>50</latexdraw:ppc>
+            <latexdraw:zoom>1.0</latexdraw:zoom>
+            <latexdraw:unit>cm</latexdraw:unit>
+            <latexdraw:classicGrid>false</latexdraw:classicGrid>
+            <latexdraw:gridGap>10</latexdraw:gridGap>
+            <latexdraw:code>0</latexdraw:code>
+            <latexdraw:displayGrid>true</latexdraw:displayGrid>
+            <latexdraw:magneticGrid>false</latexdraw:magneticGrid>
+            <latexdraw:autoUpdate>true</latexdraw:autoUpdate>
+            <latexdraw:version>2.0.8</latexdraw:version>
+            <latexdraw:size>
+                <latexdraw:width>1440</latexdraw:width>
+                <latexdraw:height>807</latexdraw:height>
+            </latexdraw:size>
+            <latexdraw:position>
+                <latexdraw:x>0</latexdraw:x>
+                <latexdraw:y>22</latexdraw:y>
+            </latexdraw:position>
+            <latexdraw:dividerPosition>0.8256944444444444</latexdraw:dividerPosition>
+            <latexdraw:displayCodePanel>true</latexdraw:displayCodePanel>
+            <latexdraw:displayXScale>true</latexdraw:displayXScale>
+            <latexdraw:displayYScale>true</latexdraw:displayYScale>
+            <latexdraw:delimitorOpacity>130</latexdraw:delimitorOpacity>
+        </latexdraw:metadata>
+    </metadata>
+</svg>
