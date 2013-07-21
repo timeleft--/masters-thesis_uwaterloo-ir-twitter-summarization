@@ -2365,16 +2365,20 @@ is defined as follows:
 %with
 %the set of closed itemsets of length 2 or more. 
 In the mining results of hour long epochs from the 
-first two weeks of November 2012, 
+%first two weeks of November 2012, 
+Twitter data,
 the number of \emph{distinct} itemsets, at $\kappa = 0.25$,
-averages at 911.71 itemsets 
-as compared to 2,428.3 closed itemsets
-(37.55\%). 
+%averages at 911.71 itemsets without setting a limit on the number of itemsets to keep
+averages at 351.10 itemsets
+%as compared to 2,428.3 closed itemsets.
+%(37.55\%). 
+as compared to 2,439.17 closed itemsets of length 2 or more.
 To make sure that no important information is filtered out
 we look at itemsets that are filtered out,
 and
 to facilitate the investigation we restrict it to %look at
-itemsets containing one of the topical terms `obama' or `romney'.
+itemsets containing one of the topical terms `obama' or `romney'
+in the first two weeks of November 2012.
 %In the mining results of hour long epochs from the 
 %first two weeks of November 2012, 
 %The number of closed itemsets
@@ -2762,7 +2766,7 @@ the ones proposed by Bayardo et al. \cite{bayardo2007scaling}.
 This will be detailed in the next section.
 
 The number of \emph{strongly closed itemsets} from an hour long epoch 
-averages to 139.1 itemsets.
+averages at 139.1 itemsets.
 %is 139.1 itemsets on average, 
 %which is a very big reduction 
 This is less than 0.25\% of the average number of closed itemsets returned by LCM 
@@ -2972,12 +2976,12 @@ keeping \emph{distinct} itemsets
 and their postings lists
 %some of the results of LCM 
 in memory,
-so that the similarity between a \emph{distinct} itemset and 
-all the previously generated ones
+so that the similarity between a \emph{closed} itemset and %\emph{distinct}
+all the previously generated \emph{distinct} ones
 can be efficiently calculated. 
 This is an overhead that the original LCM does not incur, 
 but it is not a large overhead;
-due to the limited number of \emph{distinct} itemsets,
+due to the limited number of \emph{closed} itemsets, % \emph{distinct}
 the memory requirements does not exceed 6 GB
 for mining hour long epochs using 
 a Java implementation that uses a lot of objects. % of RAM
@@ -3000,7 +3004,7 @@ According to our observation that itemsets
 from one topic are generated close to each other, 
 when the total ordering is descending in items frequency,
 we limit the mining results kept in memory 
-to the last 1000 \emph{distinct} itemsets and their postings lists.
+to the last 1000  itemsets and their postings lists. %\emph{distinct}
 %then itemsets whose candidates are so many itemsets between 
 This sets a bound on the memory requirement,
 as well as the runtime which is 
