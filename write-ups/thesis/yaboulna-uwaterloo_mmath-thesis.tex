@@ -234,7 +234,7 @@ without explicitly assigning weights based on popularity of users. % to posts ma
 However, the nature of text in social media poses a challenge when applying
 traditional text mining algorithms. 
 Text in social media is usually short, undermining the effectiveness of within document frequency counting.
-It lacks context, since posts are standalone and most platforms don't allow explicit linkage.
+It lacks context, since posts are standalone and most platforms do not allow explicit linkage.
 It also lacks structure and other useful formatting cues. 
 One type of mining algorithms that can be applied to such data is frequent itemset mining.
 
@@ -281,7 +281,7 @@ mined because the proportion of posts in English is much higher than
 other languages. 
 Notice that we do not remove function words 
 %for reasons that will be detailed later.
-to allow mining itemsets made up solely of function words, 
+so that we allow mining itemsets made up solely of function words, 
 and to make the mining results easier to understand at the user level.
 
 \item
@@ -355,10 +355,10 @@ Our main contributions are as follows:
 \item We propose a formula for ranking itemsets according to temporal novelty.
 \end{itemize}
 The effectiveness of our methods is shown quantitatively, 
-in terms of the drop in the number of itemsets at each processing step. 
+in terms of the reduction in the number of itemsets at each processing step. 
 The quality of the final outcome is verified by showing mining results from various time periods.
 
-\section{Thesis outline}
+\section{Thesis Outline}
 
 The next two chapters provide necessary background.
 We start by discussing related work in chapter \ref{sec:related},
@@ -457,7 +457,7 @@ usually the last item given a certain total ordering of items.
 By using only the frequent  ($k$-1)-itemsets for generating candidate $k$-itemsets,
 many possible $k$-itemsets are implicitly pruned, 
 based on the anti-monotonicity between itemsets' support and length:
-all subsets of a frequent itemset have to be frequent. 
+all subsets of a frequent itemset must be frequent. 
 However, each candidate has to be explicitly checked to verify that it does not
 have any infrequent subsets.
 
@@ -518,7 +518,7 @@ avoids the candidate generation bottleneck,
 by directly deriving itemsets from the transaction space.
 However,
 the creation of such representation is a bottleneck itself. 
-Building conditional pattern bases and sub-FP-trees becomes very time and space consuming as the recursion goes deep and the number of patterns goes large~\cite{wang2002top}.
+Building conditional pattern bases and sub-FP-trees becomes time and space consuming as the recursion goes deep and the number of patterns becomes large~\cite{wang2002top}.
 %Many alternate representations as well as enhancements to the original FP-Growth
 %algorithm were proposed~\cite{cats.....}, however they still operate in the same way.
 
@@ -540,7 +540,7 @@ However, in our categorization we focus on the logic behind how itemsets are gen
 After all, any algorithm must calculate the support of itemsets, 
 and this requires the algorithm to either maintain a representation of the DB or scan the transactions. 
 Algorithms that operate in the solution space prune itemsets that do not possess certain properties. 
-The limited number of itemsets that possess the desired property are sufficient to deduce the rest of the solution (other frequent itemsets and their support).
+The limited number of itemsets that possess the desired property are sufficient to deduce the rest of the solution (other frequent itemsets and their support information).
 The reduction in the number of itemsets mined improves the performance of such algorithms, 
 even if they rely on candidate generation to enumerate possible itemsets before checking for the desired property.
 It is not always necessary to produce the full solution 
@@ -561,7 +561,7 @@ is called a \emph{generator}~\cite{kryszkiewicz2001concise} or a \emph{free set}
 It is also possible to keep only the generator of each equivalence class, 
 but in this case some infrequent itemsets has to be kept 
 in order to be able to calculate the support of all frequent itemsets~\cite{kryszkiewicz2001concise}. 
-A different selection of itemsets can be made according to the Non-Derivable property~\cite{calders2002mining,calders2007non}, 
+A different selection of itemsets can be made according to the \emph{non-derivable} property~\cite{calders2002mining,calders2007non}, 
 which is linked to the closed property. %former properties. 
 
 Finding closed itemsets can be done by arranging possible itemsets into a Galois lattice, 
@@ -635,17 +635,17 @@ $\delta$-covered~\cite{xin2005mining}, and
 are examples of conditions motivated by providing a compressed representation
 of itemsets through sacrificing support information.
 The $\delta$-free condition selects an itemsets if its support
-is different from the support of all its subsets at least by $\delta$.
+is different from the support of all its subsets by at least $\delta$.
 This selection of itemsets can be used to approximate the support 
 of other frequent itemsets with a guarantee on the error,
 but only if some infrequent itemsets are included in the selection.
 The $\delta$-free condition implies setting an upper bound on the
 strength of association rules that can be derived from selected itemsets.
 It is suitable for compressing mining results from dense datasets,
-but it is exactly the opposite of \emph{distinct} itemsets we propose in this thesis.
+but it is exactly the opposite of \emph{distinctiveness} condition we propose in this thesis. 
 
 
-The $\delta$-covered condition is also the opposite of the \emph{distinct}
+The $\delta$-covered condition is also the opposite of the \emph{distinctiveness}
 condition, as it ``relaxes the closure condition to further reduce pattern
 set size'' \cite{liu2012finding}. On the other hand, the \emph{distinct}  condition strengthens the closure condition.
 The $\delta$-covered condition sets an upper bound on the confidence of the rule that 
@@ -699,7 +699,7 @@ while the rest of items, $s \setminus w$, are the antecedent.
 The confidence of the rule is then defined as: 
 \begin{equation}conf(s \setminus w \rightarrow s) = \frac{|T_s|}{|T_{s \setminus w}|} \end{equation}
 Since different rules with varying confidence can be derived from an itemset, either the minimum (\emph{all-confidence}) or the maximum (\emph{any-confidence}) is used~\cite{omiecinski2003alternative}.
-\item \emph{Lift}~\cite{brin1997beyond}: The probability (support) of the itemset over the product of the probabilities of all items in the itemset. This is a measure of dependence and can be linked to Pointwise Mutual Information~\cite{bouma2009normalized}. Such a measure is suitable for Knowledge Discovery or Exploratory Search tasks, where the goal is to extract correlated item sets or significant phrases.
+\item \emph{Lift}~\cite{brin1997beyond}: The probability (support) of the itemset over the product of the probabilities of all items in the itemset. This is a measure of dependence and can be linked to Pointwise Mutual Information~\cite{bouma2009normalized}. Such a measure is suitable for knowledge discovery or exploratory search tasks, where the goal is to extract correlated itemsets or significant phrases.
 \item \emph{Bond (or Coherence)}~\cite{omiecinski2003alternative}: The support of an itemset over the number of transactions containing \emph{any} of its items.
 \end{enumerate}
 
@@ -743,7 +743,7 @@ for our purposes.
 \emph{Subjective} measures of interestingness select itemsets that are actionable or unexpected~\cite{silberschatz1995subjective}.
 Selecting unexpected itemsets entails building a probabilistic model to use it for 
 estimating itemsets probabilities. 
-Jaroszewicz and Simovici~\cite{jaroszewicz2004interestingness} use a Baysian Network as a model,
+Jaroszewicz and Simovici~\cite{jaroszewicz2004interestingness} use a Baysian network as a model,
 which is suitable for cases where items 
 denote discrete values 
 %are value levels 
@@ -771,7 +771,7 @@ However, the value of $k$ has to be kept low (at most 100) for the algorithm to 
 even though it is running without a limit on its resource usage on a machine with 256 GB of RAM.
 In our work we focus on efficiency, allowing the summary to include larger numbers
 of itemsets than the values of $k$ for which MTV finishes in a reasonable time (at most 10). 
-This is crucial for scalability to the volumes of data typical in social media streams.
+This is crucial for scalability to the volumes of data typical to social media streams.
 
 Another approach to picking out itemsets is choosing ones that 
 can be used to compress the data (not the itemsets). % and their support). 
@@ -785,7 +785,7 @@ portion of social media data.
 Different ways to use frequent itemset mining in search %the field of Information Retrieval 
 have been proposed. 
 Possas et al.~\cite{possas2002set}  proposed using closed itemsets
-in place of terms, using them in exactly the same way as terms are used.
+in place of terms, using them in exactly the same way that terms are used.
 In the tokenization process, they use CHARM~\cite{zaki2002charm} 
 %to mine closed itemsets from 
 %frequent tokens in the document.
@@ -928,7 +928,7 @@ In both datasets, media organizations make up about 11\% only of the 963 account
 (approximately 7\% for ones with offline presence and 4\% for ones that exist solely online). 
 Journalists make up another 15\%, so the total of mainstream media affiliated accounts is approximately 26\%.
 On the other hand, more than half of the accounts from which influential tweets originated belong to individuals not affiliated to the government or mainstream media (55\% for Tunisia and 56\% for Egypt). 
-Out of those individual, almost half are ordinary people who don't self identify and cannot be identified by assessors as bloggers or activists. 
+Out of those individuals, almost half are ordinary people who do not self identify and cannot be identified by assessors as bloggers or activists. 
 
 The rate at which an account makes posts is approximately 16 per hour for mainstream media affiliated accounts, and approximately 10 for individuals accounts (thus a mainstream media account makes 60\% more posts). 
 Also the probability that a post will be echoed is 0.88 for mainstream media accounts, 0.55 for journalists, 0.4 for bloggers and activists, and 0.31 for individuals 
@@ -1125,7 +1125,7 @@ to have happened in the interval of time processed
 Another method that tracks the frequency of all tokens is EDCoW~\cite{weng2011event}, 
 where the wavelet transformation is used to convert counts of occurrences from the time domain to the frequency domain
 then auto-correlation is used to detect burstiness.
-However, the use wavelet transformation is not justified
+However, the use of wavelet transformation is not justified
 specially for the enormous number of tokens in case of social media.
 Other methods based on burst detection track a small set of keywords. 
 Lehmann et al.~\cite{lehmann2012dynamical} track hashtags and study 
@@ -1134,7 +1134,7 @@ Chakrabarti and Punera~\cite{chakrabarti2011event} track
 tokens appearing in tweets tagged by the name of an American football team,
 and use them to create a summary of a game.
 
-Our work can be seen in the light of meme-tracking~\cite{leskovec2009meme},
+Our work can also be seen in the light of meme-tracking~\cite{leskovec2009meme},
 where a particularly interesting quotation (meme) is tracked across news and blog posts.
 The quotation being tracked is not quoted verbatim in all posts, 
 but rather parts of it are selected and it could be slightly paraphrased.
@@ -1314,7 +1314,7 @@ We refer the interested reader to Uno et al.~\cite{uno2004lcm} for a
 theoretical proof that the algorithm runs in linear time in the number of
 closed itemsets,
 and that this number is quadratic in the number of transactions.
-Performance on a real data set is shown in section \ref{sec:realdata}.
+Performance on a real dataset is shown in section \ref{sec:realdata}.
 We proceed by describing how to implement this algorithm using an inverted
 index.
 
@@ -1349,7 +1349,7 @@ Step&Current Itemset&Possible Extension Items&Comments\\ \hline
 5 & \{barack, \emph{mitt}, obama\} (1) & romney (1)                       &  {\small Rule 2: `romney' appears in all $T_{itemset}$. } \\\hline
 6 & \{barack, mitt, \emph{obama, romney}\}(1)* & & {\small Rule 3: `obama'  is the \emph{suffex head}. } \\\hline
 7 & \{\emph{barack}\} (4) & mitt (2), \textbf{obama} (3), romney (2) &  {\small Nothing more to add, back to \{`barack'\}.}\\\hline
-8 & \{barack, \emph{obama}\} (3)* & \sout{mitt} (1), \textbf{romney} (2) &  {\small Rule 1: skipping `mitt', adding `romney'  } \\ %.\hline
+8 & \{barack, \emph{obama}\} (3)* & \sout{mitt} (1), \textbf{romney} (2) &  {\small Rule 1: skipping `mitt', adding `romney'  } \\\hline
 9 & \{barack, obama, \emph{romney}\} (2)* & \sout{mitt} (1) &  {\small Rule 1: Nothing more to add.  } \\\hline
 10 & \{\emph{barack}\} (4) & mitt (2), obama (3), \textbf{romney} (2) &  {\small Back to \{`barack'\}, adding `romney'. } \\\hline
 11 & \{\emph{barack}, romney\} (2) &  mitt (1), obama (2) &  {\small Rule 2: add `obama' after `romney'. } \\\hline
@@ -1410,7 +1410,7 @@ For example, a map/reduce implementation is straightforward since the only
 operations are counting (line 15) and projection (line 24).
 However, the fast execution time and the low memory requirements of the
 algorithm makes it possible that a distributed implementation will
-cause unnecessary overhead for all but the largest data sets.
+cause unnecessary overhead for all but the largest datasets.
 We experimented with Hadoop\footnote{\url{http://hadoop.apache.org}}
 %, an open source map/reduce framework, 
 and the overhead was in the order of minutes.
@@ -1936,7 +1936,7 @@ Figure \ref{fig:ngramsDist} shows the flattening of the distribution
 by plotting the average decile values at three different times of day. 
 N-grams appearing less than 10 times in an hour
 (the minimum support threshold we use) are excluded,
-because they don't contribute to the distribution of items
+because they do not contribute to the distribution of items
 that the algorithm has to mine.
 The peakedness of the head of the Zipfean distribution 
 is reflected in the peakedness of the $100^{th}$ percentile.
@@ -2608,7 +2608,7 @@ by clustering similar itemsets together.
 \normalsize
 
 \section{Strongly Closed Itemsets}
-To remove the redundancy in \emph{distinct} itemsets we merge similar ones
+To overcome the redundancy in \emph{distinct} itemsets we merge similar ones
 into \emph{strongly closed} itemset clusters.
 This will also filter out any itemset %remaining language constructs, because they
 that does not belong to a particular topic
@@ -2752,7 +2752,7 @@ several merits that makes it suitable.
 First, the similarity is measured in the transaction space, 
 so that itemsets are clustered according 
 to \emph{topical} similarity and regardless of the
-lexically similarity.
+lexical similarity.
 Jaccard similarity is another possible 
 similarity measure, but it 
 %does not have 
@@ -2933,10 +2933,11 @@ itemsets not mentioning any artist.
 
 \begin{landscape}
 \begin{figure}
-\begin{tabular}{p{0.8cm}p{17.5cm}p{2cm}}
+\begin{tabular}{p{0.8cm}p{16cm}p{1.5cm}}
 Id & Itemset &  Support\\ \hline
 \end{tabular}
-\scalebox{0.7}{
+\scalebox{0.65}{
+%\resizebox{19cm}{15cm}{
 \includegraphics{clustering/hierarchy_sham.png}
 }
 \caption{The hierarchy of itemsets in the cluster pertaining to the ``sham and travesty'' tweet}
@@ -3064,7 +3065,7 @@ The ranks can also be used as weights for itemsets when
 used by other system components, 
 such as a search component that uses itemsets for query expansion.
 
-We measure novelty compared to %between the mined epoch %is measured 
+We measure temporal novelty compared to %between the mined epoch %is measured 
 a longer period of time 
 leading up to the mined epoch
 --~a background model.
@@ -3269,7 +3270,7 @@ In section~\ref{sec:gtrends},
 we investigate the synopses of hours selected by the aid of Google Trends\footnote{\url{http://www.google.ca/trends}},
 assessing which popular queries were or were not reflected in our synopses.
 
-\subsection{US presidential elections day}
+\subsection{U.S. Presidential Elections Day}
 \label{sec:electionsday}
 In this section, we focus on the 
 2012 US presidential elections day, November $6^{th}$.
