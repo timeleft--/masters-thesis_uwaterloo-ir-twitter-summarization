@@ -1327,8 +1327,8 @@ index.
 \centering
 \begin{tabular}{|c|p{5cm}||c|p{5cm}|} \hline
 Doc. Id & Document & Doc. Id & Document\\\hline
-a& barack \& mitt & b & brack obama \& mitt romney  \\\hline
-c& brack obama \& romney & d & brack obama  \\\hline
+a& barack \& mitt & b & barack obama \& mitt romney  \\\hline
+c& barack obama \& romney & d & barack obama  \\\hline
 \end{tabular}
 \begin{tabular}{c}
 Documents (two per row)\\\\
@@ -3231,19 +3231,22 @@ the 15-minute epoch and then takes a constant time for epochs of a longer span.
 
 \begin{figure}
 \centering
-\scalebox{0.83}{
+\scalebox{0.75}{
 \includegraphics{kappa_effect.eps}
 }
-\caption{Effect of changing $\kappa$ on mining results }
+\caption{The number of different types of itemsets at different values of $\kappa$, the distinctiveness threshold. The value of $\kappa$ used in this thesis is 0.25, midway between 0 and 0.5 when all distinct itemsets are clustered,
+but it was determined according to the definition.}
+%The similarity threshold for clustering is taken to be $(1 - \kappa).$}
+%Effect of changing  on mining results }
 \label{fig:kappa}
 \end{figure}
 
 \begin{figure}
 \centering
-\scalebox{0.9}{
+\scalebox{0.8}{
 \includegraphics{runtime_lcm-lcm+filter-fpzhu_seconds.eps}
 }
-\caption{Runtime of two itemset mining algorithms alone and of the LCM algorithm with filtering and clustering, at different epoch spans}
+\caption{Runtime, at different epoch spans, of the LCM algorithm with and without the filtering and clustering extensions as well as of another efficient frequent itemset mining algorithm. Our extensions do not degrade the efficiency of the LCM algorithm.}
 \label{fig:lcmvsfpzhu}
 \end{figure}
 
@@ -3286,8 +3289,11 @@ The itemsets shown are the first appearances of the most interesting itemsets;
 that is, an hour is shown only if its top 3 feature novel interesting itemsets\footnote{The top 50 itemsets in the hours from 5 AM on the 6th till 
 almost 9 AM on the 7th are available for download at \url{http://plg.uwaterloo.ca/~yaboulna/thesis_results/twitter_synopses/elections-day_nov6-0500_nov7-0850_top50-strongly-closed.txt}}.
 The first column is the beginning of the hour, EST time.
-The second column is the top itemsets.
-The third column is a commentary to explain the itemsets.
+The second column is the top itemsets, 
+reordered and punctuated to be meaningful phrases 
+by looking at a few tweets from the postings list of each itemset.
+The third column is a commentary to explain the itemsets,
+also composed constructed according to tweets in the postings lists.
 The fourth column is the rank of an equivalent itemset 
 in the top 30 itemsets mined by the MTV algorithm, if one exists.
 %In table \ref{table:nov6}, 
@@ -3367,7 +3373,7 @@ during the acceptance speech.
 
 \multirow{5}{*}{\texttt{22:00}} 
 & \em The electoral college &  Republicans complaining about the voting system  & 9 \\ \cline{2 - 4}
-& \em President of the Unites States & Barack Obama is the 44th president of the USA   & 8 \\ \cline{2-4} %(uh oh!)
+& \em President of the United States & Barack Obama is the 44th president of the USA   & 8 \\ \cline{2-4} %(uh oh!)
 & \em who voted for & People turning against each other & - \\ \cline{2-4} % 
 & \em once you go black you never go [back] & A popular culture reference & 15 \\ \cline{2-4} %(uh oh!)
 & \em my president is black & Americans proud about the equality of opportunities & - \\ \hline % 
@@ -3388,14 +3394,15 @@ during the acceptance speech.
 & \em with the flag in her [hair]	&  During the speech, attention on social media goes to a woman appearing behind Obama on TV! & 14 \\ \hline %  \cline{2-3}
 
 \multirow{3}{*}{\texttt{01:00} }
-& \em Four more years & Barack Obama's tweet; the most retweeted in 2012\footnote{\url{http://ca.news.yahoo.com/blogs/ticket/obama-wins-twitter-election-most-rt-d-tweet-174452713--election.html}} & 20  \\  \cline{2-4} %(now)
+& \em Four more years & Barack Obama's tweet; the most retweeted in 2012 %\footnote{\url{http://ca.news.yahoo.com/blogs/ticket/obama-wins-twitter-election-most-rt-d-tweet-174452713--election.html}} 
+& 20  \\  \cline{2-4} %(now)
 & \em @paulmyers47: spots & Pyramidal marketing; people retweet to make money & 12 \\  \cline{2-4}
 & \em President Barack Obama & News headlines about the speech uses the formal title & - \\\hline
 											
 \end{tabular}
 \end{center}
 \vspace{-5mm}
-\caption{Top 3 \emph{strongly closed} itemsets for hours in US presidential elections day} %(or 5)
+\caption{Top 3 \emph{strongly closed} itemsets for hours in US presidential elections day} %  showing how the day unwound (or 5)
  \label{table:nov6}
 \end{table}
 
@@ -3465,7 +3472,7 @@ during the acceptance speech.
 
 \end{tabular}
 \end{center}
-\caption{The most interesting itemsets out of the top 10 picked by the MTV algorithm for hours in US presidential elections day. The actual rank given to each itemset by MTV is in column 3 and the rank of its equivalent \emph{strongly closed} itemset is in column 4.}
+\caption{The most interesting itemsets out of the top 10 picked by the MTV algorithm for hours in US presidential elections day. The actual rank given to each itemset by MTV is in column 3 and the rank of its equivalent \emph{strongly closed} itemset is in column 4. Interesting itemsets in the top 10 itemsets selected by MTV are all included in our synposes.}
 %MTV tends to pick complete Tweets with lots of retweets.}
  \label{table:mtv}
 \end{table}
@@ -3554,7 +3561,7 @@ are efficiently mined and are not restricted to a predefined number.
 \scalebox{0.9}{
 \includegraphics{mtv_runtime.png}
 }
-\caption{Runtime of the MTV algorithm~\cite{mampaey2011tell} at different resultset sizes (top k)}
+\caption{Runtime of mining an hour long epoch using the MTV algorithm~\cite{mampaey2011tell} at different resultset sizes (top k). The runtime increases exponentially with increasing values of k.} %, and is not short to start with
 \label{fig:mtvPerf}
 \end{figure}
 
@@ -3634,7 +3641,8 @@ this is a number that can be conveniently displayed as a summary for a human use
 
 }
 \label{fig:trendObamaRomney}
-\caption{Google Trends' volume with time plot for the queries ``Barack Obama'' and ``Mitt Romney'', the top 2 in the Top Chart for the \emph{people} category in November 2012}
+\caption{Google Trends' volume with time plot for the queries ``Barack Obama'' and ``Mitt Romney'', the top 2 in the Top Chart for the \emph{people} category in November 2012. 
+Both curves show a peak of interest at the day of the U.S. presidential elections.}
 \end{figure}
 
 \subsubsection{Pop artists and music awards events} 
@@ -3656,7 +3664,7 @@ The curves for all of the artists show relatively high volume when those events 
 \includegraphics{trends/pop-artists.png}
 }
 \label{fig:trendsPopArtists}
-\caption{Google Trends' volume with time plot for the queries about pop artists in the Top Chart for the \emph{people} category in November 2012}
+\caption{Google Trends' volume with time plot for the queries about pop artists in the Top Chart for the \emph{people} category in November 2012. The curves for different artists show similar trends with high search frequency at the times of music awards events.}
 \end{figure}
 
 
@@ -3710,7 +3718,8 @@ which are all variations of the itemset: \{i, think, ARTIST, NAME, will, be, the
 10 & veteran(2), day(1), s(2)\\ \hline 
 \end{tabular}
 \label{table:mtvemaTop10}
-\caption{Top 10 itemsets in an hour in the morning of the day of MTVEMA }
+\caption{Top 10 itemsets in an hour in the morning of the day of MTV Europe Music Awards, 
+showing different Strongly Closed itemset clusters voting for different artists }
 \end{table}
 
 The American Music Awards (AMAs) did not use social media
@@ -3799,7 +3808,7 @@ Carly Rae Jepsen (rank number 9) also performed and won an award at the American
 
 \end{tabular}
 \label{table:amaTop30}
-\caption{Top 30 itemsets from 18:30 EST on the day of American Music Awards (AMAs)}
+\caption{Top 30 itemsets from 18:30 EST on the day of American Music Awards (AMAs) showing several mentions of the event, as well as news about Justin Bieber in rank 26.}
 \end{table}
 
 %MTVEMA: From 11 / 09 / 12 @ 4:30:00pm EST (1352500200) to 11 / 13 / 12 @ 3:30:00am EST (1352799000)
