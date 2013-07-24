@@ -328,8 +328,15 @@ of itemsets than the values of K for which MTV is efficient.
 This is crucial for scalability to the volumes of data typical in social media streams.
 However, we compare our results to the ones obtained from MTV.
 
-Likewise, Yan et al.~\cite{yan2005summarizing} choose K \emph{master} patterns as representatives of the data. A \emph{master} pattern is the union of all itemsets in a cluster, similar to our proposed \emph{strongly closed itemset}. 
-While the use of clustering is similarly motivated by the trivial difference between itemsets, the K \emph{master} itemsets  have to cover the whole data, unlike the \emph{strongly closed itemsets} which actually avoid clustering together different topics or different opinions within a topic.
+Likewise, Yan et al.~\cite{yan2005summarizing} choose 
+K \emph{master} patterns as representatives of the data. 
+A \emph{master} pattern is the union of all itemsets in a 
+cluster, similar to our proposed \emph{strongly closed itemset}. 
+While the use of clustering is similarly motivated by 
+the trivial difference between itemsets, 
+the K \emph{master} itemsets  have to cover the whole data, 
+unlike the \emph{strongly closed itemsets} which actually 
+avoid clustering together different topics or different opinions within a topic.
 %Yan:
 % A method is proposed for choosing K by minimizing the restoration error of support information, 
 %To improve performance, the calculation of the distance between itemsets is approximated to avoid accessing the data. We can achieve high performance without approximation because we apply clustering to subsets of the data that are very likely to be close to each other.
@@ -360,8 +367,9 @@ paragraphs of newswire text, and are used to determine term weights for query
 expansion.
 Improvements in performance have been achieved by using itemsets taken from
 a training set of related documents, as well as ones from unrelated documents.
-In Lau et al.~\cite{laumicroblog}, related methods for term weighting were
-used in pseudo-relevance feedback for Twitter search,
+%In Lau et al.~\cite{laumicroblog}, r
+Related methods for term weighting were
+used in pseudo-relevance feedback for Twitter search~\cite{abounlaga2012frequent,laumicroblog},
 and achieved substantial improvements over a baseline.
 Our work can provide such methods by a short ranked list of itemsets.
 %, potentially improving their results.
@@ -370,8 +378,10 @@ Our work can provide such methods by a short ranked list of itemsets.
 %Many efforts 
 %usually take an existing  technique and adapt it for the new medium. 
 Existing techniques for summarization and topic extraction were adapted for social media.
-Zhao et al.~\cite{Zhao:2011:TKE:2002472.2002521} build summaries based on an adaptation of Latent Dirichlet Allocation (LDA) for Twitter.
-Parikh and Karlapalem~\cite{parikh2013events} extract topics from Tweets using a simplified state machine for burst detection.
+Zhao et al.~\cite{Zhao:2011:TKE:2002472.2002521} build summaries based on 
+an adaptation of Latent Dirichlet Allocation (LDA) for Twitter.
+Parikh and Karlapalem~\cite{parikh2013events} extract topics 
+from Tweets using a simplified state machine for burst detection.
 The short length of social media text is overcome by 
 applying the adapted techniques on large batches of posts made in a long period of time. 
 Our method processes data in batches as small as an hour worth of posts, 
@@ -419,10 +429,13 @@ of the least \emph{volume velocity} during the day.
 The \emph{minimum support} is supplied as an absolute number, $a$, and then
 converted to a ratio, $\alpha = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
 The actual support threshold used for mining any given epoch is thus
-$\alpha$ multiplied by the \emph{epoch}'s \emph{volume velocity}. 
+$\alpha$ multiplied by the number of transactions. % in the \emph{epoch}.
+%\emph{epoch}'s \emph{volume velocity}. 
 We now introduce the notation used in this paper:
 \begin{itemize}
-\item $W = \{w_1,w_2,\ldots, w_n\}$: The set of all items. Can be terms or term N-grams in this paper.
+\item $W = \{w_1,w_2,\ldots, w_n\}$: The set of all items appearing in an \emph{epoch}. 
+We use term N-grams in this paper.
+%Can be terms or term N-grams in this paper.
 \item $t_a = \{w_{a1},\ldots, w_{am}\}$: A transaction made up of a set of items. Each transaction has a sequential id, denoted by the subscript letter, derived from its timestamp.
 \item $E^{span} = \langle t_a, t_b, \ldots, t_v\rangle$: An epoch of data of a certain span, such as an hour, made up of the sequence of the transactions created within this hour.
 \item $s \subset W$: An itemset; any possible combination of items. 
@@ -438,7 +451,7 @@ generates candidates of length K (K-itemsets) by merging frequent itemsets of
 length (K-1) ((K-1)-itemsets) that differ in only 1 item, usually the last
 item given a certain total ordering of items.
 By using only the frequent  (K-1)-itemsets for generating candidate K-itemsets,
-many possible K-itemsets are implicitly pruned, based on the Apriori property:
+many possible K-itemsets are implicitly pruned, based on the downward-closure property:
 all subsets of a frequent itemset has to be frequent.
 This approach still can generate a large number of candidates, especially
 in early iterations of the algorithm.
@@ -491,80 +504,125 @@ First, an item is \emph{larger/smaller} than another item if it comes
 later/earlier in the total ordering.
 This terminology comes from the fact that LCM is most efficient if the items
 are ordered in ascending order of their frequency.
-Second, the \emph{suffix} of an itemset is one or more items whose removal
-does not result in an itemset with greater support.
+Second, the \emph{suffix} of an itemset is one or more items 
+%whose removal results in
+%does not result in
+which have to be removed to get
+an itemset with greater support.
 Notice that they will necessarily be at the end of the itemset,
 regardless of the total ordering.
 Finally, we call the first item added to the suffix of the itemset its
 \emph{suffix head}.
 With this terminology, the rules for \emph{PPC-Extentsion} are:
 \begin{enumerate}
-\item An itemset can be extended only by items \emph{larger} than its \emph{suffix head}. Extending by \emph{smaller} items will lead to closed itemsets already generated.
-\item After forming an itemset $s$, we add to its \emph{suffix} all items whose frequency within $T_s$ is equal to $|T_s|$.
-\item If any item in the \emph{suffix} is \emph{smaller} than the suffix head, prune this solution branch. All closed itemsets within this branch have already been generated.
+\item An itemset must be extended by every item that occurs in $T_{itemset}$, 
+except items which are \emph{smaller} than its \emph{suffix head};
+extending by \emph{smaller} items will lead to closed itemsets already generated in an earlier step. 
+%Extension items are added to the itemset in turn in the order given by the total ordering,
+%recursively applying PPC-Extension to the extended itemset before adding the next extension item.
+\item After adding an extension item, $w_e$, to an itemset, $s$, we add all other items that appear in all transaction containing $s \cup \{w_e\}$.
+% ~--~ 
+%that is, items whose frequency within  $T_{s\, \cup \, \{w_e\}}$ is equal to $|T_{s \, \cup \, \{w_e\}}|$.
+The added items are the \emph{suffix}.
+\item If all items in the \emph{suffix} are \emph{larger} than the \emph{suffix head} then add the itemset to the solution. Otherwise, prune this solution branch; all closed itemsets within this branch have already been generated. %, when processing the smallest suffix member.
 \end{enumerate}
  
 Table \ref{table:PPCExample} is an example of how \emph{PPC-Extentsion} is
 used to generate closed itemsets starting from the
-\emph{1}-itemset `barack'.
-The upper table enumerates $T_{\{barack\}}$.
+\emph{1}-itemset \{`barack'\}.
+The upper table enumerates $T_{\{`barack'\}}$.
 The lower table shows steps of itemsets generation.
-The current solution along with its frequency is in column 2,
-solutions marked by an (*) are the closed itemsets emitted.
-All possible extension items and their frequencies are in column 3 with the
-one being considered bolded.
-Column 4 is a comment explaining the step.
-At each step, a pass is done on $T_{itemset}$ to enumerate and count possible
-extension items.
-To enforce a support threshold infrequent extension items are removed,
+The current itemset along with its frequency is in column 2.
+Itemsets marked by an (*) are the closed itemsets that are part of the solution.
+The suffix of the itemset is shown in \emph{italic}. 
+All possible extension items and their frequencies are in column 3. 
+Extension items that are \emph{smaller} than the \emph{suffix head} 
+are shown with a line striked through them. 
+For each itemset, the extension items are kept 
+so that it is known which extension item 
+is next in turn to be added.
+An item is bolded when its turn to be added has come.
+After adding each item, a pass is done on $T_{itemset}$ to 
+enumerate and count possible extension items.
+To enforce a support threshold infrequent extension items would be removed
+after counting, %at this time,
 but in this example there is no such threshold.
-Notice that the number of steps is linear in the number of closed itemsets,
+Finally, column 4 is a comment explaining each step.
+
+%Notice
+Table \ref{table:PPCExample} shows that the number of steps is linear in the number of closed itemsets,
 and the only additional storage required, besides storage for the documents,
 is that required for possible extension items.
 Of course, this is a simplified example, but it shows in essence how LCM
 achieves its low run time and memory requirements.
-We refer the interested reader to Uno et al.\cite{uno2004lcm} for a
+We refer the interested reader to Uno et al.~\cite{uno2004lcm} for a
 theoretical proof that the algorithm runs in linear time in the number of
 closed itemsets,
 and that this number is quadratic in the number of transactions.
-Performance on a real data set is shown in section \ref{sec:socmine}.
-We proceed by describing how to implement this algorithm using an inverted
-index.
+Performance on a real dataset is shown in section \ref{sec:socmine}.
+We proceed by describing how to implement this algorithm. 
+%using an inverted index.
+
+
+%{\tiny
 
 \begin{table*}
+
 \centering
-\begin{tabular}{|c|p{5cm}||c|p{5cm}|} \hline
+\begin{tabular}{|c|p{6cm}||c|p{6cm}|} \hline
 Doc. Id & Document & Doc. Id & Document\\\hline
-a& barack \& mitt & b & brack obama \& mitt romney  \\\hline
-c& brack obama \& romney & d & brack obama  \\\hline
+a& barack \& mitt & b & barack obama \& mitt romney  \\\hline
+c& barack obama \& romney & d & barack obama  \\\hline
 \end{tabular}
 \begin{tabular}{c}
 Documents (two per row)\\\\
 \end{tabular}
-\begin{tabular}{|c|p{4.5cm}|p{5cm}|p{6cm}|} \hline
-Step&Current Solution&Possible Extension Items&Comments\\ \hline
-1& \{barack\} (4)* & \textbf{mitt} (2), obama (3), romney (2) & Items are ordered lexicographically\\ \hline
-2& \{barack,mitt\} (2)* & \textbf{obama} (1), romney (1) & Extension items reenumerated \& counted\\ \hline
-3 & \{barack,mitt,obama\} (1) & romney (1)                       & Rule 2: `romney' appears in all $T_{itemset}$\\\hline
-4 & \{barack,mitt,obama,romney\}(1)* & & Rule 2: `obama'  is the \emph{suffex head} \\\hline
-5 & \{barack\} (4) & mitt (2), \textbf{obama} (3), romney (2) & Nothing more to add, back to `barack' \\\hline
-6 & \{barack, obama\} (3)* & \sout{mitt} (1), \textbf{romney} (2) & Rule 1: skipping `mitt', adding `romney' \\\hline
-7 & \{barack, obama, romney\} (2)* & \sout{mitt} (1) & Rule 1: Nothing more to add. \\\hline
-8 & \{barack\} (4) & mitt (2), obama (3), \textbf{romney} (2) & Back to `barack', adding `romney' \\\hline
-9 & \{barack, romney\} (2) &  \sout{mitt} (1), obama (2) & Rule 2: add obama to suffix after `romney' \\\hline
-10 & \{barack, romney, obama\} (2) &  \sout{mitt} (1)  & Rule 3: suffix is not ordered, prune solution\\\hline
+%\scalebox{0.7}{
+\begin{tabular}{|c|p{5cm}|p{5cm}|p{5.5cm}|} %[scale=0.3]{| c | l | l | l |}
+\hline
+Step&Current Itemset&Possible Extension Items&Comments\\ \hline
 
+1& \{barack\} (4) & mitt (2), obama (3), romney (2) & {\small Items in $T_{\{`barack'\}}$ are counted. }\\\hline 
+2& \{\emph{barack}\} (4)* & mitt (2), obama (3), romney (2) &  {\small Rule 3: suffix is ordered, emit itemset.  } \\ \hline
+3& \{\emph{barack}\} (4) & \textbf{mitt} (2), obama (3), romney (2) &  {\small Items are ordered lexicographically.} \\ \hline
+4& \{barack, \emph{mitt}\} (2)* & \textbf{obama} (1), romney (1) &  {\small Extension items reenumerated \& counted.}\\\hline
+5 & \{barack, \emph{mitt}, obama\} (1) & romney (1)                       &  {\small Rule 2: `romney' appears in all $T_{itemset}$. } \\\hline
+6 & \{barack, mitt, \emph{obama, romney}\}(1)* & & {\small Rule 3: `obama'  is the \emph{suffex head}. } \\\hline
+7 & \{\emph{barack}\} (4) & mitt (2), \textbf{obama} (3), romney (2) &  {\small Nothing more to add, back to \{`barack'\}.}\\\hline
+8 & \{barack, \emph{obama}\} (3)* & \sout{mitt} (1), \textbf{romney} (2) &  {\small Rule 1: skipping `mitt', adding `romney'  } \\\hline
+9 & \{barack, obama, \emph{romney}\} (2)* & \sout{mitt} (1) &  {\small Rule 1: Nothing more to add.  } \\\hline
+10 & \{\emph{barack}\} (4) & mitt (2), obama (3), \textbf{romney} (2) &  {\small Back to \{`barack'\}, adding `romney'. } \\\hline
+11 & \{\emph{barack}, romney\} (2) &  mitt (1), obama (2) &  {\small Rule 2: add `obama' after `romney'. } \\\hline
+12 & \{barack, \emph{romney, obama}\} (2) &  \sout{mitt} (1)  &  {\small Rule 3: suffix is not ordered, prune.} \\\hline
+13 & \{\emph{barack}\} (4) & mitt (2), obama (3), romney (2) &  {\small All possible extension items were added. } \\\hline
 \end{tabular}
 \begin{tabular}{c}
 Closed itemsets containing `barack'
 \end{tabular}
+%}
 \caption{Generation of closed itemsets by Prefix Preserving Closure Extension}
 \label{table:PPCExample}
 \end{table*}
+%}
+
 
 \subsection{Implementation Details}
 We show in algorithm~\ref{algo:lcmix} how to implement LCM and PPO-Extension
+%based on the search infrastructure. 
 using an inverted index.
+The inverted index is part of the standard text search infrastructure,
+and it is also a  good representation of textual data. 
+Other representations that are designed for databases in general
+might not be well suited for such sparse data with a large number of items. %,from the nature of .
+%For example, the memory requirements of the FP-tree suffers from the sparsity
+%of data.
+%, since the data structure is succinct only if it can find common
+%prefixes within the constraints of its invariant. 
+%The possibility of using an inverted index in the implementation 
+%of LCM is yet another reason why it is well suited 
+%for textual data.
+
+%An inverted index is a good representation of textual data which is
 The algorithm takes as input an epoch of data and a support threshold as a
 ratio $\alpha$.
 It outputs the closed itemsets with support above the threshold.
@@ -572,16 +630,7 @@ Along with each itemset in the solution, it also outputs the transactions
 in which it occurs~--~which is represented as $\langle items,
 T_{itemset} \rangle$.
 The symbol $\succ$ denotes that the lefthand side  succeeds the righthand
-side in the total ordering.
-
-The algorithm also lends itself to distributed implementations.
-For example, a map/reduce implementation is straightforward since the only
-operations are counting (line 14) and projection (line 22).
-However, the fast execution time and the low memory requirements of the
-algorithm makes it possible that a distributed implementation will
-cause unnecessary overhead for all but the largest data sets.
-In the implementation shown, it is not necessary that the index's tokens list
-follow the total ordering; all itemsets of length 1 will be considered anyway. 
+side in the total ordering of terms. 
 
 \begin{algorithm}
 \SetAlgoLined
@@ -602,22 +651,23 @@ X $\gets$ Inverted index of E\;
 \Return{C}\;
 
 \Fn{LCM(s: Current itemset,   $w_{sh}$: Suffix head, \\ $T_s$: Transactions (tweets) containing s)}{
-	frequency[$1 \ldots w_n$] $\gets$ 0\;
+	freq[$1 \ldots w_n$] $\gets$ 0\tcp*{Initialize freq. counts}
 	suffix $\gets \{ w_{sh}\}$\;
 	\ForEach{$t \in T_s$}{
 		\ForEach{$w \in t$}{ 
-			frequency[$w$]++\;
-			\lIf{frequency[$w$] $ = |T_s|$}{
-				suffix.add($w$)	
+			freq[$w$]++\;
+			\lIf{freq[$w$] $ = |T_s|$}{
+				%suffix.add($w$)	
+				suffix $\gets$ suffix $\cup\, \{w\}$
 			}
 		}
 	}
-	\lIf{$\exists v \in suffix: w_{sh} \succ v$ }{
+	\lIf{$\exists v \in$ suffix: $w_{sh} \succ v$ }{
 		\Return
 	}
-	C.add($\langle s \cup {suffix}, T_s\rangle$)\;
+	C $ \gets $ C $ \cup\, \{\langle s \cup {suffix}, T_s\rangle\}$\;
 	\ForEach{$v \succ w_{sh}$ and $v \notin $ suffix}{
-		\If{frequency[$v$] $\geq \alpha \frac{|E|}{E.span}$}{
+		\If{freq[$v$] $\geq \alpha \times |E|$}{
 			$T \gets T_s \cap v$	\tcp*{Results of query $s$ AND $v$}
 			LCM($s \cup suffix \cup \{v\}, v, T$) 
 		}
