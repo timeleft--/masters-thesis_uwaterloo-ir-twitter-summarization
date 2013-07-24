@@ -8,7 +8,7 @@
 \usepackage{algorithm2e}
 
 
-
+\usepackage{url}
 \usepackage{multirow}
 
 \begin{document}
@@ -50,11 +50,12 @@ Search and summarization of streaming social media, such as Twitter, requires th
 %However, the totality of user generated content is overwhelmed 
 %by social chatter and non
 
-The problem of mining social media text is unique 
+%The problem of mining social media text is unique 
+Mining social media text poses unique challenges
 because of the text's content and form.
 The user generated content includes a substantial 
 amount of social chatter, %and topically irrelevant posts.
-which has to be filtered out by mining algorithms.
+which ought to be filtered out by mining algorithms.
 In terms of form, social media posts are short thus
 undermining the effectiveness of within document 
 term frequency counting.
@@ -72,21 +73,51 @@ it is desirable to devise techniques that focuses on the content of posts.
 
 In this work we study the use of frequent itemset mining
 to create a synopsis of social media streams. 
-This family of algorithms is suitable for application 
-on collections of short sets of items,
-regardless of what a set or an item represents.
-It finds items that co-occur together frequently,
-filtering out itemsets with a number of occurrences
-less than a  threshold. %user specified
-%which can be set to 
-The frequent itemset mining family of algorithms is fast and efficient,
-however it is not readily suited for application on text.
-Following are the main problems we address in this work.
-After addressing them, the frequent itemset mining results become
+Frequent itemset mining is suitable to the dynamic nature of social media streams.
+It does not require prior knowledge of the distribution of items,
+nor does it require selecting a few items to monitor 
+or a number of topics to mine. %preset
+It is fast, efficient and scalable.
+%Frequent itemset mining algorithms are fast and efficient,
+%however they are not readily suited for application on text.
+However, frequent itemset mining is not readily suited for application on text
+without preprocessing steps that are difficult to apply to social media text;
+for example, stop word removal which requires language identification
+to be done before it, and will thus suffer from the poor performance
+of language identification on social media~\cite{bergsma2012language}.
+In our experience, directly applying frequent itemset mining algorithms
+to social media text results in myriads of itemsets that are 
+mostly meaningless, repetitive or bear no information.
+%Following are the main problems that lead to 
+%we address in this work.
+In this work we address the shortcomings of 
+frequent itemset mining which lead to such poor performance.
+%After addressing them, 
+As a result, the frequent itemset mining results become
 suitable for use as a synopsis representing what is happening
 on social media at different points of time. 
+%The synopsis is understandable on the user level, 
+%and can be used by downstream system components.
+%It 
 The synopsis is particularly rich because it
 includes the itemsets as well as the ids of posts in which they occur.
+
+%First of all, they count the number of occurrences of all 
+%combinations of items, 
+%which can become prohibit
+%The short length of social media posts
+
+%Some frequent itemset robust against data sparsity, 
+%and can actually exploit this sparsity for faster computation.
+
+
+%This family of algorithms is suitable for application 
+%on collections of short sets of items,
+%regardless of what a set or an item represents.
+%It finds items that co-occur together frequently,
+%filtering out itemsets with a number of occurrences
+%less than a  threshold. %user specified
+%which can be set to 
 
 %The nature of text in social media poses a challenge when applying
 %traditional text mining algorithms.
@@ -97,32 +128,113 @@ includes the itemsets as well as the ids of posts in which they occur.
 %However, the collective stream from all users is overwhelmed with personal
 %updates, and timely finding posts about topics of interest requires an
 %efficient mining algorithm.
-The first problem is that the number of itemsets mined is large and grows with the number of
-distinct items~--~which is particularly high in the text domain.
+
+%The first problem is that the number of itemsets mined is large and grows with the number of
+%distinct items~--~which is particularly high in the text domain.
 Frequent itemset mining was originally proposed as a preliminary stage for
-association rules mining, which sifts through the numerous itemsets and
-produces a smaller number of association rules.
+association rules mining.
+It produces a large number of itemsets, which
+has to be further processed to 
+produce a smaller number of association rules.
+%which sifts through the numerous itemsets and
+%produces a smaller number of association rules.
+Furthermore, the number of itemsets grows with the number of
+distinct items, which is particularly high in the text domain.
 To reduce the number of itemsets, they may be limited by setting a high
 frequency threshold, but this is not possible in text mining because
 frequencies of items follow a long-tailed Zipfean distribution.
-Second, the high frequency of stop words and language constructs is a problem
-that frequent itemset mining is not equipped to handle.
-Even if a maximum frequency threshold is set to filter sets of stop words,
-incurring the risk of filtering important itemsets, 
-many  non-English constructs will be
-mined because the proportion of posts in English is much higher than
-other languages.  Finally, there is considerable redundancy in frequent
-itemsets caused by trivial differences in the language used.
-%In this paper we address those problems, adapting frequent itemset mining to
-%social media text without degrading its efficiency.
-Those are the problems with applying frequent itemset mining to text, 
-following we list some advantages of using it.
+We propose a condition for selecting informative itemsets, 
+and a clustering scheme for reducing redundancy in the mining results.
+Our methods exploit the dynamics of social media 
+and make use of the collaborative filtering
+that users naturally undergo on social media, 
+by sharing interesting posts and participating in conversations.
 
-Unlike trending
-topics\footnote{\scriptsize http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}
-\cite{mathioudakis2010twittermonitor}, the results of frequent itemset
-mining include itemsets that have high frequency because of sustained interest,
-as well as a spike of interest.
+
+%Second, the high frequency of stop words and language constructs is a problem
+%that frequent itemset mining is not equipped to handle.
+%Even if a maximum frequency threshold is set to filter sets of stop words,
+%incurring the risk of filtering important itemsets, 
+%many  non-English constructs will be
+%mined because the proportion of posts in English is much higher than
+%other languages.  Finally, there is considerable redundancy in frequent
+%itemsets caused by trivial differences in the language used.
+%%In this paper we address those problems, adapting frequent itemset mining to
+%%social media text without degrading its efficiency.
+%Those are the problems with applying frequent itemset mining to text, 
+%following we list some advantages of using it.
+
+%As we shall see in later examples, the top ranked itemsets cover a variety
+%of open topics, and within one topic different opinions are reported as
+%separate contrastive itemsets.
+%The ranking used is according 
+%to a formula we propose,
+%which orders
+%itemsets in terms of their temporal novelty.
+%thus turning the synopsis into a summary that 
+
+We process the social media stream in batches 
+of data from consecutive epochs of time.
+We propose a formula for ranking the itemsets
+in the synopsis of each epoch according to temporal novelty.
+An empirical evaluation of the effectiveness of our proposed methods
+shows that the hour by hour synopses at different times %of different days
+actually reflects what was happening on those times. % days.
+It is easy to see that
+we achieve improvements over a baseline
+of applying unmodified frequent itemsets mining, 
+in terms of the reduction in the number of itemsets 
+and the quality of individual itemsets.
+We also make an effort to compare our synopses 
+with those generated by a state of the art algorithm 
+for summarization based on itemset mining, MTV~\cite{mampaey2011tell}.
+%are also shown for comparison. 
+However, the number of topically relevant itemsets our algorithm mines 
+is much larger than what MTV can mine in reasonable time,
+inhibiting the use of standard comparison measures.
+The large number of topics in the mining results 
+also impede the use of quality measures which require %that need
+the creation of a gold standard, 
+such as those proposed for evaluating
+key-phrase extraction algorithms~\cite{Zhao:2011:TKE:2002472.2002521}.
+
+For the purpose of evaluation, we show the synopses 
+of periods of time when it is known what %people should
+social media users are expected to be talking about.
+Specifically, the day of the U.S. presidential elections,
+and periods in which Google Top Charts\footnote{\scriptsize \url{http://www.google.ca/trends/topcharts\#vm=chart&cid=people&geo=US&date=201211}}
+show high volume of queries about certain celebrities.
+The synopses of all hours in the last 3 months of 2012
+is available for download\footnote{\scriptsize \url{http://plg.uwaterloo.ca/~yaboulna/thesis_results/twitter_synopses/1hr+30min_ngram5-relsupp10_oct-nov-dec/}}. 
+
+%The evaluation is only empirical because our work
+%results in a synopsis that is made up of itemsets,
+%which is different from the summaries generated by
+%other extractive or abstractive summarization algorithms.
+%The synopsis is most similar to the one generated by 
+%key phrase extraction algorithms~\cite{Zhao:2011:TKE:2002472.2002521},
+%but the number of topics our algorithm mines is much larger 
+%thus inhibiting the construction of a gold standard needed for evaluation
+%using the measures used for keyphrase extraction.
+%Actually, we find that evaluating our system would best be done
+%by an evaluation measure that is suitable for exploratory search tasks.
+%However, this is an open problem~\cite{jack} and 
+%we leave the creation of an evaluation measure as 
+%a potential future direction. 
+
+%we show that the effectiveness of frequent itemsets mining
+
+
+%Because of using frequent itemset mining, the synopsis includes
+As a merit of using frequent itemset mining, the synopses include
+itemsets about topics with sustained user interest as well as a spike of interest
+--~unlike trending topics\footnote{\scriptsize \url{http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}}
+\cite{mathioudakis2010twittermonitor} which are limited to spikes of interest.
+%Unlike trending
+%topics\footnote{\scriptsize http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}
+%\cite{mathioudakis2010twittermonitor}, the results of frequent itemset
+%mining include itemsets that have high frequency because of sustained interest,
+%as well as a spike of interest.
 The mined itemsets provide the vocabulary associated with events and can be
 used as a preliminary step for search and summarization.
 For example, the collection of mining results from different epochs of time
@@ -136,44 +248,6 @@ creation.
 While the frequent itemsets themselves are not summaries, since they lack
 qualitative properties such as coherence and cohesion, the results are
 understandable at the user level.
-As we shall see in later examples, the top ranked itemsets cover a variety
-of open topics, and within one topic different opinions are reported as
-separate contrastive itemsets.
-The ranking used is according 
-to a formula we propose,
-which orders
-itemsets in terms of their temporal novelty.
-%thus turning the synopsis into a summary that 
-
-An empirical evaluation of the effectiveness of our proposed methods
-shows that the hour by hour synopses at different times %of different days
-actually reflects what was happening on those times. % days.
-The synopses generated by a state of the art algorithm 
-for summarization based on itemset mining, MTV~\cite{mampaey2011tell}, 
-are also shown for comparison. 
-The synopses of all hours in the last 3 months of 2012
-is available for download\footnote{\scriptsize http://blinded}. 
-The evaluation is only empirical because our work
-results in a synopsis that is made up of itemsets,
-which is different from the summaries generated by
-other extractive or abstractive summarization algorithms.
-The synopsis is most similar to the one generated by 
-key phrase extraction algorithms~\cite{Zhao:2011:TKE:2002472.2002521},
-but the number of topics our algorithm mines is much larger 
-thus inhibiting the construction of a gold standard needed for evaluation
-using the measures used for keyphrase extraction.
-%Actually, we find that evaluating our system would best be done
-%by an evaluation measure that is suitable for exploratory search tasks.
-%However, this is an open problem~\cite{jack} and 
-%we leave the creation of an evaluation measure as 
-%a potential future direction. 
-Nevertheless, it is easy to see that
-we achieve improvements over a baseline
-of applying unmodified frequent itemsets mining, 
-in terms of the reduction in the number of itemsets 
-and the quality of individual itemsets.
-%we show that the effectiveness of frequent itemsets mining
-
 
 The rest of the paper is organized as follows.
 The next three sections provide necessary background.
@@ -196,7 +270,6 @@ the examples used for evaluation. % in section \label{eval}.
 Finally, section \ref{sec:concfut} concludes our presentation and
 suggests future directions.
 
-\newpage
 
 \section{Related Work}
 \label{sec:related}
