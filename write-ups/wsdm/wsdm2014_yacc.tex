@@ -1513,6 +1513,53 @@ the, best, is, yet, to, come & 2 \\ \hline
  \label{table:mtv}
 \end{table}
 
+\subsubsection{Google Trends}
+We use the Top Charts of November 2012 
+for the people category\footnote{\url{http://www.google.ca/trends/topcharts\#vm=chart&cid=people&geo=US&date=201211}}
+%(only available for queries made from the USA)
+as an aid for finding out what social media users
+are expected to be talking about.
+We observed that named entities that make it to the top 10 chart in the people 
+category  are divided into finer groups. 
+The queries about 
+people in each group 
+have similar volumes over time, 
+with peaks at the times of real world events
+in which the people in the group took part.
+%Pop artists occupy most of the top 10 chart for the \emph{people} category.
+Five out of the top 10 are pop artists, 
+%and they occupy ranks as high as 3 (Justin Bieber) and 4 (Taylor Swift).
+%This is due to music awards events, specially
+with high query volume at times of music awards events.
+%~--
+%the MTV Europe Music Awards on November 11th\footnote{\url{http://en.wikipedia.org/wiki/2012_MTV_Europe_Music_Awards}},
+%and the American Music Awards on November 18th\footnote{\url{http://en.wikipedia.org/wiki/American_Music_Awards_of_2012}}. 
+
+The top 30 \emph{strongly closed} itemsets mined from hours leading to 
+the MTV Europe Music Awards contain
+many itemsets about the events and the artists, 
+especially that this event used social media to collect audience votes. 
+Voting for the award winner is 
+a good example of a topic where people have strongly different opinions.
+Such different opinions are all reported as separate \emph{strongly closed} itemsets, 
+because clustering in the transaction space avoids forming incohesive clusters. 
+Moreover, different  \emph{strongly closed} itemsets from one such topic
+can all occupy high ranks.
+For example, the top 3 itemsets for 3 PM on November 9 are all variations of the %$9^{th}$
+itemset: \{i, think, ARTIST, NAME, will, be, the, big, winner, tweet, your, pick, at, URL\footnote{\url{http://ema-twittertracker.mtv.com/live/predict.html}}, \#mtvema\}; replacing ARTIST NAME by Justin Bieber, Katy Perry, or Lady Gaga and adding a hashtag for each artist.
+
+One of the 5 artist does not appear in the itemset selection. 
+The name of Rihanna never appeared in any \emph{strongly closed} itemset.
+Actually it rarely appeared in any itemset of length 2 or more. 
+This indicates that there was not enough support for any itemset
+with her name (of length 1) and other information.
+It is impossible for an itemset of length 1 to be selected,
+since our proposed conditions select itemsets implied
+by a subset with high confidence.
+%Therefore \emph{distinct} and \emph{strongly closed} itemsets
+%would never capture information in an itemset of length 1.
+
+
 \section{Conclusion and future work}
 \label{sec:concfut}
 We have proposed a method for efficiently creating temporal synposes of social
