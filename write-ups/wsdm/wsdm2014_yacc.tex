@@ -239,7 +239,7 @@ The mined itemsets provide the vocabulary associated with events and can be
 used as a preliminary step for search and summarization.
 For example, the collection of mining results from different epochs of time
 can be used for temporal query and document
-expansion~\cite{choi2012temporal, efron2012improving}.
+expansion~\cite{choi2012temporal, efron2012improving}. %REMCITE?
 The results from each epoch can be treated as a document, facilitating the
 creation of a ``temporal profile''~\cite{jones2007temporal} of the query
 or a document being expanded.
@@ -1251,8 +1251,10 @@ slightly after that.
 We use $\kappa = 0.25$ in the remainder of the paper,
 which is an arbitrary choice based on the definition not the data.
 The average number of itemsets at this value of $\kappa$
-averages at 139.1 \emph{strongly closed} itemsets,
-and 85.38 \emph{distinct} itemsets. 
+averages at 139.1 \emph{strongly closed} itemsets.
+%,
+%and 85.38 \emph{distinct} itemsets. 
+
 %(\emph{strongly closed} and unclustered
 %\emph{distinct}) mined from one-hour epochs at this value of
 %$\kappa$ is only 224.48, which is about 10\% of the number of closed itemsets.
@@ -1546,7 +1548,8 @@ because clustering in the transaction space avoids forming incohesive clusters.
 Moreover, different  \emph{strongly closed} itemsets from one such topic
 can all occupy high ranks.
 For example, the top 3 itemsets for 3 PM on November 9 are all variations of the %$9^{th}$
-itemset: \{i, think, ARTIST, NAME, will, be, the, big, winner, tweet, your, pick, at, URL\footnote{\url{http://ema-twittertracker.mtv.com/live/predict.html}}, \#mtvema\}; replacing ARTIST NAME by Justin Bieber, Katy Perry, or Lady Gaga and adding a hashtag for each artist.
+itemset: \{i, think, ARTIST, NAME, will, be, the, big, winner, tweet, your, pick, at, URL, %\footnote{\url{http://ema-twittertracker.mtv.com/live/predict.html}}, 
+\#mtvema\}; replacing ARTIST NAME by Justin Bieber, Katy Perry, or Lady Gaga and adding a hashtag for each artist.
 
 One of the 5 artist does not appear in the itemset selection. 
 The name of Rihanna never appeared in any \emph{strongly closed} itemset.
@@ -1562,29 +1565,31 @@ by a subset with high confidence.
 
 \section{Conclusion and future work}
 \label{sec:concfut}
-We have proposed a method for efficiently creating temporal synposes of social
-media streams, based on a frequent itemset mining algorithm that is suitable
-for sparse data, LCM.
-Our method summarizes an hour of Twitter data (116920 tweets on average) into
-224 itemsets in 1945.68 milliseconds on average,
-and scales for longer epochs of data.
-The direct application of LCM on one-hour epochs of Twitter data results in
-an average of 61505.16 closed itemsets and takes 2506.58 milliseconds on
-average.
-The improvement is due to the following contributions: 
-(1) strengthening  the closure condition such that it selects an itemset only if
-it is distinctively different from its subsets and other itemsets, and 
-(2) using variable length N-grams to mitigate the effect
-of the skewness of the frequency distribution of unigrams.
-The distinctiveness between two itemsets is based on a parameter, $\kappa$, which controls tolerance to redundancy. %Even though the use or variable length N-grams
-
-Another important contribution is a method for ranking itemsets based on their temporal novelty.
-The top 3 itemsets from the hours of election day and another less eventful
-day shows that the synopses captures important events, and might reasonably
-be directly presented to users as a summary.
-A possible future direction is to use itemsets that appear as a sequence for
-building extractive coherent summaries of the social media stream at
-different times.
+We have proposed adaptations for frequent itemset mining 
+such that it can be efficiently and effectively applied to 
+social media text.
+We based our work on a frequent itemset mining algorithm that is suitable
+for sparse data, LCM~\cite{uno2004lcm}.
+The direct application of the LCM algorithm resulted 
+in a large number of closed itemsets (on average 61,505.16 itemsets 
+%for an hour of Twitter data)
+per hour),
+which are dominated by language constructs
+and contain considerable redundancy and noise.
+The result of the modified algorithm is a concise selection of
+high quality itemsets (on average 139.1 itemsets 
+per hour),
+%for an hour of Twitter data),
+which was shown to capture important events.
+Moreover, the improvement in effectiveness does not tax
+the efficiency of the algorithm.
+Thus we provided a recipe for mining frequent itemsets
+from social media text, starting from recommending
+a suitable algorithm. Our main contributions are: 
+(1) a novel method to avoid mining itemsets that are 
+merely language constructs,
+(2) a novel condition for selecting itemsets that are distinctively different, and
+(3) an efficient clustering scheme to reduce redundancy.
 
 We aim to exploit the synopses for temporal query expansion in our future work. Terms from itemsets relevant to a query (or occurring in a relevant document)
 can be used for query expansion, thus acting as precomputed results of 
