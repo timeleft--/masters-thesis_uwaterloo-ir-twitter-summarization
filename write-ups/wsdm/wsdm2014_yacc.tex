@@ -688,8 +688,9 @@ We use only tweets written in the Latin script to facilitate tokenization
 using white space and other word boundaries.
 We collect only the tweet text to avoid reliance on any features specific to a
 certain social medium,
-and to make the algorithms applicable to other media where text is short such
-as Facebook or Google+ status updates.
+and to make the algorithms applicable to other media where text is short  
+% such as Facebook or Google+ status updates.
+such as comments on a YouTube video.
 The only preprocessing we performed was to remove duplicate original tweets
 (not retweets) using a Bloom filter.
 This filtering removes spam tweets sent by botnets, averaging at 2.86\% of the stream. 
@@ -708,20 +709,9 @@ extensions do not degrade performance.
 The times reported in figure \ref{fig:runtimeEpochs} are averages across all
 epochs of the specified length in the last 3 months of 2012, % October, November and December,
 using a time step that is half the epoch length.
-The variance is very low and the confidence bands are not shown because they
-appear as dots.% on top of the bars. 
-
-The support threshold used throughout this paper %, unless otherwise specified,
-is $\alpha=0.0002$.
-This is determined as follows: We picked a topical term that is known to
-steadily appear with a rather high frequency, and is talked about in all
-languages; i.e., `obama'.
-The maximum likelihood estimate of the probability of the term `obama' within
-the whole collection of tweets is 0.0001.
-The average number of tweets per hour is 116920.21, so the term `obama' is
-expected to appear 12 times per hour on average.
-Thus, we use a minimum support threshold of 12, which translates into
-$\alpha = 0.0002$.
+The \emph{minimum support} threshold we use throughout this paper
+is 10 occurrences in the hour of least \emph{volume velocity},
+which translates into $\alpha = 0.0002$.
 
 In the rest of this paper we mine epochs of 1 hour span.
 The reason behind this choice is our observation that the number of closed
@@ -768,13 +758,13 @@ eliminate the effect of function words by N-gram filtering.
 {
 \begin{pspicture}(0,-3.56416)(37.82,3.5241601)
 \usefont{T1}{ptm}{m}{n}
-\rput(5.6938963,-3.2008398){\LARGE (a) Mean number of distinct items}
+\rput(5.6938963,-3.2008398){\LARGE (a) Mean number of closed itemsets}
 \usefont{T1}{ptm}{m}{n}
-\rput(18.373896,-3.2008398){\LARGE (b) Mean number of itemsets}
+\rput(18.373896,-3.2008398){\LARGE (b) Mean number of distinct items}
 \usefont{T1}{ptm}{m}{n}
 \rput(32.033897,-3.2208397){\LARGE (c) Mean runtime in milliseconds}
-\rput(5.93,0.50416017){\includegraphics{perf_ngramlen1-5_distinct-items_supp10+_1hr.eps}}
-\rput(18.89,0.5441601){\includegraphics{perf_ngramlen1-5_itemsets_supp10+_1hr.eps}}
+\rput(5.93,0.50416017){\includegraphics{perf_ngramlen1-5_itemsets_supp10+_1hr.eps}}
+\rput(18.89,0.5441601){\includegraphics{perf_ngramlen1-5_distinct-items_supp10+_1hr.eps}}
 \rput(31.89,0.50416017){\includegraphics{perf_ngramlen1-5_runtime-millis_supp10+_1hr.eps}}
 \end{pspicture} 
 }
@@ -823,49 +813,66 @@ until there are no more such N-grams. %; thus, the distribution is relatively fl
 %representations,
 %and its postings list is the union of those of the different representations.
 
-The threshold of high probability is different for each value of N. 
-The threshold for unigrams is determined in a similar fashion to how
-we determined the support threshold. We use $\eta_1 = P(``obama") = 0.0001$.
+The threshold of high probability, $\eta$, is different for each value of N. 
+The threshold for unigrams is determined as follows: 
+We pick a topical term that is known to  steadily  appear with a rather high frequency, 
+and is talked about in all languages; for example, `obama'. 
+The maximum likelihood estimate of the probability of the term `obama' 
+%within the whole collection of tweets is 
+is P(``obama") = 0.0001, which we use as $\eta_1$.
+%We use $\eta_1 = P(``obama") = 0.0001$.
 At each N, the probability threshold is adjusted to account for the increase
 in the number of tokens and the overall increase in the grand sum of counts (caused by overlap).
 The adjusted $\eta_N$ is:
 \begin{equation}\eta_N = \eta_1 \times \frac{\sum_{\{w:\, w \,\in\, W\, and\, w.length \,\le\, N\}}{freq(w)}}{\sum_{\{v:\, v\, \in\, W \,and \,v.length\,=\,1\}}{freq(v)}}\end{equation}
 
 
-
-
-
 Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length
-of N-grams from 1 to 5 on the number of tokens, the number of closed itemsets,
+of N-grams from 1 to 5 on 
+the number of closed itemsets,
+the number of tokens, 
 %of length more than 1, 
 and the runtime of mining one hour of data.
 The values shown are averages across all one-hour epochs in the month of
 November 2012.
-The value of $\eta$ used is 0.0001.
-Figure \ref{fig:ngramsLen}(a) shows that the number of distinct items
+Figure \ref{fig:ngramsLen}(a) shows that the number of itemsets 
+%continues to decrease as expected.
+drops by about 90\% by using variable length N-grams,
+which overcomes the problem of mining language constructs
+while limiting the increase in the sparsity of the data.
+%without increasing the sparsity of the data as much as
+%if tweets were tokenized into  N-grams.
+%while keeping the statistical properties of the data. % better than those of 
+%The value of $\eta$ used is 0.0001.
+Figure \ref{fig:ngramsLen}(b) shows that the number of distinct items
 increases substantially as N goes from 1 to 2, then continues increasing
 slightly until it starts decreasing at N=5.
-The decrease happens because all 4-grams with probability above the threshold
-are parts of tweets from services that use the same text and append a URL,
-such as tweets reporting scores from
-Game Insight\footnote{http://www.game-insight.com/}.
-Such tweets are tokenized into more 4-grams than 5-grams, and the 4-grams
-appearing in them do not appear elsewhere.
-Thus, each pair is reduced to one 5-gram.
-Figure \ref{fig:ngramsLen}(b) shows that the number of itemsets continues to
-decrease as expected.
+%The large difference between the number of distinct unigrams and bigrams
+%is still less than the increase that would have happened
+The decrease happens because 
+some tweets are tokenized into less 5-grams than 4-grams,
+eliminating 4-grams not appearing elsewhere.
+%all 4-grams with probability above the threshold
+%are parts of tweets from services that use the same text and append a URL,
+%such as tweets reporting scores from
+%Game Insight\footnote{http://www.game-insight.com/}.
+%Such tweets 
+%some tweets are tokenized into more 4-grams than 5-grams, 
+%whose 4-grams do not appear elsewhere.
+%and the 4-grams
+%appearing in them do not appear elsewhere.
+%Thus, each pair is reduced to one 5-gram.
 Figure \ref{fig:ngramsLen}(c) shows that runtime also decreases as N goes
-from 1 to 5, since LCM runtime is proportional to the number of closed
-itemsets, and is not affected by the sparsity of data.
-The runtimes in this figure are slightly less than those in
-figure \ref{fig:runtimeEpochs} because they do not include the time taken for
-writing the posting list of each itemset.
+from 1 to 5, since the runtime of LCM  is proportional to the number of closed
+itemsets, %CAN DELETE THE FOLLOWING LINE 
+and is not affected by the increasing sparsity of data.
+%The runtimes in this figure are slightly less than those in
+%figure \ref{fig:runtimeEpochs} because they do not include the time taken for
+%writing the posting list of each itemset.
 
 
-
-
-
-\section{Filtering itemsets}
+%\section{Filtering itemsets}
+\section{Selecting Itemsets} %and Ranking
 \label{sec:strong}
 
 
@@ -875,44 +882,76 @@ using a technique that exploits LCM's tolerance to sparsity.
 After applying this technique, the average number of itemsets mined from an
 hour of twitter data drops from 61,505 to 6,146.
 However, there is still redundancy in the itemsets.
-
-The closed property of an itemset is easily violated by modifying one
-transaction that contains the itemset and removing one of its items.
-While an update operation is not supported in the model of frequent itemsets
-mining, a similar effect happens when people are writing about a certain fine
-grained topic.
 For example, figure \ref{fig:sham} illustrates  itemsets related to Donald
 Trump's famous tweets in reaction to Obama's victory in
-2012\footnote{http://www.huffingtonpost.com/2012/11/07/donald-trump-election-revolution\_n\_2085864.html}.  
+2012\footnote{\url{http://www.huffingtonpost.com/2012/11/07/donald-trump-election-revolution_n_2085864.html}}.  
 Each area in the figure represents the transactions containing the itemset
-formed by concatenating the items in all intersecting ellipses.  
+formed by concatenating the items in all intersecting ellipses. 
 
-The figure shows the effect of the lack of context and structure in
-conversations happening on Twitter.
-Because there was originally no way to refer to a certain tweet,
-a tweet that sparked a conversation on Twitter had to be quoted in a retweet
-along with the retweeter's comment.
-This tradition still continues even though tweets can now explicitly reference
-one another. 
-Due to the 140 characters length limit of tweets the quotation is usually 
-edited to be as short as possible by selecting only the most discriminative
-words. 
+The closed property of an itemset is easily satisfied by an itemset
+created through the modification of 
+transactions that contain another closed itemset.
+For example, if a transaction containing a closed itemset
+is modified by removing one of its items,
+another closed itemset with enough support is immediately formed.
+%resulting in a two closed itemsets instead of one.
+While an update operation is not supported in the model of frequent itemset mining, 
+a similar effect happens when people retweet, 
+or even when they are writing original posts about 
+a certain fine grained topic.
+In case of retweeting, people actually start from the original tweet and 
+then remove parts of it to make space for their content,
+or to keep only the part they want to emphasize. 
+For example, in figure~\ref{fig:sham}  the most discriminative words are ``sham, and, travesty''
+which are quoted 
+%along with Donald Trump's user name 
+in most of the retweets.
+We can imagine that for each fine grained topic there is also a base post
+that represent the information or ideas within the topic. 
+People make posts about the fine grained topic 
+by selecting parts of the base post
+and adding their own thoughts.
+This results in many closed itemsets 
+about the topic that
+are trivially different from each other.
+%We now propose a condition that exploits this 
 
-In the figure, the most discriminative words are ``sham, and, travesty''
-which are quoted along with Donald Trump's user name in most of the retweets.
-Other people choose to also include ``not, democracy'' and/or ``elections'',
-and in most of the cases the retweet indicator ``rt'' is added. 
-This selection is an act of collaborative filtering,
-but it results in many trivially different subsets from the original tweet.
-The additions of retweeters also form many different supersets of the of the
-original tweet, and some additions represent opinions that are supported
-enough to be mined as itemsets. 
+The fact that any \emph{maximal} itemset is a closed itemset
+is another \emph{weakness}. % of the closed condition.
+%when used for mining social media text.
+%If an item is added to a number of retweets higher than the support threshold
+%it results in a \emph{maximal} itemset.
+%The itemset will be closed by definition even if the support threshold
+%is much lower than the total number of retweets
+If a closed itemset is expanded by certain items a number of times
+over the support threshold, this results in a maximal itemset
+which is closed by definition.
+%If the support of the original itemset is much higher than the support threshold,
+%the newly created itemset might not 
+%but might not be carrying 
+%if the support 
+%threshold is much lower than the 
+%Now consider that in social media a low support threshold has to be used.
+Now consider a tweet that is retweeted hundreds of times, 
+%resulting in some closed itemsets,
+%and different groups of people append the same words to it,
+and a small group of people appends the same words to it.
+%but no group is considerably large relative to the number of retweets.
+Since  a low support threshold has to be used when mining text,
+%this will result in many maximal itemsets that 
+this will result in a maximal itemset that
+might not be adding any information to the closed itemset.
+For example, in figure~\ref{fig:sham} a number of people
+talked about ``hair'' along with ``sham, and, travesty''. 
+The number is higher than the support threshold,
+but it is relatively small within the topic.
+%While amusing, this addition is not important.
 
-We propose two conditions that are not as easily violated as the closed
+We propose two conditions that are not as easily satisfied as the closed
 condition for selecting itemsets.
 The two conditions build on the concept of \emph{association rule confidence}.
-Confidence is the basic property used for association rules mining,
-and it is used in the definition of $\delta$-free sets \cite{boulicaut2003free}.
+%Confidence is the basic property used for association rules mining,
+%and it is used in the definition of $\delta$-free sets \cite{boulicaut2003free}.
 Mining itemsets based on the confidence of rules they induce has long been
 recognized as a method for finding
 ``interesting patterns'' \cite{cohen2001finding},
@@ -923,6 +962,10 @@ it cannot be directly used.
 The confidence of an assocation rule that the presence of an itemset,
 $s_{j}$, implies the presence of another itemset, $s_i$, is  defined as:
 \begin{equation}\label{eq:conf}conf(s_j \rightarrow s_i) = \frac{|T_{s_i} \cap T_{s_j}|}{|T_{s_j}|}\end{equation}
+
+
+%%%%%%%%%%%%
+
 
 \begin{figure}
 \centering
@@ -978,20 +1021,25 @@ $s_{j}$, implies the presence of another itemset, $s_i$, is  defined as:
 
 
 The \emph{distinct} condition is a novel strengthening of the closed condition
-so that it is not violated by trivial differences.
+so that it is not as easily satisfied. %violated by trivial differences.
 We define a \emph{distinct} itemset as a closed itemset whose frequency
 comprises more than a certain proportion of the frequency of its least
-frequent subset. 
-This condition chooses closed itemsets which substantially violate the closed
-condition of their subsets.
+frequent subset~--~we call this its \emph{parent} itemset. 
+%This condition chooses closed itemsets which substantially violate the closed
+%condition of their subsets.
 The proportion is a parameter, $\kappa$, that controls the selectivity of the
 \emph{distinctiveness} condition.
+%The proportion is a parameter, $\kappa$, that controls the selectivity 
+%of the condition,
+%or the \emph{distinctiveness} of itemsets selected by the condition.
 This can be interpreted as selecting itemsets which are implied by a subset
 with confidence greater than $\kappa$.
 Formally, the set of \emph{distinct} itemsets, $\mathcal{D}$,
 is defined as follows:
-\begin{equation}\mathcal{D} = \{s: s \in \mathcal{C} \, and \, \exists \; s_{p} \subset s \; where \; \frac{|T_{s}|}{|T_{s_{p}}|} \ge \kappa 
-\}\end{equation}
+\begin{equation}\mathcal{D} = \{s: s \in \mathcal{C} \, and \, \exists \; s_{parent} \subset s \; where \; \frac{|T_{s}|}{|T_{s_{parent}}|} \ge \kappa 
+\}
+\end{equation}
+
 
 In figure \ref{fig:sham}, \emph{distinct} itemsets are illustrated in solid
 lines, and closed itemsets that do not satisfy the distinctiveness condition in dashed lines.
@@ -999,8 +1047,12 @@ It is clear from the figure that considerable redundancy remains in
 \emph{distinct} itemsets.
 
 \subsection{Strongly Closed Itemsets}
-To remove the redundancy in \emph{distinct} itemsets we merge similar ones
+To overcome the redundancy in \emph{distinct} itemsets 
+we merge similar ones
 into \emph{strongly closed} itemset clusters.
+This will also filter out any itemset 
+that does not belong to a particular topic
+since it will not be part of a cluster.
 The similarity of a \emph{distinct} itemset,
 $s_d$, and another distinct itemset, $s_c$,
 is measured as the overlap of the \emph{transactions} containing both of them
@@ -1009,8 +1061,8 @@ A \emph{distinct} itemset is clustered with another itemset if one exists
 such that the overlap exceeds a similarity threshold,
 which we take to be $1-\kappa$ (the indistinctiveness of $s_d$ from $s_c$).
 If more than one satisfies this condition,
-the  \emph{distinct} itemset is clustered with the one having the highest
-overlap ratio.
+the  \emph{distinct} itemset is clustered with the 
+one having the highest overlap ratio.
 When  a \emph{distinct} itemset is clustered with an itemset that is already
 part of a cluster, the \emph{distinct} itemset is added to the existing cluster.
 Finally, the \emph{strongly closed} itemset is the union of all cluster members,
@@ -1024,9 +1076,62 @@ represented by each cluster as follows:
 \end{align*}
 \begin{equation}S_l = \{w:\, w \in \bigcup_{(s_i, s_j) \in r_l}{s_i} \; where \; r_l \in \mathcal{R}\}\end{equation}
 
-This clustering scheme selects the cluster that contains the itemset which
-maximizes the confidence of the rule $conf(s_j \rightarrow s_i)$,
-with a lower bound on the overlap to maintain distinctiveness. 
+Confidence is not a symmetric measure,
+but our proposed clustering makes use of the order
+in which PPC-extension generates itemsets 
+to determine which itemset should be the antecedent 
+and which should be the consequent.
+If PPC-extension uses a total ordering 
+of items that is non-increasing in item frequency,
+then 
+an itemset generated earlier 
+should be the antecedent, and
+an itemset generated later
+should be the consequent.
+This builds upon the use of
+variable length N-grams
+as items,
+so that the most frequent items
+are not function words.
+In that case, following the non-increasing order 
+of item frequency leads to mining itemsets related 
+to a certain topic close to each other.
+Notice that PPC-Extension is equivalent to a depth first traversal 
+of a hypothetical prefix tree of closed itemsets.
+That is, closed supersets of each itemset are generated before 
+moving to an itemset that is not a superset. 
+
+The most discriminative itemset from each topic 
+%(according to users' selection) 
+is mined 
+before other itemsets from the same topic.
+%because it is composed of items having the highest support within its topic.
+If an itemset branches out into supersets related to two topics 
+or two opinions within one topic, this itemset is 
+mined before itemsets from 
+either of the two branches. It should not 
+be clustered with either of the branches.
+For an itemset to belong to a topic, it must contain a set of topical words. 
+Since we are processing items in descending order of frequency, 
+then itemsets containing multiple topical words are generated
+when mining the supersets of the itemset containing only 
+the most frequent of them.
+%Thus, itemsets belonging to a topic
+%will be mined after the topic's most discriminative itemset,
+%even if they are not its superset.
+According to these observations, 
+the \emph{topical} similarity between itemsets
+can be indicated by
+the confidence of 
+the association rule that
+an itemset generated earlier implies 
+an itemset generated later.
+
+%%%%%%%%%%%%%%%%
+
+%This clustering scheme selects the cluster that contains the itemset which
+%maximizes the confidence of the rule $conf(s_j \rightarrow s_i)$,
+%with a lower bound on the overlap to maintain distinctiveness. 
 This clustering can be implemented efficiently using techniques similar to
 the ones proposed by Bayardo et al. \cite{bayardo2007scaling}.
 The main ideas are to limit the comparisons to a few candidates,
@@ -1050,7 +1155,7 @@ and we only check the confidence of the rule that the clustering candidate
 implies the itemset. 
 
 
-\begin{algorithm}
+\begin{algorithm}[t]
 \SetAlgoLined
 \LinesNumbered
 \KwIn{$\kappa$: Minimum distinctiveness threshold} 
@@ -1060,14 +1165,15 @@ implies the itemset.
 	$C \gets \{s_c: s_c \in \mathcal{C} \, and \, c < i \, and \, |s_c \cap s_i| > 0\}$\;
 	$P \gets \{s_p: s_p \in \mathcal{C} \, and \, p < i \, and \, s_p \cap s_i = s_p\}$\;
 	$s_p \gets \textbf{argmax}_{s_p \in P}\frac{|T_{s_i}|}{|T_{s_p}|}$ \tcp*{Direct parent}
-	\uIf{$\frac{|T_{s_i}|}{|T_{s_p}|} < \kappa$}{continue\tcp*{Not a distinct itemset}}
-	$s_m \gets s_i$  \tcp*{Cluster centroid, initially self}
-	$maxConf \gets 0$ \tcp*{Best candidate's score}
+	\uIf{$s_p = null$ \textbf{OR} $\frac{|T_{s_i}|}{|T_{s_p}|} < \kappa$}{continue\tcp*{Not a distinct itemset}}
+	%	$s_m \gets s_i$  \tcp*{Cluster centroid, initially self}
+	%$s_m \gets null$  \tcp*{Cluster centroid}
+	$s_m \gets null$, $maxConf \gets 0$ \tcp*{Best clustering}
 	\ForEach{$s_c \in C$}{
 		$\Delta \gets (1 - (1-\kappa)) |T_{s_c}|$ \tcp*{Maximum difference}
 		$\delta \gets$ difference($T_{s_c},T_{s_c \cup s_i},\Delta$) \tcp*{Stops early}
 		
-		\If{$\delta \le \Delta$}{ 
+		\If( \tcp*[f]{Confidence $\ge$ threshold}){$\delta \le \Delta$}{ 
 			$conf \gets \frac{|T_{s_c}| - \delta}{ |T_{s_c}|}$\;
 			\If{$conf > maxConf$}{
 				$s_m \gets s_k$ \tcp*{Best merge candidate}
@@ -1075,10 +1181,12 @@ implies the itemset.
 			}
 		}
 	}
-	$\mathcal{R}[s_i] \gets \mathcal{R}[s_m]$ \tcp*{Cluster $s_i$ with $s_m$}
-	$\mathcal{R}[s_m].itemset \gets \mathcal{R}[s_m].itemset \cup s_i \cup s_m$\;
-	$\mathcal{R}[s_m].postingsList \gets \mathcal{R}[s_m].postingsList \cup s_i.postingsList \cup s_m.postingsList$\;
-}
+	\If{$s_m \ne null$}{
+		\lIf(\tcp*[f]{New cluster}){$\mathcal{R}[s_m] = null$}{$\mathcal{R}[s_m] \gets s_m$} 
+		$\mathcal{R}[s_i] \gets \mathcal{R}[s_m]$ \tcp*{Add $s_i$ to the cluster}
+		$\mathcal{R}[s_m].itemset \gets \mathcal{R}[s_m].itemset \cup s_i \cup s_m$\;
+		$\mathcal{R}[s_m].postingsList \gets \mathcal{R}[s_m].postingsList \cup s_i.postingsList \cup s_m.postingsList$\;
+	}}
 \Return{$\mathcal{R}$}\;
 \caption{Forming strongly closed itemset clusters}
 \label{algo:alliance}
@@ -1088,11 +1196,45 @@ implies the itemset.
 
 \subsection{Performance Analysis}
 \label{sec:bounding}
-We analyze the performance of the filtering conditions proposed by applying
-them to the mining results of all one-hour long epochs in the Twitter data.
-The average number of itemsets mined from an hour-long epoch is
-2439.17 closed itemsets of length 2 or more;
-that is, excluding itemsets that are merely a frequent item.
+
+
+
+Unlike the original LCM algorithm, filtering low confidence itemsets requires
+us to keep mined results in memory to calculate the confidence of newly
+generated ones.
+The memory requirement is not large because the number of itemsets 
+averages at about 6,000.
+In our experience with the Twitter data it was enough to keep only a buffer
+of 1,000 itemsets, when mining an hour long epoch.
+This is based on the observation that the number of positions 
+between an itemset and a clustering candidate 
+is 1,973.11 on average, with a standard deviation of 1,443.64. 
+The large standard deviation indicates that
+candidates are either found close to the itemset
+(less than 500 positions behind),
+or in a position that is several thousands 
+of itemsets behind. 
+%Thus we keep only 1,000 itemsets.
+
+Following is an analysis of
+%We analyze
+the performance of the filtering conditions proposed,
+%We evaluate the efficiency of our proposed filtering and clustering methods 
+in terms of the number of itemsets after their application,
+and the runtime overhead they add on top of 
+the runtime of the LCM algorithm.
+The experiments were run using a single threaded Java implementation of
+algorithm \ref{algo:alliance},
+running on a 1.4GHz processor with 2MB of cache.
+%by applying
+We apply the algorithm to the mining results of all 
+one-hour long epochs in the Twitter data.
+Before filtering, the average number of itemsets mined 
+from an hour-long epoch is
+2,439.17 closed itemsets of length 2 or more;
+that is, excluding itemsets that are merely a frequent item. 
+
+
 
 %The number of length 2 or more maximal itemsets is 1831.92,
 %which we provide just as a reference to the result of a basic way of filtering.
@@ -1101,16 +1243,19 @@ Figure \ref{fig:kappa} show the effect of varying $\kappa$ on the mean number
 of \emph{distinct} and \emph{strong closed} itemsets.
 The number of \emph{distinct} itemsets drops as the distinctiveness threshold
 increases.
-On the other hand, the number of \emph{strong closed} clusters formed increases
+On the other hand, the number of \emph{strong closed} clusters %formed increases
 as the similarity (indistinctiveness) threshold decreases.
 The dashed line shows that the number of unclustered distinct itemsets reaches
 zero at $\kappa=0.5$, explaining why the number of clusters changes very
 slightly after that. 
 We use $\kappa = 0.25$ in the remainder of the paper,
 which is an arbitrary choice based on the definition not the data.
-The average number of itemsets (\emph{strongly closed} and unclustered
-\emph{distinct}) mined from one-hour epochs at this value of
-$\kappa$ is only 224.48, which is about 10\% of the number of closed itemsets.
+The average number of itemsets at this value of $\kappa$
+averages at 139.1 \emph{strongly closed} itemsets,
+and 85.38 \emph{distinct} itemsets. 
+%(\emph{strongly closed} and unclustered
+%\emph{distinct}) mined from one-hour epochs at this value of
+%$\kappa$ is only 224.48, which is about 10\% of the number of closed itemsets.
 
 
 
@@ -1141,24 +1286,14 @@ seeing slight differences.
 The output of LCM is the input to the filtering and clustering step,
 so it is affected by the number of closed itemsets produced.
 This explains why it takes slightly longer time for clustering results from
-the 15-minute epoch and then takes a constant time for epochs of a longer span. 
+the 15-minute epoch and then takes 
+a constant time for epochs of a longer span. 
 
-The experiments were run using a single threaded Java implementation of
-algorithm \ref{algo:alliance}.
-The experiments were run on a 1.4GHz processor with 2MB of cache.
-Unlike the original LCM algorithm, filtering low confidence itemsets requires
-us to keep mined results in memory to calculate the confidence of newly
-generated ones.
-The memory requirement is not large because the number of itemsets averages
-at about 6000.
-In our experience with the Twitter data it was enough to keep only a buffer
-of 1000 itemsets, and this is what we use for the runtime performance
-evaluation and the empirical evaluation of the filtering results in
-sections \ref{sec:empirical}.
+These runtimes are achieved by using a buffer of 1000 itemsets,
+which is the same setting we use when evaluating the quality of the synopsis
+in the next section.
 If all itemsets are kept in memory the runtime increases slightly and
 averages at 5.2 seconds for filtering a one-hour epoch.
-
-
 
 \begin{figure}
 \centering
@@ -1174,7 +1309,6 @@ averages at 5.2 seconds for filtering a one-hour epoch.
 \caption{Runtime of itemset mining alone and with filtering and clustering at different epoch spans}
 \label{fig:lcmvsfpzhu}
 \end{figure}
-
 
 \section{Temporal Ranking}
 \label{sec:rank}
