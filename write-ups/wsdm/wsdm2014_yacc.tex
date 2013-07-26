@@ -40,40 +40,16 @@ Based on our experience, the resulting synopses from various time periods provid
 \newpage
 \section{Introduction}
 
-%The sheer volume of user generated content continuously posted on social media 
-%has taken the problem of summarization has taken a totally different dimension 
-%gives rise to a new type of problem, or
-%User generated content that is continuously posted on social media 
-%contains valuable information, which is sometimes not available on other media. 
-%The use of social media as a source of information about real world events
-%is motivated by the diversity of the content posted on it.
-
-
-%Users of social media generate a large amount of content 
-%about every real world event, internet meme, TV show episode 
-%or anything that happens to capture their attention.
-%The large number of users making posts about a certain topic
-%diversify the content in terms of points of view,
-%and their distribution all over the globe increases the propensity
-%that some of them will witness an event and make unique posts about it.
-%However, the totality of user generated content is overwhelmed 
-%by social chatter and non
-
-%The problem of mining social media text is unique 
 Mining social media text poses unique challenges
 because of the text's content and form.
 The user generated content includes a substantial 
-amount of social chatter, %and topically irrelevant posts.
+amount of social chatter, 
 which ought to be filtered out by mining algorithms.
 In terms of form, social media posts are short thus
 undermining the effectiveness of within document 
 term frequency counting.
 They also lack structure and other formatting cues,
 thus important terms cannot be pinpointed easily. 
-%Moreover, social media platforms started allowing
-%posts to link to each other only recently 
-%and in a restricted fashion, 
-%thus posts lack context
 Moreover, the rate at which users generate and consume
 social media posts necessitates the use of efficient algorithms
 to provide users by real-time mining results.
@@ -85,10 +61,8 @@ to create a synopsis of social media streams.
 Frequent itemset mining is suitable to the dynamic nature of social media streams.
 It does not require prior knowledge of the distribution of items,
 nor does it require selecting a few items to monitor 
-or a number of topics to mine. %preset
+or a number of topics to mine. 
 It is fast, efficient and scalable.
-%Frequent itemset mining algorithms are fast and efficient,
-%however they are not readily suited for application on text.
 However, frequent itemset mining is not readily suited for application on text
 without preprocessing steps that are difficult to apply to social media text;
 for example, stop word removal which requires language identification
@@ -97,56 +71,19 @@ of language identification on social media~\cite{bergsma2012language}.
 In our experience, directly applying frequent itemset mining algorithms
 to social media text results in myriads of itemsets that are 
 mostly meaningless, repetitive or bear no information.
-%Following are the main problems that lead to 
-%we address in this work.
 In this work we address the shortcomings of 
 frequent itemset mining which lead to such poor performance.
-%After addressing them, 
 As a result, the frequent itemset mining results become
 suitable for use as a synopsis representing what is happening
 on social media at different points of time. 
-%The synopsis is understandable on the user level, 
-%and can be used by downstream system components.
-%It 
 The synopsis is particularly rich because it
 includes the itemsets as well as the ids of posts in which they occur.
 
-%First of all, they count the number of occurrences of all 
-%combinations of items, 
-%which can become prohibit
-%The short length of social media posts
-
-%Some frequent itemset robust against data sparsity, 
-%and can actually exploit this sparsity for faster computation.
-
-
-%This family of algorithms is suitable for application 
-%on collections of short sets of items,
-%regardless of what a set or an item represents.
-%It finds items that co-occur together frequently,
-%filtering out itemsets with a number of occurrences
-%less than a  threshold. %user specified
-%which can be set to 
-
-%The nature of text in social media poses a challenge when applying
-%traditional text mining algorithms.
-%Text in social media is usually short, lacks context and structure,
-%and is created at a high rate. %very
-%To realize the benefits of social media in giving a voice to ordinary people,
-%this work focuses on the content of posts.
-%However, the collective stream from all users is overwhelmed with personal
-%updates, and timely finding posts about topics of interest requires an
-%efficient mining algorithm.
-
-%The first problem is that the number of itemsets mined is large and grows with the number of
-%distinct items~--~which is particularly high in the text domain.
 Frequent itemset mining was originally proposed as a preliminary stage for
 association rules mining.
 It produces a large number of itemsets, which
 has to be further processed to 
 produce a smaller number of association rules.
-%which sifts through the numerous itemsets and
-%produces a smaller number of association rules.
 Furthermore, the number of itemsets grows with the number of
 distinct items, which is particularly high in the text domain.
 To reduce the number of itemsets, they may be limited by setting a high
@@ -160,35 +97,13 @@ that users naturally undergo on social media,
 by sharing interesting posts and participating in conversations.
 
 
-%Second, the high frequency of stop words and language constructs is a problem
-%that frequent itemset mining is not equipped to handle.
-%Even if a maximum frequency threshold is set to filter sets of stop words,
-%incurring the risk of filtering important itemsets, 
-%many  non-English constructs will be
-%mined because the proportion of posts in English is much higher than
-%other languages.  Finally, there is considerable redundancy in frequent
-%itemsets caused by trivial differences in the language used.
-%%In this paper we address those problems, adapting frequent itemset mining to
-%%social media text without degrading its efficiency.
-%Those are the problems with applying frequent itemset mining to text, 
-%following we list some advantages of using it.
-
-%As we shall see in later examples, the top ranked itemsets cover a variety
-%of open topics, and within one topic different opinions are reported as
-%separate contrastive itemsets.
-%The ranking used is according 
-%to a formula we propose,
-%which orders
-%itemsets in terms of their temporal novelty.
-%thus turning the synopsis into a summary that 
-
 We process the social media stream in batches 
 of data from consecutive epochs of time.
 We propose a formula for ranking the itemsets
 in the synopsis of each epoch according to temporal novelty.
 An empirical evaluation of the effectiveness of our proposed methods
-shows that the hour by hour synopses at different times %of different days
-actually reflects what was happening at those times. % days.
+shows that the hour by hour synopses at different times 
+actually reflects what was happening at those times. 
 It is easy to see that
 we achieve improvements over a baseline
 of applying unmodified frequent itemsets mining, 
@@ -197,20 +112,17 @@ and the quality of individual itemsets.
 We also make an effort to compare our synopses 
 with those generated by a state of the art algorithm 
 for summarization based on itemset mining, MTV~\cite{mampaey2011tell}.
-%are also shown for comparison. 
 However, the number of topically relevant itemsets our algorithm mines 
 is much larger than what MTV can mine in reasonable time,
 inhibiting the use of standard comparison measures.
 The large number of topics in the mining results 
-also impede the use of quality measures which require %that need
+also impede the use of quality measures which require 
 the creation of a gold standard, 
 such as those proposed for evaluating
 key-phrase extraction algorithms~\cite{Zhao:2011:TKE:2002472.2002521}.
 
-For the purpose of evaluation, we show the 
-%correspondence between 
-synopses 
-of periods of time when it is known what %people should
+For the purpose of evaluation, we show the synopses 
+of periods of time when it is known what 
 social media users are expected to be talking about.
 Specifically, the day of the U.S. presidential elections,
 and periods in which Google Top Charts\footnote{\scriptsize \texttt{http://www.google.ca/trends/topcharts\#vm=chart\&cid=people\&\\geo=US\&date=201211}}
@@ -219,40 +131,17 @@ The synopses of all hours in the last 3 months of 2012
 are available for download\footnote{\scriptsize \url{http://blinded.blinded.com/blinded/thesis_results/twitter_synopses/1hr+30min_ngram5-relsupp10_oct-nov-dec/}}. 
 %http://plg.uwaterloo.ca/~yaboulna/
 
-%The evaluation is only empirical because our work
-%results in a synopsis that is made up of itemsets,
-%which is different from the summaries generated by
-%other extractive or abstractive summarization algorithms.
-%The synopsis is most similar to the one generated by 
-%key phrase extraction algorithms~\cite{Zhao:2011:TKE:2002472.2002521},
-%but the number of topics our algorithm mines is much larger 
-%thus inhibiting the construction of a gold standard needed for evaluation
-%using the measures used for keyphrase extraction.
-%Actually, we find that evaluating our system would best be done
-%by an evaluation measure that is suitable for exploratory search tasks.
-%However, this is an open problem~\cite{jack} and 
-%we leave the creation of an evaluation measure as 
-%a potential future direction. 
 
-%we show that the effectiveness of frequent itemsets mining
-
-
-%Because of using frequent itemset mining, the synopsis includes
 As a merit of using frequent itemset mining, the synopses include
 itemsets about topics with sustained user interest as well as a spike of interest
 --~unlike trending topics\footnote{\scriptsize \url{http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}}
 \cite{mathioudakis2010twittermonitor} which are limited to
 topics showing spikes of interest.
-%Unlike trending
-%topics\footnote{\scriptsize http://blog.twitter.com/2010/12/to-trend-or-not-to-trend.html}
-%\cite{mathioudakis2010twittermonitor}, the results of frequent itemset
-%mining include itemsets that have high frequency because of sustained interest,
-%as well as a spike of interest.
 The mined itemsets provide the vocabulary associated with events and can be
 used as a preliminary step for search and summarization.
 For example, the collection of mining results from different epochs of time
 can be used for temporal query and document
-expansion~\cite{choi2012temporal, efron2012improving}. %REMCITE?
+expansion~\cite{choi2012temporal, efron2012improving}. 
 The results from each epoch can be treated as a document, facilitating the
 creation of a ``temporal profile''~\cite{jones2007temporal} of the query
 or a document being expanded.
@@ -279,7 +168,7 @@ together similar itemsets into \emph{strongly closed itemsets}.
 In section \ref{sec:rank} we introduce a ranking formula
 specially tailored for ranking \emph{strongly closed itemsets}.
 We use this formula to rank itemsets and construct 
-the examples used for evaluation. % in section \label{eval}.
+the examples used for evaluation. 
 Finally, section \ref{sec:concfut} concludes our presentation and
 suggests future directions.
 
@@ -350,15 +239,6 @@ the trivial difference between itemsets,
 the K \emph{master} itemsets  have to cover the whole data, 
 unlike the \emph{strongly closed itemsets} which actually 
 avoid clustering together different topics or different opinions within a topic.
-%Yan:
-% A method is proposed for choosing K by minimizing the restoration error of support information, 
-%To improve performance, the calculation of the distance between itemsets is approximated to avoid accessing the data. We can achieve high performance without approximation because we apply clustering to subsets of the data that are very likely to be close to each other.
-
- %Rhetoric:
-%The motivation of most research on finding representative itemsets involves
-%compressing itemsets mined from a general dataset.
-%This motivation leads to decisions different from those required to mine the
-%most informative itemsets mined from text.
 
 Our work complements the work done by Yang et al.~\cite{yang2012framework} for using 
 frequent itemsets to build a temporal index on social media posts. 
@@ -366,12 +246,6 @@ They use frequent itemsets to decrease the space requirements of the index,
 but they choose itemsets to include in the index based on their utility in compressing the data. 
 We propose methods to choose itemsets that are topically relevant, 
 making use of the nature of social media.
-% to choose topically relevant itemsets.
-%Our work complements the work done by Yang et al.~\cite{yang2012framework} for using frequent itemsets as a temporal summary. They have proposed a framework for storing mining results of temporally consecutive batches of data using a pyramidal time window. Their framework allows for fast execution of temporal queries, and for tracking the evolution of topics. 
-%The choice of itemsets from each batch is based on their utility in compressing the data, and thus they use non-negative matrix factorization to extract topics related to a query. We propose methods to choose itemsets that are topically relevant from each batch, making use of the nature of social media to choose topically relevant itemsets without the need for a query. Social media has been shown to be a good and timely source for discovering real-world events~\cite{ritter2012open,petrovic2010streaming}.
-
-%Our work is also related to methods of indexing social media streams~\cite{yao2012provenance,yang2012framework}. To enhance the speed of indexing, Yao et al.~\cite{yao2012provenance} use... NO they are not related at all!
-
 
 
 The use of frequent itemsets for improving search performance has been considered before. 
@@ -380,16 +254,11 @@ paragraphs of newswire text, and are used to determine term weights for query
 expansion.
 Improvements in performance have been achieved by using itemsets taken from
 a training set of related documents, as well as ones from unrelated documents.
-%In Lau et al.~\cite{laumicroblog}, r
 Related methods for term weighting were
 used in pseudo-relevance feedback for Twitter search~\cite{abounlaga2012frequent,laumicroblog},
 and achieved substantial improvements over a baseline.
 Our work can provide such methods by a short ranked list of itemsets.
-%, potentially improving their results.
 
-%Other efforts for summarizing social media %, specially Twitter
-%Many efforts 
-%usually take an existing  technique and adapt it for the new medium. 
 Existing techniques for summarization and topic extraction were adapted for social media.
 Zhao et al.~\cite{Zhao:2011:TKE:2002472.2002521} build summaries based on 
 an adaptation of Latent Dirichlet Allocation (LDA) for Twitter.
@@ -399,8 +268,6 @@ The short length of social media text is overcome by
 applying the adapted techniques on large batches of posts made in a long period of time. 
 Our method processes data in batches as small as an hour worth of posts, 
 resulting in temporally relevant synopses. 
-%The number of topics that either of the adaptations discover is small (less than 30) compared to what 
-%would be expected to be found in such a large amount of social media posts. 
 Petrovi\'{c} et al.~\cite{petrovic2010streaming}
 used an adaptation of Locality Sensitive Hashing (LSH) %~\cite{indyk1998approximate} 
 to perform first story detection at scale.
@@ -442,13 +309,11 @@ of the least \emph{volume velocity} during the day.
 The \emph{minimum support} is supplied as an absolute number, $a$, and then
 converted to a ratio, $\alpha = \frac{a}{\textbf{avg}(\min_{day}{(vol.\, vel.)})}$.
 The actual support threshold used for mining any given epoch is thus
-$\alpha$ multiplied by the number of transactions. % in the \emph{epoch}.
-%\emph{epoch}'s \emph{volume velocity}. 
+$\alpha$ multiplied by the number of transactions. 
 We now introduce the notation used in this paper:
 \begin{itemize}
 \item $W = \{w_1,w_2,\ldots, w_n\}$: The set of all items appearing in an \emph{epoch}. 
 We use term N-grams in this paper.
-%Can be terms or term N-grams in this paper.
 \item $t_a = \{w_{a1},\ldots, w_{am}\}$: A transaction made up of a set of items. Each transaction has a sequential id, denoted by the subscript letter, derived from its timestamp.
 \item $E^{span} = \langle t_a, t_b, \ldots, t_v\rangle$: An epoch of data of a certain span, such as an hour, made up of the sequence of the transactions created within this hour.
 \item $s \subset W$: An itemset; any possible combination of items. 
@@ -518,8 +383,6 @@ later/earlier in the total ordering.
 This terminology comes from the fact that LCM is most efficient if the items
 are ordered in ascending order of their frequency.
 Second, the \emph{suffix} of an itemset is one or more items 
-%whose removal results in
-%does not result in
 which have to be removed to get
 an itemset with greater support.
 Notice that they will necessarily be at the end of the itemset,
@@ -531,13 +394,9 @@ With this terminology, the rules for \emph{PPC-Extentsion} are:
 \item An itemset must be extended by every item that occurs in $T_{itemset}$, 
 except items which are \emph{smaller} than its \emph{suffix head};
 extending by \emph{smaller} items will lead to closed itemsets already generated in an earlier step. 
-%Extension items are added to the itemset in turn in the order given by the total ordering,
-%recursively applying PPC-Extension to the extended itemset before adding the next extension item.
 \item After adding an extension item, $w_e$, to an itemset, $s$, we add all other items that appear in all transaction containing $s \cup \{w_e\}$.
-% ~--~ 
-%that is, items whose frequency within  $T_{s\, \cup \, \{w_e\}}$ is equal to $|T_{s \, \cup \, \{w_e\}}|$.
 The added items are the \emph{suffix}.
-\item If all items in the \emph{suffix} are \emph{larger} than the \emph{suffix head} then add the itemset to the solution. Otherwise, prune this solution branch; all closed itemsets within this branch have already been generated. %, when processing the smallest suffix member.
+\item If all items in the \emph{suffix} are \emph{larger} than the \emph{suffix head} then add the itemset to the solution. Otherwise, prune this solution branch; all closed itemsets within this branch have already been generated. 
 \end{enumerate}
  
 Table \ref{table:PPCExample} is an example of how \emph{PPC-Extentsion} is
@@ -558,11 +417,11 @@ An item is bolded when its turn to be added has come.
 After adding each item, a pass is done on $T_{itemset}$ to 
 enumerate and count possible extension items.
 To enforce a support threshold, infrequent extension items would be removed
-after counting, %at this time,
+after counting, 
 but in this example there is no such threshold.
 Finally, column 4 is a comment explaining each step.
 
-%Notice
+
 Table \ref{table:PPCExample} shows that the number of steps is linear in the number of closed itemsets,
 and the only additional storage required, besides storage for the documents,
 is that required for possible extension items.
@@ -574,10 +433,7 @@ closed itemsets,
 and that this number is quadratic in the number of transactions.
 Performance on a real dataset is shown in section \ref{sec:socmine}.
 We proceed by describing how to implement this algorithm. 
-%using an inverted index.
 
-
-%{\tiny
 
 \begin{table*}
 
@@ -590,8 +446,8 @@ c& barack obama \& romney & d & barack obama  \\\hline
 \begin{tabular}{c}
 Documents (two per row)\\\\
 \end{tabular}
-%\scalebox{0.7}{
-\begin{tabular}{|c|p{5cm}|p{5cm}|p{5.5cm}|} %[scale=0.3]{| c | l | l | l |}
+
+\begin{tabular}{|c|p{5cm}|p{5cm}|p{5.5cm}|} 
 \hline
 \textbf{Step}&\textbf{Current Itemset}&\textbf{Possible Extension Items}&\textbf{Comments}\\ \hline
 
@@ -612,30 +468,21 @@ Documents (two per row)\\\\
 \begin{tabular}{c}
 Closed itemsets containing `barack'
 \end{tabular}
-%}
+
 \caption{Generation of closed itemsets by Prefix Preserving Closure Extension}
 \label{table:PPCExample}
 \end{table*}
-%}
 
 
 \subsection{Implementation Details}
 We show in algorithm~\ref{algo:lcmix} how to implement LCM and PPC-Extension
-%based on the search infrastructure. 
 using an inverted index.
 The inverted index is part of the standard text search infrastructure,
 and it is also a  good representation of textual data. 
 Other representations that are designed for databases in general
-might not be well suited for such sparse data with a large number of items. %,from the nature of .
-%For example, the memory requirements of the FP-tree suffers from the sparsity
-%of data.
-%, since the data structure is succinct only if it can find common
-%prefixes within the constraints of its invariant. 
-%The possibility of using an inverted index in the implementation 
-%of LCM is yet another reason why it is well suited 
-%for textual data.
+might not be well suited for such sparse data with a large number of items. 
 
-%An inverted index is a good representation of textual data which is
+
 The algorithm takes as input an epoch of data and a support threshold as a
 ratio $\alpha$.
 It outputs the closed itemsets with support above the threshold.
@@ -670,7 +517,6 @@ X $\gets$ Inverted index of E\;
 		\ForEach{$w \in t$}{ 
 			freq[$w$]++\;
 			\lIf{freq[$w$] $ = |T_s|$}{
-				%suffix.add($w$)	
 				suffix $\gets$ suffix $\cup\, \{w\}$
 			}
 		}
@@ -706,7 +552,6 @@ We collect only the tweet text to avoid reliance on any features specific to a
 certain social medium,
 and to make the algorithms applicable to other media where text is short  
 % such as Facebook or Google+ status updates.
-%such as comments on a YouTube video.
 such as YouTube comments.
 The only preprocessing we performed was to remove duplicate original tweets
 (not retweets) using a Bloom filter.
@@ -806,7 +651,7 @@ could be obtained by tokenizing the documents into term N-grams with varying N.
 
 We use term N-gram tokens such that N-grams of high probability are replaced by
 (N+1)-grams, resulting in a distribution with no high peaks.  
-An N-gram is considered to % of length N
+An N-gram is considered to 
 have a high probability if its maximum likelihood estimate from a background
 model is higher than a threshold $\eta_N$. 
 A background language model built from a long epoch of data 
@@ -815,29 +660,15 @@ The tokenization of a tweet starts by tokenizing it into unigrams, then each
 unigram of high probability is replaced by two term bigrams~--~by
 attaching to it the unigrams before and after it.
 We keep replacing N-grams of high probability by two (N+1)-grams 
-%repeat this for each N $\ge$ 1,for all N-grams
-%with probabilities above the threshold 
-until there are no more such N-grams. %; thus, the distribution is relatively flat.
+until there are no more such N-grams. 
 
-%Notice that the (N+1)-grams replacing an N-gram overlap with each other, with the unigrams that got 
-%attached to the N-gram and possibly with other N-grams. 
-%However, the  
-%We do not prevent overlap, because there is no guarantee that the N-Gram
-%created makes any sense.After mining term N-grams we flatten the itemsets to sets of unigrams again.
-%This removes overlap between parts of itemsets making it easier to reason
-%about how they relate to each other. 
-%This is also necessary since an itemset will have different N-gram set
-%representations,
-%and its postings list is the union of those of the different representations.
 
 The threshold of high probability, $\eta$, is different for each value of N. 
 The threshold for unigrams is determined as follows: 
 We pick a topical term that is known to  steadily  appear with a rather high frequency, 
 and is talked about in all languages; for example, `obama'. 
 The maximum likelihood estimate of the probability of the term `obama' 
-%within the whole collection of tweets is 
 is P(``obama") = 0.0001, which we use as $\eta_1$.
-%We use $\eta_1 = P(``obama") = 0.0001$.
 At each N, the probability threshold is adjusted to account for the increase
 in the number of tokens and the overall increase in the grand sum of counts (caused by overlap).
 The adjusted $\eta_N$ is:
@@ -848,48 +679,27 @@ Figure \ref{fig:ngramsLen} shows the effect of increasing the maximum length
 of N-grams from 1 to 5 on 
 the number of closed itemsets,
 the number of tokens, 
-%of length more than 1, 
 and the runtime of mining one hour of data.
 The values shown are averages across all one-hour epochs in the month of
 November 2012.
 Figure \ref{fig:ngramsLen}(a) shows that the number of itemsets 
-%continues to decrease as expected.
 drops by about 90\% by using variable length N-grams,
 which overcomes the problem of mining language constructs
 while limiting the increase in the sparsity of the data.
-%without increasing the sparsity of the data as much as
-%if tweets were tokenized into  N-grams.
-%while keeping the statistical properties of the data. % better than those of 
-%The value of $\eta$ used is 0.0001.
 Figure \ref{fig:ngramsLen}(b) shows that the number of distinct items
 increases substantially as N goes from 1 to 2, then continues increasing
 slightly until it starts decreasing at N $\le$ 5. %N=5.
-%The large difference between the number of distinct unigrams and bigrams
-%is still less than the increase that would have happened
 The decrease happens because 
 some tweets are tokenized into less 5-grams than 4-grams,
 eliminating 4-grams not appearing elsewhere.
-%all 4-grams with probability above the threshold
-%are parts of tweets from services that use the same text and append a URL,
-%such as tweets reporting scores from
-%Game Insight\footnote{http://www.game-insight.com/}.
-%Such tweets 
-%some tweets are tokenized into more 4-grams than 5-grams, 
-%whose 4-grams do not appear elsewhere.
-%and the 4-grams
-%appearing in them do not appear elsewhere.
-%Thus, each pair is reduced to one 5-gram.
 Figure \ref{fig:ngramsLen}(c) shows that runtime also decreases as N goes
 from 1 to 5, since the runtime of LCM  is proportional to the number of closed
 itemsets, %CAN DELETE THE FOLLOWING LINE 
 and is not affected by the increasing sparsity of data.
-%The runtimes in this figure are slightly less than those in
-%figure \ref{fig:runtimeEpochs} because they do not include the time taken for
-%writing the posting list of each itemset.
 
 
 %\section{Filtering itemsets}
-\section{Selecting Itemsets} %and Ranking
+\section{Selecting Itemsets} 
 \label{sec:strong}
 
 
@@ -911,7 +721,6 @@ transactions that contain another closed itemset.
 For example, if a transaction containing a closed itemset
 is modified by removing one of its items,
 another closed itemset with enough support is immediately formed.
-%resulting in a two closed itemsets instead of one.
 While an update operation is not supported in the model of frequent itemset mining, 
 a similar effect happens when people retweet, 
 or even when they are writing original posts about 
@@ -932,31 +741,15 @@ and adding their own thoughts.
 This results in many closed itemsets 
 about the topic that
 are trivially different from each other.
-%We now propose a condition that exploits this 
 
 The fact that any \emph{maximal} itemset is a closed itemset
 is another \emph{weakness}. % of the closed condition.
-%when used for mining social media text.
-%If an item is added to a number of retweets higher than the support threshold
-%it results in a \emph{maximal} itemset.
-%The itemset will be closed by definition even if the support threshold
-%is much lower than the total number of retweets
 If a closed itemset is expanded by certain items a number of times
 over the support threshold, this results in a maximal itemset
 which is closed by definition.
-%If the support of the original itemset is much higher than the support threshold,
-%the newly created itemset might not 
-%but might not be carrying 
-%if the support 
-%threshold is much lower than the 
-%Now consider that in social media a low support threshold has to be used.
 Now consider a tweet that is retweeted hundreds of times, 
-%resulting in some closed itemsets,
-%and different groups of people append the same words to it,
 and a small group of people appends the same words to it.
-%but no group is considerably large relative to the number of retweets.
 Since  a low support threshold has to be used when mining text,
-%this will result in many maximal itemsets that 
 this will result in a maximal itemset that
 might not be adding any information to the closed itemset.
 For example, in figure~\ref{fig:sham} a number of people
@@ -968,26 +761,19 @@ but it is relatively small within the topic.
 We propose two conditions that are not as easily satisfied as the closed
 condition for selecting itemsets.
 The two conditions build on the concept of \emph{association rule confidence}.
-%Confidence is the basic property used for association rules mining,
-%and it is used in the definition of $\delta$-free sets \cite{boulicaut2003free}.
 Mining itemsets based on the confidence of rules they induce has long been
 recognized as a method for finding
 ``interesting patterns'' \cite{cohen2001finding},
 but since this property is not anti-monotone 
 it cannot be directly used.
-%a variation has to be used
-%(for example, \emph{all confidence}). % \cite{kim2004ccmine}
 The confidence of an association rule that the presence of an itemset,
 $s_{anteced.}$, implies the presence of another itemset, $s_{conseq.}$, is  defined as:
 \begin{equation}\label{eq:conf}conf(s_{anteced.} \rightarrow s_{conseq.}) = \frac{|T_{s_{conseq.}} \cap T_{s_{anteced.}}|}{|T_{s_{anteced.}}|}\end{equation}
 
 
-%%%%%%%%%%%%
-
 
 \begin{figure}
 \centering
-%\scalebox{0.7} 
 \resizebox{7cm}{3.5cm}
 {
 \begin{pspicture}(0,-2.649212)(9.077745,2.95)
@@ -1039,17 +825,12 @@ $s_{anteced.}$, implies the presence of another itemset, $s_{conseq.}$, is  defi
 
 
 The \emph{distinct} condition is a novel strengthening of the closed condition
-so that it is not as easily satisfied. %violated by trivial differences.
+so that it is not as easily satisfied. 
 We define a \emph{distinct} itemset as a closed itemset whose frequency
 comprises more than a certain proportion of the frequency of its least
 frequent subset~--~we call this its \emph{parent} itemset. 
-%This condition chooses closed itemsets which substantially violate the closed
-%condition of their subsets.
 The proportion is a parameter, $\kappa$, that controls the selectivity of the
 \emph{distinctiveness} condition.
-%The proportion is a parameter, $\kappa$, that controls the selectivity 
-%of the condition,
-%or the \emph{distinctiveness} of itemsets selected by the condition.
 This can be interpreted as selecting itemsets which are implied by a subset
 with confidence greater than $\kappa$.
 Formally, the set of \emph{distinct} itemsets, $\mathcal{D}$,
@@ -1120,10 +901,7 @@ That is, closed supersets of each itemset are generated before
 moving to an itemset that is not a superset. 
 
 The most discriminative itemset from each topic 
-%(according to users' selection) 
-is mined 
-before other itemsets from the same topic.
-%because it is composed of items having the highest support within its topic.
+is mined before other itemsets from the same topic.
 If an itemset branches out into supersets related to two topics 
 or two opinions within one topic, this itemset is 
 mined before itemsets from 
@@ -1134,9 +912,6 @@ Since we are processing items in descending order of frequency,
 then itemsets containing multiple topical words are generated
 when mining the supersets of the itemset containing only 
 the most frequent of them.
-%Thus, itemsets belonging to a topic
-%will be mined after the topic's most discriminative itemset,
-%even if they are not its superset.
 According to these observations, 
 the \emph{topical} similarity between itemsets
 can be indicated by
@@ -1145,11 +920,6 @@ the association rule that
 an itemset generated earlier implies 
 an itemset generated later.
 
-%%%%%%%%%%%%%%%%
-
-%This clustering scheme selects the cluster that contains the itemset which
-%maximizes the confidence of the rule $conf(s_j \rightarrow s_i)$,
-%with a lower bound on the overlap to maintain distinctiveness. 
 This clustering can be implemented efficiently using techniques similar to
 the ones proposed by Bayardo et al. \cite{bayardo2007scaling}.
 The main ideas are to limit the comparisons to a few candidates,
@@ -1184,8 +954,6 @@ implies the itemset.
 	$P \gets \{s_p: s_p \in \mathcal{C} \, and \, p < i \, and \, s_p \cap s_i = s_p\}$\;
 	$s_p \gets \textbf{argmax}_{s_p \in P}\frac{|T_{s_i}|}{|T_{s_p}|}$ \tcp*{Direct parent}
 	\uIf{$s_p = null$ \textbf{OR} $\frac{|T_{s_i}|}{|T_{s_p}|} < \kappa$}{continue\tcp*{Not a distinct itemset}}
-	%	$s_m \gets s_i$  \tcp*{Cluster centroid, initially self}
-	%$s_m \gets null$  \tcp*{Cluster centroid}
 	$s_m \gets null$, $maxConf \gets 0$ \tcp*{Best clustering}
 	\ForEach{$s_c \in C$}{
 		$\Delta \gets (1 - (1-\kappa)) |T_{s_c}|$ \tcp*{Maximum difference}
@@ -1235,16 +1003,13 @@ of itemsets behind.
 %Thus we keep only 1,000 itemsets.
 
 Following is an analysis of
-%We analyze
 the performance of the filtering conditions proposed,
-%We evaluate the efficiency of our proposed filtering and clustering methods 
 in terms of the number of itemsets after their application,
 and the runtime overhead they add on top of 
 the runtime of the LCM algorithm.
 The experiments were run using a single threaded Java implementation of
 algorithm \ref{algo:alliance},
 running on a 1.4GHz processor with 2MB of cache.
-%by applying
 We apply the algorithm to the mining results of all 
 one-hour long epochs in the Twitter data.
 Before filtering, the average number of itemsets mined 
@@ -1253,34 +1018,22 @@ from an hour-long epoch is
 that is, excluding itemsets that are merely a frequent item. 
 
 
-
-%The number of length 2 or more maximal itemsets is 1831.92,
-%which we provide just as a reference to the result of a basic way of filtering.
-
 Figure \ref{fig:kappa} show the effect of varying $\kappa$ on the mean number
 of \emph{distinct} and \emph{strongly closed} itemsets.
 The number of \emph{distinct} itemsets drops as the distinctiveness threshold
 increases.
 On the other hand, the number of \emph{strongly closed} clusters %formed 
-increases
-as the similarity (indistinctiveness) threshold decreases.
+increases as the similarity (indistinctiveness) threshold decreases.
 The dashed line shows that the number of unclustered distinct itemsets reaches
 zero at $\kappa=0.5$, explaining why the number of clusters changes very
 slightly after that. 
 We use $\kappa = 0.25$ in the remainder of the paper,
 which is an arbitrary choice based on the definition not the data.
-The average 
-%number of itemsets 
-size of an hourly synopsis
+The average size of an hourly synopsis
 at this value of $\kappa$
 averages at 139.1 \emph{strongly closed} itemsets.
 %,
 %and 85.38 \emph{distinct} itemsets. 
-
-%(\emph{strongly closed} and unclustered
-%\emph{distinct}) mined from one-hour epochs at this value of
-%$\kappa$ is only 224.48, which is about 10\% of the number of closed itemsets.
-
 
 
 \begin{figure}
@@ -1322,7 +1075,6 @@ averages at 5.2 seconds for filtering a one-hour epoch.
 \begin{figure}
 \centering
 \resizebox{9cm}{4.25cm}
-%\scalebox{0.6} % Change this value to rescale the drawing.
 {
 \begin{pspicture}(0,-4.52)(16.408476,4.52)
 \rput(7.52,0.0){\includegraphics{runtime_lcm-lcm+filter-fpzhu_seconds.eps}}
@@ -1339,14 +1091,10 @@ averages at 5.2 seconds for filtering a one-hour epoch.
 The previous filtering steps reduce the number of itemsets to 
 under 10\% of their original number.
 In this section, we present a method for ranking itemset clusters 
-%according to
-%their novelty when compared to other time periods.
-%These itemsets can then 
 such that they can
 be presented to users in rank order
 as a summary of events in the epoch.
 The ranking can also be
-%providing a synopis of events in the epoch, or 
 used as input to additional search or
 summarization steps.
 
@@ -1375,12 +1123,11 @@ We also normalize by the size of the cluster, $m$, to avoid favouring large clus
 \subsection{Empirical Evaluation}
 \label{sec:empirical}
 We now show examples of the synopses produced by ranking
-the \emph{strongly closed} itemsets. % as discussed in section~\ref{sec:rank}.
+the \emph{strongly closed} itemsets. 
 The examples will serve as our assessment of the quality of 
 the synopses. 
 We make an effort to choose epochs from time periods when 
 it is known what people should be talking about. 
-%In section~\ref{sec:electionsday}, 
 We show how the 2012 U.S. presidential elections day is summarized by our methods. %hour-by-hour
 We compare our summary to the one produced by a state of the art algorithm, MTV,
 which generates better quality summaries than other summarization algorithms based on itemsets~\cite{mampaey2011tell}. 
@@ -1393,7 +1140,6 @@ Table \ref{table:nov6} shows the top 3 \emph{strongly closed} itemsets
 from one-hour epochs on the elections day.
 The itemsets shown are the first appearances of the most interesting itemsets;
 that is, an hour is shown only if its top 3 feature novel interesting itemsets.
-%\footnote{The top 50 itemsets in the hours from 5 AM on the 6th till almost 9 AM on the 7th are available for download at \url{http://plg.uwaterloo.ca/~yaboulna/thesis_results/twitter_synopses/elections-day_nov6-0500_nov7-0850_top50-strongly-closed.txt}}.
 The first column is the beginning of the hour, EST time.
 The second column is the top itemsets, 
 reordered and punctuated to be meaningful phrases 
@@ -1413,19 +1159,9 @@ thesis_results/twitter_synopses/elections-day_top50.txt}}.
 %nov6-0500_nov7-0850_top50-strongly-closed.txt}}.
 Its rank is in the second column.
 
-%We do not know if all the top ranked \emph{strongly closed} itemsets 
-%would also be picked by MTV if we use it to mine more itemsets.
-%The space and time requirements of MTV
-%becomes prohibitively large when the number
-%of itemsets requested is increased~--~
-%it takes more than an hour to mine 
-%the top 50 itemset from an hour long epoch.
 
 
 \begin{table}
-%\vspace{-3cm}
-
-%\thispagestyle{empty}
 \begin{center}
 \footnotesize
 \def\arraystretch{1.2}
@@ -1438,7 +1174,7 @@ Its rank is in the second column.
 & \em it's elections day & Excitement  & - \\ \hline
 
 \multirow{3}{*}{\texttt{09:30}}
-& \em if romney wins & Reflecting about possiblities & - \\ \cline{2 - 4} %dreading the thought (according
+& \em if romney wins & Reflecting about possiblities & - \\ \cline{2 - 4} 
 & \em of your ballot & Telling people to stop sending pictures of their ballots & - \\ \cline{2-4}
 & \em in line to vote & Tweeting while in line  & 28 \\ \hline
 
@@ -1450,7 +1186,7 @@ Its rank is in the second column.
 \multirow{3}{*}{\texttt{19:30}}
 & \em Linda  McMahon		&  She loses CT senate race & - \\ \cline{2 - 4}
 & \em Florida is so ... & tight or close; the vote count  & - \\ \cline{2-4}
-& \em \small Romney is winning & Speculations about results  & - \\ \hline %He did take the lead for a while
+& \em \small Romney is winning & Speculations about results  & - \\ \hline 
 
 
 \multirow{3}{*}{\texttt{20:00}}
@@ -1461,38 +1197,38 @@ Its rank is in the second column.
 
 \multirow{3}{*}{\texttt{21:00}}
 & \em Ohio and Florida &  Obama won in 2 more states & - \\ \cline{2 - 4}
-& \em Sarah Palin & Sarah Palin  on Fox news  & - \\ \cline{2-4} %(uh oh!)
+& \em Sarah Palin & Sarah Palin  on Fox news  & - \\ \cline{2-4} 
 & \em concession speech & Todd Akin's  speech & - \\ \hline
 
 
 \multirow{5}{*}{\texttt{22:00}} 
 & \em The electoral college &  Republicans complaining about the voting system  & 9 \\ \cline{2 - 4}
-& \em President of the United States & Barack Obama is the 44th president of the USA   & 8 \\ \cline{2-4} %(uh oh!)
-& \em who voted for & Taking things personally & - \\ \cline{2-4} % 
+& \em President of the United States & Barack Obama is the 44th president of the USA   & 8 \\ \cline{2-4} 
+& \em who voted for & Taking things personally & - \\ \cline{2-4} 
 & \em once you go black you never go & A popular culture reference, missing ``back''& 15 \\ 
-%\cline{2-4} %(uh oh!)
+%\cline{2-4} 
 %& \em my president is black & Americans proud about the equality of opportunities & - \\
  \hline % 
 
 \multirow{3}{*}{\texttt{22:30} }
 & \em @realdonaldtrump this elections ... [complete tweet]	& Trump's ``sham and travesty'' tweets. This cluster merges 26 \emph{distinct} itemsets. & 1  \\ \cline{2-4}
-& \em concede to & The loser has to concede  & - \\ \cline{2-4} %(uh oh!)
-& \em Obama won. I ... & Reactions to the result & - \\ \hline % 
+& \em concede to & The loser has to concede  & - \\ \cline{2-4} 
+& \em Obama won. I ... & Reactions to the result & - \\ \hline 
 
 \multirow{3}{*}{\texttt{23:00} }
 & \em same sex marriage	& Some states legalized same sex marriage & 27  \\ \cline{2-4}
-& \em for recreational use & CO and WA legalized weed for recreational use   & 21 \\ \cline{2-4} %(uh oh!)
-& \em acceptance speech & Anticipation for the speech & 26 \\ \hline % 
+& \em for recreational use & CO and WA legalized weed for recreational use   & 21 \\ \cline{2-4} 
+& \em acceptance speech & Anticipation for the speech & 26 \\ \hline 
 
 \multirow{3}{*}{\texttt{00:30} }
 & \em Delivered, sealed, signed & Stevie Wonder's song used in Obama's campaigns & 10  \\ \cline{2-4}
-& \em The best is yet to come & Quote from Obama's acceptance speech  & 2 \\ \cline{2-4} %(uh oh!)
-& \em with the flag in her [hair]	&  During the speech, attention goes to a woman appearing behind Obama on TV! & 14 \\ \hline %  \cline{2-3}
+& \em The best is yet to come & Quote from Obama's acceptance speech  & 2 \\ \cline{2-4} 
+& \em with the flag in her [hair]	&  During the speech, attention goes to a woman appearing behind Obama on TV! & 14 \\ \hline 
 						
 \end{tabular}
 \end{center}
 \vspace{-5mm}
-\caption{Top 3 \emph{strongly closed} itemsets for hours in US presidential elections day (November 6, 2012)} %  showing how the day unwound (or 5)
+\caption{Top 3 \emph{strongly closed} itemsets for hours in US presidential elections day (November 6, 2012)} 
  \label{table:nov6}
 \end{table}
 
@@ -1513,7 +1249,7 @@ we, re, all, in, this, together, ..., bo [266031109979131904]  & 22 \\ \hline
 @realdonaldtrump,our,country,is,...[266037143628038144]  & 24 \\ \hline
 %Our country is now in serious and unprecedented trouble...like never before.
 \specialrule{.1em}{.05em}{.05em} 
-%\hline
+
 
 URL,and,autotweet,checked,followed,me,today,unfollowed & N/A \\ \hline
 
@@ -1521,12 +1257,10 @@ house,of,representatives,shouldnt,...[266040877552656385] & 15 \\ \hline
 % House of Representatives shouldn't give anything to Obama unless he terminates Obamacare.
  URL,\#android,\#androidgames,\#gameinsight & N/A \\ \hline
 \specialrule{.1em}{.05em}{.05em} 
-%\hline 
 
 URL,and,autotweet,checked,followed,me,today,unfollowed & N/A \\ \hline
 URL,\#android,\#androidgames,\#gameinsight  & N/A \\ \hline
 @barackobama,@ryanseacrest, what, was, your, first, words, in, reaction, to, re, election, 2 & 36 \\ \hline 
-%\hline 
 \specialrule{.1em}{.05em}{.05em} 
 URL,and,autotweet,checked,followed,me,today,unfollowed & N/A \\ \hline
 the, best, is, yet, to, come & 2 \\ \hline
@@ -1545,7 +1279,6 @@ for the people category\footnote{\scriptsize
 \texttt{http://www.google.ca/trends/explore\#q=Justin\%20Bieber\%2C\%20\\
 Taylor\%20Swift\%2C\%20Rihanna\%2C\%20Nicki\%20Minaj\%2C\%20\\
 Selena\%20Gomez\&geo=US\&date=11\%2F2012\%201m\&cmpt=q}}
-%(only available for queries made from the USA)
 as an aid for finding out what social media users
 are expected to be talking about.
 We observed that named entities that make it to the top 10 chart in the people 
@@ -1555,14 +1288,8 @@ people in each group
 have similar volumes over time, 
 with peaks at the times of real world events
 in which the people in the group took part.
-%Pop artists occupy most of the top 10 chart for the \emph{people} category.
 Five out of the top 10 are pop artists, 
-%and they occupy ranks as high as 3 (Justin Bieber) and 4 (Taylor Swift).
-%This is due to music awards events, specially
 with high query volume at times of music awards events.
-%~--
-%the MTV Europe Music Awards on November 11th\footnote{\scriptsize \url{http://en.wikipedia.org/wiki/2012_MTV_Europe_Music_Awards}},
-%and the American Music Awards on November 18th\footnote{\scriptsize \url{http://en.wikipedia.org/wiki/American_Music_Awards_of_2012}}. 
 
 The top 30 \emph{strongly closed} itemsets mined from hours leading to 
 the MTV Europe Music Awards contain
@@ -1574,7 +1301,7 @@ Such different opinions are all reported as separate \emph{strongly closed} item
 because clustering in the transaction space avoids forming incohesive clusters. 
 Moreover, different  \emph{strongly closed} itemsets from one such topic
 can all occupy high ranks.
-For example, the top 3 itemsets for 3 PM on November 9 are all variations of the %$9^{th}$
+For example, the top 3 itemsets for 3 PM on November 9 are all variations of the 
 itemset: \{i, think, ARTIST, NAME, will, be, the, big, winner, tweet, your, pick, at, URL, %\footnote{\scriptsize \url{http://ema-twittertracker.mtv.com/live/predict.html}}, 
 \#mtvema\}; replacing ARTIST NAME by Justin Bieber, Katy Perry, or Lady Gaga and adding a hashtag for each artist.
 
