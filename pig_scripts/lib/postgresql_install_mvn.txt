@@ -1,1 +1,0 @@
-mvn install:install-file -Dfile=postgresql-9.2-1002.jdbc4.jar  -DgroupId=postgresql  -DartifactId=postgresql -Dversion=9.2-1002.jdbc4 -Dpackaging=jar

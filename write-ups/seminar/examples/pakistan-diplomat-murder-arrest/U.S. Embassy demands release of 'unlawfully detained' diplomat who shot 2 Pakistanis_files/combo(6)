@@ -1,1 +1,0 @@
-YUI.add("restoreText",function(A){A.namespace("TWP.Eidos.Modules");A.TWP.Eidos.Modules.RestoreText=function(D){var B=D,C=D.get("value");B.on("blur",function(){var E=D.get("value");if(E==C||E==""){B.set("value",C);}});B.on("focus",function(){var E=D.get("value");if(E==C||E==""){B.set("value","");}});};});

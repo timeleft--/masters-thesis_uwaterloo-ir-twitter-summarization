@@ -1,1 +1,0 @@
-(function(){var picad=picadService.getPJL(); picad.url_id=188764221; })();

@@ -1,1 +1,0 @@
-(function(A){if(typeof A=="function"){A("#header-v3").click(function(E){var C,B=A(E.target),D=false;if(B.is("a")){C=E.target;}else{if(A().closest){C=B.closest("a").get(0);}else{C=B.parents("a").get(0);}}if(!!C){if(D){E.preventDefault();}if(!!window.TWP&&!!TWP.Util&&!!TWP.Util.TrackClick){TWP.Util.TrackClick(C,E,{"debug":D});}if(D){return false;}}return true;});}})(jQuery);

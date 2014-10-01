@@ -1,9 +1,0 @@
-#profile-content #profile-card #friendconnect_display,
-#profile-content #profile-card #friendconnect_display div {
-  background: url(/sites/all/themes/itworld/images/button-google.jpg) no-repeat top left;
-  cursor: pointer;
-  display: block;
-  height: 30px;
-  padding: 0;
-  text-indent: -999999px;
-}
